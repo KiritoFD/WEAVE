@@ -148,9 +148,75 @@ python run_evaluation.py --checkpoint runs/submission/canonical_oriented_epoch4/
                          --inference inference.json
 ```
 
-> 💡 The first time you run training or evaluation, latent caches will be built
-> under `runs/cache/`. See [INSTALL.md](INSTALL.md) for GPU memory tuning and
-> [DATA.md](DATA.md) (forthcoming) for dataset layout.
+> 💡 The datasets and result images are hosted on Google Drive — fetch them
+> with `python scripts/download_data.py` (see
+> [Data & Results Download](#-data--results-download)). The first time you run
+> training or evaluation, latent caches are built under `runs/cache/`. See
+> [INSTALL.md](INSTALL.md) for GPU memory tuning and
+> [DATA.md](DATA.md) for the dataset layout.
+
+---
+
+## 📦 Data & Results Download
+
+The datasets and result images are **too large for git** (~56 GB unpacked) and
+are mirrored on **Google Drive** with public read links. Everything unpacks to
+the exact paths the code expects (`data/`, `datasets/`, `results/`,
+`eval_outputs/`) via one command.
+
+| Archive           | Size      | Contents                                                       | Unpacks to       |
+|-------------------|-----------|----------------------------------------------------------------|------------------|
+| `eval_outputs.tar`| 694 MiB   | Evaluation output images (D5 / R5 / P2A-256)                   | `eval_outputs/`  |
+| `data.tar`        | 7.0 GiB   | Training images, packed latent caches, ONNX VAE, TAESD          | `data/`          |
+| `results.tar`     | 20.7 GiB  | Result images (D5-512, P2A-256, R5, ours, baselines, packs)     | `results/`       |
+| `datasets.tar`    | 24.2 GiB  | WikiArt / COCO sources and preprocessed datasets, latent caches | `datasets/`      |
+
+All archives carry a SHA-256 checksum that the download script verifies
+automatically.
+
+### Option A — one-command download & unpack (recommended)
+
+From the repository root:
+
+```bash
+# download everything and unpack into data/, datasets/, results/, eval_outputs/
+python scripts/download_data.py
+
+# only the training data
+python scripts/download_data.py --only data
+
+# verify previously downloaded archives without re-extracting
+python scripts/download_data.py --verify
+```
+
+The script streams from Google Drive (Python standard library only), verifies
+each archive's size and SHA-256, then extracts with the system `tar` (bundled
+on Windows 10+, macOS, and most Linux distros). Archives are deleted after a
+successful unpack unless you pass `--keep`.
+
+### Option B — raw download links
+
+Each archive contains its top-level directory, so extracting at the repo root
+restores the exact layout:
+
+```bash
+wget -c <URL> -O eval_outputs.tar && tar -xf eval_outputs.tar
+```
+
+- `eval_outputs.tar` — https://drive.google.com/open?id=1vWJVr8qDgdb2-RuA5K5k0znSj5Ut3dG9
+- `data.tar` — https://drive.google.com/open?id=1ZdK7vpTgq7UibcRMz9QSoI1xeaYF2LTr
+- `results.tar` — https://drive.google.com/open?id=1g6Srtkf5I8zFFbe5Q_Tf8dZmlmHtESoH
+- `datasets.tar` — https://drive.google.com/open?id=1UOiz2UDV6IlpxCkBdBGvYPQS1mM7RXr9
+- Folder — https://drive.google.com/open?id=1qQncxF2N7ioQFUi6uBmFRc3C6qnM72nB
+
+> ⚠️ `results.tar` intentionally excludes `results/cross_protocol/submission_pack/boards/`
+> (that subtree contains Windows junction links to result folders already
+> included in the archive). The real per-method result images live in
+> `results/D5-512/`, `results/P2A-256/`, `results/R5/`, `results/ours/` and
+> `results/baselines/`.
+
+**Requirements:** Python 3.8+ and ~56 GiB free disk space. No third-party
+packages needed.
 
 ---
 
@@ -162,7 +228,7 @@ python run_evaluation.py --checkpoint runs/submission/canonical_oriented_epoch4/
 | [CHANGELOG.md](CHANGELOG.md)     | Versioned release history (Keep a Changelog format)    | ✅ |
 | [CITATION.cff](CITATION.cff)     | Citation metadata in CFF 1.2 format                    | ✅ |
 | [LICENSE](LICENSE)               | MIT license                                            | ✅ |
-| DATA.md                          | Dataset layout (D5-512, R5-512, P2A-256) and preparation | 📝 forthcoming |
+| [DATA.md](DATA.md)               | Dataset layout (D5-512, R5-512, P2A-256) and preparation | ✅ |
 | REPRODUCE.md                     | Step-by-step reproduction of all paper tables          | 📝 forthcoming |
 | EXPERIMENTS.md                   | Ablation and rebuttal experiment index                 | 📝 forthcoming |
 | CHECKPOINT.md                    | Checkpoint conventions and download mirrors            | 📝 forthcoming |

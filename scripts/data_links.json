@@ -1,0 +1,34 @@
+{
+  "description": "WEAVE large-file mirrors (datasets + result images) hosted on Google Drive. Download with scripts/download_data.py.",
+  "repo_root": ".",
+  "files": [
+    {
+      "name": "eval_outputs.tar",
+      "url": "https://drive.google.com/uc?export=download&id=1vWJVr8qDgdb2-RuA5K5k0znSj5Ut3dG9",
+      "size": 727534080,
+      "sha256": "788c04675c78b8d4cafa00c2333022c88c5cdf8707753b5943b8a692a889ca32",
+      "unpack": "eval_outputs"
+    },
+    {
+      "name": "data.tar",
+      "url": "https://drive.google.com/uc?export=download&id=1ZdK7vpTgq7UibcRMz9QSoI1xeaYF2LTr",
+      "size": 7506989056,
+      "sha256": "e188073b4e80f95b39ebbbfcbca69fc3ccac72c3b1300d32014beb6745a62b46",
+      "unpack": "data"
+    },
+    {
+      "name": "results.tar",
+      "url": "https://drive.google.com/uc?export=download&id=1g6Srtkf5I8zFFbe5Q_Tf8dZmlmHtESoH",
+      "size": 22180994048,
+      "sha256": "1087865fac42a5d806c68593c193c7caaef62acc0a3ab979767f5f458af42eaa",
+      "unpack": "results"
+    },
+    {
+      "name": "datasets.tar",
+      "url": "https://drive.google.com/uc?export=download&id=1UOiz2UDV6IlpxCkBdBGvYPQS1mM7RXr9",
+      "size": 26000986624,
+      "sha256": "afefc8275b193344be262168204034b9728dd09e352aa77f4bfdbf7396d64084",
+      "unpack": "datasets"
+    }
+  ]
+}
