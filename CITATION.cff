@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "WEAVE: Wavelet-based Entanglement-Augmented Vision Exchange"
+version: 1.0.0
+date-released: 2026-07-25
+license: MIT
+repository-code: "https://anonymous.4open.science/r/weave"
+keywords:
+  - style transfer
+  - wavelet
+  - flow matching
+  - Haar DWT
+  - Channel-wise AdaIN
+  - artistic stylization
+authors:
+  - name: Anonymous Authors
+    affiliation: "AAAI 2027 Submission (Double-Blind)"
+    anonymous: true
+preferred-citation:
+  type: inproceedings
+  title: "WEAVE: Wavelet-based Entanglement-Augmented Vision Exchange"
+  authors:
+    - name: Anonymous Authors
+      anonymous: true
+  year: 2027
+  conference:
+    name: "Proceedings of the AAAI Conference on Artificial Intelligence (AAAI)"
+  notes: "Anonymous double-blind submission."

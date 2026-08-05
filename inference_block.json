@@ -1,0 +1,7 @@
+{
+  "model": {
+    "endpoint_adain_scale": 2.0,
+    "endpoint_adain_mode": "spatial_fiber_block",
+    "ablation_block_size": 16
+  }
+}

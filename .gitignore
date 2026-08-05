@@ -1,0 +1,77 @@
+# ============ IDE / assistant / task tooling ============
+.codebuddy/
+.trae/
+.task_cleanup/
+.task_release/
+.vscode/
+.idea/
+
+# ============ Python ============
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ============ Logs / runs / checkpoints ============
+*.log
+texput.log
+runs/
+logs/
+*.pt
+*.ckpt
+*.pth
+wandb/
+
+# ============ Temp / scratch ============
+*.tmp
+*.bak
+~$*
+# temporary analysis scripts created at repo root
+_*.sh
+_*.ps1
+aaai2027_v4/tmp/
+
+# ============ drawio desktop app caches ============
+.drawio_tmp/
+
+# ============ Nested / embedded repo ============
+WEAVE/
+
+# ============ OS ============
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============ Data / datasets / large experiment artifacts ============
+data/
+datasets/
+results/
+exp/
+eval_outputs/
+experiments/
+state/
+
+# ============ Images (keep repo light) ============
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.webp
+*.tiff
+*.pdf
+
+# ============ Large generated artifacts (opt-in) ============
+# The results/ tree holds ~100k stylized images. By default we keep the
+# CSV/JSON metric tables under version control but ignore raw generated
+# PNG/JPG to keep the repo light. Uncomment the next lines if you instead
+# want to track everything (recommended via Git LFS for the images).
+# results/**/*.png
+# results/**/*.jpg
+# results/cross_protocol/submission_pack/

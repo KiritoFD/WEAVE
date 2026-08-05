@@ -1,0 +1,556 @@
+WEAVE: Minute-Scale Style Transfer Beyond Identity via Wavelet-Routed Latent
+                                              Transport
+
+                                                Anonymous submission
+
+                              Abstract                                 not remain simple after nonlinear, lossy encoding. VAE com-
+                                                                       pression lowers spatial cost, but can make the transport itself
+   Current style transfer methods are often ranked below a trivial     substantially harder to learn.
+   identity mapping under commonly reported metrics such as
+   LPIPS and ArtFID, which primarily reward content preserva-             We measure this difficulty directly: for standard appear-
+   tion. On direct style-similarity metrics, some lightweight mod-     ance transformations, the normalized residual of the best
+   els even fall below this identity baseline. We identify spectral    affine approximation is substantially larger in VAE-latent co-
+   bias in shared representation spaces as a contributing mecha-       ordinates than in pixel space, and a matched TinyUNet con-
+   nism: optimization is dominated by low-frequency structural         verges far more slowly on the direct latent endpoint (Method,
+   residuals, suppressing high-frequency style gradients. While        Why Direct Latent Transport Is Difficult; Figure 3). We trace
+   state-of-the-art diffusion models and their training-free vari-     this to frequency imbalance: natural images concentrate en-
+   ants achieve stronger target-style transfer, they can exceed the    ergy in low frequencies (Rahaman et al. 2019; Xu, Zhang,
+   VRAM limits of consumer GPUs.                                       and Luo 2022; Cai et al. 2021), and a shared velocity field is
+                                                                       dominated by low-frequency residuals from unrelated refer-
+   To resolve this, we propose WEAVE, a compact wavelet-               ence geometry, suppressing the high-frequency style signal.
+   routed framework. A single-level Haar transform explicitly
+   separates frequency transport: a lightweight velocity model            We address this with WEAVE, a source-aligned, wavelet-
+   handles source-aligned transport, while stepwise statistical        routed latent flow that separates content transport from style
+   alignment injects target style into the high-frequency bands.       injection: a compact velocity model predicts motion for the
+   This routing assigns bounded coarse transport to the learned        low- and mid-frequency wavelet bands while stepwise statis-
+   path and high-frequency statistical alignment to an analytic        tical alignment supplies the remaining high-frequency style
+   path, enabling WEAVE to operate robustly in the lossy VAE           (Figure 2). This factorization is what makes compressed la-
+   latent space and train in just 1.4 minutes on a single RTX          tent transport learnable.
+   3060.
+                                                                          A compact model can also obtain favorable content-
+   Furthermore, we introduce the IDT­TGT sandwich guideline,           oriented scores simply by staying close to the input; we
+   which places valid transfer between an identity floor and a         therefore evaluate WEAVE against an identity floor and a
+   source-independent target-style anchor. Under this protocol,        target-style copy anchor (IDT­TGT sandwich) to confirm its
+   WEAVE safely clears the identity baseline and occupies the          efficiency does not come from under-transferring. WEAVE
+   style­content Pareto frontier with only 1.04M trainable pa-         clears both style anchors while retaining substantially more
+   rameters.                                                           content than comparable diffusion editors, at 1.04M param-
+                                                                       eters and 1.4 minutes of training on a consumer GPU.
+                     Introduction
+                                                                       Contributions. Our contributions are threefold.
+Recent diffusion and foundation-model editors provide
+strong priors for artistic style transfer, but their computational     1. Compact transport diagnosis. We show that compres-
+cost remains prohibitive for consumer deployment. Systems                 sion alone does not yield a simple transport problem:
+built on repeated diffusion denoising, inversion, or large im-            nonlinear encoding complicates direct appearance end-
+age foundation models can require tens of gigabytes of GPU                points, while complete reference endpoints introduce un-
+memory and minutes to hours of inference (Wu et al. 2025;                 related geometry and low-frequency-dominated residual
+Black Forest Labs 2025; Chung, Hyun, and Heo 2024; Hertz                  competition. Matched endpoint, convergence, subband,
+et al. 2024; Lu et al. 2024). A natural route to lower cost is            and gradient measurements motivate reformulating the
+to perform transfer in the compressed space of a frozen vari-             transport rather than merely increasing model capacity.
+ational autoencoder, where spatial dimensions are smaller,
+representations can be cached, and the remaining transport             2. Wavelet-routed affine-fiber transport. WEAVE uses
+can in principle be modeled by a compact network (Rombach                 the Haar-induced decomposition to assign bounded LL
+et al. 2022). Yet VAE compression introduces a less visible               base motion, target-conditioned LH/HL vertical motion,
+obstacle: transformations that are simple in RGB space need               and fiber-preserving high-frequency statistical alignment.
+                                                                          This learned­analytic factorization makes lossy latent
+This is an anonymized submission for review purposes only. Dis-
+tribution, citation, or public sharing of this manuscript is strictly
+prohibited. Copyright and publication details will appear in the
+final version if accepted.
+Figure 1: IDT­TGT sandwich comparison on Distinct5-WikiArt. (a) Style affinity versus content preservation: the vertical axis
+is mean style affinity (CLIP-S + DINO-S)/2, and bubble area denotes training time. (b) Mean style affinity versus ArtFID; the
+
+dashed line is a least-squares fit over the evaluated methods, excluding TGT. On this benchmark, ArtFID is strongly influenced
+
+by content preservation and should not be interpreted as a direct ranking of target-style affinity: its negative association with
+style affinity (r = -0.76, R2 = 0.58) reflects this limitation.
+
+   transport learnable with only 1.04M trainable parame-         matching identity; it simplifies the endpoint and routes dis-
+   ters.                                                         placements in Haar coordinates upstream of the solver.
+
+3. Valid transfer at minute-scale cost. We introduce the            Mamba-based state-space models have recently been ap-
+   IDT­TGT sandwich to verify that computational savings         plied to arbitrary style transfer to obtain global receptive
+   do not arise from identity-like behavior. WEAVE clears        fields at linear cost (Gu and Dao 2023): Liu et al. (2025)
+   the identity anchor, occupies a competitive style­content     (SaMam) design a style-aware Mamba encoder­decoder over
+   Pareto position, and--restricted to sandwich-valid meth-      flattened spatial tokens, operating on the full spatial token se-
+   ods with fully reported timing--delivers about an 18×         quence and leaving frequency content unchanged. A separate
+   lower train+infer cost than the fastest such baseline on the  line of work targets multi-style scalability with lightweight
+   750-image board.                                              non-Mamba backbones: Liu et al. (2024) (SaMST) decouple
+                                                                 style representation learning from a compact convolutional
+                     Related Work                                transfer network. WEAVE differs from both: it decomposes
+                                                                 the latent into an orthonormal Haar basis and routes each
+Classical NST replaces iterative Gram matching (Gatys,           subband to an independent lightweight head, without a se-
+Ecker, and Bethge 2015, 2016) with feed-forward fea-             quential state-space backbone, a token-domain design, or a
+ture transforms (AdaIN, WCT) and attention/correspondence        diffusion U-Net.
+models (Huang and Belongie 2017; Li et al. 2017; Park and
+Lee 2019; Deng et al. 2022; Hong et al. 2023; Kwon et al.           LPIPS and ArtFID can still reward near-copies of the con-
+2024; Park et al. 2020; Gim, Yoo, and Uh 2024; Zhang             tent image (Zhang et al. 2018; Wright and Ommer 2022),
+et al. 2024a; Zhang and Tang 2025). These works improve          and no single metric captures both style affinity and content
+the transform operator; WEAVE instead asks which parts           fidelity (Ioannou and Maddock 2024). ArtScore (Chen et al.
+of latent transport should be removed, learned, or imposed       2024) offers a learned, reference-free artness measure as a
+analytically before choosing capacity.                           further complement to ArtFID; we leave its integration to
+                                                                 future evaluation work. We use the IDT­TGT sandwich (Im-
+   Diffusion editors operate in compressed VAE spaces but        plementation Details) as a validity frame rather than a new
+still invoke a large denoiser at inference (Rombach et al.       aggregate score: WEAVE factorizes the task before approx-
+2022; Hertz et al. 2022; Meng et al. 2021; Chung, Hyun,          imating it.
+and Heo 2024; Hertz et al. 2024; Ye et al. 2023; Zhang
+et al. 2023; Kim, Kwon, and Ye 2023; Zhang et al. 2024b;            Spectral bias and frequency-aware models separate scales
+Lu et al. 2024; Wu et al. 2025; Black Forest Labs 2025).         in objectives or generation heads (Rahaman et al. 2019; Xu,
+WEAVE keeps the frozen VAE state space yet removes the           Zhang, and Luo 2022; Cai et al. 2021; Ren et al. 2026);
+diffusion U-Net from the transport itself, assigning motion      wavelets give exact multi-band coordinates (Phung, Dao,
+to a compact field plus an analytic update (tested as an SD1.5   and Tran 2023; Yoo et al. 2019; Daubechies 1992). Wavelet
+plug-in under Generalization and Robustness).                    decomposition has also been used to make latent diffu-
+                                                                 sion more efficient at high resolution: Sadat et al. (2024)
+   Flow matching and Schrödinger-bridge methods regress          replace the VAE encoder with a wavelet-based design for
+short paths between endpoints (Liu, Gong, and Liu 2023;          cheaper, higher-fidelity compression, and Sigillo, He, and
+Lipman et al. 2022; Léonard 2014; De Bortoli et al. 2021;        Comminiello (2025); Zhang et al. (2025) use wavelet en-
+Shi et al. 2023; Liu et al. 2023; Su et al. 2023; Cuturi 2013;   ergy maps to allocate a fixed diffusion backbone's capacity
+Peyré and Cuturi 2019). WEAVE does not change the flow-          during ultra-high-resolution synthesis. These methods de-
+Figure 2: WEAVE architecture. A single-level Haar transform exposes LL and three high-frequency bands. The compact
+velocity network predicts LL/LH/HL motion; a style-ID memory bank is injected via cross-attention in the shared trunk (the
+LL/LH/HL heads themselves are style-free); HH has no learned velocity head. After every Euler update, high-frequency AdaIN
+aligns the combined high-frequency residual to the target-style statistics. The complete D5 model has 1.04M trainable parameters.
+
+compose the signal to save compute or resolve detail; none                    (a) Linear fit                                          (b) Convergence
+route subbands to separate style/content transport heads. Or-     0.4                                                        1.0
+thogonal to artistic stylization, SA-LUT (Gong et al. 2025)       Endpoint NMSE
+applies spatially adaptive 4D lookup tables for photorealis-      0.2                                       Validation NMSE  0.5
+tic color grading; WEAVE targets painterly appearance via
+learned subband transport rather than LUT-based color map-          0.0                                                      0.0       15               30
+ping. WEAVE uses Haar as a transport coordinate system--          Color shiftAdaINGaWmCmTa curve                                  0
+learned LL/LH/HL, fiber-preserving analytic HF alignment
+with HH--rather than a reweighted loss or a one-shot Latent-                      Pixel
+WCT-style transform.                                                              VAE latent
+
+                                                                                                                                       Epoch
+
+                         Method                                                                                                      VAE latent
+                                                                                                                                     Pixel
+WEAVE formulates style transfer as bundle-respecting trans-                                                                          Latent + spectral
+port in Haar-trivialized VAE latents (Align­Route­Assign;
+Figure 2): align the base endpoint to the source, route residual  Figure 3: Pixel vs. VAE-latent endpoint fit. (a) Affine resid-
+motion into exact Haar coordinates, and assign base/LH/HL         ual. (b) Matched TinyUNet: frequency-structured latents re-
+motion to a compact field while high-frequency statistics--       cover learnability.
+including HH--are handled analytically.
+
+Why Direct Latent Transport Is Difficult                          Haar-Induced Affine-Fiber Coordinates
+
+For an RGB map T , the normalized residual of the best            A one-level orthonormal Haar map W(z) = (, h1, h2, h3)
+pointwise affine fit is                                           exposes LL and oriented HF bands (Daubechies 1992). On
+                                                                  each 2×2 block,
+
+Rq (T  )  =  min   Aq(xc) + b - q(T (xc, xs))22  ,  (1)                   1 1 1 1  a
+                      q(T (xc, xs)) - q(xc)22
+              A,b                                                      h1     1    1               1  -1                          -1     b
+                                                                       h2     2                   -1   1                               
+             q  {I, E}.                                                    =     1                                                     c    .           (2)
+                                                                                                                                  -1
+
+                                                                       h3        1 -1 -1 1 d
+
+Figure 3 shows RE  RI for color shift, AdaIN, WCT, and            With PLz = W-1(, 0, 0, 0), PH =I-PL, and L(z)=, the
+gamma maps, and a matched TinyUNet (same width; pixel at          fiber over  is the exact affine set
+2562, latent at 322) converges far more slowly on direct latent
+endpoints than on pixel or frequency-structured latent end-            F = L-1() = W-1(, 0, 0, 0) + ker PL,                                             (3)
+points. Shared MSE then lets low-frequency residuals from
+unrelated reference geometry dominate the update (Rahaman         We use "affine" here strictly in the sense of Eq. 3: F is
+et al. 2019; Xu, Zhang, and Luo 2022; Cai et al. 2021). We        an affine subset of the coefficient space, not a claim about
+therefore reformulate the transport before increasing capac-      nontrivial manifold curvature or a general fiber-bundle con-
+                                                                  nection. Let B := im PL denote the base coordinate space
+ity.
+Figure 4: Extreme cross-domain stylization (Minimalism  Rococo). Diffusion editors alter structure; several lightweight
+outputs stay near identity. WEAVE keeps topology while adding the target appearance.
+
+and ZH := ker PL the fiber space; then Z  B × ZH via                      Fiber-Preserving Statistical Alignment
+z  (L(z), PH z). This is a coordinate split for operators,
+not a semantic content/style partition: LL may still carry                For q=PH (z) and qs=PH (zs), channel-wise AdaIN (Huang
+limited style, and HF bands can retain geometric edges after              and Belongie 2017)
+decoding.
+                                                                          q - µ(q)
+                                                                          A(q; qs) = (q) (qs) + µ(qs)                        (9)
+
+Source-Aligned Bundle Endpoint                                            defines the fiber-preserving map
+
+Let zc=E(xc) and zs=E(xs) from the frozen SD1.5                           Ss(z) = PLz + s(PH z),
+VAE (Rombach et al. 2022). Direct zczs supervises un-                                                                            (10)
+related base geometry in s. WEAVE replaces the base des-
+tination by                                                               s(q) = (1 - )q +  A q; (1 + )qs .
+
+~s = (1 - )c +  AdaIN(c, s),      = 0.3,                                  Since q, qs  ker PL, every local Haar block average of q
+z1 = W-1(~s, h1,s, h2,s, h3,s),                (4)                        (resp. qs) is zero, so the global channel-wise means satisfy
+                                                                          µ(q) = µ(qs) = 0; hence A(q; qs) = q · (qs)/(q) reduces
+keeping target HF coordinates. Training uses a lightly noised             to a pure scaling, which ker PL is closed under.
+rectified path
+                                                                          Proposition 1 (Base preservation). L(Ss(z)) = L(z) for
+ zt = (1 - t)zc + tz1 -  t(1 - t) , u = z1 - zc, (5)                      all z, i.e. Ss : F  F.
+
+with tU ([0, 1]), N (0, I), =0.02; supervision is the                     Proof. PH z  ker PL and the scaling property of A imply
+clean displacement u (noise off at inference).                            s(PH z)  ker PL, so L(Ss(z)) = L(PLz) = L(z).
+
+Learned Base and Vertical Transport                                          Thus Ss injects HF statistics (and supplies HH) without
+The field predicts only base and LH/HL vertical velocities,               moving the current LL base; applying it after every Euler step
+                                                                          makes alignment part of the dynamics, not post-processing.
+v(zt, t, s) = (v, vh1 , vh2 , 0),     (6)
+
+Because W is orthonormal, Parseval gives an exact subband                 Learned­Analytic Split Solver
+decomposition of any latent residual:
+                                                                          Inference alternates a learned Euler step and Ss:
+z-z22 = -22 + h1-h1 22
+              + h2-h2 22 + h3-h3 22.  (7)                                 zk+1 = Ss  1/K (zk),              k = 0, . . . , K - 1, (11)
+
+Under a shared MSE on z, a large LL residual therefore                    with K=8. Training minimizes Eq. 8 on cached latents; the
+dominates the total gradient and can starve HF heads--                    model has 1.04M trainable parameters plus the frozen 84M
+the spectral-bias mechanism discussed above. Routing the                  VAE. Details are in the supplement.
+loss by subband severs that coupling: spectral matching
+(LL=0.3; Table 2 is stable at 1.0)                                                             Experiments
+
+LSFM = Et LLv -u22 +vh1 -uh1 22 +vh2 -uh2 22                              Implementation Details
+                                                                     (8)
+                                                                          Datasets. All benchmarks are built from publicly avail-
+weights LL explicitly, while HH never enters the learned                  able WikiArt images. D5 uses the five WikiArt families
+gradient (analytic path only). A width-64 residual trunk with             whose identity/target-style CLIP-S gap is largest (Early Re-
+separate 1×1 LL/LH/HL heads implements v; no HH head                      naissance, Impressionism, Minimalism, Rococo, Ukiyo-e).
+is learned. Style enters via a (5, 256, 384) style-ID memory--            Training uses 5,000 images (1,000 per family) and testing
+one bank of 256 tokens ×384 channels per style ID, indexed                uses 150 images (30 per family); each test image is paired
+by the five D5 families--projected into cross-attention in                with one reference from every family, yielding 750 content­
+the trunk (heads are style-free); held-out styles clamp the ID            style pairs at 512×512 resolution. P2A is the standard photo-
+path and rely on the reference-driven analytic map Ss (R5).               to-art benchmark evaluated at 256 × 256. R5-WikiArt is a
+Trainable size is 1.04M.                                                  held-out board of five styles drawn at random from WikiArt
+                    D5-512                     P2A-256                          R5-WikiArt          Params Train Infer
+
+Method    DINO-S CLIP-S LPIPS DINO-C DINO-S CLIP-S LPIPS DINO-C DINO-S CLIP-S LPIPS DINO-C M min 750
+
+Identity  0.419     0.693 0.000  1.000  0.416  0.663 0.000        1.000  0.433  0.731 0.000  1.000     0      ­­
+                    0.855 0.756  0.220  1.000  0.835 0.800        0.169  1.000  0.796 0.747  0.230     0      ­­
+Target Style 1.000  0.693 0.003  0.922  0.341  0.674 0.603        0.279  0.505               0.538  0+1.1k  free 5m
+                    0.780 0.869                                                 0.767 0.449  0.315  0+1.1k
+SD-Turbo 0.484                   0.239  0.612  0.768 0.786        0.310  0.649  0.824 0.829  0.526  0+1.1k  free 77m
+                    0.784 0.347                0.786 0.332                                   0.380  0+2.4k  free 3h
+StyleAligned 0.675  0.787 0.765  0.549  0.514                     0.526  0.514  0.822 0.384  0.374  0+1.1k
+                                               0.774 0.713                      0.787 0.795  0.795          free 5.1h
+Z-STAR    0.449     0.822 0.552  0.377  0.552  0.648 0.691        0.335  0.484               0.615    7.0   free 63m
+                                 0.416  0.256                     0.147  0.571  0.815 0.493  0.925
+StyleShot 0.563     0.714 0.374                0.754 0.494                      0.710 0.620  0.737    8.3   323 5m
+                    0.618 0.749  0.795  0.539  0.709 0.398        0.702  0.441  0.667 0.612  0.728          39.5 10m
+StyleID   0.548     0.590 0.321  0.145  0.501  0.677 0.205        0.838  0.461  0.712 0.227  0.725    8.8   436 17.6m
+                                 0.812  0.505  0.722 0.495        0.870  0.503               0.553  35+13   1440 38m
+CUT       0.471     0.709 0.596  0.747         0.744 0.571        0.555  0.533  0.759 0.553         11+20
+SaMST     0.271     0.724 0.548  0.601  0.515  0.752 0.227        0.522  0.545  0.782 0.409                   ­ 23m
+                    0.720 0.477  0.739  0.498  0.738 0.585        0.785  0.504  0.742 0.486            ­    API ­
+SaMam     0.476     0.673 0.441  0.559  0.517                     0.386  0.414  0.710 0.444                 free 18s
+                                        0.338                                                          0
+StyTR-2   0.501
+
+AesPA-Net 0.520
+
+Seedream 4.5 0.486
+Latent-WCT 0.362
+
+WEAVE     0.492 0.713 0.259 0.810 0.480 0.668 0.312 0.861 0.523 0.775 0.290 0.772 1.04+84 1.4 126s
+
+Table 1: Main comparison (/// for DINO-S/CLIP-S/LPIPS/DINO-C). Best two (excl. IDT/TGT) bold; double underline =
+1st. : style  IDT; : content past TGT. Params in millions (frozen as superscript); Train in minutes; Infer is wall time for 750
+images (RTX 3060 unless noted). WEAVE cost is the selected D5 config.
+
+(Cubism, Expressionism, Pop Art, Romanticism, Symbol-             Comparison with State-of-the-Art Methods
+ism), evaluated at 512 × 512 with the same 750-pair protocol
+as D5. It is distinct from Other5 below (a different five-family  D5 quality­compute operating point. Figure 1(a) evalu-
+held-out set used only for zero-shot conditioning checks). For    ates the operating point jointly in style affinity, content fi-
+each request, the source content image and a target-style ref-    delity, and training cost. WEAVE clears IDT on both style
+erence image are given; the task is to render the content in      measures while retaining substantially more source content
+the target style.                                                 than editors with a similar or stronger style score. Among
+                                                                  trained methods that clear the CLIP-S identity reference, it
+Metrics. DINO-S measures target-style affinity as the max-        has the lowest LPIPS and uses only 1.04M trainable param-
+imum cosine similarity between DINOv2 CLS embeddings              eters. The selected high-frequency conditioning improves
+of the generated image and the CLS embeddings of the target-      both DINO-S and CLIP-S over the base configuration with-
+style reference pool (up to 30 reference images per style), fol-  out crossing the TGT content reference. The comparison
+lowing the standard photo-to-art evaluation protocol. CLIP-S      with Seedream is especially informative: WEAVE reaches
+reports the cosine similarity between CLIP image features of      higher DINO-S with substantially lower content cost. We
+the generated image and a target-style prototype formed as        position the D5 model as a per-collection, style-ID condi-
+the L2-normalized mean CLIP feature over the same ref-            tional system: the velocity trunk is conditioned on a learned
+erence pool; the prototype is precomputed once per target         style-memory bank indexed by style ID (one token set per
+style and shared across all 750 requests, so CLIP-S measures      WikiArt family), which is a different operating point from
+absolute style affinity rather than similarity to a particular    arbitrary-style or training-free zero-shot methods that con-
+reference image. LPIPS measures perceptual content dis-           dition only on a reference image. The reference-based style
+tance between the generated image and the source content          path is retained and is what the model uses on held-out fam-
+image (Zhang et al. 2018). DINO-C reports DINOv2 cosine           ilies; Table 4 (Other5, disjoint from R5) confirms that this
+similarity between the generated image and the source, giv-       path generalizes zero-shot without any code update.
+ing a complementary content-preservation view. IDT (iden-
+tity transfer) and TGT (target-style copy) are dataset-specific   Reading the sandwich. The marks in Table 1 expose
+anchors: IDT returns the unchanged source image and marks         methods that remain below IDT on style or cross TGT on
+the no-op baseline, while TGT returns a target-style refer-       content distance. The bracket is benchmark- and metric-
+ence itself and marks the upper bound on style affinity at        specific: DINO-S/CLIP-S capture different style cues, while
+the cost of content loss. The IDT and TGT rows in Table 1         LPIPS/DINO-C capture different content failures. We there-
+are computed from the same 750 D5 pairs and the same ref-         fore report each raw metric and compute IDT/TGT for each
+erence pool, with TGT sampling one reference per request.         benchmark rather than collapsing them into one score. Un-
+We mark methods that do not exceed IDT on style () or fall        der this bracket, WEAVE's Pareto position is task-valid: it
+outside TGT on content () in Table 1. Full benchmark con-         exceeds identity on both DINO-S and CLIP-S without ap-
+struction, preprocessing, and fixed evaluation settings are in    proaching the target-copy content cost. On the closest base-
+the supplement.                                                   lines (SaMam, CUT), we additionally verify these gaps under
+a paired significance test (supplement). StyleAligned attains      Figure 5: Per-step fiber path diagnostics on 8 cross-style
+the highest raw DINO-S on D5 but crosses the TGT content           probe pairs over 8 Euler steps. Left (absolute): the analytic
+reference (marked ); WEAVE occupies a different frontier           HF movement (red diamonds) is an order of magnitude larger
+point--higher content fidelity at modest style cost and much       than the learned LH/HL vertical movement (orange/green),
+lower train/infer budget.                                          and the learned LL base movement (blue) is the only nonzero
+                                                                   base contribution. The analytic LL leakage (purple crosses)
+P2A and R5. WEAVE remains inside the bracket on P2A.               is at numerical-zero level ( 3.2×10-6), confirming Ss pre-
+The margin over IDT is narrower than on D5, consistent             serves the base fiber. Right (normalized): the same quanti-
+with D5 family selection maximizing the identity/target-           ties divided by the initial LL/HF norms; the leakage curve
+style gap. On R5, it improves DINO-S over IDT, CUT, and            stays five orders of magnitude below the analytic HF curve.
+SaMam while retaining substantially more source content            HH learned is identically zero by construction (no learned
+than StyTR-2 and AesPA-Net. The stronger D5-512 profile            HH head). The two paths therefore carry qualitatively differ-
+is consistent with native high-frequency coefficients preserv-     ent motion, validating the operator splitting in Eq. (11).
+ing detail compressed at 256. Because D5 and P2A also differ
+in data, we treat this as scale potential rather than an isolated  facts stand out. First, LL leakage is at most 3.2×10-6 at every
+resolution claim.                                                  step, i.e. the analytic operator preserves the base fiber to nu-
+                                                                   merical precision throughout the trajectory. Second, the per-
+Cost. WEAVE trains in 1.4 min (batch 96 on a single                step analytic HF movement is an order of magnitude larger
+RTX 3060 12 GB) after latent caching and infers the 750-           than the learned vertical movement (haknalyticHF  11.5
+image D5 board in 126 s, for a total train+infer budget of         vs. hLleaHrn,ekd, hlHeaLrn,ekd  [0.6, 1.4]), while the learned
+about 3.5 min (Table 1). Restricting to methods that clear the     field alone carries the base motion (lkearned  [0.6, 1.1],
+IDT­TGT sandwich and report full timing, this is roughly           hlHeaHrn,ekd=0 by construction). The two paths therefore
+18× faster than the fastest such competitor (StyleID, 63 min       carry qualitatively different motion: the learned field trans-
+inference alone); AesPA-Net's training cost is unreported          ports the base and a small organized vertical component,
+and is excluded from this comparison, and Latent-WCT is            while Ss injects target-style high-frequency statistics with-
+faster still but falls below IDT. Compact velocity plus frozen     out touching the base. This is the empirical signature of the
+VAE keep peak VRAM low enough for large consumer-GPU               operator splitting in Eq. (11) and rules out the alternative
+batches at inference as well. Together, the sandwich and the       interpretation of WEAVE as a learned model with redundant
+cost columns establish a quality­compute operating point           post-processing. This empirically confirms Proposition 1:
+that is practical on commodity hardware while clearing the         the analytic step preserves the base fiber to numerical preci-
+identity anchor on style.                                          sion. Figure 5 visualizes the per-step diagnostics: the learned
+                                                                   base/vertical curves stay flat and small while the analytic HF
+ArtFID and style affinity. Figure 1(b) compares ArtFID             curve sits an order of magnitude higher, and the LL leakage
+with the mean of DINO-S and CLIP-S. Across IDT and meth-           curve overlaps the zero axis to numerical precision.
+ods with complete ArtFID results, the correlation between
+style affinity and -ArtFID is -0.76: stronger target-style         Generalization and Robustness
+affinity is associated with worse, not better, ArtFID. In par-
+ticular, IDT obtains the lowest ArtFID despite making no           We test whether the source-aligned, wavelet-routed formula-
+transfer. On this benchmark, ArtFID is therefore strongly          tion depends on a single checkpoint, VAE, wavelet, or editor.
+influenced by content preservation and should not be inter-        The consistent finding is that the factorization transfers; the
+preted as a direct ranking of target-style affinity; we use it as  specific numbers shift with the latent representation and the
+a complementary plausibility measure.                              operating point. We organize the tests by scope: represen-
+                                                                   tation robustness, conditioning generalization, and operator
+Ablation Study                                                     portability.
+
+Table 2 reports a transport-responsibility ablation: each vari-    Multiple seeds. The internal-dynamics stopping rule se-
+ant removes or reassigns one responsibility in Align­Route­        lects epochs 4, 4, and 3 for seeds 42, 7, and 123, respectively,
+Assign. Source alignment matters most for content: replacing       close to the retrospective DINO-S peaks. The rule fires when
+it with a direct target endpoint increases LPIPS by 0.05 while     the mean LH/HL target-HF gate begins to expand and the
+leaving DINO-S nearly unchanged. HF conditioning and               shared-trunk LL/HF gradient-norm ratio contracts by at least
+stepwise AdaIN each independently contribute to style affin-
+ity; final-only AdaIN collapses content, while zero-velocity
+(pure analytic) already exceeds IDT and shows that the 1.04M
+field adds a further style gain without duplicating Ss. A
+learned HH head and LL=1.0 give only marginal changes,
+motivating the simpler default.
+
+Fiber path observability. We instrument the integrator to
+record per-step DWT subband deltas on 8 cross-style probe
+pairs: klearned and hlLeaHrn/eHd L,k from the solver step,
+haknalyticHF from Ss, and the LL leakage aknalytic. Two
+Variant              DINO-S CLIP-S LPIPS DINO-C                 Method        CLIP-S   LPIPS   DINO-S    DINO-C 
+
+WEAVE                0.4916  0.7128  0.2593  0.8103             WEAVE          0.7742  0.2802    0.5313    0.7587
+w/o AdaIN            0.4821  0.7005  0.2258  0.8455             SaMam          0.7577  0.3990    0.5466    0.7369
+final-only AdaIN     0.4836  0.7293  0.3954  0.6660             SaMST          0.7485  0.6213    0.3913    0.2680
+w/o HF conditioning  0.4825  0.7157  0.2837  0.8125
+LL=1.0               0.4910  0.7180  0.2626  0.7874             Table 4: Zero-shot transfer on Other5 (750 pairs; D5 check-
+direct endpoint      0.4894  0.7172  0.3138  0.7966             point). Other5 is a different held-out five-family set from
+learned HH head      0.4930  0.7164  0.2670  0.8061             R5-WikiArt in Table 1.
+zero-velocity        0.4752  0.7028  0.2565  0.8558
+
+Table 2: Transport-responsibility ablation on the same 750      SD1.5 editor  DINO-S CLIP-S LPIPS DINO-C
+D5 requests. Each variant removes or reassigns one respon-
+sibility in Align­Route­Assign. Zero-velocity disables the      Base                   0.3974 0.7221 0.3591 0.6589
+learned field (pure analytic Ss).
+                                                                + wavelet alignment 0.4080 0.7366 0.3630 0.6531
+
+Frozen VAE           DINO-S CLIP-S LPIPS DINO-C                 Table 5: Plug-in wavelet alignment for a frozen SD1.5 editor
+                                                                on 600 cross-style D5 pairs. No SD1.5 weights are updated.
+
+SD1.5 EMA (main)     0.492   0.713   0.259   0.810              empty prompt, strength 0.5, and 20 DDIM steps; the plugin
+FLUX.1               0.489   0.713   0.256   0.780              aligns LH/HL/HH at scale 0.8 while leaving LL unchanged.
+FLUX.2               0.492   0.717   0.239   0.873              On 600 cross-style D5 pairs, CLIP-S rises from 0.7221 to
+Qwen-Image           0.478   0.714   0.263   0.825              0.7366 and DINO-S from 0.3974 to 0.4080 (both p<10-15,
+                                                                paired t-test), while LPIPS changes from 0.3591 to 0.3630
+Table 3: Cross-VAE D5 results (best observed checkpoint per     (Table 5). The gains remain on all 750 pairs. The DWT­
+tokenizer).                                                     AdaIN­IDWT operation adds 4.9 ms per image and requires
+                                                                no model update. This tests whether the analytic wavelet op-
+35% relative to the previous epoch; it does not generate im-    erator transfers independently of the compact learned trans-
+ages or consult DINO-S, CLIP-S, LPIPS, or DINO-C during         port.
+training. Matched LL-weight and HH variants show the same
+transition. Complete trajectories and the rule are provided in                         Discussion
+the supplement.
+                                                                WEAVE's efficiency comes from changing the transport
+Representation robustness. Table 3 replaces the frozen          problem, not from shrinking a large backbone: a 1.04M field
+SD1.5 EMA VAE with FLUX.1, FLUX.2, and Qwen-Image               plus frozen VAE, latent caching, and a short operator-split
+(only input/output channel projections adapted; Haar routing    solver (Eq. 11) fit large batches on a consumer GPU. On the
+unchanged) and retrains on D5. All three clear IDT on style     D5 board, total train+infer is about 3.5 min; among sandwich-
+with competitive content; FLUX.2 matches SD1.5 DINO-S           valid methods with fully reported timing this is about 18×
+while improving CLIP-S, LPIPS, and DINO-C. The factor-          faster than StyleID's inference-only 63 min (Table 1), while
+ization is not tied to one tokenizer, though the best epoch     methods that undercut this budget fail the sandwich (/).
+shifts with latent geometry (details in the supplement). Na-
+tive 512 training also beats upsampling a 256 checkpoint; we                          Limitations
+keep Haar for orthogonality and cost.
+                                                                WEAVE uses a single Haar level and is trained per style col-
+Conditioning generalization. We resample one without-           lection rather than as a universal zero-shot editor; multi-scale
+replacement reference pool per target style and reuse it for    styles and broader tokenizers remain open. Haar bands are
+all requests to that style. The board-mean DINO-S margin        exact coordinates, not pure semantic factors. IDT/TGT and
+over IDT remains positive across the tested pool sizes and      DINO/CLIP/LPIPS/ArtFID are imperfect proxies; baselines
+draws, showing that the aggregate conclusion is not deter-      use released operating points rather than a joint compute-
+mined by a particular reference subset. Separately from R5      matched search. The SD1.5 plug-in tests one frozen editor
+in Table 1, we evaluate zero-shot transfer on Other5--five      only.
+held-out WikiArt families disjoint from both D5 and R5
+(Abstract Expressionism, Art Nouveau Modern, Cubism,                                  Conclusion
+Expressionism, Symbolism; 750 pairs). WEAVE gives the
+highest CLIP-S and DINO-C and the lowest LPIPS (Table 4);       WEAVE shows that minute-scale style transfer in a frozen
+SaMam is 0.015 higher on DINO-S but has higher LPIPS.           VAE latent space is achievable not by performing less trans-
+The reference-conditioned path therefore generalizes beyond     fer, but by reformulating the transport problem in explicit
+the five learned style IDs.                                     wavelet coordinates. Cross-dataset evaluation, held-out style
+                                                                families, alternative VAEs, and a frozen SD1.5 plug-in con-
+Operator portability. We apply the same Haar-domain             firm this principle transfers beyond one checkpoint. The same
+statistical alignment to a frozen SD1.5 image-to-image          appearance­geometry tension observed in synthetic-to-real
+pipeline without updating its weights. The base editor uses an
+translation (Zang, Hu, and Song 2026) suggests structure-        Daubechies, I. 1992. Ten Lectures on Wavelets. SIAM.
+preserving latent augmentation as a natural extension.
+                                                                 De Bortoli, V.; Thornton, J.; Heng, J.; and Doucet, A.
+             Reproducibility Statement                           2021. Diffusion Schrödinger Bridge with Applications
+                                                                 to Score-Based Generative Modeling. arXiv preprint
+All experiments use public data (WikiArt) and a public VAE       arXiv:2106.01357.
+(Stable Diffusion v1.5 EMA VAE). The experiments section
+gives the training configuration, hyperparameters, and eval-     Deng, Y.; Tang, F.; Dong, W.; Sun, W.; Huang, F.; and Xu,
+uation protocol. The D5 run stops after four epochs and takes    C. 2022. StyTr2: Image Style Transfer with Transformers.
+82.8 seconds (1.4 minutes) on a single RTX 3060 (12 GB;          In Proceedings of the IEEE/CVF Conference on Computer
+batch 96), without online image evaluation. Generation-only      Vision and Pattern Recognition.
+inference for 750 pairs takes 126 seconds for the selected
+WEAVE model (8-step ODE + VAE decode), and a full                Gatys, L. A.; Ecker, A. S.; and Bethge, M. 2015. A
+metrics pass adds metric extraction and writing overhead.        Neural Algorithm of Artistic Style. In arXiv preprint
+The reported training time starts after latent caching. La-      arXiv:1508.06576.
+tent caching for the full D5 training set (5,000 images at
+5122) is a one-time offline VAE encode amortized across          Gatys, L. A.; Ecker, A. S.; and Bethge, M. 2016. Image
+all runs that reuse the same packed cache; at our measured       Style Transfer Using Convolutional Neural Networks. In
+content-encode throughput on RTX 3060 ( 127 ms/image             Proceedings of the IEEE Conference on Computer Vision
+in the full-pipeline encode bench), this is on the order of      and Pattern Recognition.
+11 minutes. The model has 1.04M trainable parameters plus
+the frozen 84M VAE. An anonymous repository containing           Gim, H.; Yoo, J.; and Uh, Y. 2024. Content-Adaptive Style
+all code, data-preparation scripts, the WikiArt splits, con-     Transfer: A Training-Free Approach with VQ Autoencoders.
+figuration files, the full training and inference pipeline, and  In Proceedings of the Asian Conference on Computer Vision.
+the 750-pair evaluation protocol is submitted alongside this
+paper.                                                           Gong, Z.; et al. 2025. SA-LUT: Spatial Adaptive 4D Look-Up
+                                                                 Table for Photorealistic Style Transfer. In Proceedings of the
+                  Ethical Statement                              IEEE/CVF International Conference on Computer Vision.
+
+Style transfer tools can be misused to produce deceptive         Gu, A.; and Dao, T. 2023. Mamba: Linear-Time Se-
+images or to misattribute stylistic authorship. Our method       quence Modeling with Selective State Spaces. arXiv preprint
+operates at the domain level (e.g., "Impressionism") rather      arXiv:2312.00752.
+than the per-artist level. This reduces the risk of imitating
+a specific living artist. We do not model or label individual    Hertz, A.; Mokady, R.; Tenenbaum, J.; Aberman, K.;
+artists, although inference uses target-style reference images.  Pritch, Y.; and Cohen-Or, D. 2022. Prompt-to-Prompt Im-
+The dataset is sourced from WikiArt and contains historically    age Editing with Cross Attention Control. arXiv preprint
+significant artworks. It does not contain personal data. We      arXiv:2208.01626.
+encourage downstream users to disclose when an image has
+been style-transferred and to respect source-content licensing   Hertz, A.; Voynov, A.; Fruchter, S.; and Cohen-Or, D. 2024.
+terms.                                                           Style Aligned Image Generation via Shared Attention. In
+                                                                 Proceedings of the International Conference on Learning
+                       References                                Representations (ICLR).
+
+Black Forest Labs. 2025. FLUX.2: Frontier Visual Intelli-        Hong, K.; Jeon, S.; Yang, H.; Fu, J.; and Byun, H. 2023.
+gence. https://bfl.ai/blog/flux-2.                               AesPA-Net: Aesthetic Pattern-Aware Style Transfer Net-
+                                                                 works. In Proceedings of the IEEE/CVF International Con-
+Cai, M.; Zhang, H.; Huang, H.; Geng, Q.; Li, Y.; and Huang,      ference on Computer Vision.
+G. 2021. Frequency Domain Image Translation: More Photo-
+Realistic, Better Identity-Preserving. In Proceedings of the     Huang, X.; and Belongie, S. 2017. Arbitrary Style Transfer in
+IEEE/CVF International Conference on Computer Vision.            Real-time with Adaptive Instance Normalization. In ICCV.
+
+Chen, J.; An, J.; Lyu, H.; Kanan, C.; and Luo, J. 2024. Learn-   Ioannou, E.; and Maddock, S. 2024. Evaluation in Neural
+ing to Evaluate the Artness of AI-generated Images. IEEE         Style Transfer: A Review. Computer Graphics Forum, 43(6).
+Transactions on Multimedia.
+                                                                 Kim, G.; Kwon, T.; and Ye, J. C. 2023. Diffusion-based Im-
+Chung, J.; Hyun, S.; and Heo, J.-P. 2024. Style Injection        age Translation using Disentangled Style and Content Rep-
+in Diffusion: A Training-free Approach for Adapting Large-       resentation. In International Conference on Learning Rep-
+scale Diffusion Models for Style Transfer. In Proceedings of     resentations.
+the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (CVPR).                                              Kwon, J.; Kim, S.; Lin, Y.; Yoo, S.; and Cha, J. 2024. AesFA:
+                                                                 An Aesthetic Feature-Aware Arbitrary Neural Style Transfer.
+Cuturi, M. 2013. Sinkhorn Distances: Lightspeed Computa-         In Proceedings of the AAAI Conference on Artificial Intelli-
+tion of Optimal Transport. Advances in Neural Information        gence.
+Processing Systems.
+                                                                 Léonard, C. 2014. A Survey of the Schrödinger Problem and
+                                                                 Some of Its Connections with Optimal Transport. Discrete
+                                                                 and Continuous Dynamical Systems - A.
+
+                                                                 Li, Y.; Fang, C.; Yang, J.; Wang, Z.; Lu, X.; and Yang, M.-H.
+                                                                 2017. Universal Style Transfer via Feature Transforms. In
+                                                                 Proceedings of the IEEE Conference on Computer Vision
+                                                                 and Pattern Recognition.
+Lipman, Y.; Chen, R. T. Q.; Ben-Hamu, H.; Nickel, M.; and          Sigillo, L.; He, S.; and Comminiello, D. 2025. Latent
+Le, M. 2022. Flow Matching for Generative Modeling. arXiv          Wavelet Diffusion For Ultra-High-Resolution Image Syn-
+preprint arXiv:2210.02747.                                         thesis. arXiv:2506.00433.
+
+Liu, G.-H.; Vahdat, A.; Huang, D.-A.; Theodorou, E. A.;            Su, X.; Song, J.; Meng, C.; and Ermon, S. 2023. Dual
+Nie, W.; and Anandkumar, A. 2023. I2SB: Image-to-Image             Diffusion Implicit Bridges for Image-to-Image Translation.
+Schrödinger Bridge. In International Conference on Machine         In International Conference on Learning Representations.
+Learning.
+                                                                   Wright, M.; and Ommer, B. 2022. ArtFID: Quantita-
+Liu, H.; Wang, L.; Guan, W.; Zhang, Y.; and Guo, Y.                tive Evaluation of Neural Style Transfer. arXiv preprint
+2024. Pluggable Style Representation Learning for Multi-           arXiv:2207.12280.
+Style Transfer. In Proceedings of the Asian Conference on
+Computer Vision.                                                   Wu, C.; Li, J.; Zhou, J.; Lin, J.; Gao, K.; Yan, K.; ming Yin,
+                                                                   S.; Bai, S.; Xu, X.; Chen, Y.; Chen, Y.; Tang, Z.; Zhang, Z.;
+Liu, H.; Wang, L.; Zhang, Y.; Yu, Z.; and Guo, Y. 2025.            Wang, Z.; Yang, A.; Yu, B.; Cheng, C.; Liu, D.; Li, D.; Zhang,
+SaMam: Style-aware State Space Model for Arbitrary Image           H.; Meng, H.; Wei, H.; Ni, J.; Chen, K.; Cao, K.; Peng, L.;
+Style Transfer. In Proceedings of the IEEE/CVF Conference          Qu, L.; Wu, M.; Wang, P.; Yu, S.; Wen, T.; Feng, W.; Xu, X.;
+on Computer Vision and Pattern Recognition.                        Wang, Y.; Zhang, Y.; Zhu, Y.; Wu, Y.; Cai, Y.; and Liu, Z.
+                                                                   2025. Qwen-Image Technical Report. arXiv:2508.02324.
+Liu, X.; Gong, C.; and Liu, Q. 2023. Flow Straight and Fast:
+Learning to Generate and Transfer Data with Rectified Flow.        Xu, Z.-Q. J.; Zhang, Y.; and Luo, T. 2022. Overview
+In International Conference on Learning Representations.           frequency principle/spectral bias in deep learning. arXiv
+                                                                   preprint arXiv:2201.07395.
+Lu, Z.-S.; Vukoti, S.; Hadji, I.; Dorken, W.; and Levi, G.
+2024. Z-STAR: Training-Free Zero-Shot Style Transfer via           Ye, H.; Zhang, J.; Liu, S.; Han, X.; and Yang, W. 2023. IP-
+Attention Rearrangement. In Proceedings of the IEEE/CVF            Adapter: Text Compatible Image Prompt Adapter for Text-to-
+Conference on Computer Vision and Pattern Recognition.             Image Diffusion Models. arXiv preprint arXiv:2308.06721.
+
+Meng, C.; He, Y.; Song, Y.; Song, J.; Blackwell, J.; Jia, J.; and  Yoo, J.; Uh, Y.; Chun, S.; Kang, B.; and Ha, J.-W. 2019.
+Ermon, S. 2021. SDEdit: Guided Image Synthesis and Edit-           Photorealistic Style Transfer via Wavelet Transforms. In
+ing with Stochastic Differential Equations. In Proceedings         ICCV.
+of the IEEE International Conference on Computer Vision.
+                                                                   Zang, C.; Hu, J.; and Song, X. 2026. FD-DB: Frequency-
+Park, D. Y.; and Lee, K. H. 2019. Arbitrary Style Trans-           Decoupled Dual-Branch Network for Unpaired Synthetic-to-
+fer with Style-Attentional Networks. In Proceedings of             Real Domain Translation. arXiv:2602.09476.
+the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition.                                                       Zhang, C.; Xu, X.; Wang, L.; Dai, Z.; and Yang, J. 2024a.
+                                                                   S2WAT: Image Style Transfer via Hierarchical Vision Trans-
+Park, T.; Efros, A. A.; Zhang, R.; and Zhu, J.-Y. 2020. Con-       former Using Strips Window Attention. In Proceedings of
+trastive Learning for Unpaired Image-to-Image Translation.         the AAAI Conference on Artificial Intelligence.
+In Proceedings of the European Conference on Computer
+Vision.                                                            Zhang, J.; Huang, Q.; Liu, J.; Guo, X.; and Huang, D. 2025.
+                                                                   Diffusion-4K: Ultra-High-Resolution Image Synthesis with
+Peyré, G.; and Cuturi, M. 2019. Computational Optimal              Latent Diffusion Models. In Proceedings of the IEEE/CVF
+Transport. Foundations and Trends in Machine Learning.             Conference on Computer Vision and Pattern Recognition.
+
+Phung, H.; Dao, Q.; and Tran, A. 2023. Wavelet Diffusion           Zhang, R.; Isola, P.; Efros, A. A.; Shechtman, E.; and Wang,
+Models Are Fast and Scalable Image Generators. In Pro-             O. 2018. The Unreasonable Effectiveness of Deep Features
+ceedings of the IEEE/CVF Conference on Computer Vision             as a Perceptual Metric. In CVPR.
+and Pattern Recognition.
+                                                                   Zhang, T.; and Tang, H. 2025. Style Transfer: A Decade
+Rahaman, N.; Baratin, A.; Arpit, D.; Draxler, F.; Li, M.;          Survey. arXiv preprint arXiv:2506.19278.
+Hamprecht, F.; Bengio, Y.; and Courville, A. 2019. On the
+Spectral Bias of Neural Networks. In ICML.                         Zhang, Y.; Huang, N.; Tang, F.; Huang, H.; Ma, C.; Dong,
+                                                                   W.; and Xu, C. 2023. Inversion-Based Style Transfer with
+Ren, S.; Yu, Q.; He, J.; Shen, X.; Yuille, A.; and Chen, L.-C.     Diffusion Models. In Proceedings of the IEEE/CVF Confer-
+2026. Frequency-Aware Flow Matching for High-Quality               ence on Computer Vision and Pattern Recognition.
+Image Generation. arXiv:2604.15521.
+                                                                   Zhang, Y.; et al. 2024b. ArtBank: Artistic Style Transfer
+Rombach, R.; Blattmann, A.; Lorenz, D.; Esser, P.; and Om-         with Pre-trained Diffusion Model and Implicit Style Prompt.
+mer, B. 2022. High-Resolution Image Synthesis with Latent          In Proceedings of the AAAI Conference on Artificial Intelli-
+Diffusion Models. In CVPR.                                         gence.
+
+Sadat, S.; Buhmann, J.; Bradley, D.; Hilliges, O.; and Weber,
+R. M. 2024. LiteVAE: Lightweight and Efficient Variational
+Autoencoders for Latent Diffusion Models. In Advances in
+Neural Information Processing Systems.
+
+Shi, Y.; De Bortoli, V.; Campbell, A.; and Doucet, A. 2023.
+Diffusion Schrödinger Bridge Matching. In Advances in
+Neural Information Processing Systems.
+

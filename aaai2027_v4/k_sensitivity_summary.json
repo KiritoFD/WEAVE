@@ -1,0 +1,56 @@
+{
+  "checkpoint": "I:\\Github\\Latent_Style\\WEAVE\\runs\\submission\\hf_oriented_internal_early_stop\\epoch_0004.pt",
+  "test_dir": "I:\\Github\\Latent_Style\\WEAVE\\data\\test",
+  "K_values": [
+    2,
+    4,
+    8,
+    16
+  ],
+  "rows": [
+    {
+      "K": 2,
+      "status": "ok",
+      "clip_s": 0.7163758815129598,
+      "lpips": 0.292092394416,
+      "dino_s": null,
+      "dino_c": null,
+      "gen_s": 4.632273300143424,
+      "wall_s": 60.270350500009954,
+      "out_dir": "I:\\Github\\Latent_Style\\WEAVE\\exp\\sensitivity_k_paper_e4\\k2"
+    },
+    {
+      "K": 4,
+      "status": "ok",
+      "clip_s": 0.7162489666144052,
+      "lpips": 0.287471574884,
+      "dino_s": null,
+      "dino_c": null,
+      "gen_s": 8.937638800416607,
+      "wall_s": 55.17817719996674,
+      "out_dir": "I:\\Github\\Latent_Style\\WEAVE\\exp\\sensitivity_k_paper_e4\\k4"
+    },
+    {
+      "K": 8,
+      "status": "ok",
+      "clip_s": 0.7166740542252859,
+      "lpips": 0.2869650627986667,
+      "dino_s": null,
+      "dino_c": null,
+      "gen_s": 17.989090699877124,
+      "wall_s": 64.59800769999856,
+      "out_dir": "I:\\Github\\Latent_Style\\WEAVE\\exp\\sensitivity_k_paper_e4\\k8"
+    },
+    {
+      "K": 16,
+      "status": "ok",
+      "clip_s": 0.7171188422044118,
+      "lpips": 0.28736930324666665,
+      "dino_s": null,
+      "dino_c": null,
+      "gen_s": 35.99313310015714,
+      "wall_s": 83.13196500000777,
+      "out_dir": "I:\\Github\\Latent_Style\\WEAVE\\exp\\sensitivity_k_paper_e4\\k16"
+    }
+  ]
+}

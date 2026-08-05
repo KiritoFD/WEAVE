@@ -1,0 +1,25 @@
+{
+  "_comment": "P2A-256 WEAVE training config with endpoint_adain_scale=2.0",
+  "_base": "config.json",
+  "model": {
+    "endpoint_adain_scale": 2.0
+  },
+  "data": {
+    "data_root": "data/train_p2a",
+    "test_image_dir": "style_data/overfit50",
+    "style_subdirs": ["cezanne", "Hayao", "monet", "photo", "vangogh"],
+    "max_images_per_style": 1000,
+    "latent_cache_dir": ".latent_cache",
+    "pairing_cache_path": ""
+  },
+  "training": {
+    "num_epochs": 15
+  },
+  "checkpoint": {
+    "save_dir": "runs/p2a256_adain2"
+  },
+  "ablation": {
+    "name": "p2a256_adain2",
+    "notes": "P2A-256 train with endpoint_adain_scale=2.0, 15 epochs, eval each epoch"
+  }
+}
