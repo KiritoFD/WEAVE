@@ -57,7 +57,7 @@ config.json --_base--> load_config() --deep_merge--> ExperimentConfig.from_mappi
 - 数据：`preencode_d5_packed.py`、`fast_vae_encode_d5.py`、`taesd_encode_d5.py`、`encode_wikiart27_sd15.py`、`prepare_d5_512_clean.py`、`extract_dino_cache.py`。
 - 评测：`run_eval_split.py`（600/150 拆分）、`merge_eval_metrics.py`、`batch_eval_wfi.py`。
 - 路线 B：`gen_pseudo_targets.py`。
-- 注意：`tools/_smoke_t26.py` 以 `_` 开头，是临时探针，不属于工具集。
+- 注意：`tests/_smoke_t26.py`（不在 `tools/`）以 `_` 开头，是临时探针，不属于工具集。
 
 ## 6 模型结构速览（`WEAVE.__init__` L435）
 

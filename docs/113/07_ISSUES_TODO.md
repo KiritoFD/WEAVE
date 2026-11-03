@@ -14,8 +14,8 @@
 | C6 | 训练 AdaIN=1.0、论文推理 AdaIN=2.0，但 config 里只有一个 `endpoint_adain_scale` | `config.json` + `inference.json` 覆盖 | 复现论文必须同时改；否则指标漂移 |
 | C7 | DINO 指标不在 `utils/run_evaluation.py` 内 | 该文件无 DINO 代码；靠 `scripts/_repro_dino_eval.py` 调外部脚本 | 评测链路两段式，容易只跑一半 |
 | C8 | `run_eval_split.py` 只做事后拆分，不强制参考图策略 | [tools/run_eval_split.py#L1-L25](file:///g:/GitHub/Latent_Style/WEAVE/tools/run_eval_split.py#L1-L25) | 不同 run 的参考图选择可能不同 → 指标漂移 |
-| C9 | 根目录 16 个 `_mv_*.sh/_chk*.sh` 含 `rm -rf` | 实测 `_mv_base2.sh#L3`：`find results/baselines -type d -name images -exec rm -rf {} +`；路径仍指向旧机 `/mnt/g/...` | 误运行会删结果图；应归档 |
-| C10 | `tools/_smoke_t26.py` 等临时探针混在工具目录 | 文件名 `_` 前缀 | 新人误用 |
+| C9 | 原根目录 16 个 `_mv_*.sh/_chk*.sh` 含 `rm -rf`（**已归档**到 `archives/legacy-root-oneoff-20261103/`） | 实测 `mv_base2.sh#L3`：`find results/baselines -type d -name images -exec rm -rf {} +`；路径仍指向旧机 `/mnt/g/...` | 误运行会删结果图；保留仅作历史 |
+| C10 | `tests/_smoke_t26.py` 等临时探针混在测试/工具目录 | 文件名 `_` 前缀；实测在 `tests/` | 新人误用 |
 
 ## 2 代码/文档一致性
 

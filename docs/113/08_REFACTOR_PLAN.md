@@ -17,7 +17,7 @@
 | L1 | **文档合并**：把 `docs/archive/{72,710,628,630}` 与 `docs/713` 的重叠内容收进 `docs/113/03_EXPERIMENTS.md`，旧文档移入 `docs/archive/merged-20261103/` | 只移动不删除；保留原始文件便于引用 | 低；不要改 `docs/archive` 以外的路径 |
 | L2 | **配置去重**：`config_r5.json` 21KB、`config_taesd.json` 21KB 是 `config.json` 的整份拷贝（drift 风险高），改成 `{"_base":"config.json", "model":{...}, "data":{...}}` 只写差异 | 先 diff 三份 JSON 的每个 key | 低；但若另一会话正用这两个 config 启动，**先确认再用** |
 | L3 | **仓库卫生**：`.gitignore` 增加 `docs/archive/**/node_modules/`、`**/.codeartsdoer/`、`**/.drawio_tmp/`；本地实测这些目录有 **1566+57** 个未跟踪文件（磁盘垃圾，会拖慢同步） | 追加规则，不删文件 | 极低 |
-| L4 | **临时探针归位**：`tools/_smoke_t26.py` 等 `_` 前缀脚本移到 `archives/oneoff-tools-20261103/` | `git mv` | 低；先确认没有 runbook 引用 |
+| L4 | **临时探针归位**：`tests/_smoke_t26.py` 等 `_` 前缀脚本移到 `archives/oneoff-tools-20261103/` | `git mv` | 低；先确认没有 runbook 引用 |
 | L5 | **文档路径修正**：改 `docs/NEXTGEN_RUNBOOK.md` 的 `data/train_d5_taesd`→`data/train_taesd`、`I:/datasets`→`/mnt/i/Latent_Style/WEAVE/datasets` | 纯文档 | 低；但远端只允许写 docs/113，**等训练停再同步** |
 
 ## 2 训练停后立刻做（M 级）
