@@ -1093,14 +1093,39 @@ class TrainingConfig:
     internal_early_stop_style_gain_stall_window: int = 2
     internal_early_stop_style_gain_min_delta: float = 0.002
     internal_early_stop_content_keep_floor: float = 0.0
+    # 12h scan harness: stop after N global optimizer steps (0 = run all epochs).
+    stop_after_global_steps: int = 0
+    # Save an intermediate checkpoint at these global steps (empty = never).
+    save_step_milestones: list[int] = field(default_factory=list)
     distill: dict[str, Any] = field(default_factory=dict)
     extra: dict[str, Any] = field(default_factory=dict)
+
+    # Historical configs carry this key; it was never consumed (trainer derives
+    # start_epoch from the checkpoint). Accepted and ignored, never put in extra.
+    _LEGACY_IGNORED_KEYS = frozenset({"start_epoch"})
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, Any] | None) -> "TrainingConfig":
         known, extra = _split_known_fields(cls, payload)
+        for key in list(extra):
+            if key in cls._LEGACY_IGNORED_KEYS:
+                extra.pop(key)
+        # Unknown keys must fail loudly instead of silently flowing into `extra`
+        # (they would be re-expanded by to_dict() and never validated).
+        if extra:
+            raise ValueError(
+                "Unknown training config keys: " + ", ".join(sorted(extra))
+            )
         cfg = cls(**known)
-        cfg.extra = extra
+        if int(cfg.stop_after_global_steps) < 0:
+            raise ValueError("training.stop_after_global_steps must be >= 0")
+        raw_milestones = cfg.save_step_milestones
+        if isinstance(raw_milestones, str):
+            raw_milestones = [p.strip() for p in raw_milestones.split(",") if p.strip()]
+        if not isinstance(raw_milestones, (list, tuple, set)):
+            raise ValueError("training.save_step_milestones must be a list of ints")
+        cfg.save_step_milestones = sorted({int(v) for v in raw_milestones if int(v) > 0})
+        cfg.extra = {}
         return cfg
 
     def to_dict(self) -> dict[str, Any]:
