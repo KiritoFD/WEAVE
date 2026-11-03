@@ -14,7 +14,9 @@
 
 注意：`utils/run_evaluation.py` **不计算 DINO**；DINO 由 `scripts/_repro_dino_eval.py` 调外部脚本产出 `dino_summary.json`（[L39-L63](file:///g:/GitHub/Latent_Style/WEAVE/scripts/_repro_dino_eval.py#L39-L63)）。DINO 主干在 July 脚本里是 **dinov2-small**，Nov 缓存改用 **dinov2-base**（`Exp.md#L22`）——这本身就是口径差异，且文件未明确声明迁移日期（**未验证**）。
 
-## 2 口径 A：论文主表（750 all-pairs，2026-07）
+## 2 口径 A：论文主表（750 all-pairs，2026-07）——历史标注，不可横比
+
+> **降级声明（2026-11-04）**：本节全部数字（0.4916/0.7128/0.2593/0.8103 及其同族 0.4915/0.4886…）**仅作历史标注**，用于说明方法演进，**不是当前比较基准**，**禁止与 §3 新口径横比**（主干 dinov2-small vs base、750 all-pairs vs 600 跨风格，两套东西）。当前唯一有效基线见 §3，验收标准见 §8。
 
 - 协议：150 内容图 × 5 目标风格 = 750 对（含 150 同风格对角线）；`train endpoint_adain_scale=1.0`，评测 `inference.json` 覆盖为 `2.0`；oriented-HF 配置。
   - 协议字段可由 [dino_summary.json#L2-L8](file:///g:/GitHub/Latent_Style/WEAVE/docs/model_probe/fusion_ft15_eval_epoch_0003/dino_summary.json#L2-L8) 复核：`"protocol": "paper_canonical_dinov2_small"`、`n_all=750`、`n_off_diagonal=600`（即 750 含对角线、600 跨风格）。
@@ -106,9 +108,9 @@
 
 1. **CSV 的 WEAVE 行（0.715 / 0.382）与 `config.json` 主表（0.7128 / 0.2593）不一致**，且 CSV 参数写 903K，而当前论文模型约 1.04M。结论：CSV 是较早 v4 快照，**不要当作最新主表**（`docs/79/baseline_result_sources.md#L19` 也只说它是"snapshot, not proof"）。
 2. **0.4916 / 0.4915 / 0.4886 / 0.3977 不是同一东西**：
-   - 0.4916 = 论文 ckpt、750 all-pairs（≈0.4915 复算）；
+   - 0.4916 = 论文 ckpt、750 all-pairs（≈0.4915 复算），**历史标注，不可横比**；
    - 0.4886 = subband fine-tune 6ep 探针，**不是论文 ckpt**；
-   - 0.3977 = 600 跨风格、新 split、DINOv2-base 基线。
+   - 0.3977 = 600 跨风格、新 split、DINOv2-base 基线，**当前唯一有效基线**。
 3. **0.4080/0.7007/0.7667/0.3412** 是旧 CLIP base-patch32 管线，只作历史参考。
 4. `docs/79` 的 RMSE/WFI/CLIP 旧表与 DINO 表来自不同时期，不要拼接成一张总表。
 5. 基线缺 DINO 两列，论文若声称 DINO 优势需补测或明确只比 CLIP/LPIPS。
@@ -139,3 +141,31 @@
 5. §3 的 600/150 基线与路线 A 三行已在本轮升级为**已验证**：产物在 `/mnt/i/Latent_Style/runs/`（仓库外），逐位核对通过；详见 §3 的"来源"列与 `registry.jsonl`。
 
 **结论**：`04` 里所有"已核对"数字可直接引用；标"未验证"的必须连同"来源=Exp.md / config 常量"写进正文，不得当成已复现结果。
+
+## 8 新 SOTA 判定门槛（当前唯一验收标准）
+
+> **本节是唯一验收标准（2026-11-04 定）。** 论文 0.4916 一族已冻结为历史标注（见 §2 降级声明、[07_ISSUES_TODO.md](07_ISSUES_TODO.md) E8），任何"超过论文"的表述都不再成立。新结果只与 §3 基线比，且必须同时满足下列全部条件；**缺任一项即视为无效结论，不得写进汇报或论文**。
+
+**基线（新口径，`eval_base_ep10`）**
+
+| 口径 | DINO-S | CLIP-S | DINO-C | LPIPS |
+|---|---:|---:|---:|---:|
+| 600 跨风格 | 0.3977 | 0.6425 | 0.7939 | 0.3053 |
+| 150 同风格 | 0.8263 | — | — | — |
+
+**通过条件（四条同时满足）**
+
+1. **600 跨风格 DINO-S ≥ 0.4177**（基线 +0.02）。
+2. **600 跨风格 CLIP-S ≥ 0.6525**（基线 +0.01）。
+3. **600 跨风格 DINO-C ≥ 0.7839**（基线 −0.01，即内容允许最多掉 0.01）。
+4. **600 跨风格 LPIPS ≤ 0.3153**（基线 +0.01）。
+
+**报告格式要求（缺一项即无效）**
+
+- 必须**按目标风格拆开报告**，其中 **Hayao 单独列**（不能只给 5 风格平均）。
+- 必须**同时给 150 同风格**（Identity）的 DINO-S，并按 1–4 的同类容差检查（DINO-S 掉 ≤0.01 视为可接受，掉更多需单独解释）。
+- 每条结果必须写全口径字段：`protocol`（600 跨 / 150 同）、backbone（`dinov2-base` / `dinov2-small`）、CLIP 主干（`ViT-L/14`）、参考图策略（`first_image_of_target_style_test_dir`）、`num_steps`、`endpoint_adain_scale`。
+- 必须来自已落盘的 `results.json` + `results_split.json` 并登记 `registry.jsonl`（见 [07_ISSUES_TODO.md](07_ISSUES_TODO.md) E7）；只在 stdout/csv 里的数字不算。
+- 每条 run 至少给出样本数（total 750 / cross 600 / same 150），与 §3 一致。
+
+**判定用语约定**：四条数值全满足且格式齐全 → 写"**新 SOTA（新口径）**"；数值达标但缺拆分或 150 → 写"**候选，未过验收**"；任一数值不达标 → 写"**未达标**"，不得用"接近/略优"等模糊表述绕过阈值。
