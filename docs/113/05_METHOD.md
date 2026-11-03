@@ -4,7 +4,7 @@
 
 - 形式：`y = f(x, s)`，`x` 内容图、`s ∈ {5 个已知风格}`；推理时**没有参考图**（`docs/archive/618/summary.md#L9-L25`）。
 - 与 reference-based 方法（StyleGallery/CSGO/SCSA/StyleShot）根本不同，不能直接借用其指标结论。
-- 轻量：单卡 3060 12G，端到端训练分钟级；训练 4 epoch ≈1.4 分钟（`docs/713/SUBMISSION_HANDOFF_2026-07-15.md#L156-L162`）。
+- 轻量：单卡 3060 12G，端到端训练分钟级；训练 4 epoch ≈1.4 分钟（`docs/archive/merged-20261103/713/SUBMISSION_HANDOFF_2026-07-15.md#L156-L162`）。
 
 ## 2 现有模型机制（2026-07 论文版）
 
@@ -27,12 +27,12 @@ x(4×64×64) --VAE--> latent
 **推理**（[model.py#L1442](file:///g:/GitHub/Latent_Style/WEAVE/model.py#L1442)）：
 
 - `num_steps` 步 Euler；可选 RK4 / Heun（[model.py#L1195](file:///g:/GitHub/Latent_Style/WEAVE/model.py#L1195)）。
-- 论文配置：8 步、`endpoint_adain_scale=2.0`（训练 1.0）；2.5 会崩（`docs/713/SUBMISSION_HANDOFF_2026-07-15.md#L150-L156`）。
-- 能耗约束，条件扩散式多样本采样未用于主结果（`docs/713/SUBMISSION_HANDOFF_2026-07-15.md#L160`）。
+- 论文配置：8 步、`endpoint_adain_scale=2.0`（训练 1.0）；2.5 会崩（`docs/archive/merged-20261103/713/SUBMISSION_HANDOFF_2026-07-15.md#L150-L156`）。
+- 能耗约束，条件扩散式多样本采样未用于主结果（`docs/archive/merged-20261103/713/SUBMISSION_HANDOFF_2026-07-15.md#L160`）。
 
 **条件路径**（这是 713 的核心结论）：
 
-- 监督信号（target HF）很强，但把 target 图 HF 直接当**条件输入**很弱（`docs/713/SUBMISSION_HANDOFF_2026-07-15.md#L123-L136`）。
+- 监督信号（target HF）很强，但把 target 图 HF 直接当**条件输入**很弱（`docs/archive/merged-20261103/713/SUBMISSION_HANDOFF_2026-07-15.md#L123-L136`）。
 - 坐标无关的 per-orientation HF 码（oriented）能升 DINO-S 且不崩内容；raw spatial 注入会泄漏布局、DINO-C 崩到 0.40。
 - 放大残差幅值只升 off-style，不改变修正方向。
 - HH 头低能量、相位敏感、与感知风格梯度弱对齐，628 判 DEAD、713 也未翻案。

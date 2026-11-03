@@ -25,7 +25,7 @@
 | D2 | `DATA.md` 说 `wikiart512_5style` 是"D5-512 源 / 同 5 风格" | 18k 风格与 D5 只有 Impressionism 重合 | `docs/HANDOVER.md#L158-L163` |
 | D3 | `DATA.md` 说 `r5` 与 D5 同风格 | R5 = Cubism/Expressionism/Pop_Art/Romanticism/Symbolism | 实测第 0 节表 |
 | D4 | `docs/79/main_table_v4_remote.csv` 的 WEAVE 行 0.715/0.382、903K | `config.json` 主表 0.7128/0.2593/0.8103/0.4916、约 1.04M | [04_RESULTS.md](04_RESULTS.md) §6 |
-| D5 | `docs/713/SUBMISSION_HANDOFF` 写远端 `I:\Github\Latent_Style\WEAVE` | 当前远端是 `I:\Latent_Style\WEAVE`；旧机另有一份 | handoff L64 vs 实测 |
+| D5 | `docs/archive/merged-20261103/713/SUBMISSION_HANDOFF` 写远端 `I:\Github\Latent_Style\WEAVE` | 当前远端是 `I:\Latent_Style\WEAVE`；旧机另有一份 | handoff L64 vs 实测 |
 | D6 | `NEXTGEN_RUNBOOK` 命令用 `I:/datasets/...` | 实际 `/mnt/i/Latent_Style/WEAVE/datasets/...` | 实测 |
 
 ## 3 数据/评测债

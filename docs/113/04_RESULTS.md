@@ -21,7 +21,7 @@
   - 来源 [config.json#L3-L12](file:///g:/GitHub/Latent_Style/WEAVE/config.json#L3-L12)；交叉核对 [verify_main_table.py#L77-L85](file:///g:/GitHub/Latent_Style/WEAVE/verify_main_table.py#L77-L85)。
 - 对应 checkpoint：`runs/submission/canonical_oriented_epoch4/epoch_0004.pt`（`config.json#L8`）。
 
-同族对比（`docs/713/SUBMISSION_HANDOFF_2026-07-15.md#L147-L151`）：
+同族对比（`docs/archive/merged-20261103/713/SUBMISSION_HANDOFF_2026-07-15.md#L147-L151`）：
 
 | 点 | DINO-S | CLIP-S | LPIPS | DINO-C |
 |---|---:|---:|---:|---:|
@@ -53,7 +53,7 @@
 
 ## 4 架构探针（750 all-pairs，fine-tune 6ep，2026-07）
 
-来源 `docs/713/EXPERIMENT_SUMMARY_FOR_METHOD_AND_NEXT_PLAN.md#L30-L56`；列为 DINO-S / DINO-C / CLIP-S / LPIPS / Off-DINO-S。
+来源 `docs/archive/merged-20261103/713/EXPERIMENT_SUMMARY_FOR_METHOD_AND_NEXT_PLAN.md#L30-L56`；列为 DINO-S / DINO-C / CLIP-S / LPIPS / Off-DINO-S。
 
 | 路线 | DINO-S | DINO-C | CLIP-S | LPIPS | 结论 |
 |---|---:|---:|---:|---:|---|

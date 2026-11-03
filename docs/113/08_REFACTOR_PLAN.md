@@ -14,9 +14,9 @@
 
 | # | 动作 | 具体做法 | 风险/注意 |
 |---|---|---|---|
-| L1 | **文档合并**：把 `docs/archive/{72,710,628,630}` 与 `docs/713` 的重叠内容收进 `docs/113/03_EXPERIMENTS.md`，旧文档移入 `docs/archive/merged-20261103/` | 只移动不删除；保留原始文件便于引用 | 低；不要改 `docs/archive` 以外的路径 |
-| L2 | **配置去重**：`config_r5.json` 21KB、`config_taesd.json` 21KB 是 `config.json` 的整份拷贝（drift 风险高），改成 `{"_base":"config.json", "model":{...}, "data":{...}}` 只写差异 | 先 diff 三份 JSON 的每个 key | 低；但若另一会话正用这两个 config 启动，**先确认再用** |
-| L3 | **仓库卫生**：`.gitignore` 增加 `docs/archive/**/node_modules/`、`**/.codeartsdoer/`、`**/.drawio_tmp/`；本地实测这些目录有 **1566+57** 个未跟踪文件（磁盘垃圾，会拖慢同步） | 追加规则，不删文件 | 极低 |
+| L1 | **文档合并（已完成）**：`docs/archive/{72,710,628,630}` 与 `docs/713` 已移入 `docs/archive/merged-20261103/`；重叠结论收进 `docs/113/03_EXPERIMENTS.md` | 只移动不删除；docs/113 内引用已同步改路径 | 低 |
+| L2 | **配置去重（暂缓，训练空窗再做）**：`config_r5.json` 21KB、`config_taesd.json` 21KB 是 `config.json` 的整份拷贝（drift 风险高） | 方案见 §5 | 中；运行中配置随时被引用，**禁止现在动** |
+| L3 | **仓库卫生（已完成）**：`.gitignore` 已加 `docs/archive/**/node_modules/`、`**/.codeartsdoer/`、`**/.drawio_tmp/` | 只加规则，未删文件 | 极低 |
 | L4 | **临时探针归位**：`tests/_smoke_t26.py` 等 `_` 前缀脚本移到 `archives/oneoff-tools-20261103/` | `git mv` | 低；先确认没有 runbook 引用 |
 | L5 | **文档路径修正**：改 `docs/NEXTGEN_RUNBOOK.md` 的 `data/train_d5_taesd`→`data/train_taesd`、`I:/datasets`→`/mnt/i/Latent_Style/WEAVE/datasets` | 纯文档 | 低；但远端只允许写 docs/113，**等训练停再同步** |
 
@@ -49,7 +49,36 @@
 3. `tests/test_eval_split.py`：750→600/150 的计数与均值（`run_eval_split --smoke` 已有，补断言）。
 4. `tests/test_config_fields.py`：所有 config JSON 的键都能被 schema 显式识别（防 C5 类隐式字段）。
 
-## 5 建议的提交顺序
+## 5 配置去重方案（L2，训练空窗执行）
+
+实测 `config_r5.json` 与 `config.json` 仅 **12 个叶子差异**，`config_taesd.json` 仅 **10 个**，其余 20KB 全是复制。目标结构：
+
+```json
+{ "_base": "config.json",
+  "data":    { "data_root": "...", "style_subdirs": [...], "latent_cache_mode": "...", "pairing_cache_path": "" },
+  "model":   { "latent_scale_factor": 0.18215 },
+  "training":{ "batch_size": 8, "test_image_dir": "...", "full_eval_each_epoch": true },
+  "full_eval": { "vae_model": "ema" },
+  "checkpoint": { "save_dir": "..." },
+  "ablation":  { "name": "...", "axis": "...", "stage": "...", "notes": "..." }
+}
+```
+
+必须保留的差异（逐项核对过）：
+
+- `config_r5.json`：`training.batch_size 96→8`、`full_eval_each_epoch False→True`、`test_image_dir→datasets/r5/test`、`data_root→data/train_r5`、`style_subdirs→[Cubism, Expressionism, Pop_Art, Romanticism, Symbolism]`、`pairing_cache_path→""`、`save_dir→runs/r5/weave_r5`、`ablation` 4 项；**缺** `_main_table_metrics.eval_endpoint_adain_scale`（合并时必须显式补 2.0）。
+- `config_taesd.json`：`model.latent_scale_factor 0.18215→1.0`、`data_root→data/train_d5_taesd`、`latent_cache_mode→off`、`pairing_cache_path→""`、`save_dir→runs/taesd/...`、`full_eval.vae_model→taesd`、`ablation` 4 项；**缺** `ablation.stage` 与 `eval_endpoint_adain_scale`。
+
+执行门禁（缺一不可）：
+
+1. 3060 上没有正在跑的 `run.py`/评测进程，且连续 10 分钟无新 checkpoint 写入。
+2. `diff` 新旧 config 解析后的**生效字段**完全一致（用 `load_config` dump 到 JSON 再比）。
+3. 用旧 config 与新 config 各跑 1 次 50-step smoke，loss 前 50 步逐位一致。
+4. 改完先 `git commit`，远端**不覆盖**，等用户放行同步。
+
+注意：`config_taesd.json` 指向的 `data/train_d5_taesd` 目录实际不存在（实测只有 `data/train_taesd`），合并前先确认该实验是否还要复现。
+
+## 6 建议的提交顺序
 
 ```
 L3 .gitignore           → 1 commit
