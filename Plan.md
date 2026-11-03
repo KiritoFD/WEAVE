@@ -2,6 +2,17 @@
 
 > 维护规则：本文件的进度勾选必须与 `Exp.md` 记录一致；每个 run 结束立即更新，不事后补。
 > 统一评估口径：600 跨风格为主表，150 同风格为 Identity 补充；参考图策略固定为 `first_image_of_target_style_test_dir`；指标 DINO-S / CLIP-S / DINO-C / LPIPS；权重离线可复现（见下）。
+> **目标变更（2026-11-04）**：不再复现论文 0.4916，也不追旧 ckpt；唯一比较对象是本仓库基线（600：DINO-S 0.3977 / CLIP-S 0.6425 / DINO-C 0.7939 / LPIPS 0.3053；150：DINO-S 0.8263）。
+
+## 0.1 SOTA 判定口径（写死，每张表都按它判）
+
+- **有风格收益**：600 跨风格 DINO-S 相对基线 **≥ +0.02** 且 CLIP-S **≥ +0.01**。
+- **约束**：DINO-C 不低于基线 −0.01；LPIPS 不高于基线 +0.01。
+- **必须拆分**：按目标风格逐项报告（最弱风格不能被均值掩盖；本 split 5 风格为 Early_Renaissance / Impressionism / Minimalism / Rococo / Ukiyo_e，其中 Minimalism 历史最弱），同时报 150 同风格确认 identity 未牺牲。
+- **超参充分性**：每条路线至少 3 档核心超参 × 2 seed；单档单次不构成结论。
+- **每次评测落盘**：全量 750 图 → gate → registry，且 `results.json` 必须含 `protocol`（split 定义 / 参考图策略 / 指标定义）、`counts`、`backbone`、`per_style`（由 `tools/finalize_results.py` 写入）。
+- **吞吐改动**：先跑 200 步对照，确认 loss 轨迹与改动前一致，再放量。
+- **早停口径（2026-11-04 起）**：所有新 run 默认 `internal_probe_enabled=true` / `internal_early_stop_enabled=true`；启用早停必须同时构建 `target_latent_hf_subband_delta` 头（否则启动 raise），探针读数恒定直接 raise；`min_steps=2000` 之前不触发。cap32/cap128 现队列不中途改脚本（未武装，两臂可比），队列后另跑 `cap32_es/cap128_es` 一致武装对。registry 记 `early_stop_armed/fired/fired_epoch/rho_series/gate_mean_series/stop_reason`。
 
 ## 0. 环境与依赖（已就位）
 
@@ -13,17 +24,18 @@
 | SD-VAE ft-ema | 就位 | `/mnt/i/Latent_Style/eval_cache/hf/modelscope/...` |
 | 离线开关 | `HF_HOME=/mnt/i/Latent_Style/eval_cache/hf`、`HF_HUB_OFFLINE=1`、`TRANSFORMERS_OFFLINE=1` |
 
-硬件预算：单卡 RTX 3060 12GB，Windows 常驻约占 6.1GB，WSL 可用约 5.5–6GB。
+硬件预算：单卡 RTX 3060 12GB；常驻占用随 Edge/LM Studio 变化——1b 阶段实测仅剩约 6GB，2026-11-04 凌晨实测常驻仅 1.2GB，因此显存上限按 **10GB 预算**定档（训练峰值 9.59GB）。
 基线 ckpt：`exp/dino_s_break/brk_a_ll03_10ep/epoch_0010.pt`（Route A 起点）。
 
 ## 1. 阶段与进度
 
 - [x] P0 权重离线就位 + 前向验证
 - [x] P1 吞吐爬坡：b1 峰值 6.16GB（0.40s/step）；显存释放后按 ~11GB 预算复测 b2/b4/b8 → **b2 仍 OOM**，训练固定 batch=1
+- [x] P1b 输出级监督显存优化（1b 队列结束后）：VGG→dinov2-base、损失分支 384、patch 描述子分块、bf16 AMP → 逐档重测完成，定档 batch=14/microbatch=14（峰值 9.59GB，Route A 监督下 wall ≈8 img/s）
 - [x] P2 DINOv2 patch-token 缓存：`content_5k` 5000 样本（5×1000，1.9GB）+ `refs_test` 150 样本（57MB），manifest 已写
-- [ ] P3 路线 A 超参扫描
-- [ ] P4 路线 C 参考图分支
-- [ ] P5 路线 D VAE 探针 + 多尺度纹理模块
+- [ ] P3 路线 A 超参扫描——1b 五档（seed 0）已完成并出表（最高 0.3992，未达 +0.02）；λs 0.1/0.3/1.0 × 2 seed 队列已排（`runs/sweep_queue.sh`）
+- [ ] P4 路线 C 参考图分支——ref/Style-ID 两臂 × 2 seed 已完成：ref 0.3943 vs 对照 0.3942（噪声级），**无跨风格收益**；nce 0.05/0.3 × 2 seed 队列已排
+- [ ] P5 路线 D VAE 探针 + 多尺度纹理模块——探针 `latent_ok`；纹理模块 hidden=32 × 2 seed 已完成：0.3943 vs 对照 0.3942，**无增益**；hidden 16/64 × 2 seed 队列已排
 - [ ] P6 基线同口径重评（L/14 CLIP + 统一 split）——进行中（`runs/nextgen_eval_full`）
 
 ## 2. 路线 A：输出级（可微）风格监督
@@ -42,6 +54,11 @@
 | apply_every | 1 / 2 |
 
 训练预算：从基线 ckpt 后训练；步数按平台期确定（≥1000 步起），batch 由 P1 决定，seed 0/1。
+
+**已知坑（必须写入每个 run 的配置）**：resume 基线 ckpt 会连带恢复 optimizer/scheduler 状态，把 lr 锁死在 1e-5。所有后训练 run 必须设 `training.resume_optimizer=false`（必要时 `resume_training_state=false`），并在日志里核对 `lr=` 实际值。
+
+**round1b 队列（lr=5e-5，2000 步，seed 0）**：`b_ls03_lc01_s2_e1` → `b_ls01_lc01_s2_e1` → `b_ls03_lc03_s2_e1` → `b_ls03_lc01_s4_e1` → `b_ls03_lc01_s2_e2`。
+首档结果：600 DINO-S 0.3992（基线 0.3977），DINO-C 0.8071（+0.013），LPIPS 0.2655（−0.040）→ 风格增益不足 +0.03，但内容/LPIPS 明显改善。
 
 **验收**：600 跨风格 DINO-S 相对同口径基线提升 ≥ +0.03 且 DINO-C 下降 ≤ 0.03（或 LPIPS 增幅 ≤ 0.02）→ 成立；仅风格升而内容大幅崩（DINO-C 降 >0.05）→ 不成立。
 

@@ -2333,6 +2333,7 @@ def main(argv: list[str] | None = None):
     parser.add_argument('--config_override', type=str, default="", help="Optional config json merged on top of the checkpoint config for eval-only inference overrides.")
     parser.add_argument('--style_subdirs', type=str, default="", help="Optional comma-separated style names for reuse-only eval without checkpoint")
     parser.add_argument('--config', type=str, default="../config.json", help="Auto mode config path")
+    parser.add_argument('--reference_tokens', type=str, default="", help="Route C: .pt with {'style_names','tokens'} DINOv2 patch tokens per style")
     parser.add_argument('--test_dir', type=str, default=None)
     parser.add_argument('--cache_dir', type=str, default="../eval_cache", help="Directory to store shared feature caches")
     parser.add_argument('--num_steps', type=int, default=int(full_eval_defaults.get("num_steps", 12)))
@@ -2500,6 +2501,29 @@ def main(argv: list[str] | None = None):
         action=argparse.BooleanOptionalAction,
         default=bool(full_eval_defaults.get("transfer_only", False)),
         help="Skip identity src_style==tgt_style pairs for fast convergence eval. Default off for full board comparability.",
+    )
+    parser.add_argument(
+        '--subset',
+        type=str,
+        default=str(full_eval_defaults.get("subset", "full")),
+        choices=["full", "stratified"],
+        help="Content subset: full directory, or a stratified per-style sample of --n images total.",
+    )
+    parser.add_argument(
+        '--n',
+        type=int,
+        default=int(full_eval_defaults.get("n", 0)),
+        help="Total content images for --subset stratified (evenly split across styles, sorted "
+             "order keeps it deterministic). <=0 keeps the full directory.",
+    )
+    parser.add_argument(
+        '--ref_pool',
+        type=str,
+        default=str(full_eval_defaults.get("ref_pool", "default")),
+        choices=["default", "strict"],
+        help="Style reference policy. 'strict' reserves the first sorted image of each style as "
+             "the conditioning reference and removes it from the evaluated content pool, so the "
+             "style reference is never one of the scored content images.",
     )
     parser.add_argument(
         '--eval_enable_introstyle',
@@ -2865,13 +2889,59 @@ def main(argv: list[str] | None = None):
     if not style_subdirs:
         raise ValueError("Failed to infer style names. Provide --style_subdirs or valid --test_dir folders.")
 
+    # --- evaluation protocol: content subset + style-reference policy ---------
+    # Both are recorded in eval_protocol.json (and summary.json) so every table
+    # can state which sample set / reference policy produced it.
+    subset_mode = str(args.subset).strip().lower()
+    subset_n = max(0, int(args.n))
+    ref_pool_mode = str(args.ref_pool).strip().lower()
+    available_style_ids = [sid for sid, name in enumerate(style_subdirs) if (test_dir / name).exists()]
+    subset_quota: dict[int, int] = {}
+    if subset_mode == "stratified" and subset_n > 0 and available_style_ids:
+        base_q, extra = divmod(subset_n, len(available_style_ids))
+        for pos, sid in enumerate(sorted(available_style_ids)):
+            subset_quota[sid] = base_q + (1 if pos < extra else 0)
+
     test_images = {}
+    style_ref_paths: dict[int, Path] = {}
+    style_ref_reserved: dict[int, str] = {}
     for style_id, style_name in enumerate(style_subdirs):
         s_dir = test_dir / style_name
         if not s_dir.exists(): continue
         # Only take valid images
         images = sorted([p for p in s_dir.iterdir() if p.suffix.lower() in ['.jpg', '.png', '.jpeg', '.webp']])
+        if ref_pool_mode == "strict":
+            if len(images) < 2:
+                raise ValueError(
+                    f"--ref_pool strict needs at least 2 images per style "
+                    f"({style_name}: {len(images)}); cannot hold one out as reference."
+                )
+            style_ref_paths[style_id] = images[0]
+            style_ref_reserved[style_id] = images[0].name
+            images = images[1:]
+        quota = subset_quota.get(style_id, 0)
+        if quota > 0:
+            images = images[:quota]
+        if not images:
+            raise ValueError(f"No content images left for style {style_name} after subset/reference selection.")
         test_images[style_id] = (style_name, images)
+
+    eval_protocol = {
+        "subset": subset_mode,
+        "subset_requested_n": subset_n,
+        "subset_content_total": int(sum(len(v[1]) for v in test_images.values())),
+        "per_style_content": {name: len(imgs) for name, (_, imgs) in test_images.items()},
+        "ref_policy": ref_pool_mode,
+        "ref_reserved": {style_subdirs[sid]: name for sid, name in style_ref_reserved.items()},
+        "note": "Content subset and reference policy are part of the metric definition; "
+                "tables from different settings are not directly comparable.",
+    }
+    print(
+        "Eval protocol | subset=%s (content=%d, requested=%d) ref_policy=%s reserved=%d"
+        % (subset_mode, eval_protocol["subset_content_total"], subset_n, ref_pool_mode, len(style_ref_reserved))
+    )
+    with open(out_dir / "eval_protocol.json", "w") as _f:
+        json.dump(eval_protocol, _f, indent=2)
 
     postprocess_mode = str(args.postprocess_mode).strip().lower()
     if postprocess_mode not in {"none", "style_rgb_affine", "style_rgb_wct"}:
@@ -3046,6 +3116,27 @@ def main(argv: list[str] | None = None):
             device=device,
             timings=timings,
         )
+        _ref_tokens_path = str(getattr(args, "reference_tokens", "") or "")
+        if _ref_tokens_path:
+            _has_ref_branch = getattr(getattr(lgt, "model", None), "reference_conditioner", None) is not None
+            if not _has_ref_branch:
+                print("  WARNING: --reference_tokens given but the model has no reference conditioner; ignored.")
+            else:
+                try:
+                    _payload = torch.load(_ref_tokens_path, map_location="cpu", weights_only=False)
+                    _tok_names = list(_payload.get("style_names", []))
+                    _tok = _payload["tokens"].float()
+                    _name_to_idx = {n: i for i, n in enumerate(_tok_names)}
+                    _per_style = torch.zeros(len(style_subdirs), *_tok.shape[1:], dtype=torch.float32)
+                    _hit = 0
+                    for _sid, _nm in enumerate(style_subdirs):
+                        if _nm in _name_to_idx:
+                            _per_style[_sid] = _tok[_name_to_idx[_nm]]
+                            _hit += 1
+                    lgt.set_reference_tokens(_per_style)
+                    print(f"  Route C reference tokens: {_hit}/{len(style_subdirs)} styles from {_ref_tokens_path}")
+                except Exception as _exc:
+                    print(f"  WARNING: failed to load reference tokens ({_exc}); continuing with style-id only.")
         latent_postprocess_needs_vae = (
             latent_postprocess_mode == "style_latent_affine"
             and float(args.latent_postprocess_strength) > 0.0
@@ -3450,12 +3541,17 @@ def main(argv: list[str] | None = None):
                                 if tgt_id_int not in target_style_latent_cache:
                                     _tgt_entry = test_images.get(tgt_id_int)
                                     _tgt_paths = _tgt_entry[1] if _tgt_entry else None
-                                    if not _tgt_paths:
+                                    # --ref_pool strict reserves a held-out style reference;
+                                    # default keeps the historical first sorted test image.
+                                    _ref_path = style_ref_paths.get(tgt_id_int)
+                                    if _ref_path is None and _tgt_paths:
+                                        _ref_path = _tgt_paths[0]
+                                    if not _ref_path:
                                         print(f"  WARNING: no reference images for target style id={tgt_id_int}")
                                         target_style_latent_cache[tgt_id_int] = None
                                     else:
                                         try:
-                                            _ref_img = _load_eval_image_tensor(_tgt_paths[0]).unsqueeze(0).to(device)
+                                            _ref_img = _load_eval_image_tensor(_ref_path).unsqueeze(0).to(device)
                                             _ref_latent = encode_image(vae, _ref_img, device)
                                             if abs(scale_in - 1.0) > 1e-4:
                                                 _ref_latent = _ref_latent * scale_in
@@ -5001,6 +5097,7 @@ def generate_summary_json(
             'delta_kid_ratio': "delta_kid / kid_baseline (relative improvement ratio).",
         },
         'settings': dict(settings or {}),
+        'eval_protocol': eval_protocol,
         'timings_sec': {str(k): float(v) for k, v in sorted((timings or {}).items())},
         'idt_baselines': dict(idt_baselines or {}),
         'matrix_breakdown': matrix_json,

@@ -449,6 +449,24 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info("Device: %s", device)
     logger.info("Seed: %d", seed)
+    if device.type == "cuda":
+        # infra P7: read-only startup sanity checks (shared 3060 => catch interlopers).
+        _free_bytes, _total_bytes = torch.cuda.mem_get_info()
+        logger.info(
+            "GPU memory before init: free=%.2fG total=%.2fG used=%.2fG",
+            _free_bytes / 1024 ** 3, _total_bytes / 1024 ** 3,
+            (_total_bytes - _free_bytes) / 1024 ** 3,
+        )
+        if _free_bytes < 9.5 * 1024 ** 3:
+            logger.warning(
+                "Only %.2fG free on %s; another run may share this GPU, peak VRAM numbers will be polluted.",
+                _free_bytes / 1024 ** 3, torch.cuda.get_device_name(0),
+            )
+        if not os.environ.get("PYTORCH_CUDA_ALLOC_CONF"):
+            logger.warning(
+                "PYTORCH_CUDA_ALLOC_CONF is unset; expandable_segments will not be enabled. "
+                "Export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True for long runs."
+            )
 
     contract_family = str(getattr(config.model, "contract_family", "legacy") or "legacy").strip().lower()
     if contract_family != "weave":
@@ -478,6 +496,11 @@ def main() -> None:
         preload_max_vram_gb=float(data_cfg.preload_max_vram_gb),
         preload_reserve_ratio=float(data_cfg.preload_reserve_ratio),
         virtual_length_multiplier=float(data_cfg.virtual_length_multiplier),
+        limit_per_style=int(getattr(data_cfg, "packed_limit_per_style", 0) or 0),
+        train_sample_limit=int(getattr(data_cfg, "train_sample_limit", 0) or 0),
+        pairing_mode=str(getattr(data_cfg, "pairing_mode", "epoch") or "epoch"),
+        pairing_seed=int(getattr(data_cfg, "pairing_seed", 0) or 0),
+        identity_prob=float(getattr(data_cfg, "identity_prob", 0.0) or 0.0),
         content_style_sampling_weights=data_cfg.content_style_sampling_weights,
         target_style_sampling_weights=data_cfg.target_style_sampling_weights,
         pairing_cache_path=data_cfg.pairing_cache_path,
@@ -529,6 +552,14 @@ def main() -> None:
     dataloader = DataLoader(**dataloader_kwargs)
 
     logger.info(
+        "Sampling | pairing_mode=%s pairing_seed=%d train_sample_limit=%d identity_prob=%.3f length=%d",
+        str(getattr(dataset, "pairing_mode", "epoch")),
+        int(getattr(dataset, "pairing_seed", 0)),
+        int(getattr(dataset, "train_sample_limit", 0)),
+        float(getattr(dataset, "identity_prob", 0.0)),
+        len(dataset),
+    )
+    logger.info(
         "DataLoader | batch=%d workers=%d shuffle=%s pin_memory=%s persistent_workers=%s preload_to_gpu=%s balanced_target=%s pairing_cache=%s pairing_mode=%s rank_schedule=%s active_topk=%d min_topk=%d curriculum_epochs=%d rank_power=%.3f topk=%d explore=%.3f/%d dual_mix=%.3f/%d aux_topk=%d",
         batch_size,
         num_workers,
@@ -554,6 +585,7 @@ def main() -> None:
 
     trainer = SBTrainer(config=config, device=device, config_path=str(config_path))
     deferred_eval_checkpoints: list[Path] = []
+    stop_reason_override: str | None = None
     if bool(getattr(train_cfg, "full_eval_stop_on_convergence", False)) and (
         (not bool(getattr(train_cfg, "full_eval_each_epoch", False)))
         or bool(getattr(train_cfg, "full_eval_defer_until_training_end", False))
@@ -567,6 +599,7 @@ def main() -> None:
     existing_convergence = _load_existing_eval_convergence(config, trainer.checkpoint_dir)
     if _eval_convergence_requests_stop(train_cfg, existing_convergence, epoch=int(trainer.start_epoch) - 1):
         trainer.requested_stop = True
+        stop_reason_override = "eval convergence"
         logger.info(
             "Existing eval convergence already satisfied before training loop at epoch %d: best=%s latest=%s since_last_pareto=%s tail_flat=%s patience=%s",
             int(trainer.start_epoch) - 1,
@@ -601,7 +634,7 @@ def main() -> None:
         trainer.update_internal_dynamics(epoch, metrics)
         trainer.log_epoch(epoch, metrics)
         logger.info(
-            "Epoch %d/%d | loss=%.4f flow=%.4f kin=%.4f ot=%.4f tswd=%.4f "
+            "Epoch %d/%d | loss=%.4f flow=%.4f ll=%.4f lh=%.4f hl=%.4f kin=%.4f ot=%.4f tswd=%.4f "
             "gini=%.3f hub=%.3f otd=%.4f fiber=%.3f leak=%.4f tgtshift=%.4f "
             "cla=%.4f cea=%.4f sem_attn=%.3f sem_k=%.3f topo_ent=%.3f topo_on=%.0f "
             "plan_ent=%.3f bary_ent=%.3f tok_ent=%.3f tok_eff=%.1f tok_max=%.3f tok_svd=%.3f tok_cos=%.3f app_s=%.3f app_d=%.3f "
@@ -612,6 +645,9 @@ def main() -> None:
             trainer.num_epochs,
             metrics.get("loss", 0.0),
             metrics.get("flow", 0.0),
+            metrics.get("loss_fm_spectral_ll", 0.0),
+            metrics.get("loss_fm_spectral_lh", 0.0),
+            metrics.get("loss_fm_spectral_hl", 0.0),
             metrics.get("kinetic_energy", 0.0),
             metrics.get("ot_cost", 0.0),
             metrics.get("terminal_swd", 0.0),
@@ -679,6 +715,7 @@ def main() -> None:
                         trainer.restore_after_full_eval()
                 if _eval_convergence_requests_stop(train_cfg, convergence_payload, epoch=epoch):
                     trainer.requested_stop = True
+                    stop_reason_override = "eval convergence"
                     logger.info(
                         "Early stop requested by eval convergence at epoch %d: best=%s latest=%s since_last_pareto=%s objective_best=%s objective_since_best=%s stop_reason=%s patience=%s",
                         epoch,
@@ -695,6 +732,9 @@ def main() -> None:
             break
         epoch += 1
 
+    finalize_internal = getattr(trainer, "finalize_internal_dynamics", None)
+    if callable(finalize_internal):
+        finalize_internal(stop_reason_override)
     if hasattr(trainer, "wait_for_pending_checkpoints"):
         trainer.wait_for_pending_checkpoints()
     if deferred_eval_checkpoints:

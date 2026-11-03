@@ -117,6 +117,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--style_root", type=str, default="", help="dir with style subdirs of real paintings")
     ap.add_argument("--vae", type=str, default="taesd", help="taesd|sd15 — MUST match the training data VAE")
+    ap.add_argument("--vae_dir", type=str, default="", help="sd15 only: local AutoencoderKL snapshot dir")
     ap.add_argument("--extractor", type=str, default="vgg16")
     ap.add_argument("--layers", type=str, default="relu2_2,relu3_3")
     ap.add_argument("--size", type=int, default=512)
@@ -130,7 +131,8 @@ def main() -> None:
         run_smoke(out)
         return
 
-    import cv2
+    from PIL import Image
+    from torchvision import transforms
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     from features import build_feature_extractor
@@ -146,19 +148,22 @@ def main() -> None:
     else:
         from diffusers import AutoencoderKL
 
-        vae = AutoencoderKL.from_pretrained("runwayml/stable-diffusion-v1-5", subfolder="vae").to(device).eval()
+        if args.vae_dir:
+            vae = AutoencoderKL.from_pretrained(args.vae_dir, local_files_only=True).to(device).eval()
+        else:
+            vae = AutoencoderKL.from_pretrained("runwayml/stable-diffusion-v1-5", subfolder="vae").to(device).eval()
         scale = float(vae.config.scaling_factor)
     for p in vae.parameters():
         p.requires_grad_(False)
 
     records: list[dict] = []
+    to_tensor = transforms.ToTensor()
     root = Path(args.style_root)
     for sdir in sorted(d for d in root.iterdir() if d.is_dir()):
         paths = sorted(p for p in sdir.iterdir() if p.suffix.lower() in (".jpg", ".jpeg", ".png"))[: args.max_per_style]
         for p in paths:
-            img = cv2.imread(str(p))[:, :, ::-1]
-            img = cv2.resize(img, (args.size, args.size))
-            t = torch.from_numpy(img).permute(2, 0, 1).float().div_(255.0).unsqueeze(0).to(device)
+            im = Image.open(p).convert("RGB").resize((args.size, args.size), Image.BICUBIC)
+            t = to_tensor(im).unsqueeze(0).to(device)
             with torch.no_grad():
                 if args.vae == "taesd":
                     z = vae.encode(t * 2.0 - 1.0).latents * scale

@@ -35,6 +35,11 @@ def main() -> None:
     ap.add_argument("--metrics", required=True, help="metrics.csv from run_evaluation.py")
     ap.add_argument("--dino", required=True, help="dino_metrics.csv from compute_dino_metrics.py")
     ap.add_argument("--out", required=True)
+    ap.add_argument(
+        "--protocol", default="",
+        help="Optional eval_protocol.json written by run_evaluation.py; copied into results.json "
+             "so subset / ref_policy are recorded alongside the numbers.",
+    )
     args = ap.parse_args()
 
     base = _read(Path(args.metrics))
@@ -64,11 +69,17 @@ def main() -> None:
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps({
+    payload = {
         "source_metrics": str(args.metrics),
         "source_dino": str(args.dino),
         "results": records,
-    }, indent=2))
+    }
+    if str(args.protocol).strip():
+        proto_path = Path(args.protocol)
+        payload["protocol"] = json.loads(proto_path.read_text())
+        payload["subset"] = payload["protocol"].get("subset")
+        payload["ref_policy"] = payload["protocol"].get("ref_policy")
+    out.write_text(json.dumps(payload, indent=2))
     print(f"merged {len(records)} records (missing dino rows: {missing}) -> {out}")
 
 

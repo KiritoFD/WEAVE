@@ -120,6 +120,12 @@ def main() -> None:
     records = load_records(Path(args.input))
     rep = split_report(records, args.reference_policy)
     rep["source_file"] = str(args.input)
+    # Carry the evaluation-protocol tags through so the split table states the
+    # subset and reference policy it was computed on.
+    payload = json.loads(Path(args.input).read_text())
+    for key in ("subset", "ref_policy", "protocol"):
+        if key in payload:
+            rep[key] = payload[key]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(rep, indent=2))
     print(f"cross-style n={rep['counts']['cross_style']} same-style n={rep['counts']['same_style']} -> {out}")

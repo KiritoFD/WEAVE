@@ -353,6 +353,8 @@ class LGTInference:
         self.device = device
         self.num_steps = int(num_steps)
         self._style_adapter_path = style_adapter_path
+        # Route C: per-style DINOv2 patch tokens (num_styles, tokens, dim).
+        self._reference_tokens: torch.Tensor | None = None
 
         checkpoint = torch.load(model_path, map_location=device, weights_only=False)
         raw_config = checkpoint.get("config", {}) or {}
@@ -610,6 +612,18 @@ class LGTInference:
             target_style_latent=None,
         )
 
+    def set_reference_tokens(self, tokens: torch.Tensor) -> None:
+        """Route C: register per-style DINOv2 patch tokens (num_styles, N, D)."""
+        self._reference_tokens = None if tokens is None else tokens.float()
+
+    def _reference_for_styles(self, style_ids: torch.Tensor) -> torch.Tensor | None:
+        if self._reference_tokens is None:
+            return None
+        ids = style_ids.detach().to("cpu", dtype=torch.long)
+        if int(ids.numel()) == 0:
+            return None
+        return self._reference_tokens.to(style_ids.device)[ids]
+
     @torch.no_grad()
     def generation_with_target_latent(self, x0, target_style_id, num_steps=None, target_style_latent=None):
         if num_steps is None:
@@ -617,6 +631,7 @@ class LGTInference:
         b = x0.shape[0]
         if isinstance(target_style_id, int):
             target_style_id = torch.full((b,), target_style_id, dtype=torch.long, device=x0.device)
+        reference_feats = self._reference_for_styles(target_style_id)
         if self.objective_mode == "omf":
             endpoint = self.model.endpoint_map(
                 x0,
@@ -641,6 +656,8 @@ class LGTInference:
                 integrate_kwargs["target_style_latent"] = _style_latent_tensor
         else:
             integrate_kwargs["target_style_latent"] = target_style_latent
+        if reference_feats is not None:
+            integrate_kwargs["reference_feats"] = reference_feats
         return self.model.integrate(
             x0,
             style_id=target_style_id,
