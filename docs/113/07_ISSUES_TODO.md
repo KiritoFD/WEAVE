@@ -39,7 +39,7 @@
 | E5 | 750/600/150 三口径并存，结果文件不记录协议 | [04_RESULTS.md](04_RESULTS.md) | 结果 JSON 强制写 `protocol` 字段 |
 | E6 | 基线主表缺 DINO-S/DINO-C | `docs/79/main_table_v4_remote.csv` 只有 clip/lpips/musiq | 补测或论文只比 CLIP/LPIPS |
 | E7 | **评测结果未强制落盘 + 未纳入 registry**：结果散落在 `runs/*/results.json`、`metrics.csv`、`dino_summary.json` 三种形态，只有部分 run 追加到 `registry.jsonl` | 实测 `/mnt/i/Latent_Style/runs/`：`nextgen_eval_quick/*` 只有 `metrics.csv`；`nextgen_eval_smoke/` 只有 `dino_summary.json`；`results.json` 只在 `nextgen_eval_full/*` 与 `routeA_scan_eval/*` 存在；registry 只记录 routeA 三条 | 每次评测必须落 `results.json`（含 `protocol`/`counts`/`reference_selection`/backbone）并追加一行到 `registry.jsonl`；**禁止只在 stdout 或 csv 里留数** |
-| E8 | **论文主表 0.4916 无法复算**：缺原始 eval JSON、缺具体 ckpt、缺 750 请求清单 | `config.json#L3-L12` 只有常量；`config.json#L8` 指向 `runs/submission/canonical_oriented_epoch4/epoch_0004.pt`，该 ckpt 不在本地也不在远端仓库内；`/mnt/i/Latent_Style/runs/` 无 submission 评测产物 | 复现路径：用该 ckpt + `inference.json`（`num_steps=8`, `endpoint_adain_scale=2.0`）重跑 750 全量（150×5，含对角线），输出 `results.json` + `results_split.json` 并写入 registry；只要 600/150 拆分与 `all_*` 数字同时对上 0.4916/0.7128/0.2593/0.8103（±1e-4）即可坐实。在此之前论文 DINO-S 只能当"报告值"引用 |
+| E8 | **论文主表 0.4916 冻结（won't fix，2026-11-04 决定）**：缺口仍属实——无原始 eval JSON、无具体 ckpt、无 750 请求清单 | `config.json#L3-L12` 只有常量；`config.json#L8` 指向 `runs/submission/canonical_oriented_epoch4/epoch_0004.pt`，该 ckpt 不在本地也不在远端仓库内；`/mnt/i/Latent_Style/runs/` 无 submission 评测产物 | **不再列为待办、不再追复算**。论文 0.4916 一族（含 0.4915/0.4886 等同族数字）仅作**历史标注**，不作为当前比较基准，**禁止与新口径横比**。若日后确需坐实，路径是：用该 ckpt + `inference.json`（`num_steps=8`, `endpoint_adain_scale=2.0`）重跑 750 全量，输出 `results.json` + `results_split.json` 并写 registry，600/150 与 `all_*` 同时对上才算复现 |
 
 ## 4 待验证假设（训练停后再做）
 
