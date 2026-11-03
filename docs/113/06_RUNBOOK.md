@@ -75,7 +75,7 @@ python3 tools/diag_three_way.py --help
 
 ## 5 易踩坑（按踩坑频率排序）
 
-1. **`scp` 必须加 `-O`**：远端 sftp 子系统被禁用，不加会报 `subsystem request failed on channel 0`。
+1. **`scp` 必须加 `-O`**：远端 sftp 子系统被禁用，不加会报 `subsystem request failed on channel 0`。目标路径必须写 **Windows 形式**（如 `3060:I:/Latent_Style/WEAVE/docs/113/`）；写 `/mnt/i/...` 会报 `No such file or directory`（scp 登的是 Windows 侧，看不到 WSL 的 `/mnt/i`）。
 2. **远端不是 git 仓库**：不能 `git pull/status/diff`；同步只能 `scp -O` 覆盖，覆盖前先备份。
 3. **不要在 Windows 侧跑 Python**：用 WSL `python3`；多行远端脚本用 PowerShell 数组 + `` `n `` 拼接，末尾 `echo __END__` 收尾（否则 heredoc 会挂）。
 4. **HF 不可达**：不要 `from_pretrained("facebook/dinov2-base")` 直连；用 `weights/dinov2-base` 或 ModelScope。
