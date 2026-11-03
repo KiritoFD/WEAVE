@@ -40,6 +40,11 @@ aaai2027_v4/tmp/
 # ============ drawio desktop app caches ============
 .drawio_tmp/
 
+# ============ Archive debris (untracked tooling caches) ============
+docs/archive/**/node_modules/
+**/.codeartsdoer/
+**/.drawio_tmp/
+
 # ============ Nested / embedded repo ============
 WEAVE/
 
