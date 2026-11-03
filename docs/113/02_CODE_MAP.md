@@ -31,7 +31,7 @@ config.json --_base--> load_config() --deep_merge--> ExperimentConfig.from_mappi
 | `blocks.py` | ResBlock + 时间正弦编码 | `ResidualBlock` [L52](file:///g:/GitHub/Latent_Style/WEAVE/blocks.py#L52) |
 | `wavelet.py` | Haar DWT/iDWT、多级分解、subband gamma | `dwt2_haar` [L11](file:///g:/GitHub/Latent_Style/WEAVE/wavelet.py#L11)；`idwt2_haar` [L47](file:///g:/GitHub/Latent_Style/WEAVE/wavelet.py#L47)；`subband_gamma` [L168](file:///g:/GitHub/Latent_Style/WEAVE/wavelet.py#L168) |
 | `utils/dataset.py` | 逐样本 latent 读取、packed 缓存、pairing cache、style stem 注册 | `AdaCUTLatentDataset` [L159](file:///g:/GitHub/Latent_Style/WEAVE/utils/dataset.py#L159)；packed 读写在 [L371-L412](file:///g:/GitHub/Latent_Style/WEAVE/utils/dataset.py#L371-L412) |
-| `internal_dynamics.py` | 内部梯度/门控诊断，训练中写 tensorboard/日志 | `probe_internal_dynamics` [L97](file:///g:/GitHub/Latent_Style/WEAVE/internal_dynamics.py#L97) |
+| `internal_dynamics.py` | 每 epoch 末做固定 batch 的 loss-path 梯度探针，写 `checkpoint_dir/internal_dynamics.jsonl`；含内部门控早停判据 | `probe_internal_dynamics` [L97](file:///g:/GitHub/Latent_Style/WEAVE/internal_dynamics.py#L97)；判据 `InternalDynamicsState.update` [L173-L204](file:///g:/GitHub/Latent_Style/WEAVE/internal_dynamics.py#L173-L204) |
 
 ## 3 下一代新增模块（默认全关）
 

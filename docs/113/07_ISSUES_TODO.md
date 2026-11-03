@@ -56,3 +56,53 @@
 2. `docs/archive/612-phase2/.codeartsdoer/node_modules`、`*.drawio_tmp` 是历史垃圾，占空间且拖慢同步（`.gitignore` 已忽略，文件仍留在磁盘）。
 3. ~~`docs/` 下 `713/` 与 `archive/{72,710,628,630}` 内容高度重叠~~ **已完成**：已合并进 `docs/113/03_EXPERIMENTS.md`，原目录移到 `docs/archive/merged-20261103/`。
 4. `Exp.md` 只追加不清理，`无效` 行与有效行混排；建议 `state/registry.jsonl` 机器可读化。
+
+## 6 调查：内部门控早停（internal-dynamics early stop，2026-11-04）
+
+**结论：仓库里确实存在，但"内部门控早停"不是 HF ratio / high-frequency energy ratio。** 它是 2026-07 为 oriented-HF 架构做的**训练动力学判据**，核心量是 **LL/HF 梯度范数比 + 目标 HF 门控均值的变化方向**。
+
+### 6.1 是哪个量
+
+| 量 | 定义 | 位置 |
+|---|---|---|
+| `internal_probe_gate_mean` | LH/HL 两个 `target_latent_hf_subband_delta` 模块的 `tanh(gate)` 均值 | [internal_dynamics.py#L82-L94](file:///g:/GitHub/Latent_Style/WEAVE/internal_dynamics.py#L82-L94)；模块构造 [model.py#L668-L684](file:///g:/GitHub/Latent_Style/WEAVE/model.py#L668-L684) |
+| `internal_probe_shared_ll_hf_grad_ratio` | 共享主干参数在 `loss_fm_spectral_ll` 下的梯度范数 / 在 `loss_fm_hf_total` 下的梯度范数（**梯度比，不是能量比**） | [internal_dynamics.py#L147-L159](file:///g:/GitHub/Latent_Style/WEAVE/internal_dynamics.py#L147-L159)；探针 [L97-L164](file:///g:/GitHub/Latent_Style/WEAVE/internal_dynamics.py#L97-L164) |
+| `internal_probe_route_shared_hf_grad_ratio`、`..._route_hf_head_grad_ratio` | 目标 HF 分支梯度相对共享主干 / 相对 HF 头的比例，**仅记录、不参与判据** | [L160-L163](file:///g:/GitHub/Latent_Style/WEAVE/internal_dynamics.py#L160-L163) |
+
+探针细节：固定 batch（默认 4 个 latent，`t=0.5`）、`eval` 模式、每个 epoch 额外两次 backward、`torch.random.fork_rng` 保 RNG，不更新优化器（[trainer.py#L436-L516](file:///g:/GitHub/Latent_Style/WEAVE/trainer.py#L436-L516)）。
+
+### 6.2 怎么触发
+
+判据（[internal_dynamics.py#L185-L195](file:///g:/GitHub/Latent_Style/WEAVE/internal_dynamics.py#L185-L195)）：
+
+```text
+epoch >= min_epoch(默认 3)
+且 rho_epoch / rho_prev <= 0.65      # 相对收缩，绝对阈值 rho<=1 已被废弃
+且 gate_delta > 0                    # 门控从收缩转扩张
+```
+
+- **单 epoch 判定**，没有"连续 N 步"或 patience；首次满足即 `transition_epoch`。
+- 触发后：`requested_stop=True`（[trainer.py#L513-L516](file:///g:/GitHub/Latent_Style/WEAVE/trainer.py#L513-L516)）→ 当前 epoch 结束、**保存该轮 ckpt**（[run.py#L663](file:///g:/GitHub/Latent_Style/WEAVE/run.py#L663)）→ 跳出训练循环（[run.py#L694-L696](file:///g:/GitHub/Latent_Style/WEAVE/run.py#L694-L696)）。**不降 lr、不冻结门控、不回退 ckpt、不跳过样本。**
+- 默认全关：[config_schema.py#L1075-L1078](file:///g:/GitHub/Latent_Style/WEAVE/config_schema.py#L1075-L1078) `internal_early_stop_enabled=False`、`min_epoch=3`、`gate_delta_threshold=0.0`、`ratio_drop=0.65`；且必须同时 `internal_probe_enabled=True`（默认 False，[L1071](file:///g:/GitHub/Latent_Style/WEAVE/config_schema.py#L1071)；否则 [trainer.py#L455-L456](file:///g:/GitHub/Latent_Style/WEAVE/trainer.py#L455-L456) 直接 no-op）。
+
+### 6.3 当前是否生效
+
+- **当前训练：关。** 远端正在跑的是 `runs/p0_diag/cap32/config.json`（`ps` 实测：`python3 run.py --config /mnt/i/Latent_Style/runs/p0_diag/cap32/config.json`），该配置里 `internal` 相关键 **0 个**。
+- 仓库 `config.json`、`config_r5.json` 均无该键 → 默认关。
+- 只有 3 个 rebuttal 配置开了探针但不早停：`configs/exp_rebuttal_{w03,w10,hh_head}_p256.json` 只有 `internal_probe_enabled: true`，没有 `internal_early_stop_enabled`。
+- **那次真正启用它的实验配置已不在仓库**：`configs/hf_oriented_internal_early_stop.json` 全仓库 Glob 无文件，`git log --all` 也查不到（从未被跟踪）；`experiments/architecture/` 目录同样不存在。但 `prepare_submission*.py`、`pack_*.py`、`scripts/bench_inference_latency.py`、`docs/reproduction/*` 仍在引用这两个路径 → 复现链断了（属 §2 D 类）。
+
+### 6.4 实现可信度
+
+- 有判读文档：[internal_dynamics_early_stop.md](file:///g:/GitHub/Latent_Style/WEAVE/docs/reproduction/internal_dynamics_early_stop.md)，含"为什么用这个量"、盲测曲线与三 seed 验证。
+- 实测曲线 [internal_dynamics_early_stop.csv](file:///g:/GitHub/Latent_Style/WEAVE/docs/reproduction/internal_dynamics_early_stop.csv) 与文档一致：epoch 4 `gate_delta +0.00371`、`rho 0.1634`（上轮 1.0868），`stop_requested=1`。
+- 三 seed 选中 epoch：42→4（DINO-S 0.4915）、7→4（0.4910，`internal_dynamics_seed7_eval.json`）、123→3（0.4862）。
+- **已知问题（文档已披露）**：① 初版绝对阈值 `rho<=1` 对 seed 7 / probe batch 8 失效（起点已在 1 以下），故改成相对 0.65；② seed 123 提前一轮，选出的 DINO-S 比 seed 42 低 0.005；③ `remaining_ablation_plan_2026-07-16.md#L29-L33` 明确它只是**架构相关**的判据，不能当架构无关收敛定理。
+- **实现与文档不一致（D 类）**：文档"Diagnostic Result"把 route/head 梯度比列为事件之一，但代码判据只用 gate_delta + shared ratio；route/head 只写日志。
+- **"开而无效"风险**：若模型没建 `target_latent_hf_subband_delta_lh/hl`（当前 `config.json` 未启用 target-HF subband，[model.py#L682-L684](file:///g:/GitHub/Latent_Style/WEAVE/model.py#L682-L684) 置 `None`），`target_hf_gate_mean` 恒返回 0（[L92-L94](file:///g:/GitHub/Latent_Style/WEAVE/internal_dynamics.py#L92-L94)）→ `gate_delta=0` → 判据永不成立，且不会报错。
+
+### 6.5 与"记忆"最接近的其他三处（都不是早停）
+
+1. **门控均值**：训练日志里的 `last_debug["target_latent_hf_subband_delta_gate_mean"]`（[model.py#L1168-L1175](file:///g:/GitHub/Latent_Style/WEAVE/model.py#L1168-L1175)）——和早停用的 gate_mean 同源，但不参与停止。
+2. **能量/泄漏比**：`fiber_energy_ratio`、`low_freq_leak` 只作为 epoch 指标占位与记录（[trainer.py#L1981-L1982](file:///g:/GitHub/Latent_Style/WEAVE/trainer.py#L1981-L1982)、[utils/training.py#L225-L226](file:///g:/GitHub/Latent_Style/WEAVE/utils/training.py#L225-L226)），**具体计算位置未定位（未验证）**，且不驱动停止。
+3. **数据门禁**：`StyleTargetScreener` 的 `content_keep` / `reference_copy` 阈值是**伪目标准入过滤**（[b1_style_operator.py#L757-L810](file:///g:/GitHub/Latent_Style/WEAVE/b1_style_operator.py#L757-L810)），作用在样本级、不早停训练。
