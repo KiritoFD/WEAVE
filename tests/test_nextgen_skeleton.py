@@ -310,7 +310,10 @@ def test_trainer_end_to_end_all_routes(tmp_path: Path):
                    "output_supervision_enabled": True, "output_supervision_ode_steps": 2,
                    "output_supervision_microbatch": 2, "reference_info_nce_weight": 0.1},
         "training": {"num_epochs": 1, "batch_size": 4, "use_tqdm": False, "log_interval": 0,
-                     "save_interval": 999, "use_amp": False, "gpu_monitor_enabled": False},
+                     "save_interval": 999, "use_amp": False, "gpu_monitor_enabled": False,
+                     # Internal early stop is default-on project-wide; this route test
+                     # isolates output-supervision/NCE and has no subband gate head.
+                     "internal_probe_enabled": False, "internal_early_stop_enabled": False},
         "checkpoint": {"save_dir": str(tmp_path / "ck")},
         "data": {},
     })
@@ -337,13 +340,16 @@ def test_trainer_end_to_end_all_routes(tmp_path: Path):
 
 
 def test_trainer_default_config_unchanged(tmp_path: Path):
-    """Default config must NOT activate any next-gen machinery."""
+    """Route B/C/D machinery must stay off; internal early stop is now default-on."""
     from trainer import SBTrainer
 
     cfg = ExperimentConfig.from_mapping({
         "model": {"base_dim": 32, "num_res_blocks": 2, "num_styles": 3, "contract_family": "weave"},
         "bridge": {},
-        "training": {"num_epochs": 1, "use_tqdm": False, "use_amp": False, "gpu_monitor_enabled": False},
+        "training": {"num_epochs": 1, "use_tqdm": False, "use_amp": False, "gpu_monitor_enabled": False,
+                     # Early stop now requires a subband gate head; disable it here to
+                     # keep this test focused on the retired next-gen machinery.
+                     "internal_probe_enabled": False, "internal_early_stop_enabled": False},
         "checkpoint": {"save_dir": str(tmp_path / "ck2")},
         "data": {},
     })

@@ -176,6 +176,11 @@ class AdaCUTLatentDataset(Dataset):
         preload_max_vram_gb: float = 0.0,
         preload_reserve_ratio: float = 0.35,
         virtual_length_multiplier: float = 1.0,
+        limit_per_style: int = 0,
+        train_sample_limit: int = 0,
+        pairing_mode: str = "epoch",
+        pairing_seed: int = 0,
+        identity_prob: float = 0.0,
         content_style_sampling_weights: Sequence[float] | None = None,
         target_style_sampling_weights: Sequence[float] | None = None,
         pairing_cache_path: str = "",
@@ -208,6 +213,16 @@ class AdaCUTLatentDataset(Dataset):
         self.preload_max_vram_gb = max(0.0, float(preload_max_vram_gb))
         self.preload_reserve_ratio = max(0.0, min(0.95, float(preload_reserve_ratio)))
         self.preload_to_gpu = False
+        self.limit_per_style = max(0, int(limit_per_style))
+        self.train_sample_limit = max(0, int(train_sample_limit))
+        self.pairing_mode = str(pairing_mode or "epoch").strip().lower()
+        if self.pairing_mode not in {"epoch", "fixed", "same_style"}:
+            logger.warning("Unknown pairing_mode=%s; using epoch.", self.pairing_mode)
+            self.pairing_mode = "epoch"
+        self.pairing_seed = int(pairing_seed)
+        self.identity_prob = max(0.0, min(1.0, float(identity_prob)))
+        self._train_limit_per_style: list[int] | None = None
+        self._cache_identity_mask: torch.Tensor | None = None
         self.device = device
         self.epoch = 0
         self.style_item_stems: Dict[int, list[str]] = {}
@@ -234,6 +249,15 @@ class AdaCUTLatentDataset(Dataset):
             raise ValueError("style_subdirs cannot be empty")
         if len(self.style_subdirs) < 2:
             raise ValueError("At least two style domains are required for cross-domain sampling")
+        if self.train_sample_limit > 0:
+            n_styles = len(self.style_subdirs)
+            if self.train_sample_limit < n_styles:
+                raise ValueError(
+                    f"train_sample_limit={self.train_sample_limit} is smaller than the number of "
+                    f"styles ({n_styles}); every style needs at least one sample."
+                )
+            base, extra = divmod(self.train_sample_limit, n_styles)
+            self._train_limit_per_style = [base + (1 if i < extra else 0) for i in range(n_styles)]
 
         self.pairing_cache_path = str(pairing_cache_path or "").strip()
         self.pairing_cache_topk = max(1, int(pairing_cache_topk))
@@ -270,6 +294,18 @@ class AdaCUTLatentDataset(Dataset):
             if not files:
                 raise RuntimeError(f"No latent files found for style={subdir} under {self.data_root}")
             stack = self._load_style_stack(style_id, subdir, files)
+            caps = [c for c in (
+                int(self._train_limit_per_style[style_id]) if self._train_limit_per_style is not None else 0,
+                self.limit_per_style,
+            ) if c > 0]
+            cap = min(caps) if caps else 0
+            if cap > 0 and stack.shape[0] > cap:
+                # Diagnostic subsetting: keep the first N sorted samples per style,
+                # slicing both the latent stack and the stem index so pairing lookups
+                # that point outside the subset fall back to the in-range index.
+                limit = min(cap, len(files))
+                files = files[:limit]
+                stack = stack[:limit]
             self.style_tensors[style_id] = stack
             self._register_style_index(style_id, files)
             logger.info("  style=%s id=%d count=%d", subdir, style_id, stack.shape[0])
@@ -701,7 +737,9 @@ class AdaCUTLatentDataset(Dataset):
         # This eliminates the heavy overhead of instantiating random.Random() per sample.
         N = self.length
         g = torch.Generator()
-        g.manual_seed((self.epoch + 1) * 1000003)
+        # "fixed" reuses the same seed every epoch so content/target/pairing
+        # draws are fully reproducible across epochs; "epoch" keeps legacy behaviour.
+        g.manual_seed(self.pairing_seed if self.pairing_mode == "fixed" else (self.epoch + 1) * 1000003)
         
         n_styles = len(self.style_subdirs)
         
@@ -712,7 +750,27 @@ class AdaCUTLatentDataset(Dataset):
             n_styles=n_styles,
         )
         # Uniform target sampling across all styles (including source style).
-        if self.identity_ratio is None:
+        self._cache_identity_mask = None
+        if self.pairing_mode == "same_style":
+            # Same-style pairing: target style is always the content style
+            # (a different painting of that style, not the content itself).
+            self._cache_target_style_ids = self._cache_content_style_ids.clone()
+        elif self.identity_prob > 0.0:
+            # True identity supervision: these samples keep target == content
+            # (see __getitem__); the rest are paired with a different style.
+            identity_mask = torch.rand(N, generator=g) < self.identity_prob
+            target_style_ids = self._cache_content_style_ids.clone()
+            if n_styles > 1:
+                non_id = ~identity_mask
+                non_id_count = int(non_id.sum().item())
+                if non_id_count > 0:
+                    rand_other = torch.randint(0, n_styles - 1, (non_id_count,), generator=g)
+                    src_non_id = self._cache_content_style_ids[non_id]
+                    adjusted = rand_other + (rand_other >= src_non_id).long()
+                    target_style_ids[non_id] = adjusted
+            self._cache_target_style_ids = target_style_ids
+            self._cache_identity_mask = identity_mask
+        elif self.identity_ratio is None:
             if self.target_style_sampling_weights is not None:
                 self._cache_target_style_ids = self._sample_style_ids(
                     generator=g,
@@ -857,6 +915,9 @@ class AdaCUTLatentDataset(Dataset):
         target_style_id = int(self._cache_target_style_ids[index])
 
         c_pool = self.style_tensors[content_style_id]
+        identity_sample = bool(self._cache_identity_mask[index]) if self._cache_identity_mask is not None else False
+        if identity_sample:
+            target_style_id = content_style_id
         t_pool = self.style_tensors[target_style_id]
 
         c_idx = int(self._cache_content_rands[index] * c_pool.shape[0])
@@ -873,10 +934,14 @@ class AdaCUTLatentDataset(Dataset):
         )
 
         content = self._maybe_flip(c_pool[c_idx], self._cache_flip_content, index)
-        target_style = self._maybe_flip(t_pool[t_idx], self._cache_flip_target, index)
+        if identity_sample:
+            # Identity supervision: target is the very same (flipped) content latent.
+            target_style = content.clone()
+        else:
+            target_style = self._maybe_flip(t_pool[t_idx], self._cache_flip_target, index)
         aux_target_style = None
         aux_target_valid = False
-        if self.pairing_cache_dual_target_mix > 0.0:
+        if (not identity_sample) and self.pairing_cache_dual_target_mix > 0.0:
             hard_topk = self.pairing_cache_dual_target_topk if self.pairing_cache_dual_target_topk > 0 else self.pairing_cache_topk
             hard_idx = self._sample_target_index_from_pairing(
                 content_style_id=content_style_id,
@@ -891,7 +956,7 @@ class AdaCUTLatentDataset(Dataset):
             if hard_idx != t_idx:
                 hard_target = self._maybe_flip(t_pool[hard_idx], self._cache_flip_target, index)
                 target_style = torch.lerp(target_style, hard_target, self.pairing_cache_dual_target_mix)
-        if self.pairing_cache_aux_target_topk > 0:
+        if (not identity_sample) and self.pairing_cache_aux_target_topk > 0:
             aux_idx = self._sample_target_index_from_pairing(
                 content_style_id=content_style_id,
                 content_index=c_idx,
@@ -914,6 +979,18 @@ class AdaCUTLatentDataset(Dataset):
             # consumers ignore it). Key = "<source_style_id>/<content_index>".
             "content_index": c_idx,
         }
+        # infra patch P1: frozen-feature cache coordinates (additive keys only).
+        _flip_t = bool(self._cache_flip_target[index]) if self._cache_flip_target is not None else False
+        _flip_c = bool(self._cache_flip_content[index]) if self._cache_flip_content is not None else False
+        item["target_cache_index"] = t_idx
+        item["content_cache_index"] = c_idx
+        item["target_cache_flip"] = torch.tensor(float(_flip_t), dtype=torch.float32)
+        item["content_cache_flip"] = torch.tensor(float(_flip_c), dtype=torch.float32)
+        item["target_cache_valid"] = torch.tensor(
+            float(self.pairing_cache_dual_target_mix <= 0.0), dtype=torch.float32
+        )
+        if self._cache_identity_mask is not None:
+            item["identity_mask"] = torch.tensor(float(identity_sample), dtype=torch.float32)
         if self.pairing_cache_aux_target_topk > 0:
             item["aux_target_style"] = aux_target_style if aux_target_style is not None else target_style
             item["aux_target_valid"] = torch.tensor(float(aux_target_valid), dtype=torch.float32)

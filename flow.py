@@ -316,6 +316,13 @@ class FlowMatchingObjective:
                 f"pseudo_target_latent shape {tuple(pseudo.shape)} incompatible with "
                 f"target_style {tuple(target_style.shape)}"
             )
+        # Identity supervision rows must keep target == content; never swap in a
+        # style-transferred pseudo endpoint there.
+        identity_mask = conditioning.get("identity_mask")
+        if torch.is_tensor(identity_mask) and idx.numel() > 0:
+            keep = ~identity_mask.to(device=idx.device).view(-1)[idx].bool()
+            idx = idx[keep]
+            pseudo = pseudo[keep]
         out[idx] = pseudo
         return out
 
@@ -324,7 +331,10 @@ class FlowMatchingObjective:
         source_style_id=None, aux_target_style=None, aux_target_valid=None,
         conditioning=None, **_,
     ) -> Dict[str, torch.Tensor]:
-        del source_style_id, aux_target_style, aux_target_valid
+        del aux_target_style, aux_target_valid
+        # source_style_id is retained: identity/same-style rows carry
+        # source == target, and conditioning["identity_mask"] uses it to keep
+        # identity targets from being replaced by pseudo endpoints.
         conditioning = conditioning or {}
         style_text_tokens = conditioning.get("target_style_text_tokens")
         style_latent = conditioning.get("target_style_latent")

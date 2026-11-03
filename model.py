@@ -1206,6 +1206,7 @@ class WEAVE(nn.Module):
         style_text_tokens: torch.Tensor | None,
         style_latent: torch.Tensor | None,
         cfg_scale: float = 0.0,
+        reference_feats: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Advance one ODE step via the configured solver (euler | heun | rk4).
 
@@ -1217,11 +1218,12 @@ class WEAVE(nn.Module):
         _cfg_active = cfg_scale > 0.0 and self.null_style_tokens is not None
         def _f(x_in, t_in):
             v_cond = self.forward(x_in, t=t_in, style_id=style_id,
-                                  style_text_tokens=style_text_tokens, style_latent=style_latent)
+                                  style_text_tokens=style_text_tokens, style_latent=style_latent,
+                                  reference_feats=reference_feats)
             if _cfg_active:
                 v_uncond = self.forward(x_in, t=t_in, style_id=style_id,
                                         style_text_tokens=style_text_tokens, style_latent=style_latent,
-                                        cfg_unconditional=True)
+                                        cfg_unconditional=True, reference_feats=reference_feats)
                 for _k in list(v_cond.keys()):
                     v_cond[_k] = v_uncond[_k] + cfg_scale * (v_cond[_k] - v_uncond[_k])
             return v_cond
@@ -1448,6 +1450,7 @@ class WEAVE(nn.Module):
         style_text_tokens: torch.Tensor | None = None,
         style_latent: torch.Tensor | None = None,
         target_style_latent: torch.Tensor | None = None,
+        reference_feats: torch.Tensor | None = None,
         **_: object,
     ) -> torch.Tensor:
         """Spectral-domain Euler integration + stepwise AdaIN.
@@ -1641,6 +1644,7 @@ class WEAVE(nn.Module):
                 style_id=style_id, style_text_tokens=style_text_tokens,
                 style_latent=style_latent,
                 cfg_scale=self.cfg_scale if not self.training else 0.0,
+                reference_feats=reference_feats,
             )
             # 630 Phase 4H.1: EOTA — 只在最后一步应用 AdaIN (解耦 ODE 求解与风格注入)
             apply_adain_this_step = (not only_last_step) or (i == steps - 1)

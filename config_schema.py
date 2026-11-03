@@ -914,6 +914,13 @@ class BridgeConfig:
     output_supervision_extractor_local_dir: str = ""  # offline HF snapshot for dinov2
     output_supervision_feature_res: int = 0        # 0=keep decoded res; e.g. 384 for loss branch
     output_supervision_chunk_rows: int = 0         # descriptor unfold chunking (0=off)
+    # === infra patch (docs/113/patches/infra_20261104.patch): all default OFF ===
+    output_supervision_max_samples: int = 0        # 0=whole batch; >0=random K aux samples per step
+    output_supervision_split_backward: bool = False  # FM backward first, aux backward second
+    output_supervision_decoder_checkpoint: bool = False  # grad-checkpoint the latent decoder
+    output_supervision_extractor_checkpoint: bool = False  # grad-checkpoint the img_out teacher pass
+    output_supervision_frozen_feats_dir: str = ""  # offline dinov2 feature cache root (P1)
+    output_supervision_frozen_feats_dtype: str = "float16"
     # Route C training weight (InfoNCE on reference embeddings); 0 = off.
     reference_info_nce_weight: float = 0.0
     reference_info_nce_temperature: float = 0.1
@@ -960,6 +967,7 @@ class TrainingConfig:
     save_interval: int = 10
     async_checkpoint_save: bool = False
     log_interval: int = 20
+    probe_log_interval: int = 0   # 0=follow log_interval; N=sample probe scalars every N steps
     use_tqdm: bool = True
     use_amp: bool = False
     amp_dtype: str = "bf16"
@@ -1068,14 +1076,23 @@ class TrainingConfig:
     numeric_debug_interval: int = 10
     numeric_debug_halt_on_nonfinite: bool = True
     numeric_debug_dump_limit: int = 200
-    internal_probe_enabled: bool = False
+    internal_probe_enabled: bool = True
     internal_probe_batch_size: int = 4
     internal_probe_fixed_t: float = 0.5
     internal_probe_seed_offset: int = 9173
-    internal_early_stop_enabled: bool = False
+    internal_probe_every: int = 1
+    internal_early_stop_enabled: bool = True
+    internal_early_stop_record_only: bool = False
     internal_early_stop_min_epoch: int = 3
+    internal_early_stop_min_steps: int = 0
     internal_early_stop_gate_delta_threshold: float = 0.0
     internal_early_stop_shared_ratio_drop_threshold: float = 0.65
+    # Route B stage-1: stall of style_gain with healthy content_keep is the same
+    # kind of "attention only learned global statistics" event. Off until B is merged.
+    internal_early_stop_style_gain_enabled: bool = False
+    internal_early_stop_style_gain_stall_window: int = 2
+    internal_early_stop_style_gain_min_delta: float = 0.002
+    internal_early_stop_content_keep_floor: float = 0.0
     distill: dict[str, Any] = field(default_factory=dict)
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -1105,6 +1122,20 @@ class DataConfig:
     preload_max_vram_gb: float = 0.0
     preload_reserve_ratio: float = 0.35
     virtual_length_multiplier: float = 1.0
+    # Diagnostic-only: keep the first N sorted latents per style (0 = full set).
+    packed_limit_per_style: int = 0
+    # Diagnostic-only: cap the TOTAL number of training samples, split evenly
+    # across styles (0 = full set). Unlike packed_limit_per_style this names a
+    # global budget, so it also fixes the resulting steps-per-epoch.
+    train_sample_limit: int = 0
+    # Pairing reproducibility: "epoch" (default, seed derived from epoch),
+    # "fixed" (same pairing every epoch under pairing_seed), "same_style"
+    # (target style forced equal to content style).
+    pairing_mode: str = "epoch"
+    pairing_seed: int = 0
+    # Fraction of samples whose target IS the content latent (identity mapping).
+    # 0 disables it; default keeps the legacy uniform-target behaviour.
+    identity_prob: float = 0.0
     content_style_sampling_weights: list[float] | None = None
     target_style_sampling_weights: list[float] | None = None
     pairing_cache_path: str = ""

@@ -152,6 +152,7 @@ def unroll_euler_decode(
     reference_feats: torch.Tensor | None = None,
     use_grad_checkpoint: bool = True,
     microbatch: int = 0,
+    decoder_checkpoint: bool = False,
 ) -> torch.Tensor:
     """Unroll ``steps`` Euler ODE steps from content latent, then decode.
 
@@ -185,6 +186,7 @@ def unroll_euler_decode(
                 style_id=sid_c[i], style_latent=slat_c[i], style_text_tokens=stok_c[i],
                 reference_feats=ref_c[i],
                 use_grad_checkpoint=use_grad_checkpoint, microbatch=0,
+                decoder_checkpoint=decoder_checkpoint,
             ))
         return torch.cat(imgs, dim=0)
 
@@ -207,6 +209,8 @@ def unroll_euler_decode(
                 style_id=style_id, style_latent=style_latent,
                 style_text_tokens=style_text_tokens, reference_feats=reference_feats,
             )
+    if decoder_checkpoint and torch.is_grad_enabled() and h.requires_grad:
+        return grad_checkpoint(decoder.decode_image, h, use_reentrant=False)
     return decoder.decode_image(h)
 
 
@@ -327,6 +331,8 @@ class OutputSupervision(nn.Module):
         microbatch: int = 0,
         feature_res: int = 0,
         chunk_rows: int = 0,
+        decoder_checkpoint: bool = False,
+        extractor_checkpoint: bool = False,
     ) -> None:
         super().__init__()
         self.decoder = decoder
@@ -335,6 +341,8 @@ class OutputSupervision(nn.Module):
         self.microbatch = int(microbatch)
         self.feature_res = max(0, int(feature_res))
         self.chunk_rows = max(0, int(chunk_rows))
+        self.decoder_checkpoint = bool(decoder_checkpoint)
+        self.extractor_checkpoint = bool(extractor_checkpoint)
         self.style_loss = PatchSWDStyleLoss(
             extractor, style_layers,
             patch_size=patch_size, patch_stride=patch_stride,
@@ -350,24 +358,29 @@ class OutputSupervision(nn.Module):
         model,
         *,
         content_latent: torch.Tensor,
-        style_image: torch.Tensor,
-        content_image: torch.Tensor,
+        style_image: torch.Tensor | None,
+        content_image: torch.Tensor | None,
         style_id=None,
         style_latent: torch.Tensor | None = None,
         style_text_tokens: torch.Tensor | None = None,
         reference_feats: torch.Tensor | None = None,
+        style_feats: Dict[str, torch.Tensor] | None = None,
+        content_feats: Dict[str, torch.Tensor] | None = None,
     ) -> Dict[str, torch.Tensor]:
         img_out = unroll_euler_decode(
             model, self.decoder, content_latent,
             steps=self.ode_steps, style_id=style_id, style_latent=style_latent,
             style_text_tokens=style_text_tokens, reference_feats=reference_feats,
             use_grad_checkpoint=self.grad_checkpoint, microbatch=self.microbatch,
+            decoder_checkpoint=self.decoder_checkpoint,
         )
         if self.feature_res and img_out.shape[-1] != self.feature_res:
             size = (self.feature_res, self.feature_res)
             img_out = F.interpolate(img_out, size=size, mode="bilinear", align_corners=False)
-            style_image = F.interpolate(style_image, size=size, mode="bilinear", align_corners=False)
-            content_image = F.interpolate(content_image, size=size, mode="bilinear", align_corners=False)
+            if style_image is not None:
+                style_image = F.interpolate(style_image, size=size, mode="bilinear", align_corners=False)
+            if content_image is not None:
+                content_image = F.interpolate(content_image, size=size, mode="bilinear", align_corners=False)
         # Single extractor pass on the output for all layers used by the two
         # losses (previously each loss ran its own forward, 5x total).
         needed = list(dict.fromkeys(
@@ -375,15 +388,31 @@ class OutputSupervision(nn.Module):
             + self.content_loss.perceptual_layers
             + [self.content_loss.selfsim_layer]
         ))
-        feats_out = self.style_loss.extractor.forward_layers(img_out, needed)
-        with torch.no_grad():
-            feats_style = self.style_loss.extractor.forward_layers(
-                style_image.detach(), self.style_loss.layers,
+        feats_style = style_feats
+        feats_content = content_feats
+        if self.extractor_checkpoint and torch.is_grad_enabled() and img_out.requires_grad:
+            feats_out = grad_checkpoint(
+                self.style_loss.extractor.forward_layers, img_out, needed, use_reentrant=False,
             )
-            feats_content = self.content_loss.extractor.forward_layers(
-                content_image.detach(),
-                self.content_loss.perceptual_layers + [self.content_loss.selfsim_layer],
-            )
+        else:
+            feats_out = self.style_loss.extractor.forward_layers(img_out, needed)
+        if feats_style is None or feats_content is None:
+            with torch.no_grad():
+                if feats_style is None:
+                    if style_image is None:
+                        raise ValueError("style_image is required when style_feats are not cached")
+                    feats_style = self.style_loss.extractor.forward_layers(
+                        style_image.detach(), self.style_loss.layers,
+                    )
+                if feats_content is None:
+                    if content_image is None:
+                        raise ValueError("content_image is required when content_feats are not cached")
+                    feats_content = self.content_loss.extractor.forward_layers(
+                        content_image.detach(),
+                        self.content_loss.perceptual_layers + [self.content_loss.selfsim_layer],
+                    )
+        if self.content_loss.w_edge > 0.0 and content_image is None:
+            raise ValueError("content_image is required for the edge term (w_edge > 0)")
         style_logs = self.style_loss(
             img_out, style_image, feats_out=feats_out, feats_style=feats_style,
         )
