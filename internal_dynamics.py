@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 import torch
+
+
+class InternalEarlyStopConfigError(RuntimeError):
+    """Early stop was enabled without the gate head or required probe metrics."""
+
+
+class ConstantProbeReadingsError(RuntimeError):
+    """The probe is running but every reading is identical (silent no-op)."""
 
 
 def _module_params(module: torch.nn.Module | None) -> list[torch.nn.Parameter]:
@@ -94,6 +102,35 @@ def target_hf_gate_mean(model: torch.nn.Module) -> float:
     return float(torch.stack(gates).mean().item())
 
 
+def validate_internal_early_stop_model(model: torch.nn.Module) -> None:
+    """Fail fast when early stop is armed but the gate head was never built."""
+    for name in ("target_latent_hf_subband_delta_lh", "target_latent_hf_subband_delta_hl"):
+        module = getattr(model, name, None)
+        gate = getattr(module, "gate", None)
+        if not isinstance(gate, torch.nn.Parameter):
+            raise InternalEarlyStopConfigError(
+                "internal_early_stop_enabled=true 但 target_latent_hf_subband_delta 头不存在"
+                "（早停已启用但门控不存在）。请在 config 的 model 段设置 "
+                "target_latent_hf_subband_fusion_enabled=true。"
+            )
+
+
+def check_probe_constancy(records: list[dict[str, float]]) -> None:
+    """Raise when the probe is technically running but produces a constant signal."""
+    if len(records) < 2:
+        return
+    gates = [float(row["gate_mean"]) for row in records]
+    rhos = [float(row["rho"]) for row in records]
+    if all(gate == 0.0 for gate in gates):
+        raise ConstantProbeReadingsError(
+            "探针 gate_mean 恒为 0：早停已启用但门控没有读数（检查 subband delta 头是否真的参与前向）"
+        )
+    if max(rhos) - min(rhos) <= 1e-12:
+        raise ConstantProbeReadingsError(
+            "探针 rho 方差为 0：梯度探针没有产生有效读数（检查 probe loss/backward 路径）"
+        )
+
+
 def probe_internal_dynamics(
     model: torch.nn.Module,
     loss_fn: Any,
@@ -178,6 +215,8 @@ class InternalDynamicsState:
         min_epoch: int,
         gate_delta_threshold: float,
         shared_ratio_drop_threshold: float,
+        min_steps: int = 0,
+        global_step: int | None = None,
     ) -> bool:
         gate_mean = float(metrics["internal_probe_gate_mean"])
         shared_ratio = float(metrics["internal_probe_shared_ll_hf_grad_ratio"])
@@ -187,8 +226,10 @@ class InternalDynamicsState:
             if self.previous_shared_ll_hf_ratio is None
             else shared_ratio / max(self.previous_shared_ll_hf_ratio, 1e-12)
         )
+        steps_ready = global_step is None or int(global_step) >= int(min_steps)
         crossed = bool(
             epoch >= int(min_epoch)
+            and steps_ready
             and self.previous_shared_ll_hf_ratio is not None
             and ratio_step <= float(shared_ratio_drop_threshold)
             and gate_delta > float(gate_delta_threshold)
@@ -199,6 +240,51 @@ class InternalDynamicsState:
         metrics["internal_probe_shared_ratio_step"] = ratio_step
         metrics["internal_probe_transition"] = float(crossed)
         metrics["internal_probe_transition_epoch"] = float(self.transition_epoch or 0)
+        metrics["internal_probe_min_steps_reached"] = float(steps_ready)
         self.previous_gate_mean = gate_mean
         self.previous_shared_ll_hf_ratio = shared_ratio
         return crossed
+
+
+@dataclass
+class StyleGainEarlyStopState:
+    """Route B stage-1 stop rule: style_gain stalls while content_keep stays healthy.
+
+    Firing means "attention only learned global statistics", so adding capacity is
+    pointless until the query/token resolution changes.
+    """
+
+    stall_window: int = 2
+    min_delta: float = 0.002
+    content_keep_floor: float = 0.0
+    history: list[tuple[int, float, float]] = field(default_factory=list)
+    transition_epoch: int | None = None
+
+    def update(
+        self,
+        epoch: int,
+        style_gain: float,
+        content_keep: float,
+        *,
+        min_epoch: int,
+        min_steps: int = 0,
+        global_step: int | None = None,
+    ) -> bool:
+        self.history.append((int(epoch), float(style_gain), float(content_keep)))
+        window = max(1, int(self.stall_window))
+        if len(self.history) < window + 1:
+            return False
+        steps_ready = global_step is None or int(global_step) >= int(min_steps)
+        first_gain = self.history[-(window + 1)][1]
+        last_gain = self.history[-1][1]
+        gain_delta = last_gain - first_gain
+        keep = self.history[-1][2]
+        fired = bool(
+            epoch >= int(min_epoch)
+            and steps_ready
+            and gain_delta <= float(self.min_delta)
+            and keep >= float(self.content_keep_floor)
+        )
+        if fired and self.transition_epoch is None:
+            self.transition_epoch = int(epoch)
+        return fired

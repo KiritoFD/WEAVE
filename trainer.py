@@ -19,7 +19,15 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
 from config_schema import ExperimentConfig, compact_runtime_config
-from internal_dynamics import InternalDynamicsState, probe_internal_dynamics
+from internal_dynamics import (
+    ConstantProbeReadingsError,
+    InternalDynamicsState,
+    InternalEarlyStopConfigError,
+    StyleGainEarlyStopState,
+    check_probe_constancy,
+    probe_internal_dynamics,
+    validate_internal_early_stop_model,
+)
 from model import build_model_from_config, count_parameters
 from style_families import prune_state_dict_for_tokenizer_family
 from utils.training import (
@@ -325,9 +333,43 @@ class SBTrainer:
                 getattr(config.bridge, "output_supervision_feature_res", 0),
                 getattr(config.bridge, "output_supervision_chunk_rows", 0),
             )
+        # === infra patch (docs/113/patches/infra_20261104.patch): all default OFF ===
+        self._output_sup_max_samples = max(0, int(getattr(config.bridge, "output_supervision_max_samples", 0)))
+        self._output_sup_split_backward = bool(
+            getattr(config.bridge, "output_supervision_split_backward", False)
+        )
+        self._output_sup_cache = None
+        self._sup_cache_fallback_warned = False
+        _feats_dir = str(getattr(config.bridge, "output_supervision_frozen_feats_dir", "") or "").strip()
+        if self._output_supervision is not None and _feats_dir:
+            from frozen_feature_cache import FrozenFeatureCache
+
+            _sup = self._output_supervision
+            self._output_sup_cache = FrozenFeatureCache(
+                _feats_dir,
+                feature_res=int(getattr(config.bridge, "output_supervision_feature_res", 0)),
+                layers=list(dict.fromkeys(
+                    _sup.style_loss.layers
+                    + _sup.content_loss.perceptual_layers
+                    + [_sup.content_loss.selfsim_layer]
+                )),
+                dtype=str(getattr(config.bridge, "output_supervision_frozen_feats_dtype", "float16")),
+            )
         # Route C: InfoNCE weight for reference encoder (encoder lives in the model)
         self._ref_nce_weight = float(getattr(config.bridge, "reference_info_nce_weight", 0.0))
         self._ref_nce_temperature = float(getattr(config.bridge, "reference_info_nce_temperature", 0.1))
+        if getattr(self.model, "reference_conditioner", None) is not None:
+            logger.info(
+                "Route C reference conditioning ON: variant=%s in_dim=%d nce=%.4f temp=%.4f cache=%s",
+                config.model.conditioner_variant, int(config.model.reference_encoder_in_dim),
+                self._ref_nce_weight, self._ref_nce_temperature,
+                getattr(config.data, "reference_dino_cache_dir", ""),
+            )
+        if getattr(self.model, "texture_refiner", None) is not None:
+            logger.info(
+                "Route D texture refiner ON: hidden=%d dilations=1/2/4",
+                int(getattr(config.model, "texture_refiner_hidden", 32)),
+            )
         _assert_active_source_modules([
             "config_schema",
             "model",
@@ -341,6 +383,9 @@ class SBTrainer:
         self.grad_clip_norm = float(train_cfg.get("grad_clip_norm", 1.0))
         self.accumulation_steps = max(1, int(train_cfg.get("accumulation_steps", 1)))
         self.log_interval = max(0, int(train_cfg.get("log_interval", 20)))
+        self.probe_log_interval = int(train_cfg.get("probe_log_interval", 0) or 0)
+        if self.probe_log_interval <= 0:
+            self.probe_log_interval = max(1, int(train_cfg.get("log_interval", 20) or 20))
         self.use_tqdm = bool(train_cfg.get("use_tqdm", True))
         self.num_epochs = int(train_cfg.get("num_epochs", 60))
         self.save_interval = max(1, int(train_cfg.get("save_interval", 10)))
@@ -358,21 +403,40 @@ class SBTrainer:
         self.numeric_debug_dump_limit = max(1, int(train_cfg.get("numeric_debug_dump_limit", 200)))
         self.numeric_debug_events = 0
         self._offloaded_for_full_eval = False
-        self.internal_probe_enabled = bool(train_cfg.get("internal_probe_enabled", False))
+        self.internal_probe_enabled = bool(train_cfg.get("internal_probe_enabled", True))
         self.internal_probe_batch_size = max(1, int(train_cfg.get("internal_probe_batch_size", 4)))
         self.internal_probe_fixed_t = float(train_cfg.get("internal_probe_fixed_t", 0.5))
         self.internal_probe_seed_offset = int(train_cfg.get("internal_probe_seed_offset", 9173))
-        self.internal_early_stop_enabled = bool(train_cfg.get("internal_early_stop_enabled", False))
+        self.internal_probe_every = max(1, int(train_cfg.get("internal_probe_every", 1)))
+        self.internal_early_stop_enabled = bool(train_cfg.get("internal_early_stop_enabled", True))
+        self.internal_early_stop_record_only = bool(train_cfg.get("internal_early_stop_record_only", False))
         self.internal_early_stop_min_epoch = max(2, int(train_cfg.get("internal_early_stop_min_epoch", 3)))
+        self.internal_early_stop_min_steps = max(0, int(train_cfg.get("internal_early_stop_min_steps", 0)))
         self.internal_early_stop_gate_delta_threshold = float(
             train_cfg.get("internal_early_stop_gate_delta_threshold", 0.0)
         )
         self.internal_early_stop_shared_ratio_drop_threshold = float(
             train_cfg.get("internal_early_stop_shared_ratio_drop_threshold", 0.65)
         )
+        self.internal_early_stop_style_gain_enabled = bool(
+            train_cfg.get("internal_early_stop_style_gain_enabled", False)
+        )
         self._internal_probe_batch: dict | None = None
         self._internal_probe_noise: torch.Tensor | None = None
+        self._internal_probe_records: list[dict[str, float]] = []
+        self._style_gain_stop_state = StyleGainEarlyStopState(
+            stall_window=max(1, int(train_cfg.get("internal_early_stop_style_gain_stall_window", 2))),
+            min_delta=float(train_cfg.get("internal_early_stop_style_gain_min_delta", 0.002)),
+            content_keep_floor=float(train_cfg.get("internal_early_stop_content_keep_floor", 0.0)),
+        )
         self._internal_dynamics_state = InternalDynamicsState()
+        self.internal_early_stop_fired = False
+        self.internal_early_stop_fired_epoch: int | None = None
+        self.internal_early_stop_fire_reason: str | None = None
+        self.internal_early_stop_would_fire = False
+        self.stop_reason: str | None = None
+        if self.internal_early_stop_enabled:
+            validate_internal_early_stop_model(unwrap_compiled_model(self.model))
 
         self.checkpoint_dir = Path(ckpt_cfg.save_dir)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -380,6 +444,7 @@ class SBTrainer:
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.numeric_debug_file = self.checkpoint_dir / "numeric_debug.jsonl"
         self.internal_dynamics_file = self.checkpoint_dir / "internal_dynamics.jsonl"
+        self.internal_dynamics_summary_path = self.checkpoint_dir / "internal_dynamics_summary.json"
         self._maybe_load_transport_style_stats_bank()
 
         write_config_and_source_snapshot(
@@ -442,6 +507,8 @@ class SBTrainer:
     def update_internal_dynamics(self, epoch: int, metrics: Dict[str, float]) -> bool:
         if not self.internal_probe_enabled or self._internal_probe_batch is None:
             return False
+        if self.internal_probe_every > 1 and epoch % self.internal_probe_every != 0:
+            return False
         model = unwrap_compiled_model(self.model)
         was_training = model.training
         model.eval()
@@ -477,13 +544,26 @@ class SBTrainer:
             model.zero_grad(set_to_none=True)
             model.train(was_training)
         metrics.update(probe_metrics)
+        self._internal_probe_records.append(
+            {
+                "epoch": int(epoch),
+                "gate_mean": float(metrics["internal_probe_gate_mean"]),
+                "rho": float(metrics["internal_probe_shared_ll_hf_grad_ratio"]),
+                "global_step": int(self.global_step),
+            }
+        )
+        if self.internal_early_stop_enabled:
+            check_probe_constancy(self._internal_probe_records)
         crossed = self._internal_dynamics_state.update(
             epoch,
             metrics,
             min_epoch=self.internal_early_stop_min_epoch,
             gate_delta_threshold=self.internal_early_stop_gate_delta_threshold,
             shared_ratio_drop_threshold=self.internal_early_stop_shared_ratio_drop_threshold,
+            min_steps=self.internal_early_stop_min_steps,
+            global_step=self.global_step,
         )
+        style_gain_crossed = self._update_style_gain_stop(epoch, metrics)
         metrics["internal_probe_stop_requested"] = float(crossed and self.internal_early_stop_enabled)
         payload = {"epoch": int(epoch), **{key: float(value) for key, value in metrics.items() if key.startswith("internal_probe_")}}
         with open(self.internal_dynamics_file, "a", encoding="utf-8") as handle:
@@ -498,10 +578,97 @@ class SBTrainer:
             metrics["internal_probe_route_hf_head_grad_ratio"],
             crossed,
         )
-        if crossed and self.internal_early_stop_enabled:
-            self.requested_stop = True
-            logger.info("Internal-dynamics early stop requested at epoch %d.", epoch)
-        return crossed
+        if (crossed or style_gain_crossed) and self.internal_early_stop_enabled:
+            self.internal_early_stop_would_fire = True
+            reason = "gate fired" if crossed else "style_gain stalled"
+            if self.internal_early_stop_record_only:
+                logger.info(
+                    "Internal-dynamics would fire at epoch %d (%s) but record_only=True; continuing.",
+                    epoch,
+                    reason,
+                )
+            else:
+                self.internal_early_stop_fired = True
+                self.internal_early_stop_fired_epoch = int(epoch)
+                self.internal_early_stop_fire_reason = reason
+                self.stop_reason = reason
+                self.requested_stop = True
+                logger.info(
+                    "Internal-dynamics early stop requested at epoch %d (%s).",
+                    epoch,
+                    reason,
+                )
+        self._write_internal_dynamics_summary()
+        return crossed or style_gain_crossed
+
+    def _update_style_gain_stop(self, epoch: int, metrics: Dict[str, float]) -> bool:
+        if not self.internal_early_stop_style_gain_enabled:
+            return False
+        if "style_gain" not in metrics or "content_keep" not in metrics:
+            raise InternalEarlyStopConfigError(
+                "internal_early_stop_style_gain_enabled=true 但 metrics 缺少 "
+                "style_gain/content_keep（Route B 诊断尚未接线）"
+            )
+        return self._style_gain_stop_state.update(
+            epoch,
+            float(metrics["style_gain"]),
+            float(metrics["content_keep"]),
+            min_epoch=self.internal_early_stop_min_epoch,
+            min_steps=self.internal_early_stop_min_steps,
+            global_step=self.global_step,
+        )
+
+    def _write_internal_dynamics_summary(self) -> None:
+        records = self._internal_probe_records
+        style_history = self._style_gain_stop_state.history
+        payload = {
+            "armed": bool(self.internal_early_stop_enabled),
+            "record_only": bool(self.internal_early_stop_record_only),
+            "fired": bool(self.internal_early_stop_fired),
+            "would_fire": bool(self.internal_early_stop_would_fire),
+            "fired_epoch": self.internal_early_stop_fired_epoch,
+            "stop_reason": self.stop_reason,
+            "min_epoch": int(self.internal_early_stop_min_epoch),
+            "min_steps": int(self.internal_early_stop_min_steps),
+            "probe_every": int(self.internal_probe_every),
+            "gate_delta_threshold": float(self.internal_early_stop_gate_delta_threshold),
+            "shared_ratio_drop_threshold": float(self.internal_early_stop_shared_ratio_drop_threshold),
+            "global_step": int(self.global_step),
+            "probe_epochs": [int(row["epoch"]) for row in records],
+            "rho_series": [round(float(row["rho"]), 6) for row in records],
+            "gate_mean_series": [round(float(row["gate_mean"]), 6) for row in records],
+            "style_gain_series": [round(float(row[1]), 6) for row in style_history],
+            "content_keep_series": [round(float(row[2]), 6) for row in style_history],
+        }
+        try:
+            self.internal_dynamics_summary_path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+        except OSError as exc:
+            logger.warning("Failed to write internal dynamics summary: %s", exc)
+
+    def finalize_internal_dynamics(self, stop_reason: str | None = None) -> None:
+        if stop_reason:
+            self.stop_reason = stop_reason
+        elif self.internal_early_stop_fired:
+            self.stop_reason = self.internal_early_stop_fire_reason or "gate fired"
+        elif self.internal_early_stop_enabled:
+            if self.global_step < self.internal_early_stop_min_steps:
+                self.stop_reason = "min_steps 未达"
+            else:
+                self.stop_reason = "max epochs"
+        else:
+            self.stop_reason = "early stop disabled"
+        self._write_internal_dynamics_summary()
+        logger.info(
+            "Internal early stop summary: armed=%s fired=%s epoch=%s reason=%s probes=%d",
+            self.internal_early_stop_enabled,
+            self.internal_early_stop_fired,
+            self.internal_early_stop_fired_epoch,
+            self.stop_reason,
+            len(self._internal_probe_records),
+        )
 
     def _move_optimizer_state(self, device: torch.device) -> None:
         for state in self.optimizer.state.values():
@@ -822,7 +989,7 @@ class SBTrainer:
 
         return _rms(endpoint_f - source_f) / (_rms(target_f - source_f) + 1e-6)
 
-    def _format_bridge_probe_log(self) -> str:
+    def _format_bridge_probe_log(self, stats: Dict[str, float] | None = None) -> str:
         """Format a concise probe log line from the current bridge last_debug."""
         bridge = getattr(self.model, "last_debug", {})
         if not isinstance(bridge, dict):
@@ -839,6 +1006,12 @@ class SBTrainer:
             "endpoint_alpha",
             "endpoint_high_alpha",
         ]
+        if stats is not None:
+            return " ".join(
+                f"{key}={stats[f'bridge_{key}']:.4f}"
+                for key in keys
+                if f"bridge_{key}" in stats
+            )
         parts = []
         for key in keys:
             value = bridge.get(key)
@@ -851,12 +1024,22 @@ class SBTrainer:
                 parts.append(f"{key}={value:.4f}")
         return " ".join(parts)
 
+    @staticmethod
+    def _flush_scalar_stats(pending: list[tuple[str, torch.Tensor]], stats: Dict[str, float]) -> None:
+        """Copy every pending scalar to the host in ONE device-to-host transfer."""
+        if not pending:
+            return
+        values = torch.stack([torch.nan_to_num(v.detach().float().reshape(())) for _, v in pending])
+        for (key, _), value in zip(pending, values.tolist()):
+            stats[key] = float(value)
+
     def _bridge_probe_stats(self) -> Dict[str, float]:
         """Extract scalar probe statistics from the WEAVE model's last_debug state."""
         stats: Dict[str, float] = {}
         bridge = getattr(self.model, "last_debug", None)
         if not isinstance(bridge, dict):
             return stats
+        pending: list[tuple[str, torch.Tensor]] = []
         probe_keys = [
             "latent_input_mean",
             "latent_input_std",
@@ -891,7 +1074,7 @@ class SBTrainer:
         for key in probe_keys:
             value = bridge.get(key)
             if torch.is_tensor(value):
-                stats[f"bridge_{key}"] = float(torch.nan_to_num(value.detach().float()).item())
+                pending.append((f"bridge_{key}", value))
             elif isinstance(value, (int, float, bool)):
                 stats[f"bridge_{key}"] = float(value)
         # Include per-layer block output std if present.
@@ -899,11 +1082,13 @@ class SBTrainer:
             if key.startswith("block") and key.endswith("_output_std"):
                 value = bridge[key]
                 if torch.is_tensor(value):
-                    stats[f"bridge_{key}"] = float(torch.nan_to_num(value.detach().float()).item())
+                    pending.append((f"bridge_{key}", value))
+        self._flush_scalar_stats(pending, stats)
         return stats
 
     def _tokenizer_scalar_metrics(self) -> Dict[str, float]:
         stats: Dict[str, float] = {}
+        pending: list[tuple[str, torch.Tensor]] = []
         modules = [
             ("style_tokenizer", getattr(self.model, "style_tokenizer", None)),
             ("structured_style_tokenizer", getattr(self.model, "structured_style_tokenizer", None)),
@@ -915,44 +1100,25 @@ class SBTrainer:
             if isinstance(raw, dict):
                 for key, value in raw.items():
                     if torch.is_tensor(value):
-                        stats[f"{prefix}_{key}"] = float(torch.nan_to_num(value.detach().float()).item())
+                        pending.append((f"{prefix}_{key}", value))
                     elif isinstance(value, (int, float, bool)):
                         stats[f"{prefix}_{key}"] = float(value)
-        appearance_debug = getattr(self.model, "last_output_appearance_debug", {})
-        if isinstance(appearance_debug, dict):
-            for key, value in appearance_debug.items():
+        debug_sources = [
+            (getattr(self.model, "last_output_appearance_debug", {}), ""),
+            (getattr(self.model, "last_solver_noise_debug", {}), "solver_"),
+            (getattr(self.model, "last_style_delta_debug", {}), ""),
+            (getattr(self.model, "last_transport_stats_debug", {}), ""),
+            (getattr(self.loss_fn, "last_fiberwise_swd_debug", {}), "fiberwise_"),
+        ]
+        for source, prefix in debug_sources:
+            if not isinstance(source, dict):
+                continue
+            for key, value in source.items():
                 if torch.is_tensor(value):
-                    stats[str(key)] = float(torch.nan_to_num(value.detach().float()).item())
+                    pending.append((f"{prefix}{key}", value))
                 elif isinstance(value, (int, float, bool)):
-                    stats[str(key)] = float(value)
-        solver_debug = getattr(self.model, "last_solver_noise_debug", {})
-        if isinstance(solver_debug, dict):
-            for key, value in solver_debug.items():
-                if torch.is_tensor(value):
-                    stats[f"solver_{key}"] = float(torch.nan_to_num(value.detach().float()).item())
-                elif isinstance(value, (int, float, bool)):
-                    stats[f"solver_{key}"] = float(value)
-        style_delta_debug = getattr(self.model, "last_style_delta_debug", {})
-        if isinstance(style_delta_debug, dict):
-            for key, value in style_delta_debug.items():
-                if torch.is_tensor(value):
-                    stats[str(key)] = float(torch.nan_to_num(value.detach().float()).item())
-                elif isinstance(value, (int, float, bool)):
-                    stats[str(key)] = float(value)
-        transport_stats_debug = getattr(self.model, "last_transport_stats_debug", {})
-        if isinstance(transport_stats_debug, dict):
-            for key, value in transport_stats_debug.items():
-                if torch.is_tensor(value):
-                    stats[str(key)] = float(torch.nan_to_num(value.detach().float()).item())
-                elif isinstance(value, (int, float, bool)):
-                    stats[str(key)] = float(value)
-        fiberwise_debug = getattr(self.loss_fn, "last_fiberwise_swd_debug", {})
-        if isinstance(fiberwise_debug, dict):
-            for key, value in fiberwise_debug.items():
-                if torch.is_tensor(value):
-                    stats[f"fiberwise_{key}"] = float(torch.nan_to_num(value.detach().float()).item())
-                elif isinstance(value, (int, float, bool)):
-                    stats[f"fiberwise_{key}"] = float(value)
+                    stats[f"{prefix}{key}"] = float(value)
+        self._flush_scalar_stats(pending, stats)
         return stats
 
     def _maybe_load_transport_style_stats_bank(self) -> None:
@@ -1049,6 +1215,27 @@ class SBTrainer:
             prefixes.append("style_conditioner.cls_proj.")
         if not hasattr(module, "intrinsic_style_global"):
             prefixes.append("intrinsic_style_global.")
+        # Route C modules are new: resuming a pre-Route-C checkpoint must not
+        # fail strict loading (they start from their zero gate).
+        if getattr(module, "reference_encoder", None) is not None:
+            prefixes.append("reference_encoder.")
+        if getattr(module, "reference_conditioner", None) is not None:
+            prefixes.append("reference_conditioner.")
+        # Route D texture refiner is new too (zero-init residual).
+        if getattr(module, "texture_refiner", None) is not None:
+            prefixes.append("texture_refiner.")
+        # Internal-dynamics gate heads are new; resuming an older checkpoint must
+        # load them from their zero gate instead of failing strict loading.
+        if any(
+            getattr(module, name, None) is not None
+            for name in (
+                "target_latent_hf_subband_delta_lh",
+                "target_latent_hf_subband_delta_hl",
+                "target_latent_hf_subband_encoder_lh",
+                "target_latent_hf_subband_encoder_hl",
+            )
+        ):
+            prefixes.append("target_latent_hf_subband_")
         return tuple(prefixes)
 
     def _load_state_dict_with_policy(
@@ -1436,6 +1623,103 @@ class SBTrainer:
                 out[key] = value
         return out
 
+    def _warn_sup_cache_fallback(self, reason: str) -> None:
+        if not self._sup_cache_fallback_warned:
+            logger.warning(
+                "Frozen feature cache disabled for this run: %s; using the online extractor.", reason
+            )
+            self._sup_cache_fallback_warned = True
+
+    def _sup_cache_rows(self, batch: Dict[str, torch.Tensor], side: str, sel: torch.Tensor | None):
+        """Global cache rows for ``side`` ('target'|'content'); ``None`` = online path."""
+        cache = self._output_sup_cache
+        if cache is None or not cache.enabled:
+            return None
+        idx_key = f"{side}_cache_index"
+        sid_key = "target_style_id" if side == "target" else "source_style_id"
+        if idx_key not in batch or sid_key not in batch:
+            self._warn_sup_cache_fallback(f"batch has no '{idx_key}'/'{sid_key}' keys")
+            return None
+        if side == "target" and "target_cache_valid" in batch:
+            if not bool(torch.all(batch["target_cache_valid"] > 0).item()):
+                self._warn_sup_cache_fallback("dual-target blend rows are not cacheable")
+                return None
+        _sid = batch[sid_key]
+        _idx = batch[idx_key]
+        _flip = batch.get(f"{side}_cache_flip")
+        if sel is not None:
+            if torch.is_tensor(_sid):
+                _sid = _sid.index_select(0, sel)
+            if torch.is_tensor(_idx):
+                _idx = _idx.index_select(0, sel)
+            if torch.is_tensor(_flip):
+                _flip = _flip.index_select(0, sel)
+        rows = cache.rows(_sid, _idx, _flip)
+        if rows is None:
+            self._warn_sup_cache_fallback("cache row out of range or unknown style id")
+        return rows
+
+    def _output_sup_step(self, batch, content, target_style, target_style_id):
+        """Route A auxiliary loss (P1 cache + P2 sub-sampling aware)."""
+        if content.device.type == "cuda":
+            _autocast = torch.amp.autocast("cuda", enabled=self.use_amp, dtype=self.amp_dtype)
+        else:
+            _autocast = torch.autocast("cpu", enabled=False)
+        with _autocast:
+            # --- infra P2: optional aux sub-sampling (K random samples) ---
+            _c_aux, _t_aux, _sid_aux = content, target_style, target_style_id
+            _tok_aux = batch.get("target_style_text_tokens")
+            _ref_aux = batch.get("reference_feats")
+            _sel = None
+            _aux_k = self._output_sup_max_samples
+            if 0 < _aux_k < content.shape[0]:
+                _sel = torch.randperm(content.shape[0], device=content.device)[:_aux_k]
+                _c_aux = content.index_select(0, _sel)
+                _t_aux = target_style.index_select(0, _sel)
+                if torch.is_tensor(target_style_id):
+                    _sid_aux = target_style_id.index_select(0, _sel)
+                if torch.is_tensor(_tok_aux):
+                    _tok_aux = _tok_aux.index_select(0, _sel)
+                if torch.is_tensor(_ref_aux):
+                    _ref_aux = _ref_aux.index_select(0, _sel)
+            # --- infra P1: frozen feature cache lookup (None => online path) ---
+            _feats_style = _feats_content = None
+            _rows_t = self._sup_cache_rows(batch, "target", _sel)
+            _rows_c = self._sup_cache_rows(batch, "content", _sel)
+            if _rows_t is not None and _rows_c is not None:
+                _feats_style = self._output_sup_cache.lookup(
+                    _rows_t, self._output_supervision.style_loss.layers, device=content.device,
+                )
+                _feats_content = self._output_sup_cache.lookup(
+                    _rows_c,
+                    self._output_supervision.content_loss.perceptual_layers
+                    + [self._output_supervision.content_loss.selfsim_layer],
+                    device=content.device,
+                )
+            with torch.no_grad():
+                _style_img = (
+                    None if _feats_style is not None
+                    else self._output_supervision.decoder.decode_image(_t_aux)
+                )
+                _content_img = self._output_supervision.decoder.decode_image(_c_aux)
+            _sup_logs = self._output_supervision(
+                self.model,
+                content_latent=_c_aux,
+                style_image=_style_img,
+                content_image=_content_img,
+                style_id=_sid_aux,
+                style_latent=batch.get("target_style_latent") if torch.is_tensor(batch.get("target_style_latent")) else _t_aux,
+                style_text_tokens=_tok_aux,
+                reference_feats=_ref_aux,
+                style_feats=_feats_style,
+                content_feats=_feats_content,
+            )
+            _sup_total = (
+                self._output_sup_lambda_style * _sup_logs["loss_style_out"]
+                + self._output_sup_lambda_content * _sup_logs["loss_content_out"]
+            )
+        return _sup_total, _sup_logs
+
     def step_scheduler(self) -> None:
         if self.scheduler is not None:
             self.scheduler.step()
@@ -1456,6 +1740,8 @@ class SBTrainer:
         self.gpu_sampler.start()
         epoch_start = time.time()
         metric_accum: Dict[str, torch.Tensor] = {}
+        probe_accum: Dict[str, float] = {}
+        probe_batches = 0
         num_batches = 0
         data_time_total = 0.0
         forward_time_total = 0.0
@@ -1562,23 +1848,13 @@ class SBTrainer:
                 # Route A: output-level style/content supervision on decoded image.
                 # Style image / content image are obtained by decoding the batch
                 # latents with the same frozen decoder (dataset is latent-only).
-                if self._output_supervision is not None and (step_idx % self._output_sup_apply_every == 0):
-                    with torch.no_grad():
-                        _style_img = self._output_supervision.decoder.decode_image(target_style)
-                        _content_img = self._output_supervision.decoder.decode_image(content)
-                    _sup_logs = self._output_supervision(
-                        self.model,
-                        content_latent=content,
-                        style_image=_style_img,
-                        content_image=_content_img,
-                        style_id=target_style_id,
-                        style_latent=batch.get("target_style_latent") if torch.is_tensor(batch.get("target_style_latent")) else target_style,
-                        style_text_tokens=batch.get("target_style_text_tokens"),
-                        reference_feats=batch.get("reference_feats"),
-                    )
-                    _sup_total = (
-                        self._output_sup_lambda_style * _sup_logs["loss_style_out"]
-                        + self._output_sup_lambda_content * _sup_logs["loss_content_out"]
+                if (
+                    self._output_supervision is not None
+                    and (step_idx % self._output_sup_apply_every == 0)
+                    and not self._output_sup_split_backward
+                ):
+                    _sup_total, _sup_logs = self._output_sup_step(
+                        batch, content, target_style, target_style_id,
                     )
                     loss = loss + _sup_total
                     loss_dict["loss"] = loss
@@ -1628,6 +1904,26 @@ class SBTrainer:
             else:
                 (loss / self.accumulation_steps).backward()
             backward_time_total += max(0.0, time.perf_counter() - t0)
+            if (
+                self._output_sup_split_backward
+                and self._output_supervision is not None
+                and (step_idx % self._output_sup_apply_every == 0)
+            ):
+                # --- infra P3: the FM graph is already freed, build the aux graph now ---
+                _t0 = time.perf_counter()
+                _sup_total, _sup_logs = self._output_sup_step(
+                    batch, content, target_style, target_style_id,
+                )
+                _aux_term = _sup_total / self.accumulation_steps
+                if self.scaler is not None:
+                    self.scaler.scale(_aux_term).backward()
+                else:
+                    _aux_term.backward()
+                backward_time_total += max(0.0, time.perf_counter() - _t0)
+                loss_dict["loss_output_sup"] = _sup_total
+                loss_dict["loss"] = loss.detach() + _sup_total.detach()
+                for _k, _v in _sup_logs.items():
+                    loss_dict[f"out_{_k}"] = _v.detach() if torch.is_tensor(_v) else _v
             grad_report = None
             has_nonfinite_grad = False
             if should_debug_step:
@@ -1702,16 +1998,23 @@ class SBTrainer:
                 if value is None:
                     continue
                 metric_accum[key] = metric_accum.get(key, 0) + value.detach()
-            token_scalar_metrics = self._tokenizer_scalar_metrics()
-            if token_scalar_metrics:
-                for key, value in token_scalar_metrics.items():
-                    scalar = content.new_tensor(float(value), dtype=torch.float32)
-                    metric_accum[key] = metric_accum.get(key, 0) + scalar
-            bridge_probe_stats = self._bridge_probe_stats()
-            if bridge_probe_stats:
-                for key, value in bridge_probe_stats.items():
-                    scalar = content.new_tensor(float(value), dtype=torch.float32)
-                    metric_accum[key] = metric_accum.get(key, 0) + scalar
+            probe_interval = self.probe_log_interval
+            probe_due = (
+                step_idx == 1
+                or step_idx % probe_interval == 0
+                or step_idx == len(dataloader)
+            )
+            probe_stats: Dict[str, float] | None = None
+            if probe_due:
+                # Probe scalars are diagnostics only: collect them on the throttle
+                # schedule, one .tolist() per source, and average with their own
+                # denominator so the epoch summary is not diluted by log_interval.
+                for key, value in self._tokenizer_scalar_metrics().items():
+                    probe_accum[key] = probe_accum.get(key, 0.0) + float(value)
+                probe_stats = self._bridge_probe_stats()
+                for key, value in probe_stats.items():
+                    probe_accum[key] = probe_accum.get(key, 0.0) + float(value)
+                probe_batches += 1
                 # Compute endpoint alpha from the stored last endpoint if source/target are available.
                 if "content" in batch and "target_style" in batch:
                     bridge_debug = getattr(self.model, "last_debug", {})
@@ -1721,7 +2024,10 @@ class SBTrainer:
                             alpha = self._compute_endpoint_alpha_from_last_endpoint(
                                 last_endpoint, batch["content"], batch["target_style"]
                             )
-                            metric_accum["bridge_endpoint_alpha_trainer"] = metric_accum.get("bridge_endpoint_alpha_trainer", 0) + alpha.detach()
+                            probe_accum["bridge_endpoint_alpha_trainer"] = (
+                                probe_accum.get("bridge_endpoint_alpha_trainer", 0.0)
+                                + float(alpha.detach().float().item())
+                            )
                         except Exception:
                             pass
             num_batches += 1
@@ -1748,8 +2054,8 @@ class SBTrainer:
                         postfix["cea"] = f"{edge_anchor:.4f}"
                 progress.set_postfix(**postfix)
 
-            if step_idx == 1 or step_idx % progress_interval == 0:
-                probe_msg = self._format_bridge_probe_log()
+            if (step_idx == 1 or step_idx % progress_interval == 0 or step_idx == len(dataloader)):
+                probe_msg = self._format_bridge_probe_log(probe_stats)
                 if probe_msg:
                     logger.info("Step %d probe | %s", step_idx, probe_msg)
 
@@ -1804,6 +2110,9 @@ class SBTrainer:
         denom = max(num_batches, 1)
         for key, value in metric_accum.items():
             metrics[key] = float((value / denom).item())
+        if probe_batches > 0:
+            for key, value in probe_accum.items():
+                metrics[key] = float(value / probe_batches)
         metrics.setdefault("loss", 0.0)
         metrics.setdefault("flow", 0.0)
         metrics.setdefault("kinetic_energy", 0.0)
