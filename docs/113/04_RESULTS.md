@@ -41,22 +41,29 @@
 - 协议：150 内容图 × 4 个非本风格目标 = **600 跨风格主表**；对角线 150 = **Identity 补充**；参考图固定 `first_image_of_target_style_test_dir`（`Exp.md#L3-L4`）。
 - 同口径基线 `eval_base_ep10`（论文模型 epoch 10，L/14 CLIP + 统一 split）：
 
-| 项目 | DINO-S | CLIP-S | DINO-C | LPIPS | 来源 |
+产物目录在**仓库外**：远端 `/mnt/i/Latent_Style/runs/`（Windows 侧 `I:/Latent_Style/runs/`），不是仓库内的 `runs/`。
+
+| 项目 | DINO-S | CLIP-S | DINO-C | LPIPS | 来源（已验证） |
 |---|---:|---:|---:|---:|---|
-| 600 跨风格（主表） | 0.3977 | 0.6425 | 0.7939 | 0.3053 | `Exp.md#L23` |
-| 150 同风格（Identity） | 0.8263 | — | — | — | `Exp.md#L23` |
+| 600 跨风格（主表） | 0.3977 | 0.6425 | 0.7939 | 0.3053 | `runs/nextgen_eval_full/base_ep10/results_split.json` |
+| 150 同风格（Identity） | 0.8263 | — | — | — | 同上（`identity_same_style`，完整值 0.8263/0.7966/0.8249/0.2461） |
 
-- 路线 A 试跑（**不进结论**，500/1000 步）：
+> 已逐位核对：`main_cross_style` = 0.39772862 / 0.64251816 / 0.79385916 / 0.30529517，`counts` = total 750 / cross 600 / same 150，`reference_selection.policy` = `first_image_of_target_style_test_dir`；同目录 `dino_summary.json` 的 `off_dino_s = 0.39772862` 与之自洽。
+> **状态：已验证。**
 
-| run | 600 DINO-S | 600 CLIP-S | 600 DINO-C | 600 LPIPS | 150 DINO-S |
-|---|---:|---:|---:|---:|---:|
-| routeA_smoke_ep12（500 步） | 0.3938 | 0.6461 | 0.8258 | 0.2722 | 0.8526 |
-| a_ls005_lc01_s2_e1_s0（1000 步） | 0.3912 | 0.6454 | 0.8359 | 0.2667 | 0.8572 |
-| a_ls01_lc01_s2_e1_s0（1000 步） | 0.3926 | 0.6454 | 0.8342 | 0.2670 | 0.8558 |
+- 路线 A 试跑（**不进结论**；`registry.jsonl` 三条均标 `valid:false`，原因是 round1 lr=1e-5 平台期、配置作废）：
 
-- 历史参考（旧 CLIP base-patch32、复用旧产出，**不是同管线**）：600 = 0.4080/0.7007/0.7667/0.3412；150 = 0.8264/0.8467/0.8240/0.2568（`Exp.md#L30`）。
+| run | 600 DINO-S | 600 CLIP-S | 600 DINO-C | 600 LPIPS | 150 DINO-S | 来源（已验证） |
+|---|---:|---:|---:|---:|---:|---|
+| routeA_ep12（仓库原名 `routeA_smoke_ep12`） | 0.3938 | 0.6461 | 0.8258 | 0.2722 | 0.8526 | `runs/nextgen_eval_full/routeA_ep12/results_split.json` |
+| a_ls005_lc01_s2_e1_s0（1000 步） | 0.3912 | 0.6454 | 0.8359 | 0.2667 | 0.8572 | `runs/routeA_scan_eval/a_ls005_lc01_s2_e1_s0/results_split.json` |
+| a_ls01_lc01_s2_e1_s0（1000 步） | 0.3926 | 0.6454 | 0.8342 | 0.2670 | 0.8558 | `runs/routeA_scan_eval/a_ls01_lc01_s2_e1_s0/results_split.json` |
+| a_ls03_lc01_s2_e1_s0（1000 步，未列入前表） | 0.3961 | 0.6443 | 0.8249 | 0.2672 | 0.8508 | `runs/routeA_scan_eval/a_ls03_lc01_s2_e1_s0/results_split.json` |
 
-> **来源可靠性**：本节数字全部只来自 `Exp.md#L22-L30`。在本次核对中，本地 `runs/` 与远端共享副本 `runs/` 都**没有** `runs/nextgen_eval_full`、`runs/routeA_scan` 目录，也没有任何 `results*.json`，因此这些 600/150 数字**无法用 artifact 复核**（标"未验证"）。引用时必须连同口径（600 跨风格、dinov2-base、L/14 CLIP）一起写。
+> **状态：已验证**（三行数字与对应 `results_split.json` 逐位一致）。另注：`runs/nextgen_eval_smoke/dino_summary.json` 只有 `n_all=25` / `n_off_diagonal=20`，是冒烟子集，**不可当作 600 主表**；`runs/nextgen_eval_full/routeA_ep11` 另有一份 750 全量（600: 0.3943/0.6450/0.8219/0.2651），未进本表。
+> `registry.jsonl` 三条 routeA 记录同时给出 `metrics_600`/`metrics_150`，与上表一致。
+
+- 历史参考（旧 CLIP base-patch32、复用旧产出，**不是同管线**）：600 = 0.4080/0.7007/0.7667/0.3412；150 = 0.8264/0.8467/0.8240/0.2568（`Exp.md#L30`）。**状态：未验证**（`/mnt/i/Latent_Style/runs/` 下未找到该管线的 `results*.json`）。
 
 ## 4 架构探针（750 all-pairs，fine-tune 6ep，2026-07）
 
@@ -122,9 +129,13 @@
 
 **无法验证（artifact 缺失，数字仅来自文档）**
 
-1. §2 论文值 0.4916/0.7128/0.2593/0.8103：只有 `config.json#L3-L12` 与 `verify_main_table.py#L77-L85`，**没有对应 raw eval JSON**。
-2. §3 全部 600/150 数字（0.3977、0.8263、三条 route A 行、历史 0.4080 行）：只来自 `Exp.md#L22-L30`；`runs/nextgen_eval_full`、`runs/routeA_scan` 在本地与远端共享副本均不存在，`runs/` 下也没有任何 `results*.json`。
+1. §2 论文值 0.4916/0.7128/0.2593/0.8103：只有 `config.json#L3-L12` 与 `verify_main_table.py#L77-L85`，**没有对应 raw eval JSON**；远端 `/mnt/i/Latent_Style/runs/` 下也没有 submission/论文 750 全量的 `results*.json`（见 [07_ISSUES_TODO.md](07_ISSUES_TODO.md) E8）。
+2. §3 历史参考行 0.4080/0.7007/0.7667/0.3412 与 150 行：旧 CLIP base-patch32 管线，未找到对应 `results*.json`。
 3. §4 除 texture / spatial 两行外的 5 行：其 run 的 `dino_summary.json` 不在本地 `docs/model_probe/`（现存 7 个都属于 `fusion_ft15_eval_epoch_*` 或 `target_hf*_texture_ft6`），只以 713 summary 为来源。
 4. §5 基线 CSV 行：`docs/79/main_table_v4_remote.csv` 存在，属可验证；但它是 v4 快照，与 §6 第 1 条冲突。
+
+**本次补核新增（远端仓库外产物）**
+
+5. §3 的 600/150 基线与路线 A 三行已在本轮升级为**已验证**：产物在 `/mnt/i/Latent_Style/runs/`（仓库外），逐位核对通过；详见 §3 的"来源"列与 `registry.jsonl`。
 
 **结论**：`04` 里所有"已核对"数字可直接引用；标"未验证"的必须连同"来源=Exp.md / config 常量"写进正文，不得当成已复现结果。
