@@ -9,7 +9,7 @@
 | DINO-S | ↑ | 生成图与目标风格参考图的 DINOv2 CLS 余弦相似度；历史实现取 `max cos(gen, refs)` | `archives/legacy-root-research-scripts-20260715/compute_dino_flat_results.py#L7-L10` |
 | DINO-C | ↑ | 生成图与内容源图的 DINOv2 CLS 余弦 | 同上 L8 |
 | DINO-structure | ↓ | patch self-similarity MSE | 同上 L10 |
-| CLIP-S | ↑ | 生成图与目标风格参考图的 CLIP 相似度 | `utils/run_evaluation.py#L1331-L1354`（`clip_style`） |
+| CLIP-S | ↑ | 生成图与目标风格参考图的 CLIP 相似度（Nov 口径用 ViT-L/14） | per-request 字段 `clip_style` 的聚合见 `utils/run_evaluation.py#L1320-L1354`；**具体 CLIP 前向实现本地未定位（未验证）** |
 | LPIPS | ↓ | 生成图 vs 内容图，AlexNet 感知距离 | `utils/run_evaluation.py#L592-L650` |
 
 注意：`utils/run_evaluation.py` **不计算 DINO**；DINO 由 `scripts/_repro_dino_eval.py` 调外部脚本产出 `dino_summary.json`（[L39-L63](file:///g:/GitHub/Latent_Style/WEAVE/scripts/_repro_dino_eval.py#L39-L63)）。DINO 主干在 July 脚本里是 **dinov2-small**，Nov 缓存改用 **dinov2-base**（`Exp.md#L22`）——这本身就是口径差异，且文件未明确声明迁移日期（**未验证**）。
