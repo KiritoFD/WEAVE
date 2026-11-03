@@ -49,6 +49,8 @@ x(4×64×64) --VAE--> latent
 
 ## 4 下一代 A/B/C/D
 
+> 验收目标统一为**击败新口径基线**（600 跨风格：DINO-S 0.3977 / CLIP-S 0.6425 / DINO-C 0.7939 / LPIPS 0.3053；150 同风格 DINO-S 0.8263），**不追论文 0.4916 等历史数字**（见 [04_RESULTS.md §8](04_RESULTS.md) 判定门槛与 [07_ISSUES_TODO.md](07_ISSUES_TODO.md) E8）。
+
 | 路线 | 假设 | 机制 | 依赖 | 验收 |
 |---|---|---|---|---|
 | **A 输出级监督** | latent flow 目标与感知风格弱相关，解码后监督更直接 | VAE/TAESD 解码 → VGG16 特征 → patch SWD/Gram + 内容 + 自相似；只对 2-4 步 Euler 反传 | VGG16、解码器、≥5G 显存；**batch 只能 1**（`Plan.md#L33-L48`） | 600 DINO-S +0.03 且 DINO-C 掉 ≤0.03 |
