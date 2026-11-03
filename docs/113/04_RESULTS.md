@@ -17,8 +17,9 @@
 ## 2 口径 A：论文主表（750 all-pairs，2026-07）
 
 - 协议：150 内容图 × 5 目标风格 = 750 对（含 150 同风格对角线）；`train endpoint_adain_scale=1.0`，评测 `inference.json` 覆盖为 `2.0`；oriented-HF 配置。
+  - 协议字段可由 [dino_summary.json#L2-L8](file:///g:/GitHub/Latent_Style/WEAVE/docs/model_probe/fusion_ft15_eval_epoch_0003/dino_summary.json#L2-L8) 复核：`"protocol": "paper_canonical_dinov2_small"`、`n_all=750`、`n_off_diagonal=600`（即 750 含对角线、600 跨风格）。
 - 论文报告值（WEAVE，D5-512）：**DINO-S 0.4916 / CLIP-S 0.7128 / LPIPS 0.2593 / DINO-C 0.8103**。
-  - 来源 [config.json#L3-L12](file:///g:/GitHub/Latent_Style/WEAVE/config.json#L3-L12)；交叉核对 [verify_main_table.py#L77-L85](file:///g:/GitHub/Latent_Style/WEAVE/verify_main_table.py#L77-L85)。
+  - 来源 [config.json#L3-L12](file:///g:/GitHub/Latent_Style/WEAVE/config.json#L3-L12)；交叉核对 [verify_main_table.py#L77-L85](file:///g:/GitHub/Latent_Style/WEAVE/verify_main_table.py#L77-L85)；**未找到对应的 raw eval JSON**（本地 `runs/` 无 `results*.json`，见 §7）。
 - 对应 checkpoint：`runs/submission/canonical_oriented_epoch4/epoch_0004.pt`（`config.json#L8`）。
 
 同族对比（`docs/archive/merged-20261103/713/SUBMISSION_HANDOFF_2026-07-15.md#L147-L151`）：
@@ -30,6 +31,10 @@
 | Oriented route epoch 6 | 0.4878 | 0.7101 | 0.2563 | 0.8215 |
 
 > 论文值 0.4916/0.7128/0.2593 与 handoff 的 0.4915/0.7126/0.2596 差 0.0001-0.0003，属四舍五入/复算误差，不是新结果。
+>
+> **Baseline epoch 6 行已逐位复核**：[runs/endpoint_adain_2p0.csv#L2](file:///g:/GitHub/Latent_Style/WEAVE/runs/endpoint_adain_2p0.csv#L2) 为 `clip_s 0.7074506924947103 / lpips 0.2507582016786667 / dino_s 0.4866787612984578 / dino_c 0.8280592558185259`，与表中 0.4867/0.7075/0.2508/0.8281 完全吻合（四舍五入）。
+>
+> **AdaIN 系数扫描（同 750 口径）**：`runs/endpoint_adain_1p5.csv#L2` = 0.4846353 / 0.8038735 / 0.7175466 / 0.2870541；`runs/endpoint_adain_2p0.csv#L2` 见上；`runs/endpoint_adain_2p5.csv#L2` = DINO-S **0.3060** / DINO-C **0.2586** / CLIP-S 0.6941 / LPIPS **0.5814** —— 2.5 是崩溃点，不要使用。
 
 ## 3 口径 B：600 跨 + 150 同（2026-11，当前唯一有效主表）
 
@@ -51,6 +56,8 @@
 
 - 历史参考（旧 CLIP base-patch32、复用旧产出，**不是同管线**）：600 = 0.4080/0.7007/0.7667/0.3412；150 = 0.8264/0.8467/0.8240/0.2568（`Exp.md#L30`）。
 
+> **来源可靠性**：本节数字全部只来自 `Exp.md#L22-L30`。在本次核对中，本地 `runs/` 与远端共享副本 `runs/` 都**没有** `runs/nextgen_eval_full`、`runs/routeA_scan` 目录，也没有任何 `results*.json`，因此这些 600/150 数字**无法用 artifact 复核**（标"未验证"）。引用时必须连同口径（600 跨风格、dinov2-base、L/14 CLIP）一起写。
+
 ## 4 架构探针（750 all-pairs，fine-tune 6ep，2026-07）
 
 来源 `docs/archive/merged-20261103/713/EXPERIMENT_SUMMARY_FOR_METHOD_AND_NEXT_PLAN.md#L30-L56`；列为 DINO-S / DINO-C / CLIP-S / LPIPS / Off-DINO-S。
@@ -64,6 +71,11 @@
 | subband + texture stats | 0.4884 | 0.7988 | 0.7194 | 0.2960 | 保守备选 |
 | subband 去 style memory | 0.4849 | 0.7948 | 0.7167 | 0.2943 | 拒绝（memory 有用） |
 | subband residual ×1.5 | 0.4875 | 0.7798 | 0.7211 | 0.3054 | 风格偏置，内容代价高 |
+
+> **逐行来源（本次核对）**：
+> - `subband + texture stats` 行已用 [dino_summary_adain15.json#L9-L16](file:///g:/GitHub/Latent_Style/WEAVE/docs/model_probe/target_hf_subband_texture_ft6/dino_summary_adain15.json#L9-L16) 逐位复核：`all_dino_s 0.48841997` / `all_dino_c 0.79881480` / `all_clip_s 0.71935731` / `all_lpips 0.29604570` / `off_dino_s 0.40430150`，与表中 0.4884/0.7988/0.7194/0.2960 完全吻合。
+> - `spatial raw HF` 行同表可见 `DINO-C 0.404308`（内容崩）与 `LPIPS 0.538240`；该表列序为 DINO-S / DINO-C / CLIP-S / LPIPS / Off-DINO-S，引用时勿错位。
+> - 其余行对应的 `dino_summary.json` **未保留在本地**：`docs/model_probe/` 现存 7 个 DINO summary，分别属于 `fusion_ft15_eval_epoch_{0003,0006,0009,0012,0015}` 与 `target_hf_{subband_,}texture_ft6`，没有本表其他 run 的原始 JSON，故以 `EXPERIMENT_SUMMARY_FOR_METHOD_AND_NEXT_PLAN.md#L30-L56` 为唯一来源。
 
 ## 5 基线主表（`docs/79/main_table_v4_remote.csv`）
 
@@ -93,3 +105,26 @@
 3. **0.4080/0.7007/0.7667/0.3412** 是旧 CLIP base-patch32 管线，只作历史参考。
 4. `docs/79` 的 RMSE/WFI/CLIP 旧表与 DINO 表来自不同时期，不要拼接成一张总表。
 5. 基线缺 DINO 两列，论文若声称 DINO 优势需补测或明确只比 CLIP/LPIPS。
+
+## 7 逐项核对记录（2026-11-03）
+
+核对对象：本文件全部数字 vs 本地 `runs/*.csv`、`docs/model_probe/**/dino_summary*.json`、远端共享副本 `runs/`。
+
+**已核对且完全吻合**
+
+| 本文件数字 | 来源 | 结果 |
+|---|---|---|
+| §2 Baseline epoch 6 = 0.4867/0.7075/0.2508/0.8281 | `runs/endpoint_adain_2p0.csv#L2` | 逐位吻合（DINO-S/C、CLIP-S、LPIPS） |
+| §2 AdaIN 1.5 扫描 | `runs/endpoint_adain_1p5.csv#L2` | 0.4846353/0.8038735/0.7175466/0.2870541 |
+| §2 AdaIN 2.5 崩 | `runs/endpoint_adain_2p5.csv#L2` | DINO-S 0.3060、DINO-C 0.2586、LPIPS 0.5814，确认崩 |
+| §2 协议字段 750/600 | `docs/model_probe/fusion_ft15_eval_epoch_0003/dino_summary.json#L2-L8` | `n_all=750`、`n_off_diagonal=600` |
+| §4 texture stats 行 0.4884/0.7988/0.7194/0.2960 | `docs/model_probe/target_hf_subband_texture_ft6/dino_summary_adain15.json#L9-L16` | 逐位吻合 |
+
+**无法验证（artifact 缺失，数字仅来自文档）**
+
+1. §2 论文值 0.4916/0.7128/0.2593/0.8103：只有 `config.json#L3-L12` 与 `verify_main_table.py#L77-L85`，**没有对应 raw eval JSON**。
+2. §3 全部 600/150 数字（0.3977、0.8263、三条 route A 行、历史 0.4080 行）：只来自 `Exp.md#L22-L30`；`runs/nextgen_eval_full`、`runs/routeA_scan` 在本地与远端共享副本均不存在，`runs/` 下也没有任何 `results*.json`。
+3. §4 除 texture / spatial 两行外的 5 行：其 run 的 `dino_summary.json` 不在本地 `docs/model_probe/`（现存 7 个都属于 `fusion_ft15_eval_epoch_*` 或 `target_hf*_texture_ft6`），只以 713 summary 为来源。
+4. §5 基线 CSV 行：`docs/79/main_table_v4_remote.csv` 存在，属可验证；但它是 v4 快照，与 §6 第 1 条冲突。
+
+**结论**：`04` 里所有"已核对"数字可直接引用；标"未验证"的必须连同"来源=Exp.md / config 常量"写进正文，不得当成已复现结果。
