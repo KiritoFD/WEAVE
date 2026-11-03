@@ -497,6 +497,7 @@ def main() -> None:
         latent_cache_mode=str(data_cfg.latent_cache_mode),
         latent_cache_dir=str(data_cfg.latent_cache_dir),
         style_caption_path=str(getattr(data_cfg, "style_caption_path", "")),
+        reference_dino_cache_dir=str(getattr(data_cfg, "reference_dino_cache_dir", "")),
         device=str(device),
     )
 

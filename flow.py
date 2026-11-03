@@ -17,12 +17,15 @@ mechanism (SAT + LL partial AdaIN + FM loss) remains.
 """
 from __future__ import annotations
 
+import logging
 from typing import Dict
 
 import torch
 import torch.nn.functional as F
 from config_schema import ExperimentConfig
 from wavelet import dwt2_haar, idwt2_haar, dwt2_lowpass
+
+logger = logging.getLogger(__name__)
 
 
 class FlowMatchingObjective:
@@ -52,11 +55,54 @@ class FlowMatchingObjective:
         self.training_sde_noise_mode = str(
             getattr(self.bridge_cfg, "training_sde_noise_mode", "subtractive")
         ).strip().lower()
+        # Route B: content-aligned endpoints
+        self.endpoint_mode = str(getattr(self.bridge_cfg, "endpoint_mode", "target_hf")).strip().lower()
+        if self.endpoint_mode not in ("target_hf", "pseudo", "mixed"):
+            raise ValueError(
+                f"bridge.endpoint_mode must be target_hf|pseudo|mixed, got {self.endpoint_mode!r}"
+            )
+        # t-sampling honesty fix
+        self.t_sampling_mode = str(getattr(self.bridge_cfg, "t_sampling_mode", "uniform")).strip().lower()
+        self.t_sampling_legacy_compat = bool(getattr(self.bridge_cfg, "t_sampling_legacy_compat", True))
+        self.t_sampling_power = float(getattr(self.bridge_cfg, "t_sampling_power", 1.0))
+        self.t_sampling_beta_a = float(getattr(self.bridge_cfg, "t_sampling_beta_a", 0.0))
+        self.t_sampling_beta_b = float(getattr(self.bridge_cfg, "t_sampling_beta_b", 0.0))
+        self.t_sampling_logit_mean = float(getattr(self.bridge_cfg, "t_sampling_logit_mean", 0.0))
+        self.t_sampling_logit_std = float(getattr(self.bridge_cfg, "t_sampling_logit_std", 1.0))
+        if self.t_sampling_legacy_compat and self.t_sampling_mode not in ("uniform", "uniform_power"):
+            if not getattr(FlowMatchingObjective, "_t_sampling_warned", False):
+                logger.warning(
+                    "bridge.t_sampling_mode=%r is set but t_sampling_legacy_compat=True: "
+                    "t is sampled UNIFORMLY (historical behaviour; the mode name is ignored). "
+                    "Set t_sampling_legacy_compat=false to activate real %r sampling.",
+                    self.t_sampling_mode, self.t_sampling_mode,
+                )
+                FlowMatchingObjective._t_sampling_warned = True
 
     def _sample_t(self, content: torch.Tensor) -> torch.Tensor:
         lo = max(0.0, min(1.0, self.t_min))
         hi = max(lo + 1e-4, min(1.0, self.t_max))
-        return torch.rand(content.shape[0], device=content.device, dtype=content.dtype) * (hi - lo) + lo
+        B = content.shape[0]
+        dev, dt = content.device, content.dtype
+        # Historical behaviour (default): uniform regardless of the mode name.
+        # See config_schema BridgeConfig.t_sampling_legacy_compat.
+        if self.t_sampling_legacy_compat:
+            return torch.rand(B, device=dev, dtype=dt) * (hi - lo) + lo
+        mode = self.t_sampling_mode
+        if mode in ("uniform", "uniform_power"):
+            u = torch.rand(B, device=dev, dtype=dt)
+            if mode == "uniform_power" and self.t_sampling_power != 1.0:
+                u = u.pow(self.t_sampling_power)
+        elif mode == "beta":
+            a = max(self.t_sampling_beta_a, 1e-3)
+            b = max(self.t_sampling_beta_b, 1e-3)
+            u = torch.distributions.Beta(a, b).sample((B,)).to(device=dev, dtype=dt)
+        elif mode == "logit_normal":
+            z = torch.randn(B, device=dev, dtype=dt) * self.t_sampling_logit_std + self.t_sampling_logit_mean
+            u = torch.sigmoid(z)
+        else:
+            raise ValueError(f"Unknown bridge.t_sampling_mode {mode!r}")
+        return (u * (hi - lo) + lo).clamp(lo, hi)
 
     def _fm_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         if self.loss_type in ("huber", "smooth_l1", "smoothl1"):
@@ -211,6 +257,7 @@ class FlowMatchingObjective:
             style_id=target_style_id,
             style_latent=style_latent,
             style_text_tokens=style_text_tokens,
+            reference_feats=conditioning.get("reference_feats"),
         )
         loss_ll = self._fm_loss(v_dict["ll"], target_ll)
         loss_lh = self._fm_loss(v_dict["lh"], target_lh)
@@ -237,6 +284,41 @@ class FlowMatchingObjective:
             "loss_fm_spectral_hh_raw": loss_hh,
         }
 
+    def _apply_pseudo_endpoints(
+        self, target_style: torch.Tensor, conditioning: Dict
+    ) -> torch.Tensor:
+        """Route B: replace target latents with content-aligned pseudo targets.
+
+        conditioning carries:
+          - "pseudo_target_latent": (K, C, H, W) stacked found latents
+          - "pseudo_target_found":  list of batch row indices (len K)
+        Rows without a cache hit keep the original (target_hf) target — in
+        "pseudo" mode this is a logged fallback, in "mixed" mode it is by
+        design (real-target distribution matching stays active via Route A).
+        """
+        if self.endpoint_mode == "target_hf":
+            return target_style
+        pseudo = conditioning.get("pseudo_target_latent")
+        found = conditioning.get("pseudo_target_found")
+        if not torch.is_tensor(pseudo) or not found:
+            if self.endpoint_mode == "pseudo" and not getattr(self, "_pseudo_missing_warned", False):
+                logger.warning(
+                    "endpoint_mode='pseudo' but no pseudo_target_latent in batch; "
+                    "falling back to target_hf endpoints for this batch."
+                )
+                self._pseudo_missing_warned = True
+            return target_style
+        out = target_style.clone()
+        idx = torch.as_tensor(list(found), dtype=torch.long, device=target_style.device)
+        pseudo = pseudo.to(device=target_style.device, dtype=target_style.dtype)
+        if pseudo.shape[1:] != target_style.shape[1:]:
+            raise ValueError(
+                f"pseudo_target_latent shape {tuple(pseudo.shape)} incompatible with "
+                f"target_style {tuple(target_style.shape)}"
+            )
+        out[idx] = pseudo
+        return out
+
     def compute(
         self, model, *, content, target_style, target_style_id,
         source_style_id=None, aux_target_style=None, aux_target_valid=None,
@@ -251,6 +333,8 @@ class FlowMatchingObjective:
         if not torch.is_tensor(style_latent):
             style_latent = target_style
 
+        target_style = self._apply_pseudo_endpoints(target_style, conditioning)
+
         t = self._sample_t(content)
         noise = torch.randn_like(content) if self.bridge_sigma > 0.0 else None
         probe_losses = self.compute_probe_losses(
@@ -261,6 +345,7 @@ class FlowMatchingObjective:
             conditioning={
                 "target_style_text_tokens": style_text_tokens,
                 "target_style_latent": style_latent,
+                "reference_feats": conditioning.get("reference_feats"),
             },
             t=t,
             noise=noise,

@@ -228,6 +228,10 @@ class SBTrainer:
         self.use_amp = bool(train_cfg.get("use_amp", False) and device.type == "cuda")
         amp_dtype_cfg = str(train_cfg.get("amp_dtype", "bf16")).lower()
         self.amp_dtype = torch.bfloat16 if amp_dtype_cfg in {"bf16", "bfloat16"} else torch.float16
+        # GradScaler is only needed for fp16; bf16 has fp32-equivalent exponent range.
+        self.scaler = None
+        if self.use_amp and self.amp_dtype == torch.float16:
+            self.scaler = torch.amp.GradScaler("cuda", enabled=True)
 
         self.model = build_model_from_config(
             model_cfg,
@@ -266,6 +270,64 @@ class SBTrainer:
         from flow import FlowMatchingObjective
 
         self.loss_fn = FlowMatchingObjective(config)
+        # === Next-gen modules (all default OFF — current paper run unaffected) ===
+        # Route B: pseudo-target endpoint cache lookup
+        self._pseudo_cache = None
+        _endpoint_mode = str(getattr(config.bridge, "endpoint_mode", "target_hf"))
+        if _endpoint_mode in ("pseudo", "mixed"):
+            _cache_dir = str(getattr(config.bridge, "pseudo_target_cache_dir", "") or "").strip()
+            if _cache_dir:
+                from pseudo_targets import PseudoTargetCache
+
+                self._pseudo_cache = PseudoTargetCache(
+                    _cache_dir, score_threshold=float(getattr(config.bridge, "pseudo_target_min_score", 0.0))
+                )
+                logger.info("Route B pseudo-target cache: %d entries from %s", self._pseudo_cache.count, _cache_dir)
+            elif _endpoint_mode == "pseudo":
+                logger.warning("endpoint_mode='pseudo' without pseudo_target_cache_dir — all rows fall back to target_hf.")
+        # Route A: differentiable output-level supervision (post-training term)
+        self._output_supervision = None
+        self._output_sup_apply_every = max(1, int(getattr(config.bridge, "output_supervision_apply_every", 1)))
+        self._output_sup_lambda_style = float(getattr(config.bridge, "output_supervision_lambda_style", 1.0))
+        self._output_sup_lambda_content = float(getattr(config.bridge, "output_supervision_lambda_content", 0.5))
+        if bool(getattr(config.bridge, "output_supervision_enabled", False)):
+            from features import build_feature_extractor
+            from output_supervision import OutputSupervision, build_latent_decoder
+
+            _extractor = build_feature_extractor(
+                str(getattr(config.bridge, "output_supervision_extractor", "tiny_conv")), device=device,
+                local_dir=str(getattr(config.bridge, "output_supervision_extractor_local_dir", "")),
+            )
+            _decoder = build_latent_decoder(
+                str(getattr(config.bridge, "output_supervision_decoder", "tiny")), device=device
+            )
+            self._output_supervision = OutputSupervision(
+                _extractor, _decoder,
+                style_layers=str(getattr(config.bridge, "output_supervision_style_layers", "conv2,conv3")).split(","),
+                content_perceptual_layers=str(getattr(config.bridge, "output_supervision_content_layers", "conv1,conv2")).split(","),
+                content_selfsim_layer=str(getattr(config.bridge, "output_supervision_selfsim_layer", "conv3")),
+                ode_steps=int(getattr(config.bridge, "output_supervision_ode_steps", 2)),
+                swd_projections=int(getattr(config.bridge, "output_supervision_swd_projections", 64)),
+                patch_size=int(getattr(config.bridge, "output_supervision_patch_size", 8)),
+                patch_stride=int(getattr(config.bridge, "output_supervision_patch_stride", 4)),
+                w_perceptual=float(getattr(config.bridge, "output_supervision_w_perceptual", 1.0)),
+                w_selfsim=float(getattr(config.bridge, "output_supervision_w_selfsim", 1.0)),
+                w_edge=float(getattr(config.bridge, "output_supervision_w_edge", 0.5)),
+                grad_checkpoint=bool(getattr(config.bridge, "output_supervision_grad_checkpoint", True)),
+                microbatch=int(getattr(config.bridge, "output_supervision_microbatch", 4)),
+                feature_res=int(getattr(config.bridge, "output_supervision_feature_res", 0)),
+                chunk_rows=int(getattr(config.bridge, "output_supervision_chunk_rows", 0)),
+            ).to(device)
+            logger.info(
+                "Route A output supervision ON: extractor=%s decoder=%s ode_steps=%d feature_res=%d chunk_rows=%d",
+                config.bridge.output_supervision_extractor, config.bridge.output_supervision_decoder,
+                config.bridge.output_supervision_ode_steps,
+                getattr(config.bridge, "output_supervision_feature_res", 0),
+                getattr(config.bridge, "output_supervision_chunk_rows", 0),
+            )
+        # Route C: InfoNCE weight for reference encoder (encoder lives in the model)
+        self._ref_nce_weight = float(getattr(config.bridge, "reference_info_nce_weight", 0.0))
+        self._ref_nce_temperature = float(getattr(config.bridge, "reference_info_nce_temperature", 0.1))
         _assert_active_source_modules([
             "config_schema",
             "model",
@@ -1459,6 +1521,22 @@ class SBTrainer:
                     for blk in self.model.blocks:
                         if hasattr(blk, 'set_step'):
                             blk.set_step(self.global_step)
+                # Route B: attach pseudo-target endpoints to conditioning
+                if self._pseudo_cache is not None and "content_index" in batch:
+                    _cidx = batch["content_index"]
+                    _src = batch["source_style_id"]
+                    _tsid = batch["target_style_id"]
+                    if torch.is_tensor(_cidx) and torch.is_tensor(_src):
+                        _keys = [
+                            f"{int(s)}/{int(c)}"
+                            for s, c in zip(_src.view(-1).tolist(), _cidx.view(-1).tolist())
+                        ]
+                        _sids = [int(v) for v in (_tsid.view(-1).tolist() if torch.is_tensor(_tsid) else [int(_tsid)] * len(_keys))]
+                        _lat, _mask, _found = self._pseudo_cache.get_batch(_keys, _sids)
+                        if _lat is not None:
+                            batch["pseudo_target_latent"] = _lat.to(device=self.device)
+                            batch["pseudo_target_found"] = _found
+                            metric_accum["pseudo_target_hit_rate"] = metric_accum.get("pseudo_target_hit_rate", 0) + _mask.float().mean().to(device=self.device)
                 if self.distill_enabled and self.teacher_model is not None:
                     loss_dict = self.loss_fn.compute_distill(
                         self.model,
@@ -1481,6 +1559,48 @@ class SBTrainer:
                         conditioning=batch,
                     )
                 loss = loss_dict["loss"]
+                # Route A: output-level style/content supervision on decoded image.
+                # Style image / content image are obtained by decoding the batch
+                # latents with the same frozen decoder (dataset is latent-only).
+                if self._output_supervision is not None and (step_idx % self._output_sup_apply_every == 0):
+                    with torch.no_grad():
+                        _style_img = self._output_supervision.decoder.decode_image(target_style)
+                        _content_img = self._output_supervision.decoder.decode_image(content)
+                    _sup_logs = self._output_supervision(
+                        self.model,
+                        content_latent=content,
+                        style_image=_style_img,
+                        content_image=_content_img,
+                        style_id=target_style_id,
+                        style_latent=batch.get("target_style_latent") if torch.is_tensor(batch.get("target_style_latent")) else target_style,
+                        style_text_tokens=batch.get("target_style_text_tokens"),
+                        reference_feats=batch.get("reference_feats"),
+                    )
+                    _sup_total = (
+                        self._output_sup_lambda_style * _sup_logs["loss_style_out"]
+                        + self._output_sup_lambda_content * _sup_logs["loss_content_out"]
+                    )
+                    loss = loss + _sup_total
+                    loss_dict["loss"] = loss
+                    loss_dict["loss_output_sup"] = _sup_total
+                    for _k, _v in _sup_logs.items():
+                        loss_dict[f"out_{_k}"] = _v.detach() if torch.is_tensor(_v) else _v
+                # Route C: multi-reference InfoNCE on the reference encoder.
+                if (
+                    self._ref_nce_weight > 0.0
+                    and getattr(self.model, "reference_encoder", None) is not None
+                    and torch.is_tensor(batch.get("reference_feats"))
+                    and torch.is_tensor(batch.get("reference_feats_alt"))
+                ):
+                    from reference_encoder import info_nce_loss
+
+                    _anchor = getattr(self.model, "last_reference_embedding", None)
+                    if _anchor is not None:
+                        _pos = self.model.reference_encoder(batch["reference_feats_alt"])["embedding"]
+                        _nce = info_nce_loss(_anchor, _pos, temperature=self._ref_nce_temperature)
+                        loss = loss + self._ref_nce_weight * _nce
+                        loss_dict["loss"] = loss
+                        loss_dict["loss_reference_nce"] = _nce.detach()
             forward_time_total += max(0.0, time.perf_counter() - t0)
             should_debug_step = self.numeric_debug and (
                 step_idx == 1 or step_idx % self.numeric_debug_interval == 0
@@ -1503,12 +1623,23 @@ class SBTrainer:
                     raise FloatingPointError(msg)
 
             t0 = time.perf_counter()
-            (loss / self.accumulation_steps).backward()
+            if self.scaler is not None:
+                self.scaler.scale(loss / self.accumulation_steps).backward()
+            else:
+                (loss / self.accumulation_steps).backward()
             backward_time_total += max(0.0, time.perf_counter() - t0)
             grad_report = None
             has_nonfinite_grad = False
             if should_debug_step:
-                grad_report = self._grad_stats()
+                if self.scaler is not None:
+                    # fp16 grads are still scaled here; inf/nan would be a
+                    # scaler artefact, not a real numerical failure.
+                    grad_report = {
+                        "first_nonfinite_grad_name": None,
+                        "scaler_scale": float(self.scaler.get_scale()),
+                    }
+                else:
+                    grad_report = self._grad_stats()
                 has_nonfinite_grad = bool(grad_report["first_nonfinite_grad_name"] is not None)
                 self._write_numeric_debug(
                     epoch=epoch,
@@ -1532,9 +1663,15 @@ class SBTrainer:
             if should_step:
                 t0 = time.perf_counter()
                 total_grad_norm = None
+                if self.scaler is not None:
+                    self.scaler.unscale_(self.optimizer)
                 if self.grad_clip_norm > 0.0:
                     total_grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_norm)
-                self.optimizer.step()
+                if self.scaler is not None:
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
+                else:
+                    self.optimizer.step()
                 self.optimizer.zero_grad(set_to_none=True)
                 optimizer_time_total += max(0.0, time.perf_counter() - t0)
                 self.global_step += 1
@@ -1643,9 +1780,15 @@ class SBTrainer:
         progress.close()
 
         if num_batches > 0 and (num_batches % self.accumulation_steps != 0):
+            if self.scaler is not None:
+                self.scaler.unscale_(self.optimizer)
             if self.grad_clip_norm > 0.0:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_norm)
-            self.optimizer.step()
+            if self.scaler is not None:
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            else:
+                self.optimizer.step()
             self.optimizer.zero_grad(set_to_none=True)
             self.global_step += 1
 

@@ -14,6 +14,9 @@ from torch.utils.data import Dataset
 
 logger = logging.getLogger(__name__)
 
+# Route C: per-worker cap on cached reference token tensors (256x768 fp16 ≈ 0.4MB each).
+_REF_TOKEN_CACHE_MAX = 256
+
 # ---------------------------------------------------------------------------
 # Shared-memory helpers for the pairing cache
 # ---------------------------------------------------------------------------
@@ -192,6 +195,7 @@ class AdaCUTLatentDataset(Dataset):
         latent_cache_mode: str = "off",
         latent_cache_dir: str = "",
         style_caption_path: str = "",
+        reference_dino_cache_dir: str = "",
         device: str = "cpu",
     ) -> None:
         self.data_root = Path(data_root)
@@ -269,6 +273,41 @@ class AdaCUTLatentDataset(Dataset):
             self.style_tensors[style_id] = stack
             self._register_style_index(style_id, files)
             logger.info("  style=%s id=%d count=%d", subdir, style_id, stack.shape[0])
+
+        # === Next-gen Route C: reference-image DINO token cache ===
+        # When set, every sample also returns ``reference_feats`` (DINOv2 patch
+        # tokens of the target-style reference image) and ``reference_feats_alt``
+        # (a DIFFERENT painting of the SAME style, i.e. different content) so the
+        # trainer can apply multi-reference InfoNCE.  Off by default: behaviour is
+        # byte-identical to the Style-ID-only path when the dir is empty.
+        self.reference_dino_cache_dir = str(reference_dino_cache_dir or "").strip()
+        self._ref_token_paths: Dict[int, list[Path]] = {}
+        self._ref_token_cache: dict[str, torch.Tensor] = {}
+        if self.reference_dino_cache_dir:
+            ref_root = Path(self.reference_dino_cache_dir)
+            if not ref_root.is_absolute():
+                ref_root = (self.data_root / ref_root).resolve()
+            missing = 0
+            for style_id, subdir in enumerate(self.style_subdirs):
+                paths = [ref_root / subdir / f"{stem}.pt" for stem in self.style_item_stems[style_id]]
+                miss = [p for p in paths if not p.exists()]
+                missing += len(miss)
+                if miss:
+                    logger.warning(
+                        "reference dino cache missing %d/%d files for style=%s (e.g. %s)",
+                        len(miss), len(paths), subdir, miss[0],
+                    )
+                self._ref_token_paths[style_id] = paths
+            if missing:
+                raise RuntimeError(
+                    f"reference_dino_cache_dir={ref_root} is missing {missing} token files; "
+                    "regenerate the cache with tools/extract_dino_cache.py"
+                )
+            logger.info(
+                "Route C reference dino cache ready: %s (%d styles, %d files)",
+                ref_root, len(self._ref_token_paths),
+                sum(len(v) for v in self._ref_token_paths.values()),
+            )
 
         total_count = sum(int(t.shape[0]) for t in self.style_tensors.values())
         self.content_count = max(1, total_count)
@@ -795,6 +834,23 @@ class AdaCUTLatentDataset(Dataset):
         picked_variant = min(int(random_value * len(target_indices)), len(target_indices) - 1)
         return int(target_indices[picked_variant])
 
+    def _load_ref_tokens(self, style_id: int, item_index: int) -> torch.Tensor:
+        """Load cached DINOv2 patch tokens for one reference image.
+
+        Kept as float16 (roughly 2x smaller than float32) with a small bounded
+        LRU so a long run does not pull ~2GB of token files into RAM: the cache
+        holds at most ``_REF_TOKEN_CACHE_MAX`` images per worker.
+        """
+        path = str(self._ref_token_paths[style_id][item_index])
+        tok = self._ref_token_cache.get(path)
+        if tok is None:
+            payload = torch.load(path, map_location="cpu")
+            tok = payload["tokens"] if isinstance(payload, dict) else payload
+            if len(self._ref_token_cache) >= _REF_TOKEN_CACHE_MAX:
+                self._ref_token_cache.pop(next(iter(self._ref_token_cache)))
+            self._ref_token_cache[path] = tok
+        return tok.float()
+
     def __getitem__(self, index: int) -> Dict[str, torch.Tensor | int]:
         # Ultra-lightweight getitem using pre-computed indices
         content_style_id = int(self._cache_content_style_ids[index])
@@ -854,10 +910,20 @@ class AdaCUTLatentDataset(Dataset):
             "target_style": target_style,
             "target_style_id": target_style_id,
             "source_style_id": content_style_id,
+            # Route B: pseudo-target cache lookup key component (additive; older
+            # consumers ignore it). Key = "<source_style_id>/<content_index>".
+            "content_index": c_idx,
         }
         if self.pairing_cache_aux_target_topk > 0:
             item["aux_target_style"] = aux_target_style if aux_target_style is not None else target_style
             item["aux_target_valid"] = torch.tensor(float(aux_target_valid), dtype=torch.float32)
+        if self._ref_token_paths:
+            n_ref = len(self._ref_token_paths[target_style_id])
+            item["reference_feats"] = self._load_ref_tokens(target_style_id, t_idx)
+            # Same style, different content: offset in [1, n_ref-1] so the positive
+            # pair shares style statistics but never the same painting.
+            alt_offset = 1 + min(n_ref - 2, int(float(self._cache_content_rands[index]) * max(1, n_ref - 1)))
+            item["reference_feats_alt"] = self._load_ref_tokens(target_style_id, (t_idx + alt_offset) % n_ref)
         if self.style_caption_path:
             target_style_name = self.style_subdirs[target_style_id]
             target_stem = self.style_item_stems[target_style_id][t_idx]

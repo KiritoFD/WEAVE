@@ -708,6 +708,22 @@ class ModelConfig:
     solver_tangent_projection_strength: float = 1.0
     solver_stochastic_noise_scale: float = 0.01
     lowpass_mode: str = "avg_pool"            # "avg_pool" | "wavelet" | "tri_band" — Base/Fiber 分割方式
+    # === Next-gen Route C: reference-image style conditioner ===
+    # conditioner_variant="style_id" (default, current paper behaviour) keeps the
+    # learnable Style Memory as the only style token source.
+    # "reference_hybrid" adds reference-image tokens from ReferenceStyleEncoder
+    # on top of the family tokens via a zero-init gated addition.
+    conditioner_variant: str = "style_id"          # "style_id" | "reference_hybrid"
+    reference_encoder_in_dim: int = 384            # frozen backbone feature dim (DINOv2-small=384)
+    reference_encoder_tokens: int = 32             # pooled reference style tokens M
+    reference_encoder_layers: int = 1
+    reference_encoder_heads: int = 4
+    reference_encoder_proj_dim: int = 128          # contrastive embedding dim
+    reference_inject_gate_init: float = 0.0        # tanh gate init for ref tokens (0 = strict no-op)
+    reference_shuffle_train: bool = True           # patch permutation to suppress layout
+    # === Next-gen Route D: multi-scale texture refiner (interface only) ===
+    texture_refiner_enabled: bool = False          # default off; placeholder module only
+    texture_refiner_hidden: int = 32
     # === FC-SB Phase 4 A1: Time-Frequency Coupled Scheduling ===
     tf_schedule_enabled: bool = False       # 总开关：让 mid/hh_adain_scale 成为时间 t 的函数
     tf_hh_ramp_start: float = 0.5           # hh 开始升温的 t 阈值（t < 此值保持静态 hh_adain_scale）
@@ -855,6 +871,52 @@ class BridgeConfig:
     w_flow_scale: float = 1.0   # FM loss 缩放因子，<1 降低 FM 主导
     cfg_dropout_prob: float = 0.0  # 0=no dropout(default), >0=CFG unconditional training prob
     cfg_null_token_init_std: float = 0.02  # std for learnable null tokens
+    # === Next-gen Route B: content-aligned training endpoints ===
+    # endpoint_mode="target_hf" (default) = current SAT behaviour.
+    # "pseudo": FM endpoint taken from the offline pseudo-target cache (content-
+    #   aligned stylised candidates encoded to latent). Requires
+    #   pseudo_target_cache_dir + dataset emitting content_index.
+    # "mixed": pseudo endpoint for FM + Route A output supervision against the
+    #   REAL style image, so pseudo targets never become the only supervision.
+    endpoint_mode: str = "target_hf"             # "target_hf" | "pseudo" | "mixed"
+    pseudo_target_cache_dir: str = ""
+    pseudo_target_min_score: float = 0.0         # cache lookup filters below this score
+    # === Next-gen: t-sampling honesty fix ===
+    # Historically t_sampling_mode="logit_normal" was set in configs but
+    # _sample_t() actually drew UNIFORM t (paper's "uniform" is correct). To
+    # preserve exact reproducibility of the current model, legacy_compat=True
+    # (default) keeps uniform sampling and warns once. Set False to make
+    # t_sampling_mode take real effect ("uniform" | "uniform_power" | "beta" |
+    # "logit_normal").
+    t_sampling_legacy_compat: bool = True
+    # === Next-gen Route A: differentiable output-level supervision ===
+    # Post-training terms L = L_FM + lambda_s*L_style + lambda_c*L_content on the
+    # decoded image (2-4 unrolled Euler steps + VAE decode, full backprop along
+    # the real ODE path). Default off: current paper training is bit-identical.
+    output_supervision_enabled: bool = False
+    output_supervision_lambda_style: float = 1.0
+    output_supervision_lambda_content: float = 0.5
+    output_supervision_ode_steps: int = 2
+    output_supervision_extractor: str = "tiny_conv"  # tiny_conv(tests)|vgg16|vgg19|dinov2 (server)
+    output_supervision_decoder: str = "tiny"         # tiny(tests)|taesd|sd15 (server)
+    output_supervision_style_layers: str = "conv2,conv3"      # e.g. "relu3_3,relu4_3" for vgg16
+    output_supervision_content_layers: str = "conv1,conv2"    # perceptual layers
+    output_supervision_selfsim_layer: str = "conv3"           # e.g. "block6" for dinov2
+    output_supervision_swd_projections: int = 64
+    output_supervision_patch_size: int = 8
+    output_supervision_patch_stride: int = 4
+    output_supervision_w_perceptual: float = 1.0
+    output_supervision_w_selfsim: float = 1.0
+    output_supervision_w_edge: float = 0.5
+    output_supervision_grad_checkpoint: bool = True
+    output_supervision_microbatch: int = 4
+    output_supervision_apply_every: int = 1        # apply the expensive term every N steps
+    output_supervision_extractor_local_dir: str = ""  # offline HF snapshot for dinov2
+    output_supervision_feature_res: int = 0        # 0=keep decoded res; e.g. 384 for loss branch
+    output_supervision_chunk_rows: int = 0         # descriptor unfold chunking (0=off)
+    # Route C training weight (InfoNCE on reference embeddings); 0 = off.
+    reference_info_nce_weight: float = 0.0
+    reference_info_nce_temperature: float = 0.1
     extra: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -1062,6 +1124,9 @@ class DataConfig:
     style_caption_path: str = ""
     latent_cache_mode: str = "off"
     latent_cache_dir: str = ""
+    # Route C: DINOv2 patch-token cache root (tools/extract_dino_cache.py output).
+    # Empty -> old Style-ID-only dataset path, byte-identical to previous runs.
+    reference_dino_cache_dir: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
 
     @classmethod

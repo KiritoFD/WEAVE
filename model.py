@@ -461,6 +461,49 @@ class WEAVE(nn.Module):
             num_styles=self.num_styles,
             num_memory_tokens=256,
         )
+        # === Next-gen Route C: reference-hybrid conditioner ===
+        # s = (s_family, s_reference): family tokens from Style Memory (above)
+        # remain the category prior; reference tokens come from a small trainable
+        # encoder over frozen backbone features of the reference image, with
+        # layout suppression + InfoNCE training (see reference_encoder.py).
+        # Injected via zero-init gated addition — enabling the variant is a
+        # strict no-op at init. Old Style-ID-only path stays the default.
+        self.conditioner_variant = str(getattr(model_cfg, "conditioner_variant", "style_id")).strip().lower()
+        if self.conditioner_variant == "reference_hybrid":
+            from reference_encoder import ReferenceConditioner, ReferenceStyleEncoder
+
+            self.reference_encoder = ReferenceStyleEncoder(
+                in_dim=int(getattr(model_cfg, "reference_encoder_in_dim", 384)),
+                model_dim=self.dim,
+                num_tokens=int(getattr(model_cfg, "reference_encoder_tokens", 32)),
+                num_layers=int(getattr(model_cfg, "reference_encoder_layers", 1)),
+                num_heads=int(getattr(model_cfg, "reference_encoder_heads", 4)),
+                proj_dim=int(getattr(model_cfg, "reference_encoder_proj_dim", 128)),
+                shuffle_train=bool(getattr(model_cfg, "reference_shuffle_train", True)),
+            )
+            self.reference_conditioner = ReferenceConditioner(
+                model_dim=self.dim, num_family_tokens=256,
+                num_ref_tokens=int(getattr(model_cfg, "reference_encoder_tokens", 32)),
+                gate_init=float(getattr(model_cfg, "reference_inject_gate_init", 0.0)),
+            )
+        elif self.conditioner_variant == "style_id":
+            self.reference_encoder = None
+            self.reference_conditioner = None
+        else:
+            raise ValueError(
+                f"model.conditioner_variant must be style_id|reference_hybrid, got {self.conditioner_variant!r}"
+            )
+        self.last_reference_embedding: torch.Tensor | None = None
+        # === Next-gen Route D: texture refiner slot (interface only, default off) ===
+        if bool(getattr(model_cfg, "texture_refiner_enabled", False)):
+            from texture_module import MultiscaleTextureRefiner
+
+            self.texture_refiner = MultiscaleTextureRefiner(
+                self.dim, self.latent_channels,
+                hidden=int(getattr(model_cfg, "texture_refiner_hidden", 32)),
+            )
+        else:
+            self.texture_refiner = None
         if self.use_intrinsic_style:
             self.intrinsic_style_cnn = nn.Sequential(
                 nn.Conv2d(self.latent_channels, 64, kernel_size=3, padding=1),
@@ -528,6 +571,10 @@ class WEAVE(nn.Module):
         )
         _target_hf_init_std = float(getattr(model_cfg, "target_latent_hf_head_fusion_init_std", 0.05))
         _target_hf_gate_init = float(getattr(model_cfg, "target_latent_hf_head_fusion_gate_init", 0.05))
+        # P1 fix: HH-specific encoders/deltas are dead weight when the HH velocity
+        # head is disabled (~54k params never used). Build them only when the HH
+        # head exists. LH/HL paths are unaffected.
+        _hh_head_on = bool(getattr(model_cfg, "enable_hh_head", False))
         if self.target_latent_hf_head_fusion_enabled:
             self.target_latent_hf_encoder = nn.Sequential(
                 nn.Conv2d(self.latent_channels * 3, self.dim, kernel_size=3, padding=1),
@@ -551,7 +598,7 @@ class WEAVE(nn.Module):
             )
             self.target_latent_hf_delta_hh = StyleOnlyVelocityDelta(
                 self.dim, self.latent_channels, init_std=_target_hf_init_std, gate_init=_target_hf_gate_init
-            )
+            ) if _hh_head_on else None
         else:
             self.target_latent_hf_encoder = None
             self.target_latent_hf_proj = None
@@ -570,7 +617,7 @@ class WEAVE(nn.Module):
 
             self.target_latent_hf_spatial_lh = _spatial_encoder()
             self.target_latent_hf_spatial_hl = _spatial_encoder()
-            self.target_latent_hf_spatial_hh = _spatial_encoder()
+            self.target_latent_hf_spatial_hh = _spatial_encoder() if _hh_head_on else None
             _spatial_delta_cls = (
                 EnergyBoundedSpatialStyleVelocityDelta
                 if self.target_latent_hf_spatial_energy_fusion_enabled
@@ -584,7 +631,7 @@ class WEAVE(nn.Module):
             )
             self.target_latent_hf_spatial_delta_hh = _spatial_delta_cls(
                 self.dim, self.latent_channels, init_std=_target_hf_init_std, gate_init=_target_hf_gate_init
-            )
+            ) if _hh_head_on else None
         else:
             self.target_latent_hf_spatial_lh = None
             self.target_latent_hf_spatial_hl = None
@@ -610,10 +657,10 @@ class WEAVE(nn.Module):
 
             self.target_latent_hf_subband_encoder_lh = _subband_encoder()
             self.target_latent_hf_subband_encoder_hl = _subband_encoder()
-            self.target_latent_hf_subband_encoder_hh = _subband_encoder()
+            self.target_latent_hf_subband_encoder_hh = _subband_encoder() if _hh_head_on else None
             self.target_latent_hf_subband_proj_lh = _subband_proj()
             self.target_latent_hf_subband_proj_hl = _subband_proj()
-            self.target_latent_hf_subband_proj_hh = _subband_proj()
+            self.target_latent_hf_subband_proj_hh = _subband_proj() if _hh_head_on else None
             if self.target_latent_hf_subband_head_fusion_enabled:
                 self.target_latent_hf_subband_head_gate = nn.Parameter(torch.tensor(_target_hf_gate_init))
             else:
@@ -630,7 +677,7 @@ class WEAVE(nn.Module):
                 self.target_latent_hf_subband_delta_hh = StyleOnlyVelocityDelta(
                     self.dim, self.latent_channels,
                     init_std=_target_hf_init_std, gate_init=_target_hf_gate_init,
-                )
+                ) if _hh_head_on else None
             else:
                 self.target_latent_hf_subband_delta_lh = None
                 self.target_latent_hf_subband_delta_hl = None
@@ -655,7 +702,7 @@ class WEAVE(nn.Module):
             )
             self.target_latent_hf_texture_encoder_hh = StationaryTextureStatsEncoder(
                 self.latent_channels, self.dim
-            )
+            ) if _hh_head_on else None
             self.target_latent_hf_texture_delta_lh = StyleOnlyVelocityDelta(
                 self.dim, self.latent_channels, init_std=_target_hf_init_std, gate_init=_target_hf_gate_init
             )
@@ -664,7 +711,7 @@ class WEAVE(nn.Module):
             )
             self.target_latent_hf_texture_delta_hh = StyleOnlyVelocityDelta(
                 self.dim, self.latent_channels, init_std=_target_hf_init_std, gate_init=_target_hf_gate_init
-            )
+            ) if _hh_head_on else None
         else:
             self.target_latent_hf_texture_encoder_lh = None
             self.target_latent_hf_texture_encoder_hl = None
@@ -782,6 +829,7 @@ class WEAVE(nn.Module):
         style_latent: torch.Tensor | None = None,
         style_text_tokens: torch.Tensor | None = None,
         cfg_unconditional: bool = False,
+        reference_feats: torch.Tensor | None = None,
         **_: object,
     ) -> dict[str, torch.Tensor]:
         """Returns dict with 3 velocities: {'ll': v_ll, 'lh': v_lh, 'hl': v_hl} (HH removed - 628 L8 DEAD)."""
@@ -826,6 +874,16 @@ class WEAVE(nn.Module):
                 style_tokens = self.style_conditioner(
                     style_id=style_id, batch=x.shape[0], device=x.device, dtype=x.dtype,
                 )
+        # Route C: reference-hybrid conditioning. Family tokens (Style Memory,
+        # category prior) are combined with layout-suppressed reference tokens
+        # via a zero-init gated addition. Spatial placement of texture stays
+        # driven by content features inside the blocks; no raw spatial HF map
+        # of the reference is injected (July experiments: layout copying).
+        self.last_reference_embedding = None
+        if self.reference_conditioner is not None and torch.is_tensor(reference_feats):
+            ref_out = self.reference_encoder(reference_feats.to(device=x.device, dtype=torch.float32))
+            self.last_reference_embedding = ref_out["embedding"]
+            style_tokens = self.reference_conditioner(style_tokens, ref_out["tokens"].to(dtype=x.dtype))
         target_latent_tokens_active = False
         target_latent_hf_head_active = False
         target_latent_hf_spatial_active = False
@@ -878,13 +936,13 @@ class WEAVE(nn.Module):
             and not cfg_unconditional
             and self.target_latent_hf_spatial_lh is not None
             and self.target_latent_hf_spatial_hl is not None
-            and self.target_latent_hf_spatial_hh is not None
         ):
             _s_ll, s_lh_sp, s_hl_sp, s_hh_sp = dwt2_haar(style_latent.to(device=x.device, dtype=x.dtype))
             target_latent_hf_maps = (
                 self.target_latent_hf_spatial_lh(s_lh_sp).to(dtype=x.dtype),
                 self.target_latent_hf_spatial_hl(s_hl_sp).to(dtype=x.dtype),
-                self.target_latent_hf_spatial_hh(s_hh_sp).to(dtype=x.dtype),
+                self.target_latent_hf_spatial_hh(s_hh_sp).to(dtype=x.dtype)
+                if self.target_latent_hf_spatial_hh is not None else None,
             )
             target_latent_hf_spatial_active = True
         if (
@@ -893,12 +951,18 @@ class WEAVE(nn.Module):
             and not cfg_unconditional
             and self.target_latent_hf_subband_encoder_lh is not None
             and self.target_latent_hf_subband_encoder_hl is not None
-            and self.target_latent_hf_subband_encoder_hh is not None
             and self.target_latent_hf_subband_proj_lh is not None
             and self.target_latent_hf_subband_proj_hl is not None
-            and self.target_latent_hf_subband_proj_hh is not None
         ):
             _s_ll, s_lh_sb, s_hl_sb, s_hh_sb = dwt2_haar(style_latent.to(device=x.device, dtype=x.dtype))
+            _sub_hh = (
+                self.target_latent_hf_subband_proj_hh(
+                    self.target_latent_hf_subband_encoder_hh(s_hh_sb).flatten(1).float()
+                ).to(dtype=x.dtype)
+                if (self.target_latent_hf_subband_encoder_hh is not None
+                    and self.target_latent_hf_subband_proj_hh is not None)
+                else None
+            )
             target_latent_hf_subband_pooled = (
                 self.target_latent_hf_subband_proj_lh(
                     self.target_latent_hf_subband_encoder_lh(s_lh_sb).flatten(1).float()
@@ -906,9 +970,7 @@ class WEAVE(nn.Module):
                 self.target_latent_hf_subband_proj_hl(
                     self.target_latent_hf_subband_encoder_hl(s_hl_sb).flatten(1).float()
                 ).to(dtype=x.dtype),
-                self.target_latent_hf_subband_proj_hh(
-                    self.target_latent_hf_subband_encoder_hh(s_hh_sb).flatten(1).float()
-                ).to(dtype=x.dtype),
+                _sub_hh,
             )
             target_latent_hf_subband_active = True
         if (
@@ -917,13 +979,13 @@ class WEAVE(nn.Module):
             and not cfg_unconditional
             and self.target_latent_hf_texture_encoder_lh is not None
             and self.target_latent_hf_texture_encoder_hl is not None
-            and self.target_latent_hf_texture_encoder_hh is not None
         ):
             _s_ll, s_lh_tx, s_hl_tx, s_hh_tx = dwt2_haar(style_latent.to(device=x.device, dtype=x.dtype))
             target_latent_hf_texture_pooled = (
                 self.target_latent_hf_texture_encoder_lh(s_lh_tx).to(dtype=x.dtype),
                 self.target_latent_hf_texture_encoder_hl(s_hl_tx).to(dtype=x.dtype),
-                self.target_latent_hf_texture_encoder_hh(s_hh_tx).to(dtype=x.dtype),
+                self.target_latent_hf_texture_encoder_hh(s_hh_tx).to(dtype=x.dtype)
+                if self.target_latent_hf_texture_encoder_hh is not None else None,
             )
             target_latent_hf_texture_active = True
         # Stage8: CFG — 训练时随机 drop style (替换为 null token), 推理时 cfg_unconditional 强制 null
@@ -961,7 +1023,8 @@ class WEAVE(nn.Module):
             sub_gain = torch.tanh(self.target_latent_hf_subband_head_gate).to(dtype=x.dtype)
             style_pooled_hf_lh = sub_lh if style_pooled_hf is None else style_pooled_hf + sub_gain * sub_lh
             style_pooled_hf_hl = sub_hl if style_pooled_hf is None else style_pooled_hf + sub_gain * sub_hl
-            style_pooled_hf_hh = sub_hh if style_pooled_hf is None else style_pooled_hf + sub_gain * sub_hh
+            if sub_hh is not None:
+                style_pooled_hf_hh = sub_hh if style_pooled_hf is None else style_pooled_hf + sub_gain * sub_hh
         total_entropy = []
         total_pixel_entropy = []
         total_guidance = []
@@ -1052,6 +1115,11 @@ class WEAVE(nn.Module):
                 v_hl = v_hl + self.target_latent_hf_texture_delta_hl(h, tex_hl)
             if v_hh is not None and self.target_latent_hf_texture_delta_hh is not None:
                 v_hh = v_hh + self.target_latent_hf_texture_delta_hh(h, tex_hh)
+        # Route D: multi-scale texture refiner slot (zero-init residual; no-op at init).
+        if self.texture_refiner is not None:
+            _tex_delta = self.texture_refiner(h)
+            v_lh = v_lh + _tex_delta["lh"]
+            v_hl = v_hl + _tex_delta["hl"]
         self.last_debug = {
             "v_ll_abs": v_ll.detach().float().abs().mean(),
             "v_lh_abs": v_lh.detach().float().abs().mean(),
@@ -1161,44 +1229,45 @@ class WEAVE(nn.Module):
         t_batch = torch.full((h.shape[0],), t_curr, device=h.device, dtype=h.dtype)
         if solver_type == "rk4":
             # 630 Phase 4I.6: Classic RK4 (四阶精度 O(h^4))
+            # P1 fix: v_hh is now integrated when present (was silently dropped).
             ll0, lh0, hl0, hh0 = dwt2_haar(h)
             t_mid_b = torch.full((h.shape[0],), t_mid, device=h.device, dtype=h.dtype)
             t_next_b = torch.full((h.shape[0],), t_next, device=h.device, dtype=h.dtype)
             k1 = _f(h, t_batch)
-            ll_k2 = ll0 + (k1["ll"] * dt / 2.0 if not lock_ll else 0.0)
-            lh_k2 = lh0 + k1["lh"] * dt / 2.0
-            hl_k2 = hl0 + k1["hl"] * dt / 2.0
-            h_k2 = idwt2_haar(ll_k2, lh_k2, hl_k2, hh0)
+            hh_k2 = hh0 + k1["hh"] * dt / 2.0 if "hh" in k1 else hh0
+            h_k2 = idwt2_haar(ll0 + (k1["ll"] * dt / 2.0 if not lock_ll else 0.0),
+                              lh0 + k1["lh"] * dt / 2.0, hl0 + k1["hl"] * dt / 2.0, hh_k2)
             k2 = _f(h_k2, t_mid_b)
-            ll_k3 = ll0 + (k2["ll"] * dt / 2.0 if not lock_ll else 0.0)
-            lh_k3 = lh0 + k2["lh"] * dt / 2.0
-            hl_k3 = hl0 + k2["hl"] * dt / 2.0
-            h_k3 = idwt2_haar(ll_k3, lh_k3, hl_k3, hh0)
+            hh_k3 = hh0 + k2["hh"] * dt / 2.0 if "hh" in k2 else hh0
+            h_k3 = idwt2_haar(ll0 + (k2["ll"] * dt / 2.0 if not lock_ll else 0.0),
+                              lh0 + k2["lh"] * dt / 2.0, hl0 + k2["hl"] * dt / 2.0, hh_k3)
             k3 = _f(h_k3, t_mid_b)
-            ll_k4 = ll0 + (k3["ll"] * dt if not lock_ll else 0.0)
-            lh_k4 = lh0 + k3["lh"] * dt
-            hl_k4 = hl0 + k3["hl"] * dt
-            h_k4 = idwt2_haar(ll_k4, lh_k4, hl_k4, hh0)
+            hh_k4 = hh0 + k3["hh"] * dt if "hh" in k3 else hh0
+            h_k4 = idwt2_haar(ll0 + (k3["ll"] * dt if not lock_ll else 0.0),
+                              lh0 + k3["lh"] * dt, hl0 + k3["hl"] * dt, hh_k4)
             k4 = _f(h_k4, t_next_b)
             ll_new = ll0 + ((k1["ll"] + 2.0*k2["ll"] + 2.0*k3["ll"] + k4["ll"]) / 6.0 * dt if not lock_ll else 0.0)
             lh_new = lh0 + (k1["lh"] + 2.0*k2["lh"] + 2.0*k3["lh"] + k4["lh"]) / 6.0 * dt
             hl_new = hl0 + (k1["hl"] + 2.0*k2["hl"] + 2.0*k3["hl"] + k4["hl"]) / 6.0 * dt
-            return idwt2_haar(ll_new, lh_new, hl_new, hh0)
+            hh_new = hh0 + (k1["hh"] + 2.0*k2["hh"] + 2.0*k3["hh"] + k4["hh"]) / 6.0 * dt if "hh" in k1 else hh0
+            return idwt2_haar(ll_new, lh_new, hl_new, hh_new)
         elif solver_type == "heun":
             # 630 Phase 4I.2: Heun's method (二阶精度 O(h^3))
+            # P1 fix: v_hh is now integrated when present (was silently dropped).
             v1 = _f(h, t_batch)
             ll1, lh1, hl1, hh1 = dwt2_haar(h)
             ll_pred = ll1 + (v1["ll"] * dt if not lock_ll else 0.0)
             lh_pred = lh1 + v1["lh"] * dt
             hl_pred = hl1 + v1["hl"] * dt
-            hh_pred = hh1
-            h_pred = idwt2_haar(ll_pred, lh_pred, hl_pred, hh1)
+            hh_pred = hh1 + v1["hh"] * dt if "hh" in v1 else hh1
+            h_pred = idwt2_haar(ll_pred, lh_pred, hl_pred, hh_pred)
             t_batch2 = torch.full((h_pred.shape[0],), t_next, device=h.device, dtype=h.dtype)
             v2 = _f(h_pred, t_batch2)
             ll_new = ll1 + ((v1["ll"] + v2["ll"]) / 2.0 * dt if not lock_ll else 0.0)
             lh_new = lh1 + (v1["lh"] + v2["lh"]) / 2.0 * dt
             hl_new = hl1 + (v1["hl"] + v2["hl"]) / 2.0 * dt
-            return idwt2_haar(ll_new, lh_new, hl_new, hh1)
+            hh_new = hh1 + ((v1["hh"] + v2["hh"]) / 2.0 * dt) if ("hh" in v1 and "hh" in v2) else hh1
+            return idwt2_haar(ll_new, lh_new, hl_new, hh_new)
         else:
             # Euler (一阶) — Spectral: integrate LL/LH/HL independently
             v_dict = _f(h, t_batch)
