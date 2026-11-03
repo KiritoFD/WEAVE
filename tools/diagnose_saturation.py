@@ -1,20 +1,29 @@
 #!/usr/bin/env python3
 """A2/A3/A4 saturation diagnostics for the WEAVE velocity field.
 
-A3  time-bucket cosine / magnitude ratio   : cos(v, u) and ||v||/||u|| on
-                                            t in [0,.1] [.1,.25] [.25,.5]
-                                            [.5,.75] [.75,1], per subband.
-A2  non-paired label uncertainty           : Top1/Top4/Top8 candidate targets,
-                                            cosine spread + consistency, per subband.
-A4  teacher-forcing vs ODE trajectory      : 1-step, 8-step, 8-step AdaIN@0/2,
-                                            8-step AdaIN only on the last step.
+P0 corrections (2026-11-04):
+  A3 真实训练监督 : endpoint, x_t 和 velocity 目标全部来自
+                    FlowMatchingObjective._build_training_target()
+                    (SAT / LL-partial AdaIN / train AdaIN 等开关全部生效),
+                    不再用原始 target-content 自造监督.
+  A2 标签方差     : 固定在 t=0 (x_t == content, 与候选目标无关) 与固定风格条件
+                    (同一 style_id + 同一 style_latent), 对 Top1/4/8 个候选目标
+                    的 velocity 标签计算 cos(v,u) 的均值/标准差/极值 + 标签两两
+                    cosine, 直接量化非配对监督的不确定性.
+  A4 真实轨迹     : 使用 model.integrate_transport() 真实推理路径 (含 per-step
+                    AdaIN / EOTA / progressive 等真实语义), 不再用自写 Euler
+                    与 "style_latent * 系数" 的假 AdaIN.
 
-All quantities are computed from the model alone (no external teacher).
+所有量只来自模型本身 (无外部教师). A2/A3/A4 的 endpoint 均通过训练 objective 构造.
+
 CPU smoke:  python tools/diagnose_saturation.py --smoke --n 4 --steps 4
+Server:     python tools/diagnose_saturation.py --config config.json \
+                --checkpoint runs/.../latest.pt --data-root data/train --device cuda
 """
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import math
 import random
@@ -22,29 +31,63 @@ import sys
 from pathlib import Path
 
 import torch
+import torch.nn.functional as F
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from config_schema import load_experiment_config
+from flow import FlowMatchingObjective
 from model import build_model_from_config, count_parameters
-from wavelet import dwt2_haar, idwt2_haar
+from wavelet import dwt2_haar
 
 SUBBANDS = ("ll", "lh", "hl", "hh")
 TIME_BUCKETS = ((0.0, 0.1), (0.1, 0.25), (0.25, 0.5), (0.5, 0.75), (0.75, 1.0))
 
 
 def _load_checkpoint(model: torch.nn.Module, path: str, device: torch.device) -> None:
+    """Strict checkpoint load.
+
+    Prints the expected / missing / unexpected key lists and fails (SystemExit)
+    if any list is non-empty. No `strict=False` fallback: a diagnostic run on a
+    partially loaded model is worse than no run at all.
+    """
     payload = torch.load(path, map_location=device, weights_only=False)
-    state = payload.get("model_state_dict", payload.get("state_dict", payload))
-    cleaned = {}
+    if not isinstance(payload, dict):
+        raise SystemExit(f"[ckpt] {path}: payload is {type(payload).__name__}, expected dict")
+    state = payload.get("model_state_dict")
+    if state is None:
+        state = payload.get("state_dict")
+    if state is None:
+        state = payload
+    if not isinstance(state, dict):
+        raise SystemExit(f"[ckpt] {path}: state dict is {type(state).__name__}, expected dict")
+
+    cleaned: dict[str, torch.Tensor] = {}
     for key, value in state.items():
         clean = key
         for prefix in ("_orig_mod.", "module.", "model."):
             if clean.startswith(prefix):
                 clean = clean[len(prefix):]
         cleaned[clean] = value
-    missing, unexpected = model.load_state_dict(cleaned, strict=False)
-    print(f"[ckpt] loaded {path} | missing={len(missing)} unexpected={len(unexpected)}")
+
+    expected = list(model.state_dict().keys())
+    missing = [key for key in expected if key not in cleaned]
+    unexpected = [key for key in cleaned if key not in expected]
+    print(f"[ckpt] path={path}")
+    print(f"[ckpt] expected={len(expected)} provided={len(cleaned)} "
+          f"missing={len(missing)} unexpected={len(unexpected)}")
+    print(f"[ckpt] missing_keys={missing}")
+    print(f"[ckpt] unexpected_keys={unexpected}")
+
+    try:
+        result = model.load_state_dict(cleaned, strict=False)
+    except RuntimeError as exc:  # shape mismatch etc. (strict=False still raises)
+        raise SystemExit(f"[ckpt] strict load failed (shape mismatch): {exc}") from exc
+    if result.missing_keys or result.unexpected_keys:
+        raise SystemExit(
+            "[ckpt] strict load failed: expected/missing/unexpected must all be empty"
+        )
+    print("[ckpt] strict load OK")
 
 
 def _load_latents(root: Path, styles: list[str], n: int, seed: int) -> list[torch.Tensor]:
@@ -78,160 +121,38 @@ def _cos_ratio(v: torch.Tensor, u: torch.Tensor) -> tuple[float, float]:
     vf, uf = v.flatten(1), u.flatten(1)
     vn = vf.norm(dim=1).clamp_min(1e-8)
     un = uf.norm(dim=1).clamp_min(1e-8)
-    cos = torch.nn.functional.cosine_similarity(vf, uf, dim=1, eps=1e-8)
+    cos = F.cosine_similarity(vf, uf, dim=1, eps=1e-8)
     ratio = vn / un
     return float(cos.mean()), float(ratio.mean())
 
 
-def _velocity(model, h, t: float, style_id: int, style_latent, adain_scale: float) -> dict:
-    if adain_scale == 0.0:
-        sl = torch.zeros_like(style_latent)
-    elif adain_scale != 1.0:
-        sl = style_latent * float(adain_scale)
-    else:
-        sl = style_latent
-    return model(h, t=float(t), style_id=style_id, style_latent=sl)
+def _pairwise_cos(vecs: list[torch.Tensor]) -> float:
+    """Mean cosine between every pair of flattened label tensors."""
+    if len(vecs) < 2:
+        return 0.0
+    flat = [v.reshape(-1) for v in vecs]
+    vals = []
+    for i in range(len(flat)):
+        for j in range(i + 1, len(flat)):
+            vals.append(float(F.cosine_similarity(flat[i], flat[j], dim=0, eps=1e-8)))
+    return sum(vals) / len(vals)
 
 
-def _euler(model, h, *, steps: int, style_id: int, style_latent, adain_scale: float,
-           last_step_adain_only: bool = False) -> torch.Tensor:
-    steps = max(1, int(steps))
-    dt = 1.0 / steps
-    for i in range(steps):
-        t = i * dt
-        scale = adain_scale
-        if last_step_adain_only and i != steps - 1:
-            scale = 0.0
-        v = _velocity(model, h, t, style_id, style_latent, scale)
-        ll, lh, hl, hh = dwt2_haar(h)
-        ll = ll + v["ll"] * dt
-        lh = lh + v["lh"] * dt
-        hl = hl + v["hl"] * dt
-        if "hh" in v:
-            hh = hh + v["hh"] * dt
-        h = idwt2_haar(ll, lh, hl, hh)
-    return h
-
-
-def analysis_a3(model, content, target, *, style_id: int, samples_per_bucket: int = 3, seed: int = 0):
-    """Time-bucket cosine and magnitude ratio, per subband."""
-    g = torch.Generator().manual_seed(seed)
-    u_sub = {k: _subbands(target)[k] - _subbands(content)[k] for k in SUBBANDS}
-    records = []
-    for lo, hi in TIME_BUCKETS:
-        rows = {k: {"cos": [], "ratio": []} for k in SUBBANDS}
-        for _ in range(samples_per_bucket):
-            t = lo + (hi - lo) * float(torch.rand(1, generator=g))
-            h = content * (1.0 - t) + target * t
-            v = _velocity(model, h, t, style_id, target, 1.0)
-            v_sub = _subbands_out(v, h)
-            for k in SUBBANDS:
-                if k not in v_sub or k not in u_sub or u_sub[k] is None:
-                    continue
-                cos, ratio = _cos_ratio(v_sub[k], u_sub[k])
-                rows[k]["cos"].append(cos)
-                rows[k]["ratio"].append(ratio)
-        for k in SUBBANDS:
-            if rows[k]["cos"]:
-                records.append({
-                    "bucket": f"[{lo},{hi}]", "subband": k,
-                    "cos_mean": sum(rows[k]["cos"]) / len(rows[k]["cos"]),
-                    "ratio_mean": sum(rows[k]["ratio"]) / len(rows[k]["ratio"]),
-                })
-    return records
-
-
-def _subbands_out(v: dict, h: torch.Tensor) -> dict[str, torch.Tensor]:
-    ll, lh, hl, hh = dwt2_haar(h)
-    zeros = torch.zeros_like(hh)
-    out = {
-        "ll": torch.cat([ll, lh, hl, hh], dim=1),
-        "lh": torch.cat([ll, lh, hl, hh], dim=1),
-        "hl": torch.cat([ll, lh, hl, hh], dim=1),
-        "hh": torch.cat([ll, lh, hl, hh], dim=1),
+def _stats(values: list[float]) -> dict[str, float]:
+    if not values:
+        return {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0}
+    mean = sum(values) / len(values)
+    var = sum((v - mean) ** 2 for v in values) / max(1, len(values) - 1)
+    return {
+        "mean": mean,
+        "std": math.sqrt(max(0.0, var)),
+        "min": min(values),
+        "max": max(values),
     }
-    # Subband-velocity tensors are already (B,C,H/2,W/2); keep the raw fields.
-    out["ll"] = v["ll"]
-    out["lh"] = v["lh"]
-    out["hl"] = v["hl"]
-    out["hh"] = v.get("hh", zeros)
-    return out
 
 
-def analysis_a2(model, content, candidates, *, style_id: int, t: float, k_list=(1, 4, 8)):
-    """Non-paired label uncertainty over Top-K candidate targets."""
-    u_sub_all = []
-    for target in candidates:
-        u = {kk: _subbands(target)[kk] - _subbands(content)[kk] for kk in SUBBANDS}
-        u_sub_all.append(u)
-    h = content * (1.0 - t) + candidates[0] * t
-    v = _velocity(model, h, t, style_id, candidates[0], 1.0)
-    v_sub = _subbands_out(v, h)
-    rows = []
-    for k in k_list:
-        ks = min(k, len(candidates))
-        for sb in SUBBANDS:
-            cos_vals = []
-            ratio_vals = []
-            if sb == "hh" and not model_has_hh(model):
-                continue
-            for u in u_sub_all[:ks]:
-                cos, ratio = _cos_ratio(v_sub[sb], u[sb])
-                cos_vals.append(cos)
-                ratio_vals.append(ratio)
-            mean = sum(cos_vals) / len(cos_vals)
-            var = sum((c - mean) ** 2 for c in cos_vals) / max(1, len(cos_vals) - 1)
-            rows.append({
-                "topk": ks, "subband": sb, "cos_mean": mean,
-                "cos_std": math.sqrt(max(0.0, var)),
-                "ratio_mean": sum(ratio_vals) / len(ratio_vals),
-            })
-    return rows
-
-
-def analysis_a4(model, content, target, *, style_id: int, steps: int):
-    """Teacher forcing vs free ODE rollout under different AdaIN schedules."""
-    u = {k: _subbands(target)[k] - _subbands(content)[k] for k in SUBBANDS}
-    grid = [i / 8 for i in range(9)]
-    tf_cos = {k: [] for k in SUBBANDS}
-    for t in grid:
-        h = content * (1.0 - t) + target * t
-        v = _velocity(model, h, t, style_id, target, 1.0)
-        v_sub = _subbands_out(v, h)
-        for k in SUBBANDS:
-            if k == "hh" and not model_has_hh(model):
-                continue
-            cos, _ = _cos_ratio(v_sub[k], u[k])
-            tf_cos[k].append(cos)
-    tf_mean = {k: (sum(v) / len(v) if v else 0.0) for k, v in tf_cos.items()}
-
-    modes = [
-        ("1step_adain0", 1, 0.0, False),
-        ("8step_adain0", steps, 0.0, False),
-        ("8step_adain2", steps, 2.0, False),
-        ("8step_last_adain", steps, 1.0, True),
-        ("8step_adain1", steps, 1.0, False),
-    ]
-    rows = []
-    for name, n_steps, scale, last_only in modes:
-        out_latent = _euler(model, content, steps=n_steps, style_id=style_id,
-                            style_latent=target, adain_scale=scale,
-                            last_step_adain_only=last_only)
-        err = float((out_latent - target).flatten(1).norm(dim=1).mean())
-        out_sub = _subbands(out_latent)
-        cos_to_target = []
-        for k in SUBBANDS:
-            if k == "hh" and not model_has_hh(model):
-                continue
-            cos_to_target.append(_cos_ratio(out_sub[k] - _subbands(content)[k], u[k])[0])
-        rows.append({
-            "mode": name, "steps": n_steps, "adain_scale": scale,
-            "last_step_adain_only": last_only,
-            "endpoint_l2": err,
-            "endpoint_cos_to_target": sum(cos_to_target) / max(1, len(cos_to_target)),
-            "teacher_forcing_cos_mean": sum(tf_mean.values()) / max(1, len(tf_mean)),
-        })
-    return rows
+def _velocity(model, h, t: float, style_id: int, style_latent) -> dict:
+    return model(h, t=float(t), style_id=style_id, style_latent=style_latent)
 
 
 def model_has_hh(model) -> bool:
@@ -239,6 +160,227 @@ def model_has_hh(model) -> bool:
         if getattr(model, name, None) is not None:
             return True
     return False
+
+
+def _cfg_get(model, key: str, default):
+    """Same lookup precedence as model.integrate_transport: model_cfg, then bridge_cfg."""
+    mcfg = getattr(model, "model_cfg", None)
+    bcfg = getattr(model, "bridge_cfg", None)
+    if mcfg is not None and hasattr(mcfg, key):
+        return getattr(mcfg, key)
+    if bcfg is not None and hasattr(bcfg, key):
+        return getattr(bcfg, key)
+    return default
+
+
+@contextlib.contextmanager
+def _temporary_cfg(model, overrides: dict):
+    """Temporarily override model_cfg (or bridge_cfg) attributes, restore afterwards."""
+    mcfg = getattr(model, "model_cfg", None)
+    targets = [mcfg, getattr(model, "bridge_cfg", None)]
+    saved = []  # (obj, key, existed, value)
+    for obj in targets:
+        if obj is None:
+            continue
+        for key, value in overrides.items():
+            existed = hasattr(obj, key)
+            saved.append((obj, key, existed, getattr(obj, key, None) if existed else None))
+            setattr(obj, key, value)
+    try:
+        yield
+    finally:
+        for obj, key, existed, value in reversed(saved):
+            if existed:
+                setattr(obj, key, value)
+            else:
+                try:
+                    delattr(obj, key)
+                except AttributeError:
+                    pass
+
+
+def analysis_a3(
+    model,
+    objective: FlowMatchingObjective,
+    content: torch.Tensor,
+    target_style: torch.Tensor,
+    *,
+    style_id: int,
+    samples_per_bucket: int = 3,
+    seed: int = 0,
+):
+    """Time-bucket cosine and magnitude ratio, per subband, against the REAL target."""
+    g = torch.Generator().manual_seed(seed)
+    endpoint = objective._build_training_target(content, target_style, target_style)
+    endpoint_sub = _subbands(endpoint)
+    content_sub = _subbands(content)
+    u_sub = {k: endpoint_sub[k] - content_sub[k] for k in SUBBANDS}
+    records = []
+    for lo, hi in TIME_BUCKETS:
+        cos_rows = {k: [] for k in SUBBANDS}
+        ratio_rows = {k: [] for k in SUBBANDS}
+        for _ in range(samples_per_bucket):
+            t = lo + (hi - lo) * float(torch.rand(1, generator=g))
+            h = content * (1.0 - t) + endpoint * t
+            v = _velocity(model, h, t, style_id, target_style)
+            for k in SUBBANDS:
+                if k == "hh" and not model_has_hh(model):
+                    continue
+                cos, ratio = _cos_ratio(v[k], u_sub[k])
+                cos_rows[k].append(cos)
+                ratio_rows[k].append(ratio)
+        for k in SUBBANDS:
+            if not cos_rows[k]:
+                continue
+            cos_stats = _stats(cos_rows[k])
+            records.append({
+                "bucket": f"[{lo},{hi}]", "subband": k,
+                "cos_mean": cos_stats["mean"], "cos_std": cos_stats["std"],
+                "ratio_mean": sum(ratio_rows[k]) / len(ratio_rows[k]),
+            })
+    return records
+
+
+def analysis_a2(
+    model,
+    objective: FlowMatchingObjective,
+    content: torch.Tensor,
+    candidates: list[torch.Tensor],
+    *,
+    style_id: int,
+    k_list=(1, 4, 8),
+):
+    """Non-paired label uncertainty at t=0 with a fixed style condition.
+
+    At t=0 x_t == content for every candidate, so the prediction v is computed
+    once and compared against the candidate velocity labels. The only source of
+    variation is the non-paired target, which is exactly what we want to measure.
+    """
+    if not candidates:
+        raise ValueError("A2 needs at least one candidate target")
+    style_ref = candidates[0]
+    batch = min(content.shape[0], *(c.shape[0] for c in candidates))
+    content_b = content[:batch]
+    targets = [
+        objective._build_training_target(content_b, cand[:batch], style_ref[:batch])
+        for cand in candidates
+    ]
+    content_sub = _subbands(content_b)
+    u_sub_all = [
+        {k: _subbands(tgt)[k] - content_sub[k] for k in SUBBANDS} for tgt in targets
+    ]
+    # t=0 -> x_t = content (independent of candidate).
+    v = _velocity(model, content_b, 0.0, style_id, style_ref[:batch])
+    rows = []
+    for k in k_list:
+        ks = min(k, len(targets))
+        for sb in SUBBANDS:
+            if sb == "hh" and not model_has_hh(model):
+                continue
+            cos_vals = []
+            ratio_vals = []
+            for u in u_sub_all[:ks]:
+                cos, ratio = _cos_ratio(v[sb], u[sb])
+                cos_vals.append(cos)
+                ratio_vals.append(ratio)
+            cos_stats = _stats(cos_vals)
+            ratio_stats = _stats(ratio_vals)
+            rows.append({
+                "topk": ks, "subband": sb,
+                "t": 0.0, "n_candidates": ks,
+                "cos_mean": cos_stats["mean"], "cos_std": cos_stats["std"],
+                "cos_min": cos_stats["min"], "cos_max": cos_stats["max"],
+                "ratio_mean": ratio_stats["mean"], "ratio_std": ratio_stats["std"],
+                "label_pairwise_cos_mean": _pairwise_cos([u[sb] for u in u_sub_all[:ks]]),
+            })
+    return rows
+
+
+A4_MODES = (
+    # (name, overrides) — empty overrides == the config's real inference path.
+    ("net_only", {
+        "endpoint_adain_scale": 0.0,
+        "endpoint_adain_scale_ll": 0.0,
+        "endpoint_adain_scale_lh": 0.0,
+        "endpoint_adain_scale_hl": 0.0,
+        "endpoint_adain_scale_hh": 0.0,
+        "endpoint_adain_only_last_step": False,
+        "progressive_alpha_schedule": "none",
+        "zero_step_wct_enabled": False,
+    }),
+    ("real_ode", {}),
+    ("last_step_adain", {
+        "endpoint_adain_only_last_step": True,
+        "progressive_alpha_schedule": "none",
+    }),
+    ("every_step_adain", {
+        "endpoint_adain_only_last_step": False,
+        "progressive_alpha_schedule": "none",
+    }),
+)
+
+
+def analysis_a4(
+    model,
+    objective: FlowMatchingObjective,
+    content: torch.Tensor,
+    target_style: torch.Tensor,
+    *,
+    style_id: int,
+    steps: int,
+):
+    """Teacher forcing vs the real ODE rollout (model.integrate_transport)."""
+    endpoint = objective._build_training_target(content, target_style, target_style)
+    content_sub = _subbands(content)
+    endpoint_sub = _subbands(endpoint)
+    u = {k: endpoint_sub[k] - content_sub[k] for k in SUBBANDS}
+
+    grid = [i / 8 for i in range(9)]
+    tf_cos = {k: [] for k in SUBBANDS}
+    for t in grid:
+        h = content * (1.0 - t) + endpoint * t
+        v = _velocity(model, h, t, style_id, target_style)
+        for k in SUBBANDS:
+            if k == "hh" and not model_has_hh(model):
+                continue
+            cos, _ = _cos_ratio(v[k], u[k])
+            tf_cos[k].append(cos)
+    tf_mean = sum(sum(v) / len(v) for v in tf_cos.values() if v) / max(
+        1, sum(1 for v in tf_cos.values() if v)
+    )
+
+    rows = []
+    for name, overrides in A4_MODES:
+        with _temporary_cfg(model, dict(overrides)):
+            effective_scale = float(_cfg_get(model, "endpoint_adain_scale", 0.0))
+            out = model.integrate_transport(
+                content, style_id, num_steps=steps, style_latent=target_style
+            )
+        err = float((out - endpoint).flatten(1).norm(dim=1).mean())
+        out_sub = _subbands(out)
+        cos_to_endpoint = []
+        for k in SUBBANDS:
+            if k == "hh" and not model_has_hh(model):
+                continue
+            cos_to_endpoint.append(
+                _cos_ratio(out_sub[k] - content_sub[k], u[k])[0]
+            )
+        cos_to_raw = []
+        raw_sub = _subbands(target_style)
+        raw_u = {k: raw_sub[k] - content_sub[k] for k in SUBBANDS}
+        for k in SUBBANDS:
+            if k == "hh" and not model_has_hh(model):
+                continue
+            cos_to_raw.append(_cos_ratio(out_sub[k] - content_sub[k], raw_u[k])[0])
+        rows.append({
+            "mode": name, "steps": steps,
+            "effective_adain_scale": effective_scale,
+            "endpoint_l2": err,
+            "endpoint_cos_to_training_target": sum(cos_to_endpoint) / max(1, len(cos_to_endpoint)),
+            "endpoint_cos_to_raw_target": sum(cos_to_raw) / max(1, len(cos_to_raw)),
+            "teacher_forcing_cos_mean": tf_mean,
+        })
+    return rows
 
 
 def main() -> None:
@@ -264,17 +406,18 @@ def main() -> None:
         cfg = load_experiment_config(cfg_path)
         cfg.model.base_dim = 16
         cfg.model.num_res_blocks = 2
-        model = build_model_from_config(cfg.model, bridge_cfg=cfg.bridge).to(device)
+        objective = FlowMatchingObjective(cfg)
+        model = build_model_from_config(cfg.model, bridge_cfg=cfg.bridge).to(device).eval()
         content = torch.randn(4, 4, 64, 64, device=device)
         target = torch.randn_like(content)
         candidates = [torch.randn_like(content) for _ in range(4)]
-        styles = ["style0", "style1"]
         style_id = 0
         print(f"[smoke] params={count_parameters(model)}")
     else:
         if not args.config:
             raise SystemExit("--config is required unless --smoke")
         cfg = load_experiment_config(args.config)
+        objective = FlowMatchingObjective(cfg)
         model = build_model_from_config(cfg.model, bridge_cfg=cfg.bridge).to(device)
         if args.checkpoint:
             _load_checkpoint(model, args.checkpoint, device)
@@ -292,13 +435,16 @@ def main() -> None:
         print(f"[data] content={tuple(content.shape)} target={tuple(target.shape)} style_id={style_id}")
 
     with torch.no_grad():
-        a3 = analysis_a3(model, content, target, style_id=style_id, seed=args.seed)
-        a2 = analysis_a2(model, content, candidates, style_id=style_id, t=0.5)
-        a4 = analysis_a4(model, content, target, style_id=style_id, steps=args.steps)
+        a3 = analysis_a3(model, objective, content, target, style_id=style_id, seed=args.seed)
+        a2 = analysis_a2(model, objective, content, candidates, style_id=style_id)
+        a4 = analysis_a4(model, objective, content, target, style_id=style_id, steps=args.steps)
 
     payload = {
         "config": args.config, "checkpoint": args.checkpoint,
         "n": args.n, "steps": args.steps, "seed": args.seed, "smoke": args.smoke,
+        "endpoint_source": "FlowMatchingObjective._build_training_target",
+        "a2_setting": "t=0, fixed style_id + fixed style_latent",
+        "a4_setting": "model.integrate_transport (real inference path)",
         "A2_candidate_uncertainty": a2,
         "A3_time_buckets": a3,
         "A4_trajectory_vs_teacher_forcing": a4,
