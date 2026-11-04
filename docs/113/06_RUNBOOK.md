@@ -92,3 +92,4 @@ python3 tools/diag_three_way.py --help
 - 本地是唯一 git 源；远端是 scp 副本（无 `.git`）。
 - 改代码 → 本地 commit → 再 `scp -O` 覆盖；本次整理**不动**远端代码/配置/runs。
 - 文档同步后做 `md5sum` 对照，别靠肉眼。
+

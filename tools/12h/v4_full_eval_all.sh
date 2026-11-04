@@ -15,3 +15,4 @@ bash tools/12h/v4_full_eval.sh s0.15_cf1.0_50steps    "$ck" "$root" 50 0.15 1.0
 bash tools/12h/v4_full_eval.sh s0.30_cf1.5_50steps    "$ck" "$root" 50 0.30 1.5
 bash tools/12h/v4_full_eval.sh s0.45_cf1.0_50steps    "$ck" "$root" 50 0.45 1.0
 echo ALLDONE
+

@@ -128,3 +128,4 @@ B0（当前 WEAVE 统一基线）→ B1a（内部注意力 + 伪端点；判据�
 3. 关闭新机制的对照组必须与已有基线**逐位一致**（同 seed 同步数）；不一致先查实现。
 4. 每组 ≥2 seed；单 seed 标"待复现"。
 5. 所有 run 登记 `/mnt/i/Latent_Style/runs/registry.jsonl`。
+

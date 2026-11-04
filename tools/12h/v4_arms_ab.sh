@@ -10,3 +10,4 @@ for arm in A B; do
   echo "$arm EXIT=$? $(date +%H:%M:%S)"
 done
 echo ARMS_AB_DONE
+

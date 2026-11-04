@@ -11,3 +11,4 @@ for f in ("overfit_synth_lr1e3", "overfit_real_lr1e3"):
           "d_wrong%", j["final"]["d_wrong_pct"], "mid_dnull%", j["final"]["mid_snr_d_null_pct"],
           "last_loss", j["curve"][-1]["loss"], "embed_norm", j["style_embed_norm"],
           "film_norm", j["film_proj_norm_mean"])
+

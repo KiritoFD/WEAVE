@@ -1,2 +1,0 @@
-epoch,checkpoint,clip_s,lpips,dino_s,dino_c,eval_subdir,config_override
-6,epoch_0006.pt,0.6940537011623382,0.5813830013866667,0.30604889848828315,0.25862670643938085,param_endpoint_adain_2p5,experiments\endpoint_adain\adain_2p5.json

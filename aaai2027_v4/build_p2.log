@@ -1,0 +1,107 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./paper.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+(c:/texlive/2026/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(c:/texlive/2026/texmf-dist/tex/latex/base/size10.clo)) (./aaai2027.sty
+Conference Style for AAAI for LaTeX 2e
+(c:/texlive/2026/texmf-dist/tex/generic/iftex/iftex.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/base/fontenc.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/newtx/newtxtext.sty
+`newtxtext' v1.744, 2024/04/01 Text macros taking advantage of TeXGyre Termes a
+nd its extensions (msharpe)
+(c:/texlive/2026/texmf-dist/tex/latex/xpatch/xpatch.sty
+(c:/texlive/2026/texmf-dist/tex/latex/l3kernel/expl3.sty
+(c:/texlive/2026/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def))
+(c:/texlive/2026/texmf-dist/tex/latex/l3packages/xparse/xparse.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/etoolbox/etoolbox.sty))
+(c:/texlive/2026/texmf-dist/tex/latex/xcolor/xcolor.sty
+(c:/texlive/2026/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(c:/texlive/2026/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(c:/texlive/2026/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(c:/texlive/2026/texmf-dist/tex/latex/xkeyval/xkeyval.sty
+(c:/texlive/2026/texmf-dist/tex/generic/xkeyval/xkeyval.tex
+(c:/texlive/2026/texmf-dist/tex/generic/xkeyval/xkvutils.tex
+(c:/texlive/2026/texmf-dist/tex/generic/xkeyval/keyval.tex))))
+(c:/texlive/2026/texmf-dist/tex/latex/base/textcomp.sty)
+(c:/texlive/2026/texmf-dist/tex/generic/xstring/xstring.sty
+(c:/texlive/2026/texmf-dist/tex/generic/xstring/xstring.tex))
+(c:/texlive/2026/texmf-dist/tex/latex/base/ifthen.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/carlisle/scalefnt.sty)
+(c:/texlive/2026/texmf-dist/tex/generic/kastrup/binhex.tex)
+(c:/texlive/2026/texmf-dist/tex/latex/fontaxes/fontaxes.sty
+(c:/texlive/2026/texmf-dist/tex/latex/figureversions/figureversions.sty)))
+(c:/texlive/2026/texmf-dist/tex/latex/psnfss/helvet.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/psnfss/courier.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/placeins/placeins.sty))
+(c:/texlive/2026/texmf-dist/tex/latex/url/url.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/graphics/graphicx.sty
+(c:/texlive/2026/texmf-dist/tex/latex/graphics/graphics.sty
+(c:/texlive/2026/texmf-dist/tex/latex/graphics/trig.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+(c:/texlive/2026/texmf-dist/tex/latex/natbib/natbib.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/caption/caption.sty
+(c:/texlive/2026/texmf-dist/tex/latex/caption/caption3.sty))
+(c:/texlive/2026/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(c:/texlive/2026/texmf-dist/tex/latex/amsmath/amstext.sty
+(c:/texlive/2026/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(c:/texlive/2026/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(c:/texlive/2026/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(c:/texlive/2026/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+(c:/texlive/2026/texmf-dist/tex/latex/amscls/amsthm.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(c:/texlive/2026/texmf-dist/tex/latex/newtx/t1ntxtlf.fd) (./paper.aux)
+(c:/texlive/2026/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+) (c:/texlive/2026/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+(c:/texlive/2026/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg))
+(c:/texlive/2026/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(c:/texlive/2026/texmf-dist/tex/latex/amsfonts/umsb.fd)
+Overfull \vbox (39.27644pt too high) has occurred while \output is active
+[1{c:/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/texlive/202
+6/texmf-dist/fonts/enc/dvips/newtx/ntx-ec-tlf.enc} <./fig_page1_a.png (PNG copy
+)>]
+Underfull \hbox (badness 10000) in paragraph at lines 85--89
+[]\T1/ntxtlf/b/n/10 Compact trans-port di-ag-no-sis. \T1/ntxtlf/m/n/10 We iden-
+tify a
+
+Underfull \hbox (badness 3872) in paragraph at lines 85--89
+\T1/ntxtlf/m/n/10 compression--transport gap: VAE com-pres-sion re-
+[2 <./fig_page1_b.png (PNG copy)>] [3 <./frame.png> <./fig_pixel_vs_latent_one_
+column.pdf>]
+Underfull \hbox (badness 1057) in paragraph at lines 190--193
+\T1/ntxtlf/m/n/10 Let $\OML/cmm/m/it/10 z[][]\OMS/cmsy/m/n/10 E\OT1/cmr/m/n/10 
+(\OML/cmm/m/it/10 x[]\OT1/cmr/m/n/10 )$ \T1/ntxtlf/m/n/10 and $\OML/cmm/m/it/10
+ z[][]\OMS/cmsy/m/n/10 E\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 x[]\OT1/cmr/m/n/10 )$
+ \T1/ntxtlf/m/n/10 from the frozen SD1.5
+[4]
+Underfull \hbox (badness 1917) in paragraph at lines 358--359
+ \T1/ntxtlf/b/n/10 Con-fig-u-ra-tion. \T1/ntxtlf/m/n/10 Train-ing uses $\OML/cm
+m/m/it/10 []\OT1/cmr/m/n/10 0\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 3$\T1/ntxtlf/m/
+n/10 , $\OML/cmm/m/it/10 ^^U[][]\OT1/cmr/m/n/10 0\OML/cmm/m/it/10 :\OT1/cmr/m/n
+/10 3$\T1/ntxtlf/m/n/10 , and
+[5] [6 <./teaser.png>] (./paper.bbl [7]
+Underfull \hbox (badness 1189) in paragraph at lines 203--207
+\T1/ntxtlf/m/n/10 El-Nouby, A.; et al. 2023.  DI-NOv2: Learn-ing Ro-
+[8]) [9] (./paper.aux) )
+(see the transcript file for additional information)<c:/texlive/2026/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2026/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/publi
+c/amsfonts/cm/cmmi7.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmr10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.p
+fb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb><c:/texl
+ive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><c:/texlive/2026/te
+xmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2026/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmsy6.pfb><c:/texlive/2026/texmf-dist/fonts/type
+1/public/amsfonts/cm/cmsy7.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmsy9.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/sy
+mbols/msbm10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/newtx/ztmb.pfb>
+<c:/texlive/2026/texmf-dist/fonts/type1/public/newtx/ztmr.pfb><c:/texlive/2026/
+texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
+Output written on paper.pdf (9 pages, 10033018 bytes).
+Transcript written on paper.log.

@@ -18,3 +18,4 @@ spans = [(tr[i]["step"], tr[i]["elapsed_s"]) for i in range(0, len(tr), 50)]
 if len(spans) >= 2:
     (s0, t0), (s1, t1) = spans[0], spans[-1]
     print(f"step time = {(t1 - t0) / (s1 - s0):.3f} s/step  (mb=16 x accum 2)")
+

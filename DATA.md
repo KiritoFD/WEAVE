@@ -3,14 +3,6 @@
 > 本文档描述 WEAVE 项目使用的全部数据集、下载方式、预处理流程、目录结构、评估数据组成、去重结论，以及添加自定义数据集的步骤。
 > 所有训练 / 评估图像均来自公开的 **WikiArt** 与 **COCO val2017**；VAE 为公开的 **SD1.5 EMA** 权重。仓库代码包不重新分发任何图像、packed latent 或 ONNX 图——需按本文档在本地准备。
 
-> **💾 快速通道（推荐）**：项目使用的完整数据集与结果图片已打包并镜像到
-> **Google Drive**（公开读链接），可直接下载解压到正确路径，跳过手工下载/预处理：
-> ```bash
-> python scripts/download_data.py        # 下载并解压 data/ datasets/ results/ eval_outputs/
-> ```
-> 见 [README → Data & Results Download](README.md#-data--results-download) 获取
-> 各归档的下载链接、SHA-256 校验值与解压说明。
-
 ---
 
 ## 1. 概述

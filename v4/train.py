@@ -337,3 +337,4 @@ def _save(path: Path, ema: EMA, model, cfg: V4Config, schedule: Schedule, step: 
 
 if __name__ == "__main__":
     main()
+

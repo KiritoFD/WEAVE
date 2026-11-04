@@ -11,3 +11,4 @@ for s in 0.05 0.08 0.10 0.20; do
 done
 python3 tools/12h/v4_sweep_table.py "$root"
 echo LOWSTRENGTHDONE
+

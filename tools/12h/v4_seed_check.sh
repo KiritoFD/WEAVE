@@ -17,3 +17,4 @@ for sd in 1 2; do
   echo "seed${sd} EXIT=$? $(date +%H:%M:%S)"
 done
 echo SEEDSDONE
+

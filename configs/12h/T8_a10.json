@@ -1,0 +1,32 @@
+{
+  "_base": "../../config.json",
+  "bridge": {
+    "hf_endpoint_mode": "content_anchored",
+    "hf_endpoint_alpha": 1.0
+  },
+  "training": {
+    "seed": 42,
+    "batch_size": 32,
+    "accumulation_steps": 1,
+    "num_epochs": 600,
+    "stop_after_global_steps": 600,
+    "save_interval": 600,
+    "save_step_milestones": [200, 400, 600],
+    "full_eval_each_epoch": false,
+    "internal_probe_enabled": true,
+    "internal_probe_every": 3,
+    "internal_early_stop_enabled": false,
+    "resume_checkpoint": "",
+    "resume_prefer_local_checkpoint": false,
+    "torch_compile": false
+  },
+  "data": {
+    "train_sample_limit": 32,
+    "pairing_mode": "fixed",
+    "pairing_seed": 0,
+    "pairing_cache_path": ""
+  },
+  "checkpoint": {
+    "save_dir": "runs/12h/T8_a10"
+  }
+}

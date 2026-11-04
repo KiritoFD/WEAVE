@@ -15,19 +15,6 @@ python -c "import torch; torch.hub.load('facebookresearch/dinov2', 'dinov2_vits1
 
 硬件：单卡 RTX 4090 足够（基线 4 epoch ≈ 1.4 min @ RTX 3060；Route A 多步可微解码约增加 5–10× 单步开销，microbatch + grad checkpoint 后 24GB 显存充裕）。
 
-### 内部监督主干预的 batch 档位（RTX 3060 12GB 实测，2026-11-04）
-
-| batch | 步/epoch（5000 样本） | 峰值显存 | 结果 |
-|---|---|---|---|
-| 96 | 52 | 6.6GB | 基线档（计划内 600 步） |
-| **160** | **31** | **10.38GB guard / 10.02GB reserved / 9.28GB allocated** | **默认标准档**：496 步 248s，0.45–0.50 s/step，无 OOM，`vram_guard` 未误杀 |
-| 176 | 29 | 未实测 | 上限（按 160 峰值线性外推约 11.2GB，需先跑 100 步确认） |
-| 180–192 | — | 11.6GB+ | **已 OOM，不再尝试** |
-
-- lr 随 batch 重定：`lr = 5e-5 * sqrt(batch/14)`（b160 → 1.69e-4）。
-- 步数预算：`每 epoch 步数 = ceil(样本数 / batch)`，`总更新数 = 步/epoch × epoch`。b96×5000 = 52 步/epoch；b160×5000 = 31 步/epoch。
-- `vram_guard.sh` 判活已改为看 `ps` 进程状态（僵尸进程不再被当成低显存误杀）。
-
 数据放置（沿用现有约定）：
 
 ```

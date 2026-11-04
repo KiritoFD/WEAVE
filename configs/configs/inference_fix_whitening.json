@@ -1,0 +1,9 @@
+{
+  "_comment": "Whitening fix: endpoint AdaIN scale reduced from 2.0 to 1.0 to avoid HF over-normalization. Preserve HF mean to prevent style luminance offset.",
+  "model": {
+    "endpoint_adain_scale": 1.0,
+    "endpoint_adain_preserve_mean": true,
+    "endpoint_adain_only_last_step": false,
+    "style_extrap_alpha": 0.1
+  }
+}

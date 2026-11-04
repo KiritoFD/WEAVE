@@ -53,20 +53,3 @@
 2. `DATA.md`（根目录）把 `wikiart512_5style` 描述为"D5-512 源 / 同 5 风格"、把 `r5` 描述为"与 D5 同 5 风格"——与实测风格表冲突（见第 0 节）。
 3. 750/600/150 的拆分在 `DATA.md` §6.1 被写成"5 内容图 × 30 × 5"，实际是 150 内容图 × 5 目标风格——**表述错误**。
 4. 18k 缺 latent 是路线 C/P0 的前置阻塞项。
-
-## 6 当前数据与缓存清单（2026-11-04）
-
-> 本节记录 V2 主线在用的数据与离线缓存。路径以远端 `/mnt/i/Latent_Style/WEAVE` 为准；本机仓库没有 `data/`、`runs/` 产物，数字来自 3060 实测，**未在本机复核**。
-
-| 对象 | 路径 | 形态 / 规模 | 用途 | 是否入库 |
-|---|---|---|---|---|
-| 训练集（5k D5） | `datasets/d5/train`（`distinct5_512/train`） | 5 风格 × 1000 张，512 长边 | V2/V3 唯一训练集 | 否（`datasets/` 被 `.gitignore` 忽略） |
-| 512 原生 packed latent | `data/train/.latent_cache/packed/packed/*.pt` | 5 个文件，每个 1000 × **4×64×64** float32（约 313MB，合计 ~1.6G） | V2 `v2/data512.py` 直接读取，**不池化、不重编码**；同时提供 content latent 与源风格 id | 否（`data/` 被 `.gitignore:57` 忽略） |
-| 逐样本 latent / 像素备份 | `data/train/<Style>/*.pt`、`data/train_d5/images_hwc_uint8.bin` | 1×4×64×64 / 3.93GB uint8 | 历史编码与重编码用，训练不读 | 否 |
-| 评测集 | `data/test`（= `datasets/d5/test`） | 150 张 = 5 风格 × 30 | 600 跨风格主表 + 150 同风格 Identity | 否 |
-| SWD 风格统计库 | `runs/v2/swd/library_5styles_512*.pt`（V3S 用的是 `library_5styles_512_enc.pt`） | 5 风格的小波/patch 描述子统计 | `v2/objective_swd.py` 的 SWD/MMD 目标；由 `tools/build_style_library.py` 生成 | 否（`runs/` 被 `.gitignore:24` 忽略） |
-| 风格编码器权重 | `runs/v2/swd/style_encoder_512.pt` | 512 风格 token 编码器 | 给 V3S 提供参考风格特征；由 `tools/build_style_encoder.py` 生成 | 否（同上，且 `*.pt` 被忽略） |
-| DINOv2 参考特征缓存 | `dino_cache/`（`refs_test` 150 样本） | patch tokens | 评测与参考图诊断 | 否 |
-| 生成图 / 审计中间产物 | `runs/v2/**/images`、`runs/audit/*.json` | png 与 json | 图不入库；**纯文本/JSON 指标按需 `git add -f`**（`runs/` 默认被忽略） | 部分（仅 json/md/jsonl） |
-
-`.gitignore` 覆盖检查：`data/`（第 57 行）、`runs/`（第 24 行）、`*.pt`、`*.png|jpg` 均已忽略，因此**数据本体、权重与生成图不会误入版本库**；需要在库内保留的只有脚本、配置、文档与 `runs/audit/*.json` 这类小体积指标文件（需显式 `-f`）。

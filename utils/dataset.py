@@ -1030,3 +1030,4 @@ class AdaCUTLatentDataset(Dataset):
             item["target_style_caption"] = caption_text
             item["target_style_caption_rel_path"] = matched_rel
         return item
+
