@@ -1,0 +1,400 @@
+{
+ "content_neighbour_style_purity": {
+  "mean": 0.841592013835907,
+  "per_style": {
+   "ER": 0.8080800175666809,
+   "Imp": 0.6370199918746948,
+   "Min": 0.973580002784729,
+   "Roc": 0.8529799580574036,
+   "Uki": 0.9362999200820923
+  },
+  "chance": 0.2
+ },
+ "content_clusters": {
+  "k": 25,
+  "n_valid": 25,
+  "dominant_style_share": 0.8215681314468384,
+  "per_cluster": [
+   {
+    "cluster": 0,
+    "n": 184,
+    "counts": [
+     154,
+     2,
+     0,
+     28,
+     0
+    ],
+    "dominant_style": "ER"
+   },
+   {
+    "cluster": 1,
+    "n": 89,
+    "counts": [
+     1,
+     85,
+     2,
+     1,
+     0
+    ],
+    "dominant_style": "Imp"
+   },
+   {
+    "cluster": 2,
+    "n": 197,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     197
+    ],
+    "dominant_style": "Uki"
+   },
+   {
+    "cluster": 3,
+    "n": 112,
+    "counts": [
+     2,
+     3,
+     0,
+     1,
+     106
+    ],
+    "dominant_style": "Uki"
+   },
+   {
+    "cluster": 4,
+    "n": 180,
+    "counts": [
+     149,
+     7,
+     0,
+     23,
+     1
+    ],
+    "dominant_style": "ER"
+   },
+   {
+    "cluster": 5,
+    "n": 156,
+    "counts": [
+     49,
+     47,
+     1,
+     52,
+     7
+    ],
+    "dominant_style": "Roc"
+   },
+   {
+    "cluster": 6,
+    "n": 332,
+    "counts": [
+     5,
+     40,
+     0,
+     287,
+     0
+    ],
+    "dominant_style": "Roc"
+   },
+   {
+    "cluster": 7,
+    "n": 301,
+    "counts": [
+     1,
+     1,
+     299,
+     0,
+     0
+    ],
+    "dominant_style": "Min"
+   },
+   {
+    "cluster": 8,
+    "n": 284,
+    "counts": [
+     0,
+     0,
+     284,
+     0,
+     0
+    ],
+    "dominant_style": "Min"
+   },
+   {
+    "cluster": 9,
+    "n": 310,
+    "counts": [
+     1,
+     278,
+     2,
+     29,
+     0
+    ],
+    "dominant_style": "Imp"
+   },
+   {
+    "cluster": 10,
+    "n": 263,
+    "counts": [
+     212,
+     1,
+     0,
+     48,
+     2
+    ],
+    "dominant_style": "ER"
+   },
+   {
+    "cluster": 11,
+    "n": 254,
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     254
+    ],
+    "dominant_style": "Uki"
+   },
+   {
+    "cluster": 12,
+    "n": 175,
+    "counts": [
+     0,
+     0,
+     175,
+     0,
+     0
+    ],
+    "dominant_style": "Min"
+   },
+   {
+    "cluster": 13,
+    "n": 153,
+    "counts": [
+     1,
+     0,
+     0,
+     0,
+     152
+    ],
+    "dominant_style": "Uki"
+   },
+   {
+    "cluster": 14,
+    "n": 194,
+    "counts": [
+     191,
+     2,
+     0,
+     1,
+     0
+    ],
+    "dominant_style": "ER"
+   },
+   {
+    "cluster": 15,
+    "n": 114,
+    "counts": [
+     4,
+     27,
+     0,
+     82,
+     1
+    ],
+    "dominant_style": "Roc"
+   },
+   {
+    "cluster": 16,
+    "n": 232,
+    "counts": [
+     0,
+     1,
+     230,
+     0,
+     1
+    ],
+    "dominant_style": "Min"
+   },
+   {
+    "cluster": 17,
+    "n": 188,
+    "counts": [
+     78,
+     55,
+     0,
+     49,
+     6
+    ],
+    "dominant_style": "ER"
+   },
+   {
+    "cluster": 18,
+    "n": 185,
+    "counts": [
+     0,
+     167,
+     0,
+     13,
+     5
+    ],
+    "dominant_style": "Imp"
+   },
+   {
+    "cluster": 19,
+    "n": 209,
+    "counts": [
+     2,
+     7,
+     0,
+     2,
+     198
+    ],
+    "dominant_style": "Uki"
+   },
+   {
+    "cluster": 20,
+    "n": 272,
+    "counts": [
+     4,
+     52,
+     0,
+     216,
+     0
+    ],
+    "dominant_style": "Roc"
+   },
+   {
+    "cluster": 21,
+    "n": 121,
+    "counts": [
+     53,
+     8,
+     7,
+     7,
+     46
+    ],
+    "dominant_style": "ER"
+   },
+   {
+    "cluster": 22,
+    "n": 186,
+    "counts": [
+     8,
+     110,
+     0,
+     65,
+     3
+    ],
+    "dominant_style": "Imp"
+   },
+   {
+    "cluster": 23,
+    "n": 241,
+    "counts": [
+     85,
+     45,
+     0,
+     94,
+     17
+    ],
+    "dominant_style": "Roc"
+   },
+   {
+    "cluster": 24,
+    "n": 68,
+    "counts": [
+     0,
+     62,
+     0,
+     2,
+     4
+    ],
+    "dominant_style": "Imp"
+   }
+  ]
+ },
+ "within_content_cluster_style_acc": {
+  "n_clusters_used": 10,
+  "mean": 0.715772807598114,
+  "chance_k5": 0.2,
+  "values": [
+   0.8157894611358643,
+   0.824999988079071,
+   0.6470588445663452,
+   0.5757575631141663,
+   0.8333333134651184,
+   0.9024389982223511,
+   0.7777777910232544,
+   0.4399999976158142,
+   0.78125,
+   0.5593220591545105
+  ]
+ },
+ "dino_style_probe": {
+  "acc": 0.9679999947547913,
+  "per_style": {
+   "ER": 0.9800000190734863,
+   "Imp": 0.9150000214576721,
+   "Min": 0.9950000047683716,
+   "Roc": 0.9549999833106995,
+   "Uki": 0.9950000047683716
+  }
+ },
+ "latent_subband_probe": {
+  "acc": 0.6389999985694885,
+  "per_style": {
+   "ER": 0.48500001430511475,
+   "Imp": 0.5149999856948853,
+   "Min": 0.8500000238418579,
+   "Roc": 0.5899999737739563,
+   "Uki": 0.7549999952316284
+  }
+ },
+ "author_heldout_subband_probe": {
+  "acc": 0.6486055850982666,
+  "per_style": {
+   "ER": 0.5,
+   "Imp": 0.6273062825202942,
+   "Min": 0.7873303294181824,
+   "Roc": 0.6079027652740479,
+   "Uki": 0.8397436141967773
+  },
+  "n_train": 3449,
+  "n_test": 1255
+ },
+ "author_heldout_dino_probe": {
+  "acc": 0.9490039944648743,
+  "per_style": {
+   "ER": 0.9676259160041809,
+   "Imp": 0.9446494579315186,
+   "Min": 0.9909502267837524,
+   "Roc": 0.8844984769821167,
+   "Uki": 1.0
+  }
+ },
+ "content_cluster_heldout_subband": {
+  "acc": 0.5215827226638794,
+  "n_test": 278,
+  "per_style": {
+   "ER": 0.26923078298568726,
+   "Imp": 0.3404255211353302,
+   "Min": 0.6888889074325562,
+   "Roc": 0.7222222089767456,
+   "Uki": 0.4431818127632141
+  }
+ },
+ "content_cluster_heldout_dino": {
+  "acc": 0.9388489127159119,
+  "per_style": {
+   "ER": 0.9615384340286255,
+   "Imp": 0.8510638475418091,
+   "Min": 0.9111111164093018,
+   "Roc": 0.9444444179534912,
+   "Uki": 0.9886363744735718
+  }
+ }
+}

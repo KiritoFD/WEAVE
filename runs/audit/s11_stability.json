@@ -1,0 +1,37 @@
+{
+ "style": 1,
+ "variants": {
+  "target_seed0": {
+   "grad_norm_mean": 0.00032025022665038705,
+   "cos_to_base": 1.0,
+   "norm_ratio_to_base": 1.0
+  },
+  "target_seed1": {
+   "grad_norm_mean": 0.0003580016200430691,
+   "cos_to_base": 0.281623899936676,
+   "norm_ratio_to_base": 1.1717215776443481
+  },
+  "target_seed2": {
+   "grad_norm_mean": 0.0003474090772215277,
+   "cos_to_base": 0.2946431636810303,
+   "norm_ratio_to_base": 1.1495018005371094
+  },
+  "seed_101": {
+   "grad_norm_mean": 0.00035747705260291696,
+   "cos_to_base": 0.3056045472621918,
+   "norm_ratio_to_base": 1.1688625812530518
+  },
+  "seed_202": {
+   "grad_norm_mean": 0.00032829452538862824,
+   "cos_to_base": 0.2814781069755554,
+   "norm_ratio_to_base": 1.0944527387619019
+  }
+ },
+ "loss": "swd",
+ "mixed_style": {
+  "norm_of_mean": 0.0003178927581757307,
+  "mean_of_norms": 0.0004509653081186116,
+  "cancellation_ratio": 0.70491623878479,
+  "within_style_variance": 8.444814292296599e-12
+ }
+}

@@ -1,0 +1,38 @@
+{
+ "residual_style_probe_acc": 0.25,
+ "residual_style_probe_per_style": {
+  "ER": 0.0,
+  "Imp": 0.6875,
+  "Min": 0.0625,
+  "Roc": 0.5,
+  "Uki": 0.0
+ },
+ "residual_dino_s": {
+  "ER": {
+   "dino_s_own_style": 0.3730795681476593,
+   "dino_s_other_mean": 0.3078060448169708,
+   "margin": 0.06527352333068848
+  },
+  "Imp": {
+   "dino_s_own_style": 0.5708056688308716,
+   "dino_s_other_mean": 0.36321649700403214,
+   "margin": 0.20758917182683945
+  },
+  "Min": {
+   "dino_s_own_style": 0.5147111415863037,
+   "dino_s_other_mean": 0.1666528470814228,
+   "margin": 0.3480582945048809
+  },
+  "Roc": {
+   "dino_s_own_style": 0.5676132440567017,
+   "dino_s_other_mean": 0.38838738948106766,
+   "margin": 0.179225854575634
+  },
+  "Uki": {
+   "dino_s_own_style": 0.42112866044044495,
+   "dino_s_other_mean": 0.3612901195883751,
+   "margin": 0.059838540852069855
+  }
+ },
+ "mean_residual_margin": 0.17199707701802253
+}

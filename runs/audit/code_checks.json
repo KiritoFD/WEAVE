@@ -1,0 +1,27 @@
+{
+ "swd_batch_merge": {
+  "merged_value": 0.31778085231781006,
+  "per_image_mean": 0.2938082814216614,
+  "style_grouped_mean": 0.2709527909755707,
+  "merged_vs_per_image_rel": 0.08159256726503372
+ },
+ "projection_variance": {
+  "mean": 0.33646801114082336,
+  "std": 0.04515344649553299,
+  "cv": 0.13419833779335022,
+  "min": 0.28422170877456665,
+  "max": 0.42875245213508606
+ },
+ "sample_count_bias": {
+  "64v320": 0.3126685619354248,
+  "320v64": 0.2711915075778961,
+  "256v256": 0.31745558977127075,
+  "64v64": 0.2711915075778961
+ },
+ "b1_defaults": {
+  "swd_weight": null,
+  "moment_weight": null,
+  "selfsim_weight": null,
+  "edge_weight": null
+ }
+}
