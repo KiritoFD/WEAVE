@@ -106,8 +106,10 @@ clip_style = cos( CLIP_image(gen), CLIP_image(target_style_proto) )
 - **target_style_proto**: 目标风格所有测试图的 CLIP 图像特征取均值后 L2 归一化
   - 具体地：对目标风格下 30 张测试图分别提取 CLIP 特征 → stack 为 [30, D] → 逐向量归一化 → 取均值 → 再归一化
   - 缓存于 `exp/*/ref_feats_*.pt`
-- **CLIP 模型**: HuggingFace `openai/clip-vit-large-patch14` (CLIP-ViT-L/14)
+- **CLIP 模型**: CLIP-ViT-L/14（已删除，见下方废弃声明）
 - **方向**: 越高越好
+
+> 废弃：CLIP-L/14 口径已删除，任何 L/14 数字不得与本仓库其他数字横比。
 
 #### 2.3.2 Content LPIPS (content_lpips)
 
@@ -176,9 +178,11 @@ clip_dir = cos( CLIP(gen) - CLIP(src), CLIP(target_style_proto) - CLIP(src) )
 | `--eval_lpips_net` | `alex` | LPIPS 使用 AlexNet（不是 VGG） |
 | `--clip_style_idt_baseline` | `0.6399` | IDT 基线值（distinct5_512 transfer-only） |
 | `--clip_backend` | `hf` | 使用 HuggingFace CLIP |
-| `--clip_model_name` | `openai/clip-vit-large-patch14` | CLIP-ViT-L/14 |
+| `--clip_model_name` | （原 CLIP-ViT-L/14，已删除） | 见下方废弃声明 |
 | `--reuse_generated` | True | 使用已有生成图（不重新推理） |
 | `--save_generated_images` | True | 保存生成图副本 |
+
+> 废弃：CLIP-L/14 口径已删除，任何 L/14 数字不得与本仓库其他数字横比。
 
 ### 2.5 图片命名规范
 

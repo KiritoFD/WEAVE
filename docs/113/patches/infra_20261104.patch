@@ -948,7 +948,7 @@ new file mode 100644
 +cd /mnt/i/Latent_Style/WEAVE || exit 1
 +out="$root/$name"; mkdir -p "$out"
 +LOG="$out/eval.log"
-+CLIP=/mnt/i/Latent_Style/weights/AI-ModelScope__clip-vit-large-patch14
++CLIP=openai/clip-vit-base-patch32
 +extra=()
 +if [ -n "$reftok" ]; then extra=(--reference_tokens "$reftok"); fi
 +EVAL_BATCH="${EVAL_BATCH:-32}"

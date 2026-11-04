@@ -19,7 +19,8 @@
 | 依赖 | 状态 | 路径 |
 |---|---|---|
 | DINOv2-base | 就位，前向已验证 | `/mnt/i/Latent_Style/weights/dinov2-base` |
-| CLIP ViT-L/14 | 就位，前向已验证 | `/mnt/i/Latent_Style/weights/AI-ModelScope__clip-vit-large-patch14` |
+| CLIP ViT-L/14 | 已废弃，权重已删除 | — |
+| CLIP ViT-B/32 | 当前唯一口径 | `openai/clip-vit-base-patch32` |
 | VGG16 | 就位 | `/root/.cache/torch/hub/checkpoints/vgg16-397923af.pth` |
 | SD-VAE ft-ema | 就位 | `/mnt/i/Latent_Style/eval_cache/hf/modelscope/...` |
 | 离线开关 | `HF_HOME=/mnt/i/Latent_Style/eval_cache/hf`、`HF_HUB_OFFLINE=1`、`TRANSFORMERS_OFFLINE=1` |

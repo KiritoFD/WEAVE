@@ -22,8 +22,11 @@
 | 权重 | 本地路径 |
 |---|---|
 | DINOv2-base | `/mnt/i/Latent_Style/weights/dinov2-base` |
-| CLIP ViT-L/14 | `/mnt/i/Latent_Style/weights/clip-vit-large-patch14`；ModelScope 缓存 `weights/AI-ModelScope__clip-vit-large-patch14` |
+| CLIP ViT-L/14（已废弃） | 权重已删除；旧路径与 ModelScope 缓存均不再存在 |
+| CLIP ViT-B/32（当前唯一口径） | `openai/clip-vit-base-patch32`（离线走 `eval_cache/hf/hub` 快照） |
 | DINO patch cache | `/mnt/i/Latent_Style/dino_cache/{content_5k,refs_test}`（dinov2-base, 224, last_hidden_state） |
+
+> 废弃：CLIP-L/14 口径已删除，任何 L/14 数字不得与本仓库其他数字横比。
 
 HF 不可达，统一走 ModelScope / 本地目录；需要离线环境变量：
 
