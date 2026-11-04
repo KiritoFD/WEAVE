@@ -830,12 +830,17 @@ def main() -> None:
             except Exception:
                 _ckpt = None
             if isinstance(_ckpt, dict) and (
-                "v2_config" in _ckpt or str(_ckpt.get("variant", "")) in {"V1", "V2", "V3", "V4", "V5", "V3S"}
+                "v2_config" in _ckpt or str(_ckpt.get("variant", "")) in {"V1", "V2", "V3", "V4", "V5", "V3S", "V4DIFF"}
             ):
                 os.environ["SB_STRICT_CKPT"] = "1"
         timer.start("load_lgt")
         variant_tag = str(_ckpt.get("variant", "")) if isinstance(_ckpt, dict) else ""
-        if isinstance(_ckpt, dict) and variant_tag in {"V2", "V3", "V4", "V3S"}:
+        if isinstance(_ckpt, dict) and variant_tag == "V4DIFF":
+            # WEAVE-v4 条件扩散先验：SDEdit 适配器（strict 加载在内部硬校验）
+            from v4.inference import build_v4_inference
+            lgt = build_v4_inference(_ckpt, cfg, device=device, num_steps=args.num_steps,
+                                     seed=args.seed)
+        elif isinstance(_ckpt, dict) and variant_tag in {"V2", "V3", "V4", "V3S"}:
             # 新主干（V2 velocity / V3-V4 generator）用 v2 适配器，strict 加载在内部硬校验。
             from v2.inference import build_v2_inference
             lgt = build_v2_inference(_ckpt, cfg, device=device, num_steps=args.num_steps)
