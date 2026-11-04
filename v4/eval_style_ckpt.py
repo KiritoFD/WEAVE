@@ -218,7 +218,8 @@ def main() -> None:
     report["swap"] = {**swap_scores,
                       "pairwise_style_rms": round(float(np.mean(pair)), 4),
                       "to_input_rms": round(float(np.mean(
-                          [(outs[s] - content).pow(2).mean().sqrt() for s in range(cfg.num_styles)]
+                          [float((outs[s] - content).pow(2).mean().sqrt().item())
+                           for s in range(cfg.num_styles)]
                       )), 4),
                       "strength": args.swap_strength}
 
