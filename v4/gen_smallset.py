@@ -111,41 +111,50 @@ def main() -> None:
             pair_idx += 1
             print(f"[gen] {pair_idx}/{len(sources) * cfg.num_styles} {STYLE_NAMES[src_sid]}->{STYLE_NAMES[tgt_sid]} {name}", flush=True)
 
-    if args.lpips:
-        import lpips
-        from utils.run_evaluation import _lpips_forward_safe
-
-        loss_fn = lpips.LPIPS(net=args.lpips_net, verbose=False).to("cuda").eval()
-        gen_x = torch.cat([p[3] for p in pairs], 0)
-        src_x = torch.cat([r["_src_tensor"] for r in rows], 0)
-        d = _lpips_forward_safe(loss_fn, gen_x, src_x, device="cuda", chunk_size=4,
-                                cpu_fallback=True, tag="smallset-lpips")
-        for row, val in zip(rows, d.tolist()):
-            row["content_lpips"] = round(float(val), 5)
-
-    for row in rows:
-        row.pop("_src_tensor", None)
-    with (out / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
-        writer.writeheader()
-        writer.writerows(rows)
-
+    src_x = torch.cat([r.pop("_src_tensor") for r in rows], 0)
     summary = {
         "ckpt": str(args.ckpt), "step": payload.get("step"), "n": len(rows),
         "steps": args.steps, "strength": args.strength, "cfg": args.cfg, "seed": args.seed,
         "src_per_style": args.src_per_style, "prediction_type": cfg.prediction_type,
         "content_lpips": None,
     }
+    rc = 0
     if args.lpips:
-        summary["content_lpips"] = round(float(np.mean([r["content_lpips"] for r in rows])), 5)
-        summary["lpips_net"] = args.lpips_net
-        by_tgt = {}
-        for sid, name in enumerate(STYLE_NAMES):
-            vals = [r["content_lpips"] for r in rows if r["tgt_style"] == name]
-            by_tgt[name] = round(float(np.mean(vals)), 5)
-        summary["content_lpips_by_tgt"] = by_tgt
+        try:
+            import lpips
+            from utils.run_evaluation import _lpips_forward_safe
+
+            loss_fn = lpips.LPIPS(net=args.lpips_net, verbose=False).to("cuda").eval()
+            # lpips 的 shift/scale 在本版本不是 buffer，.to(cuda) 不会搬它们
+            for attr in ("shift", "scale"):
+                val = getattr(loss_fn, attr, None)
+                if isinstance(val, torch.Tensor):
+                    setattr(loss_fn, attr, val.to("cuda"))
+            gen_x = torch.cat([p[3] for p in pairs], 0)
+            d = _lpips_forward_safe(loss_fn, gen_x, src_x, device="cuda", chunk_size=4,
+                                    cpu_fallback=True, tag="smallset-lpips")
+            for row, val in zip(rows, d.tolist()):
+                row["content_lpips"] = round(float(val), 5)
+            summary["content_lpips"] = round(float(np.mean([r["content_lpips"] for r in rows])), 5)
+            summary["lpips_net"] = args.lpips_net
+            by_tgt = {}
+            for name in STYLE_NAMES:
+                vals = [r["content_lpips"] for r in rows if r["tgt_style"] == name]
+                by_tgt[name] = round(float(np.mean(vals)), 5)
+            summary["content_lpips_by_tgt"] = by_tgt
+        except Exception as exc:  # 失败必须留痕，不静默
+            import traceback
+            traceback.print_exc()
+            summary["lpips_error"] = f"{type(exc).__name__}: {exc}"
+            rc = 3
+
+    with (out / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
     (out / "gen.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     print(json.dumps(summary, indent=2, ensure_ascii=False))
+    return rc
 
 
 if __name__ == "__main__":
