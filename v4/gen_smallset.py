@@ -47,6 +47,8 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--strength", type=float, default=0.45)
     ap.add_argument("--cfg", type=float, default=1.0)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--vae-roundtrip", action="store_true",
+                    help="控制实验：只做 encode→decode，不跑扩散，用于分离 VAE 往返损伤")
     ap.add_argument("--guide-clf", default="", help="噪声条件风格分类器 ckpt；空=不加引导")
     ap.add_argument("--guide-scale", type=float, default=0.0)
     ap.add_argument("--guide-t-max", type=int, default=700)
@@ -138,14 +140,18 @@ def main() -> int:
     pairs: list[tuple[int, Path, int, torch.Tensor]] = []
     pair_idx = 0
     for src_sid, path in sources:
-        for tgt_sid in range(cfg.num_styles):
+        targets = [src_sid] if args.vae_roundtrip else list(range(cfg.num_styles))
+        for tgt_sid in targets:
             gen = torch.Generator(device="cuda").manual_seed(args.seed * 1000 + pair_idx)
             with torch.autocast("cuda", dtype=torch.bfloat16, enabled=cfg.use_bf16):
-                z = sdedit(model, src_cache[path], torch.tensor([tgt_sid], device="cuda"),
-                           schedule, strength=args.strength, num_steps=args.steps,
-                           cfg_scale=args.cfg, prediction_type=cfg.prediction_type,
-                           guidance_fn=guidance.get(tgt_sid),
-                           guidance_scale=args.guide_scale, generator=gen)
+                if args.vae_roundtrip:
+                    z = src_cache[path]
+                else:
+                    z = sdedit(model, src_cache[path], torch.tensor([tgt_sid], device="cuda"),
+                               schedule, strength=args.strength, num_steps=args.steps,
+                               cfg_scale=args.cfg, prediction_type=cfg.prediction_type,
+                               guidance_fn=guidance.get(tgt_sid),
+                               guidance_scale=args.guide_scale, generator=gen)
             img = decode_latent(vae, z.float())[0].float().cpu().clamp(0, 1)
             rel_dir = STYLE_NAMES[tgt_sid]
             (img_dir / rel_dir).mkdir(parents=True, exist_ok=True)
@@ -168,6 +174,7 @@ def main() -> int:
         "ckpt": str(args.ckpt), "step": payload.get("step"), "n": len(rows),
         "steps": args.steps, "strength": args.strength, "cfg": args.cfg, "seed": args.seed,
         "src_per_style": args.src_per_style, "prediction_type": cfg.prediction_type,
+        "mode": ("vae_roundtrip" if args.vae_roundtrip else "sdedit"),
         "guide_clf": (args.guide_clf or None), "guide_scale": args.guide_scale,
         "guide_t_max": args.guide_t_max, "content_lpips": None,
     }
