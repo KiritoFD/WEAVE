@@ -73,6 +73,25 @@ except Exception:
 _PROJECT_ROOT = _SRC_ROOT
 _WORKSPACE_ROOT = _PROJECT_ROOT.parent
 _DEFAULT_HF_CLIP_REPO = "openai/clip-vit-base-patch32"
+_ALLOWED_CLIP_REPO = "openai/clip-vit-base-patch32"
+_CLIP_PROTOCOL_ERROR = (
+    "本仓库只允许 openai/clip-vit-base-patch32；"
+    "CLIP-L/14 口径已于 2026-11-04 废弃并删除。"
+)
+
+
+def _require_b32_clip(value: str, where: str, *, allow_openai_b32: bool = False) -> None:
+    """Hard gate: only the B/32 CLIP backbone may be used (no override, no escape hatch)."""
+    v = str(value or "").strip().lower()
+    if "large-patch14" in v or "vit-l/14" in v:
+        raise SystemExit(f"{_CLIP_PROTOCOL_ERROR} (got {where}={value!r})")
+    if allow_openai_b32 and v in {"vit-b/32", "openai:vit-b/32"}:
+        return
+    if v == _ALLOWED_CLIP_REPO or "base-patch32" in v:
+        return
+    raise SystemExit(f"{_CLIP_PROTOCOL_ERROR} (got {where}={value!r})")
+
+
 _DEFAULT_CLIP_IMAGE_MEAN = (0.48145466, 0.4578275, 0.40821073)
 _DEFAULT_CLIP_IMAGE_STD = (0.26862954, 0.26130258, 0.27577711)
 
@@ -2645,6 +2664,10 @@ def main(argv: list[str] | None = None):
     parser.add_argument('--generation_only', action='store_true', help="Only generate translated images, skip all evaluation metrics")
     parser.add_argument('--seed', type=int, default=-1, help="Seed RNGs for reproducible VAE latent sampling/generation; <0 leaves RNG state untouched.")
     args = parser.parse_args(argv)
+    _require_b32_clip(args.clip_model_name, "--clip_model_name")
+    _require_b32_clip(args.clip_openai_model, "--clip_openai_model", allow_openai_b32=True)
+    if str(args.clip_modelscope_id).strip():
+        _require_b32_clip(args.clip_modelscope_id, "--clip_modelscope_id")
     cli_tokens = list(sys.argv[1:] if argv is None else argv)
     raw_cli_flags = {token.split("=", 1)[0] for token in cli_tokens if token.startswith("--")}
 

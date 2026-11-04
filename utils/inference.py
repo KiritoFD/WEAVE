@@ -428,7 +428,20 @@ class LGTInference:
                 setattr(self.model, key, getattr(config.model, key))
         try:
             self.model.load_state_dict(state_dict, strict=True)
+            total_params = len(self.model.state_dict())
+            logger.info("Checkpoint load strict OK: loaded_params=%d/%d (100%%)", total_params, total_params)
         except RuntimeError as exc:
+            if os.environ.get("SB_STRICT_CKPT", "").strip() == "1":
+                model_keys = set(self.model.state_dict().keys())
+                ckpt_keys = set(state_dict.keys())
+                missing = sorted(model_keys - ckpt_keys)
+                unexpected = sorted(ckpt_keys - model_keys)
+                loaded = len(model_keys & ckpt_keys)
+                raise SystemExit(
+                    f"键不匹配，拒绝评测: loaded_params={loaded}/{len(model_keys)} "
+                    f"(missing={len(missing)}, unexpected={len(unexpected)}); "
+                    f"first_missing={missing[:3]}; first_unexpected={unexpected[:3]}"
+                )
             if os.environ.get("SB_DEBUG_INFERENCE_LOAD", "").strip():
                 debug_keys = [
                     "style_tokenizer",

@@ -1,10 +1,13 @@
-"""Evaluation protocol tool: 600 cross-style main set + 150 same-style identity report.
+"""Evaluation protocol tool: 750 all-pairs primary table + 600/150 explanatory split.
 
-Review doc requirement (section 四/五): the 750-request eval mixes two tasks.
-Cross-style transfer is the MAIN task; same-style requests only measure
-Identity Preservation and must be reported separately. Reference-image
-selection must be FIXED and recorded inside the result file to prevent metric
-drift between runs.
+Official protocol (2026-11-04): the ONLY primary metric table is the full
+**750 all-pairs** mixture (600 cross-style + 150 same-style, all counted), i.e.
+exactly what the paper's main table reports.  600 cross-style and 150
+same-style rows are kept for interpretation only and must never be used as a
+promotion criterion on their own.
+
+Reference-image selection must be FIXED and recorded inside the result file to
+prevent metric drift between runs.
 
 This tool is post-hoc and format-stable:
   Input:  a results JSON produced by utils/run_evaluation.py (or any file with
@@ -13,8 +16,10 @@ This tool is post-hoc and format-stable:
           --reference_policy describing how the style reference was chosen
           (e.g. "first_image_of_target_style_test_dir").
   Output: split report JSON:
-          {"main_cross_style": {...means over 600...},
-           "identity_same_style": {...means over 150...},
+          {"all_pairs_750": {...means over all 750...},   # PRIMARY
+           "gate_750": {...pass/fail vs 750 thresholds...},
+           "main_cross_style": {...means over 600...},     # explanatory
+           "identity_same_style": {...means over 150...},  # explanatory
            "reference_selection": {"policy": ..., "note": ...},
            "counts": {...}}
 
@@ -36,6 +41,37 @@ _ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_ROOT))
 
 METRIC_KEYS = ("dino_s", "clip_s", "dino_c", "lpips")
+
+# 750 all-pairs anchor (base_ep10, B/32 + b8 + 8 steps + AdaIN 2.0 + 256px).
+ANCHOR_750 = {"dino_s": 0.48587, "dino_c": 0.82902, "clip_s": 0.70940, "lpips": 0.25850}
+# Promotion gate expressed on the 750 table (anchor +/- fixed absolute delta).
+GATE_750 = {
+    "dino_s": {"threshold": 0.5009, "direction": "min"},
+    "dino_c": {"threshold": 0.8140, "direction": "min"},
+    "clip_s": {"threshold": 0.7194, "direction": "min"},
+    "lpips": {"threshold": 0.2685, "direction": "max"},
+}
+
+
+def gate_750(all_pairs: dict) -> dict:
+    """Evaluate the 750 promotion gate; all four must pass."""
+    passes: dict = {}
+    for key, spec in GATE_750.items():
+        value = all_pairs.get(key)
+        if value is None:
+            passes[key] = None
+            continue
+        if spec["direction"] == "min":
+            passes[key] = bool(value >= spec["threshold"])
+        else:
+            passes[key] = bool(value <= spec["threshold"])
+    return {
+        "anchor": dict(ANCHOR_750),
+        "thresholds": {k: dict(v) for k, v in GATE_750.items()},
+        "values": {k: all_pairs.get(k) for k in GATE_750},
+        "passes": passes,
+        "all_pass": bool(all(v is True for v in passes.values())),
+    }
 
 
 def load_records(path: Path) -> list[dict]:
@@ -68,8 +104,14 @@ def _means(records: list[dict]) -> dict:
 def split_report(records: list[dict], reference_policy: str) -> dict:
     same = [r for r in records if is_same_style(r)]
     cross = [r for r in records if not is_same_style(r)]
+    all_pairs = _means(records)
     return {
         "counts": {"total": len(records), "cross_style": len(cross), "same_style": len(same)},
+        # PRIMARY table: 750 all-pairs, the paper main-table protocol.
+        "all_pairs_750": all_pairs,
+        "gate_750": gate_750(all_pairs),
+        "primary_table": "all_pairs_750",
+        # Explanatory splits only; never a promotion criterion on their own.
         "main_cross_style": _means(cross),
         "identity_same_style": _means(same),
         "reference_selection": {
@@ -78,9 +120,11 @@ def split_report(records: list[dict], reference_policy: str) -> dict:
                     "identical across runs. Changing how the style reference image is "
                     "chosen changes DINO-S/CLIP-S and invalidates comparisons.",
         },
-        "reporting_rule": "main_cross_style is the primary table (target: 600 requests); "
-                          "identity_same_style (target: 150) is a separate Identity "
-                          "Preservation report, never averaged into the main table.",
+        "reporting_rule": "all_pairs_750 is the ONLY primary table and the only "
+                          "promotion criterion (600 cross-style + 150 same-style, all "
+                          "counted, paper main-table protocol). main_cross_style (600) "
+                          "and identity_same_style (150) are explanatory splits and must "
+                          "never be reported as the conclusion on their own.",
     }
 
 
@@ -97,11 +141,18 @@ def run_smoke(out: Path) -> None:
         })
     rep = split_report(records, "first_image_of_target_style_test_dir")
     assert rep["counts"] == {"total": 750, "cross_style": 600, "same_style": 150}, rep["counts"]
+    assert rep["primary_table"] == "all_pairs_750"
+    # 750 = (150*0.48 + 600*0.40) / 750 = 0.416
+    assert abs(rep["all_pairs_750"]["dino_s"] - 0.416) < 1e-9, rep["all_pairs_750"]
     assert abs(rep["main_cross_style"]["dino_s"] - 0.4) < 1e-9
     assert abs(rep["identity_same_style"]["dino_s"] - 0.48) < 1e-9
+    # Synthetic record cannot pass the real 750 gate, but the block must exist.
+    assert set(rep["gate_750"]["passes"]) == set(GATE_750)
+    assert rep["gate_750"]["all_pass"] is False
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"smoke": True, "report": rep}, indent=2))
-    print(f"[smoke] eval split OK -> {out}; main DINO-S={rep['main_cross_style']['dino_s']}")
+    print(f"[smoke] eval split OK -> {out}; 750 DINO-S={rep['all_pairs_750']['dino_s']:.4f} "
+          f"all_pass={rep['gate_750']['all_pass']}")
 
 
 def main() -> None:
@@ -128,7 +179,11 @@ def main() -> None:
             rep[key] = payload[key]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(rep, indent=2))
-    print(f"cross-style n={rep['counts']['cross_style']} same-style n={rep['counts']['same_style']} -> {out}")
+    m = rep["all_pairs_750"]
+    print(f"750 all-pairs n={rep['counts']['total']} "
+          f"dino_s={m.get('dino_s')} dino_c={m.get('dino_c')} "
+          f"clip_s={m.get('clip_s')} lpips={m.get('lpips')} "
+          f"all_pass={rep['gate_750']['all_pass']} -> {out}")
 
 
 if __name__ == "__main__":

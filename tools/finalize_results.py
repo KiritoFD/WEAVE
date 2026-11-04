@@ -16,6 +16,12 @@ import json
 import statistics
 from pathlib import Path
 
+ALLOWED_CLIP_REPO = "openai/clip-vit-base-patch32"
+CLIP_PROTOCOL_ERROR = (
+    "本仓库只允许 openai/clip-vit-base-patch32；"
+    "CLIP-L/14 口径已于 2026-11-04 废弃并删除。"
+)
+
 METRICS = ("dino_s", "clip_s", "dino_c", "lpips")
 
 
@@ -53,9 +59,13 @@ def main() -> None:
     ap.add_argument("--eval-dir", required=True)
     ap.add_argument("--reference-policy", default="first_image_of_target_style_test_dir")
     ap.add_argument("--dino-backbone", default="facebook/dinov2-small")
-    ap.add_argument("--clip-backbone", default="openai/clip-vit-large-patch14")
+    ap.add_argument("--clip-backbone", default=ALLOWED_CLIP_REPO)
     ap.add_argument("--extra", default="", help="free-form note stored in protocol")
     args = ap.parse_args()
+
+    _bb = str(args.clip_backbone or "").strip().lower()
+    if "large-patch14" in _bb or "vit-l/14" in _bb or "base-patch32" not in _bb:
+        raise SystemExit(f"{CLIP_PROTOCOL_ERROR} (got --clip-backbone={args.clip_backbone!r})")
 
     path = Path(args.eval_dir) / "results.json"
     payload = json.loads(path.read_text())
@@ -71,7 +81,7 @@ def main() -> None:
         "metrics": {
             "dino_s": "max cosine CLS(gen), CLS(target-style reference)",
             "dino_c": "cosine CLS(gen), CLS(source)",
-            "clip_s": "CLIP full-image style similarity (ViT-L/14)",
+            "clip_s": "CLIP full-image style similarity (ViT-B/32)",
             "lpips": "LPIPS(gen, source), lower is better",
         },
         "note": args.extra,

@@ -15,7 +15,8 @@ CLIP / LPIPS / DINOv2 implementation) but:
 
 Default protocol (must stay identical to ``utils/run_evaluation.py``):
 test dir ``data/test``, 30 source images per style, first image of the target
-style as reference, 256x256 pixels, 8 ODE steps, config.json full_eval section.
+style as reference, 512x512 pixels (--image-size, default 512), 8 ODE steps,
+config.json full_eval section.
 
 Usage:
   python tools/eval_fast.py --checkpoint exp/.../epoch_0010.pt \
@@ -54,6 +55,7 @@ from PIL import Image
 _ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_ROOT))
 sys.path.insert(0, str(_ROOT / "tools"))
+sys.path.insert(0, str(_ROOT / "tools" / "trt"))
 
 from config_schema import load_config, resolve_full_eval_section  # noqa: E402
 from utils.compute_dino_metrics import DINO_TRANSFORM, list_style_images, load_dino  # noqa: E402
@@ -73,6 +75,23 @@ from utils.run_evaluation import (  # noqa: E402
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 REFERENCE_POLICY = "first_image_of_target_style_test_dir"
+ALLOWED_CLIP_REPO = "openai/clip-vit-base-patch32"
+CLIP_PROTOCOL_ERROR = (
+    "本仓库只允许 openai/clip-vit-base-patch32；"
+    "CLIP-L/14 口径已于 2026-11-04 废弃并删除。"
+)
+
+
+def require_b32_clip(value: str, where: str) -> None:
+    """Hard gate: only the B/32 CLIP backbone may be used (no override, no escape hatch)."""
+    v = str(value or "").strip().lower()
+    if "large-patch14" in v or "vit-l/14" in v:
+        raise SystemExit(f"{CLIP_PROTOCOL_ERROR} (got {where}={value!r})")
+    if v == ALLOWED_CLIP_REPO or "base-patch32" in v:
+        return
+    raise SystemExit(f"{CLIP_PROTOCOL_ERROR} (got {where}={value!r})")
+
+
 METRIC_HEADER = [
     "src_style", "tgt_style", "src_image", "gen_image",
     "clip_style", "clip_s_delta_idt", "clip_t", "clip_content", "clip_dir",
@@ -327,7 +346,7 @@ class MetricEngine:
             with torch.inference_mode():
                 for s in range(0, len(source_paths), self.args.ref_batch):
                     chunk = source_paths[s:s + self.args.ref_batch]
-                    batch = torch.stack([_load_eval_image_tensor(p) for p in chunk]).to(self.device)
+                    batch = torch.stack([_load_eval_image_tensor(p, size=self.args.image_size) for p in chunk]).to(self.device)
                     self.src_float.update({str(p): t for p, t in zip(chunk, batch)})
                     if not self.cache_hits["clip"] and not self.args.disable_clip:
                         feats = self._clip_images(batch).cpu()
@@ -342,7 +361,7 @@ class MetricEngine:
                     refs = self.style_meta[sid]["all"][: self.args.max_ref_cache]
                     feats = []
                     for s in range(0, len(refs), self.args.ref_batch):
-                        batch = torch.stack([_load_eval_image_tensor(p) for p in refs[s:s + self.args.ref_batch]]).to(self.device)
+                        batch = torch.stack([_load_eval_image_tensor(p, size=self.args.image_size) for p in refs[s:s + self.args.ref_batch]]).to(self.device)
                         feats.append(self._clip_images(batch).cpu())
                     proto = F.normalize(torch.cat(feats, 0).mean(0, keepdim=True), dim=-1)[0]
                     self.ref_clip_proto[sid] = proto
@@ -387,7 +406,7 @@ class MetricEngine:
         h = hashlib.md5()
         h.update(str(self.args.test_dir).encode())
         h.update(f"|mref={self.args.max_ref_cache}|dref={self.args.dino_max_refs}|".encode())
-        h.update(f"|clip={self.args.clip_model}|dino={self.args.dino_model}|".encode())
+        h.update(f"|clip={self.args.clip_model}|dino={self.args.dino_model}|px={self.args.image_size}|".encode())
         for p in sorted(source_paths):
             h.update(str(p).encode())
         for sid in sorted(self.style_meta):
@@ -446,7 +465,12 @@ class MetricEngine:
 
         if not self.args.disable_dino:
             timer.start("metric_dino")
-            ims = [Image.fromarray(gen01[i].permute(1, 2, 0).to(torch.uint8).cpu().numpy()) for i in range(n)]
+            ims = [
+                Image.fromarray(
+                    (gen01[i].permute(1, 2, 0).float() * 255.0).round().clamp(0, 255).to(torch.uint8).cpu().numpy()
+                )
+                for i in range(n)
+            ]
             with torch.inference_mode():
                 cls, patches = self._dino_forward(ims)
             cls = cls.cpu()
@@ -528,7 +552,7 @@ def build_source_latents(
     if args.source_latent_cache:
         cache_dir = Path(args.cache_dir)
         cache_hash = _source_latent_cache_hash(
-            source_paths, vae_model=args.vae_model, scale_in=scale_in, image_size=256,
+            source_paths, vae_model=args.vae_model, scale_in=scale_in, image_size=args.image_size,
         )
         cache_file = cache_dir / f"source_latents_{cache_hash}.pt"
         if cache_file.exists():
@@ -540,10 +564,11 @@ def build_source_latents(
                 print(f"[eval_fast] source latent cache hit: {cache_file}")
     if latents is None:
         chunks = []
+        enc_bs = max(1, int(args.encode_batch))
         with torch.inference_mode():
-            for s in range(0, len(source_paths), args.latent_batch):
-                chunk = source_paths[s:s + args.latent_batch]
-                imgs = torch.stack([_load_eval_image_tensor(p) for p in chunk]).to(device)
+            for s in range(0, len(source_paths), enc_bs):
+                chunk = source_paths[s:s + enc_bs]
+                imgs = torch.stack([_load_eval_image_tensor(p, size=args.image_size) for p in chunk]).to(device)
                 lat = encode_image(vae, imgs, device)
                 if abs(scale_in - 1.0) > 1e-4:
                     lat = lat * scale_in
@@ -562,12 +587,8 @@ def build_target_latents(lgt, vae, style_meta, device: str, args, timer: Timer) 
     timer.start("target_latents")
     with torch.inference_mode():
         for sid in sorted(style_meta):
-            img = _load_eval_image_tensor(style_meta[sid]["ref"]).unsqueeze(0).to(device)
-            if device == "cuda":
-                with torch.autocast("cuda", dtype=torch.bfloat16):
-                    lat = encode_image(vae, img, device)
-            else:
-                lat = encode_image(vae, img, device)
+            img = _load_eval_image_tensor(style_meta[sid]["ref"], size=args.image_size).unsqueeze(0).to(device)
+            lat = encode_image(vae, img, device)
             if abs(scale_in - 1.0) > 1e-4:
                 lat = lat * scale_in
             out[sid] = lat.detach().to(lat_dtype).cpu()
@@ -611,7 +632,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Fast protocol-equivalent full evaluation")
     ap.add_argument("--checkpoint", default="", help="checkpoint .pt; not needed with --reuse-images")
     ap.add_argument("--output", required=True)
-    ap.add_argument("--protocol", choices=["paper", "legacy"], default="paper",
+    ap.add_argument("--protocol", choices=["paper"], default="paper",
                     help="paper: CLIP ViT-B/32 + AdaIN 2.0 + 8 steps + 750 all-pairs")
     ap.add_argument("--config", default=str(_ROOT / "config.json"))
     ap.add_argument("--config-override", default="", help="defaults to inference.json for --protocol paper")
@@ -620,6 +641,10 @@ def main() -> None:
     ap.add_argument("--batch", type=int, default=32, help="ODE generation batch (sources x targets)")
     ap.add_argument("--metric-batch", type=int, default=32)
     ap.add_argument("--decode-batch", type=int, default=32)
+    ap.add_argument("--image-size", type=int, default=512,
+                    help="evaluation resolution; source/target images are resized to this "
+                         "before VAE encode, and latents decode to this. Default 512 matches "
+                         "the 512-native training latents (4x64x64 -> 512px).")
     ap.add_argument("--ref-batch", type=int, default=32)
     ap.add_argument("--latent-batch", type=int, default=8)
     ap.add_argument("--lpips-chunk", type=int, default=32)
@@ -659,6 +684,18 @@ def main() -> None:
     ap.add_argument("--dino-model", default="facebook/dinov2-small")
     ap.add_argument("--dino-cache-dir", default="")
     ap.add_argument("--lpips-net", default="alex")
+    ap.add_argument("--vae-dtype", choices=["fp32", "fp16"], default="fp32",
+                    help="VAE compute dtype; fp32 is batch-invariant (default)")
+    ap.add_argument("--gen-dtype", choices=["fp32", "bf16"], default="fp32",
+                    help="generation compute dtype; fp32 is batch-invariant (default)")
+    ap.add_argument("--encode-batch", type=int, default=1,
+                    help="VAE encode batch; 1 keeps latents independent of --batch")
+    ap.add_argument("--backbone", default="", help="label written to protocol metadata")
+    ap.add_argument("--decoder", choices=["torch", "trt"], default="torch",
+                    help="optional TensorRT VAE decoder; engines are fixed (size, batch, "
+                         "precision), so a missing engine raises instead of falling back")
+    ap.add_argument("--engine-dir", default=str(_ROOT / "runs" / "trt" / "engines"),
+                    help="directory holding vae_decoder_{size}_b{batch}_{precision}.engine")
     ap.add_argument("--amp", action="store_true", help="half precision CLIP/DINO (not parity-safe)")
     ap.add_argument("--reference-policy", default=REFERENCE_POLICY)
     ap.add_argument("--ref-cache", default="")
@@ -673,19 +710,16 @@ def main() -> None:
     # Frozen paper protocol (see docs/reproduction/hf_oriented_nohh_result.md):
     # oriented-HF checkpoint, CLIP ViT-B/32, DINOv2-small, 750 all-pairs,
     # first-image reference, 8 ODE steps, AdaIN 2.0 via inference.json,
-    # 256 px, no postprocess.
-    if args.protocol == "paper":
-        if not args.clip_model:
-            args.clip_model = "openai/clip-vit-base-patch32"
-        if not args.config_override:
-            args.config_override = str(_ROOT / "inference.json")
-        args.adain_scale = 2.0
-        args.split = "all-pairs"
-    else:
-        if not args.clip_model:
-            args.clip_model = str(_ROOT.parent / "weights" / "AI-ModelScope__clip-vit-large-patch14")
-        args.adain_scale = 1.0
-        args.split = "all-pairs (legacy backbone)"
+    # 512 px native (latent 4x64x64), no postprocess.
+    if not args.clip_model:
+        args.clip_model = ALLOWED_CLIP_REPO
+    if not args.config_override:
+        args.config_override = str(_ROOT / "inference.json")
+    args.adain_scale = 2.0
+    args.split = "all-pairs"
+    if not args.backbone:
+        args.backbone = "hf_oriented_nohh"
+    require_b32_clip(args.clip_model, "--clip-model")
 
     if args.only_clip_style is None:
         args.only_clip_style = bool(full.get("only_lpips_clip_style", True))
@@ -701,8 +735,17 @@ def main() -> None:
         args.style_strength = float(full.get("style_strength", 1.0))
     if not args.vae_model:
         args.vae_model = str(full.get("vae_model", "ema"))
+    cache_explicit = bool(args.cache_dir)
     if not args.cache_dir:
         args.cache_dir = str(_resolve_path(str(full.get("cache_dir", "runs/cache")), _ROOT))
+    # The canonical artifacts live in <workspace>/eval_cache (source latents +
+    # ref features + HF hub snapshots).  Prefer it when the configured cache
+    # directory has no HF hub layout (offline machines).
+    if not cache_explicit and not (Path(args.cache_dir) / "hf" / "hub").exists():
+        alt = _ROOT.parent / "eval_cache"
+        if (alt / "hf" / "hub").exists():
+            args.cache_dir = str(alt)
+            print(f"[eval_fast] cache dir -> {args.cache_dir} (workspace eval_cache)")
     if not args.hf_cache_dir:
         args.hf_cache_dir = str(Path(args.cache_dir) / "hf")
     if not args.test_dir:
@@ -710,7 +753,10 @@ def main() -> None:
     if args.clip_style_idt_baseline < 0:
         args.clip_style_idt_baseline = float(full.get("clip_style_idt_baseline", 0.0) or 0.0)
     if not args.clip_cache_dir:
-        args.clip_cache_dir = args.hf_cache_dir
+        # transformers expects <cache_dir>/models--org--name; the workspace
+        # keeps snapshots under <hf_cache>/hub/models--org--name.
+        hub = Path(args.hf_cache_dir) / "hub"
+        args.clip_cache_dir = str(hub) if hub.exists() else args.hf_cache_dir
     if not args.dino_cache_dir:
         args.dino_cache_dir = args.hf_cache_dir
     args.test_dir = str(Path(args.test_dir))
@@ -777,22 +823,44 @@ def main() -> None:
     # ---- models -----------------------------------------------------------
     lgt = vae = None
     if not reuse:
+        _ckpt = None
+        if args.checkpoint:
+            try:
+                _ckpt = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
+            except Exception:
+                _ckpt = None
+            if isinstance(_ckpt, dict) and (
+                "v2_config" in _ckpt or str(_ckpt.get("variant", "")) in {"V1", "V2", "V3", "V4", "V5", "V3S"}
+            ):
+                os.environ["SB_STRICT_CKPT"] = "1"
         timer.start("load_lgt")
-        lgt = LGTInference(
-            model_path=args.checkpoint,
-            device=device,
-            num_steps=args.num_steps,
-            step_size=args.step_size,
-            style_strength=args.style_strength,
-            residual_scale=1.0,
-            config_override_path=(args.config_override or None),
-        )
+        variant_tag = str(_ckpt.get("variant", "")) if isinstance(_ckpt, dict) else ""
+        if isinstance(_ckpt, dict) and variant_tag in {"V2", "V3", "V4", "V3S"}:
+            # 新主干（V2 velocity / V3-V4 generator）用 v2 适配器，strict 加载在内部硬校验。
+            from v2.inference import build_v2_inference
+            lgt = build_v2_inference(_ckpt, cfg, device=device, num_steps=args.num_steps)
+        else:
+            lgt = LGTInference(
+                model_path=args.checkpoint,
+                device=device,
+                num_steps=args.num_steps,
+                step_size=args.step_size,
+                style_strength=args.style_strength,
+                residual_scale=1.0,
+                config_override_path=(args.config_override or None),
+            )
         timer.stop("load_lgt")
         timer.start("load_vae")
         vae = load_vae(device, model_id=args.vae_model, cache_dir=args.hf_cache_dir, compile_decoder=False)
-        if device == "cpu":
-            vae = vae.to(dtype=torch.float32)
+        vae = vae.to(dtype=torch.float32 if args.vae_dtype == "fp32" else torch.float16)
         timer.stop("load_vae")
+
+        trt_decoder = None
+        if args.decoder == "trt" and device == "cuda":
+            from trt_vae_decoder import TrtVaeDecoder
+            trt_decoder = TrtVaeDecoder(args.engine_dir, vae,
+                                        precision="fp16" if args.vae_dtype == "fp16" else "fp32",
+                                        device=device)
 
     engine = None
     if not args.skip_metrics:
@@ -816,10 +884,12 @@ def main() -> None:
                 pool = ThreadPoolExecutor(max_workers=args.workers)
 
         num_styles = len(style_meta)
+        gen_dtype = torch.float16 if (args.gen_dtype == "bf16" and device == "cuda") else torch.float32
+        use_bf16 = args.gen_dtype == "bf16" and device == "cuda"
         for b_start in range(0, len(source_paths), args.batch):
             b_end = min(b_start + args.batch, len(source_paths))
             chunk_paths = source_paths[b_start:b_end]
-            x0 = source_latents[b_start:b_end].to(device, non_blocking=True)
+            x0 = source_latents[b_start:b_end].to(device=device, dtype=gen_dtype, non_blocking=True)
             with torch.inference_mode():
                 x0 = lgt.inversion(x0)
             n_src = x0.shape[0]
@@ -829,16 +899,16 @@ def main() -> None:
 
                 timer.start("generation")
                 with torch.inference_mode():
-                    style_lat = target_latents[tgt].to(device=device, dtype=x0.dtype).expand(n_src, -1, -1, -1).contiguous()
+                    style_lat = target_latents[tgt].to(device=device, dtype=gen_dtype).expand(n_src, -1, -1, -1).contiguous()
                     tgt_ids = torch.full((n_src,), tgt, dtype=torch.long, device=device)
-                    if device == "cuda":
+                    if use_bf16:
                         with torch.autocast("cuda", dtype=torch.bfloat16):
                             latents_gen = lgt.generation_with_target_latent(
-                                x0, tgt_ids, {"style_latent_tensor": style_lat},
+                                x0, tgt_ids, target_style_latent={"style_latent_tensor": style_lat},
                             )
                     else:
                         latents_gen = lgt.generation_with_target_latent(
-                            x0, tgt_ids, {"style_latent_tensor": style_lat},
+                            x0, tgt_ids, target_style_latent={"style_latent_tensor": style_lat},
                         )
                 timer.stop("generation")
 
@@ -852,14 +922,29 @@ def main() -> None:
                 timer.start("vae_decode")
                 with torch.inference_mode():
                     for s in range(0, n_src, args.decode_batch):
-                        decoded.append(decode_latent(vae, latents_gen[s:s + args.decode_batch], device))
+                        chunk = latents_gen[s:s + args.decode_batch]
+                        if trt_decoder is not None:
+                            # TRT engines are fixed-shape: pad the tail chunk, then slice.
+                            n = chunk.shape[0]
+                            if n < args.decode_batch:
+                                chunk = torch.cat([chunk, chunk[-1:].expand(
+                                    args.decode_batch - n, -1, -1, -1)], 0)
+                            decoded.append(trt_decoder.decode(chunk)[:n])
+                        else:
+                            decoded.append(decode_latent(vae, chunk, device))
                 timer.stop("vae_decode")
                 gen05 = torch.cat(decoded, 0)
 
                 timer.start("uint8_copy")
+                timer.start("u8_quant")
                 u8_gpu = gen05.detach().clamp(0.0, 1.0).mul(255.0).round().to(torch.uint8)
+                timer.stop("u8_quant")
+                timer.start("u8_dequant")
                 gen01 = u8_gpu.float().div_(255.0)
+                timer.stop("u8_dequant")
+                timer.start("u8_d2h")
                 u8_cpu = u8_gpu.permute(0, 2, 3, 1).contiguous().cpu()
+                timer.stop("u8_d2h")
                 timer.stop("uint8_copy")
 
                 if not args.no_save_images:
@@ -904,20 +989,15 @@ def main() -> None:
             metric_rows.extend(rows_out)
 
     # ---- rank / dump ------------------------------------------------------
+    req_map = {(r["src_path"], r["tgt_style_id"]): r for r in requests}
     for row in metric_rows:
-        if "_src_style_id" not in row:
-            row["_src_style_id"] = row.get("_src_style_id", -1)
-    # attach ids for generation path (reuse path filled by engine? no)
-    if not reuse:
-        req_map = {(r["src_path"], r["tgt_style_id"]): r for r in requests}
-        for row in metric_rows:
-            if "_src_style_id" not in row or row.get("_src_style_id") == -1:
-                key = (Path(args.test_dir) / row["src_style"] / row["src_image"], row["_tgt_style_id"])
-                r = req_map.get(key)
-                if r:
-                    row["_src_style_id"] = r["src_style_id"]
-                    row["_tgt_style_id"] = r["tgt_style_id"]
-                    row["_same_style"] = r["same_style"]
+        if row.get("_src_style_id", -1) == -1:
+            key = (Path(args.test_dir) / row["src_style"] / row["src_image"], row.get("_tgt_style_id", -1))
+            r = req_map.get(key)
+            if r:
+                row["_src_style_id"] = r["src_style_id"]
+                row["_tgt_style_id"] = r["tgt_style_id"]
+                row["_same_style"] = r["same_style"]
 
     metrics_ready = time.perf_counter() - wall0
 
@@ -925,12 +1005,10 @@ def main() -> None:
     if pool is not None:
         torch.cuda.empty_cache()
 
-    timer.start("save_join")
+    t_join0 = time.perf_counter()
     if pool is not None:
         pool.shutdown(wait=True)
-    save_join = time.perf_counter() - timer._t0.get("save_join", time.perf_counter())
-    timer.values.pop("save_join", None)
-    timer.values["save_join"] = save_join
+    timer.values["save_join"] = time.perf_counter() - t_join0
 
     if not args.skip_metrics:
         timer.start("write_csv")
@@ -975,22 +1053,41 @@ def main() -> None:
 
         results = build_results(metric_rows)
         protocol = {
-            "test_dir": args.test_dir,
-            "subset": f"max_src_samples={args.max_src_samples}",
+            "protocol": args.protocol,
+            "backbone": args.backbone,
+            "clip_backbone": args.clip_model,
+            "dino_backbone": args.dino_model,
+            "split": args.split,
             "ref_policy": args.reference_policy,
+            "steps": args.num_steps,
+            "adain": float(args.adain_scale),
+            "eval_batch": args.batch,
+            "image_size": args.image_size,
+            "subset": f"max_src_samples={args.max_src_samples}",
             "num_steps": args.num_steps,
-            "image_size": 256,
             "dino_model": args.dino_model,
             "clip_model": args.clip_model,
             "lpips_net": args.lpips_net,
             "batch": args.batch,
             "device": device,
+            "vae_dtype": args.vae_dtype,
+            "gen_dtype": args.gen_dtype,
         }
         payload = {
             "results": results,
             "protocol": protocol,
+            # top-level mirrors required by the paper-protocol contract
+            "protocol_name": args.protocol,
+            "backbone": args.backbone,
+            "clip_backbone": args.clip_model,
+            "dino_backbone": args.dino_model,
+            "split": args.split,
+            "ref_policy": args.reference_policy,
+            "steps": args.num_steps,
+            "adain": float(args.adain_scale),
+            "eval_batch": args.batch,
+            "image_size": args.image_size,
             "subset": protocol["subset"],
-            "ref_policy": protocol["ref_policy"],
             "reference_selection": {"policy": REFERENCE_POLICY},
         }
         (output / "results.json").write_text(json.dumps(payload, indent=1))
@@ -1018,6 +1115,15 @@ def main() -> None:
     timings["peak_rss_mb"] = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)
     meta = {
         "device": device,
+        "protocol": args.protocol,
+        "backbone": args.backbone,
+        "clip_backbone": args.clip_model,
+        "dino_backbone": args.dino_model,
+        "split": args.split,
+        "ref_policy": args.reference_policy,
+        "steps": args.num_steps,
+        "adain": float(args.adain_scale),
+        "eval_batch": args.batch,
         "checkpoint": args.checkpoint,
         "reuse_images": args.reuse_images,
         "batch": args.batch,
@@ -1028,6 +1134,8 @@ def main() -> None:
         "save_images": not args.no_save_images,
         "summary_grid": False,
         "amp": bool(args.amp),
+        "decoder": args.decoder,
+        "decoder_stats": (trt_decoder.summary() if trt_decoder is not None else {"decoder": "torch"}),
         "timings": timings,
         "settings": {
             "num_steps": args.num_steps,
@@ -1039,6 +1147,9 @@ def main() -> None:
             "ref_pool": args.ref_pool,
             "seed": args.seed,
             "vae_model": args.vae_model,
+            "vae_dtype": args.vae_dtype,
+            "gen_dtype": args.gen_dtype,
+            "encode_batch": args.encode_batch,
             "clip_model": args.clip_model,
             "dino_model": args.dino_model,
             "lpips_net": args.lpips_net,
