@@ -39,7 +39,7 @@ def load_image(path: Path, size: int = 512) -> torch.Tensor:
 
 def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--ckpt", required=True)
+    ap.add_argument("--ckpt", default="", help="--lpips-only 时可为空")
     ap.add_argument("--out", required=True, help="输出目录（PNG + metrics.csv + gen.json）")
     ap.add_argument("--test-dir", default="data/test")
     ap.add_argument("--src-per-style", type=int, default=3)
@@ -48,13 +48,53 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--cfg", type=float, default=1.0)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--lpips", action="store_true")
+    ap.add_argument("--lpips-only", action="store_true", help="不重跑生成，只对已有 metrics.csv 补算 LPIPS")
     ap.add_argument("--lpips-net", default="alex")
     return ap.parse_args()
 
 
-def main() -> None:
+def compute_lpips(gen_x: torch.Tensor, src_x: torch.Tensor, net: str) -> torch.Tensor:
+    import lpips
+    from utils.run_evaluation import _lpips_forward_safe
+
+    loss_fn = lpips.LPIPS(net=net, verbose=False).to("cuda").eval()
+    return _lpips_forward_safe(loss_fn, gen_x, src_x, device="cuda", chunk_size=4,
+                               cpu_fallback=True, tag="smallset-lpips")
+
+
+def lpips_only(out: Path, args: argparse.Namespace) -> int:
+    rows = list(csv.DictReader((out / "metrics.csv").open(newline="", encoding="utf-8")))
+    test_dir = resolve(args.test_dir)
+    gen = torch.cat([load_image(out / r["gen_image"]).unsqueeze(0) for r in rows], 0).cuda()
+    src = torch.cat([load_image(test_dir / r["src_style"] / r["src_image"]).unsqueeze(0) for r in rows], 0).cuda()
+    d = compute_lpips(gen, src, args.lpips_net)
+    for row, val in zip(rows, d.tolist()):
+        row["content_lpips"] = round(float(val), 5)
+    with (out / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+    path = out / "gen.json"
+    summary = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    summary.pop("lpips_error", None)
+    summary["content_lpips"] = round(float(np.mean([r["content_lpips"] for r in rows])), 5)
+    summary["lpips_net"] = args.lpips_net
+    summary["content_lpips_by_tgt"] = {
+        name: round(float(np.mean([r["content_lpips"] for r in rows if r["tgt_style"] == name])), 5)
+        for name in STYLE_NAMES
+    }
+    path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(json.dumps(summary, indent=2, ensure_ascii=False))
+    return 0
+
+
+def main() -> int:
     args = parse_args()
     out = resolve(args.out)
+    if args.lpips_only:
+        return lpips_only(out, args)
+    if not args.ckpt:
+        raise SystemExit("--ckpt 必填（除非 --lpips-only）")
     img_dir = out / "images"
     img_dir.mkdir(parents=True, exist_ok=True)
 
@@ -121,18 +161,9 @@ def main() -> None:
     rc = 0
     if args.lpips:
         try:
-            import lpips
-            from utils.run_evaluation import _lpips_forward_safe
-
-            loss_fn = lpips.LPIPS(net=args.lpips_net, verbose=False).to("cuda").eval()
-            # lpips 的 shift/scale 在本版本不是 buffer，.to(cuda) 不会搬它们
-            for attr in ("shift", "scale"):
-                val = getattr(loss_fn, attr, None)
-                if isinstance(val, torch.Tensor):
-                    setattr(loss_fn, attr, val.to("cuda"))
-            gen_x = torch.cat([p[3] for p in pairs], 0)
-            d = _lpips_forward_safe(loss_fn, gen_x, src_x, device="cuda", chunk_size=4,
-                                    cpu_fallback=True, tag="smallset-lpips")
+            # _lpips_forward_safe 不改输入设备，输入必须与 loss_fn 同设备
+            gen_x = torch.cat([p[3] for p in pairs], 0).cuda()
+            d = compute_lpips(gen_x, src_x.cuda(), args.lpips_net)
             for row, val in zip(rows, d.tolist()):
                 row["content_lpips"] = round(float(val), 5)
             summary["content_lpips"] = round(float(np.mean([r["content_lpips"] for r in rows])), 5)
