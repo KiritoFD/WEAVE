@@ -24,9 +24,9 @@ def test_resolve_keeps_absolute_path_unchanged(tmp_path: Path) -> None:
 
 def test_resolve_config_path_relative_is_project_root_based() -> None:
     assert paths.resolve_config_path("data/train") == paths.WEAVE_ROOT / "data" / "train"
-    assert paths.resolve_config_path("../Dataset/distinct5_512/train").resolve() == (
-        paths.WEAVE_ROOT.parent / "Dataset" / "distinct5_512" / "train"
-    ).resolve()
+    assert paths.resolve_config_path("datasets/distinct5_512/train") == (
+        paths.WEAVE_ROOT / "datasets" / "distinct5_512" / "train"
+    )
 
 
 def test_resolve_config_path_empty_stays_unset() -> None:

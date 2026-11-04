@@ -523,7 +523,7 @@
     "internal_probe_fixed_t": 0.5
   },
   "data": {
-    "data_root": "../Dataset/distinct5_512/train",
+    "data_root": "datasets/distinct5_512/train",
     "style_subdirs": [
       "Early_Renaissance",
       "Impressionism",
