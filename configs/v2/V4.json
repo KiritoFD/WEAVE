@@ -1,0 +1,18 @@
+{
+  "_base": "../../config.json",
+  "v2": {
+    "enabled": true,
+    "variant": "V4",
+    "channels": [80, 160, 208, 208],
+    "blocks_per_stage": [1, 1, 2, 1],
+    "steps": 20000,
+    "batch_size": 8,
+    "lr": 1e-4,
+    "lr_disc": 2e-4,
+    "w_recon": 0.5,
+    "out_dir": "runs/v2"
+  },
+  "checkpoint": {
+    "save_dir": "runs/v2/V4"
+  }
+}

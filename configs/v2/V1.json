@@ -1,0 +1,16 @@
+{
+  "_base": "../../config.json",
+  "v2": {
+    "enabled": true,
+    "variant": "V1",
+    "legacy_ode_steps": 2,
+    "steps": 20000,
+    "batch_size": 8,
+    "lr": 1e-4,
+    "lr_disc": 2e-4,
+    "out_dir": "runs/v2"
+  },
+  "checkpoint": {
+    "save_dir": "runs/v2/V1"
+  }
+}

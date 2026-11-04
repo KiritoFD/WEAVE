@@ -1,0 +1,19 @@
+{
+  "_base": "../../config.json",
+  "v2": {
+    "enabled": true,
+    "variant": "V5",
+    "channels": [80, 160, 208, 208],
+    "blocks_per_stage": [1, 1, 2, 1],
+    "distill_enabled": true,
+    "distill_steps": 2,
+    "distill_weight": 1.0,
+    "steps": 20000,
+    "batch_size": 8,
+    "lr": 1e-4,
+    "out_dir": "runs/v2"
+  },
+  "checkpoint": {
+    "save_dir": "runs/v2/V5"
+  }
+}

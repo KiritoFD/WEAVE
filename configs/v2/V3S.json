@@ -1,0 +1,29 @@
+{
+  "_base": "../../config.json",
+  "v2": {
+    "enabled": true,
+    "variant": "V3S",
+    "channels": [80, 160, 208, 208],
+    "blocks_per_stage": [1, 1, 2, 1],
+    "steps": 4000,
+    "batch_size": 4,
+    "accumulation_steps": 8,
+    "lr": 1e-4,
+    "residual_head_zero_init": true,
+    "w_swd": 1.0,
+    "w_mmd": 0.5,
+    "w_content": 1.0,
+    "content_eps": 0.05,
+    "content_alpha": 1.0,
+    "w_identity": 1.0,
+    "swd_library": "runs/v2/swd/library_5styles_512_enc.pt",
+    "latent_cache": "data/train/.latent_cache/packed/packed",
+    "swd_patch_samples": 128,
+    "swd_real_images": 16,
+    "save_every": 500,
+    "diag_every": 50
+  },
+  "checkpoint": {
+    "save_dir": "runs/v2/V3S"
+  }
+}
