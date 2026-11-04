@@ -143,9 +143,10 @@ def ddim_sample(
         x0_pred, eps = pred_to_x0_eps(pred, z, t_cur, schedule, prediction_type)
         alpha, sigma = schedule.alpha_sigma(t_cur)
         if guidance_fn is not None and guidance_scale != 0.0:
-            grad = guidance_fn(z, t_batch)
+            grad = guidance_fn(z, t_batch)  # guidance_fn 返回 dCE/dz（CE 上升方向）
             denom = grad.flatten(1).norm(dim=1).clamp_min(1e-8).reshape(-1, 1, 1, 1)
-            eps = eps - guidance_scale * sigma * (grad / denom)
+            # x0' = x0 + sigma/alpha * (eps - eps')；要让 p(target) 上升，x0 需沿 -dCE/dx0 走
+            eps = eps + guidance_scale * sigma * (grad / denom)
             x0_pred = (z - sigma * eps) / alpha
         ab_next = schedule.alpha_bar[t_next] if t_next > 0 else torch.tensor(1.0, device=z.device)
         z = ab_next.sqrt() * x0_pred + (1 - ab_next).sqrt() * eps
