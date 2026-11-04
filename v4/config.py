@@ -37,6 +37,11 @@ class V4Config:
     cond_dim: int = 256
     dropout: float = 0.0
     film_init_std: float = 0.0   # >0 时 FiLM 投影非零初始化（臂 B：条件通路开机即激活）
+    # 条件注入方式："sum" = 时间+风格相加后共用一套 FiLM（A/B 臂）；
+    # "split" = 时间走原 FiLM，风格走逐层独立 FiLM（E2 臂，参数几乎持平）。
+    cond_mode: str = "sum"
+    style_film_dim: int = 64      # split 模式下风格条件维度
+    style_film_init_std: float = 0.05
 
     # ---- 扩散 ----
     timesteps: int = 1000
@@ -44,6 +49,7 @@ class V4Config:
     beta_end: float = 2e-2
     beta_schedule: str = "linear"
     cfg_dropout: float = 0.10
+    prediction_type: str = "eps"  # "eps" | "v"
 
     # ---- 优化 ----
     # lr 按有效 batch 缩放：原 1e-4 @ batch 32 -> 1e-4*sqrt(256/32)=2.83e-4 @ batch 256
@@ -85,6 +91,10 @@ class V4Config:
             raise ValueError("v4.batch_size / grad_accum must be >= 1")
         if self.beta_schedule != "linear":
             raise ValueError("only linear beta schedule is implemented")
+        if self.prediction_type not in ("eps", "v"):
+            raise ValueError(f"prediction_type must be 'eps' or 'v', got {self.prediction_type!r}")
+        if self.cond_mode not in ("sum", "split"):
+            raise ValueError(f"cond_mode must be 'sum' or 'split', got {self.cond_mode!r}")
         if not 0.0 < self.ema_decay <= 1.0:
             raise ValueError("v4.ema_decay must be in (0, 1]")
 

@@ -16,7 +16,7 @@ import torch
 
 from .config import V4Config
 from .data import STYLE_NAMES, load_bank
-from .diffusion import Schedule, training_loss
+from .diffusion import Schedule, pred_to_x0_eps, training_loss
 from .model import FiLM, V4UNet, count_parameters
 
 
@@ -168,7 +168,7 @@ def grad_diag(model: V4UNet, cfg: V4Config, sched: Schedule, bank, n: int = 16) 
     model.zero_grad(set_to_none=True)
     loss, _ = training_loss(model, bank.latents.cuda().index_select(0, idx),
                             bank.style_ids.cuda().index_select(0, idx), sched, cfg_dropout=0.0,
-                            generator=gen)
+                            prediction_type=cfg.prediction_type, generator=gen)
     loss.backward()
     g = {k: float(v.grad.norm()) if v.grad is not None else 0.0 for k, v in model.named_parameters()}
 
@@ -223,7 +223,8 @@ def cond_loss_report(model: V4UNet, cfg: V4Config, sched: Schedule, bank, idx, *
         for key, cond in (("true", sid), ("null", neg), ("wrong", wrong)):
             with torch.autocast("cuda", dtype=torch.bfloat16, enabled=cfg.use_bf16):
                 pred = model(zt, t[r].float(), cond)
-            per[key].append(((pred.float() - noise[r]) ** 2).flatten(1).mean(1))
+            _, eps = pred_to_x0_eps(pred.float(), zt, t[r], sched, cfg.prediction_type)
+            per[key].append(((eps - noise[r]) ** 2).flatten(1).mean(1))
     err = {k: torch.stack(v, 0) for k, v in per.items()}   # [reps, n]
 
     nb = 6
