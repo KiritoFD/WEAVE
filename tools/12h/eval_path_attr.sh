@@ -2,8 +2,9 @@
 # Same as eval_path_trt.sh plus an optional config-override (attribution runs).
 # Usage: eval_path_attr.sh <tag> <ckpt> <out_dir> <batch> <override.json>
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
-export HF_HOME=/mnt/i/Latent_Style/eval_cache/hf
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
+export HF_HOME="${WEAVE_EVAL_CACHE_ROOT:-$ROOT/../eval_cache}/hf"
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True

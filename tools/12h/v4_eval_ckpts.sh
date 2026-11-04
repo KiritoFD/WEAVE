@@ -2,8 +2,9 @@
 # 逐个 checkpoint 跑 v4.evaluate（去噪分桶 / 风格探针 / 纯生成 / swap / 记忆检查 + 解码图）。
 # Usage: v4_eval_ckpts.sh <run_dir> [steps] [gen_per_style]
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
-export HF_HOME=/mnt/i/Latent_Style/eval_cache/hf HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
+export HF_HOME="${WEAVE_EVAL_CACHE_ROOT:-$ROOT/../eval_cache}/hf" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 run_dir="${1:-runs/v4/prior}"; steps="${2:-20}"; n="${3:-16}"
 [ -d "$run_dir" ] || exit 1

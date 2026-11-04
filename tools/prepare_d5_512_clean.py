@@ -2,11 +2,16 @@
 from __future__ import annotations
 
 import argparse
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from PIL import Image
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from paths import datasets_root  # noqa: E402
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 EXTS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -33,12 +38,12 @@ def main() -> None:
     ap.add_argument(
         "--src",
         type=str,
-        default=r"G:\GitHub\Latent_Style\Dataset\distinct5_512\train",
+        default=str(datasets_root("distinct5_512", "train")),
     )
     ap.add_argument(
         "--dst",
         type=str,
-        default=r"G:\GitHub\Latent_Style\Dataset\distinct5_512\train_512clean",
+        default=str(datasets_root("train_512clean")),
     )
     ap.add_argument("--workers", type=int, default=12)
     ap.add_argument("--quality", type=int, default=95)

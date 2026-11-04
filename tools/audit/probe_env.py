@@ -13,6 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import torch
 
+from paths import dino_cache_root, hf_cache_root  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 
@@ -41,7 +43,7 @@ def main() -> None:
             out["artists"] = sorted({f.split("__")[1].split("_", 1)[0] for f in d["files"]})[:12]
             out["n_artists"] = len({f.split("__")[1].split("_", 1)[0] for f in d["files"]})
 
-    dinoc = Path("/mnt/i/Latent_Style/dino_cache/content_5k")
+    dinoc = dino_cache_root("content_5k")
     out["dino_manifest"] = json.loads((dinoc / "manifest.json").read_text())
     sample = next((dinoc / "Early_Renaissance").glob("*.pt"))
     tok = torch.load(sample, map_location="cpu", weights_only=False)
@@ -51,7 +53,7 @@ def main() -> None:
 
     # VAE presence
     from utils.inference import load_vae, decode_latent  # noqa: E402
-    vae = load_vae("cuda", model_id="ema", cache_dir="/mnt/i/Latent_Style/eval_cache/hf",
+    vae = load_vae("cuda", model_id="ema", cache_dir=str(hf_cache_root()),
                    compile_decoder=False)
     z = torch.load(files[0], map_location="cpu", weights_only=False)["latents"][:2].float().cuda()
     with torch.inference_mode():

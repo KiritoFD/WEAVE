@@ -24,6 +24,7 @@ import torch
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
+from paths import hf_cache_root, runs_root  # noqa: E402
 from utils.inference import load_vae  # noqa: E402
 
 
@@ -89,8 +90,8 @@ def check_ort(mod: DecoderExport, onnx_path: Path, size: int, n: int = 2) -> dic
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sizes", default="64,256,512")
-    ap.add_argument("--out_dir", default=str(_ROOT / "runs" / "trt" / "onnx"))
-    ap.add_argument("--cache_dir", default=str(Path("/mnt/i/Latent_Style/eval_cache") / "hf"))
+    ap.add_argument("--out_dir", default=str(runs_root("trt", "onnx")))
+    ap.add_argument("--cache_dir", default=str(hf_cache_root()))
     ap.add_argument("--vae_model", default="ema")
     args = ap.parse_args()
 

@@ -14,9 +14,10 @@ from PIL import Image
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
+from paths import datasets_root  # noqa: E402
 from utils.inference import encode_image, load_vae
 
-D5_IMAGE_ROOT = Path(r"G:\GitHub\Latent_Style\Dataset\distinct5_512\train")
+D5_IMAGE_ROOT = datasets_root("distinct5_512", "train")
 D5_STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 IMAGE_SIZE = 512
 

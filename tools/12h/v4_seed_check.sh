@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # 最佳配置的多 seed 复现检查（100 对小集，paper/512/TRT，20 步，s=0.15 cfg=1.0）。
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
-export HF_HOME=/mnt/i/Latent_Style/eval_cache/hf HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
+export HF_HOME="${WEAVE_EVAL_CACHE_ROOT:-$ROOT/../eval_cache}/hf" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 root=runs/v4/prior/sweep_10k
 exec >> "$root/seeds.log" 2>&1
 for sd in 1 2; do

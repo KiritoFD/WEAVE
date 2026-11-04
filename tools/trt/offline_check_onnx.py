@@ -26,6 +26,7 @@ from skimage.metrics import structural_similarity
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
+from paths import hf_cache_root, runs_root  # noqa: E402
 from utils.inference import decode_latent, load_vae  # noqa: E402
 
 
@@ -52,10 +53,10 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--size", type=int, default=256)
     ap.add_argument("--batch", type=int, default=4)
-    ap.add_argument("--onnx_dir", default=str(_ROOT / "runs" / "trt" / "onnx"))
-    ap.add_argument("--latents", default=str(_ROOT / "runs" / "trt" / "latents" / "real_latents.pt"))
+    ap.add_argument("--onnx_dir", default=str(runs_root("trt", "onnx")))
+    ap.add_argument("--latents", default=str(runs_root("trt", "latents") / "real_latents.pt"))
     ap.add_argument("--variants", default=",fp16,mixed", help="'' = fp32 file, else suffix")
-    ap.add_argument("--vae_cache", default="/mnt/i/Latent_Style/eval_cache/hf")
+    ap.add_argument("--vae_cache", default=str(hf_cache_root()))
     args = ap.parse_args()
 
     blob = torch.load(args.latents, map_location="cpu", weights_only=False)
@@ -97,7 +98,7 @@ def main() -> None:
         rows.append(row)
         print(json.dumps(row), flush=True)
 
-    out = _ROOT / "runs" / "trt" / "bench" / f"offline_check_{args.size}.json"
+    out = runs_root("trt", "bench") / f"offline_check_{args.size}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(rows, indent=1), encoding="utf-8")
     print("wrote", out)

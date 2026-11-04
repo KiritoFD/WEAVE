@@ -2,8 +2,9 @@
 # V4 SDEdit 小集扫参：每风格 8 张内容图 -> 40 对；协议其余部分完全沿用 paper/512/TRT。
 # Usage: v4_sweep.sh <ckpt> <root_out> [steps=20] [seed=0] [max_src=8]
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
-export HF_HOME=/mnt/i/Latent_Style/eval_cache/hf
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
+export HF_HOME="${WEAVE_EVAL_CACHE_ROOT:-$ROOT/../eval_cache}/hf"
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 

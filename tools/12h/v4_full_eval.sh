@@ -2,8 +2,9 @@
 # V4 全量 750 all-pairs 评测（protocol paper / 512 / CLIP-B32 / DINOv2-s / b8 / TRT fp16）。
 # Usage: v4_full_eval.sh <name> <ckpt> <out_root> <steps> <strength> <cfg> [seed]
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
-export HF_HOME=/mnt/i/Latent_Style/eval_cache/hf HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
+export HF_HOME="${WEAVE_EVAL_CACHE_ROOT:-$ROOT/../eval_cache}/hf" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 name="$1"; ckpt="$2"; root="$3"; steps="$4"; strength="$5"; cfg="$6"; seed="${7:-0}"
 out="$root/$name"; mkdir -p "$out"

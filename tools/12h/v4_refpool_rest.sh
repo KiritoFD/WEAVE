@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
-export HF_HOME=/mnt/i/Latent_Style/eval_cache/hf HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
+export HF_HOME="${WEAVE_EVAL_CACHE_ROOT:-$ROOT/../eval_cache}/hf" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 for d in s0.30_cf1.5 identity nullcond_s0.15; do
   python3 tools/12h/v4_refpool_eval.py "runs/v4/prior/refpool/$d" --tag "$d" > "runs/v4/prior/refpool/$d/refpool.log" 2>&1
   echo "$d EXIT=$?"

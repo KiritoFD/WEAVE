@@ -2,7 +2,7 @@
 
 The task asked for ``data/train_d5/.latent_cache.packed``; that file does not exist
 on this machine.  What does exist are the evaluator's source-latent caches
-(``/mnt/i/Latent_Style/eval_cache/source_latents_*.pt``): VAE-encoded latents of
+(``<eval_cache>/source_latents_*.pt``): VAE-encoded latents of
 real test photographs, fp16, shape [4,32,32] (i.e. 256x256 pixels).
 
 So:
@@ -20,12 +20,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import torch
 import torch.nn.functional as F
 
-CACHE_DIR = Path("/mnt/i/Latent_Style/eval_cache")
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from paths import eval_cache_root, runs_root  # noqa: E402
+
+CACHE_DIR = eval_cache_root()
 
 
 def load_real_latents(per_style: int) -> tuple[dict[str, torch.Tensor], dict]:
@@ -56,7 +61,7 @@ def resample(items: dict[str, torch.Tensor], lat: int) -> dict[str, torch.Tensor
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--per_style", type=int, default=8)
-    ap.add_argument("--out_dir", default="/mnt/i/Latent_Style/WEAVE/runs/trt/latents")
+    ap.add_argument("--out_dir", default=str(runs_root("trt", "latents")))
     args = ap.parse_args()
 
     out_dir = Path(args.out_dir)

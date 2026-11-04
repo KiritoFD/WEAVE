@@ -14,11 +14,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
 import onnx
 from onnx import TensorProto, helper, numpy_helper
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from paths import runs_root  # noqa: E402
 
 SHAPE_OPS = {"Resize", "Upsample", "Shape", "ConstantOfShape", "Expand", "Tile", "Range"}
 
@@ -121,7 +126,7 @@ def validate(path: Path, raw: bytes) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--onnx_dir", default="/mnt/i/Latent_Style/WEAVE/runs/trt/onnx")
+    ap.add_argument("--onnx_dir", default=str(runs_root("trt", "onnx")))
     ap.add_argument("--sizes", default="64,256,512")
     ap.add_argument("--suffix", default="fp16")
     ap.add_argument("--check_trt", action="store_true")

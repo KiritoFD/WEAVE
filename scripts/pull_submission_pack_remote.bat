@@ -5,8 +5,9 @@ REM Requires OpenSSH scp to administrator@100.115.18.62:2222
 
 set HOST=administrator@100.115.18.62
 set PORT=2222
-set REMOTE=I:/Github/Latent_Style/WEAVE
-set LOCAL=G:/GitHub/Latent_Style/WEAVE/results/cross_protocol/submission_pack/boards
+if not defined WEAVE_REMOTE_ROOT set "WEAVE_REMOTE_ROOT=I:/Github/Latent_Style/WEAVE"
+set REMOTE=%WEAVE_REMOTE_ROOT%
+set LOCAL=%~dp0..\results\cross_protocol\submission_pack\boards
 
 if not exist "%LOCAL%\ablation" mkdir "%LOCAL%\ablation"
 

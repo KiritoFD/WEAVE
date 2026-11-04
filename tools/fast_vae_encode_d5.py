@@ -31,15 +31,13 @@ import torch.nn as nn
 _ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 
+from paths import datasets_root  # noqa: E402
 from utils.inference import load_vae  # noqa: E402
 
 # Clean pre-resized 512 JPEGs (fastest decode + no runtime resize).
-D5_ROOT_CLEAN = Path(r"G:\GitHub\Latent_Style\Dataset\distinct5_512\train_512clean")
-D5_ROOT_REMOTE = Path(r"I:\Github\Latent_Style\Dataset\distinct5_512\train_512clean")
-D5_ROOT_RAW = Path(r"G:\GitHub\Latent_Style\Dataset\distinct5_512\train")
-D5_ROOT_RAW_REMOTE = Path(r"I:\Github\Latent_Style\Dataset\distinct5_512\train")
-# Auto-detect: use remote path if available, else local
-D5_ROOT = D5_ROOT_REMOTE if D5_ROOT_REMOTE.is_dir() else (D5_ROOT_CLEAN if D5_ROOT_CLEAN.is_dir() else (D5_ROOT_RAW_REMOTE if D5_ROOT_RAW_REMOTE.is_dir() else D5_ROOT_RAW))
+D5_ROOT_CLEAN = datasets_root("train_512clean")
+D5_ROOT_RAW = datasets_root("distinct5_512", "train")
+D5_ROOT = D5_ROOT_CLEAN if D5_ROOT_CLEAN.is_dir() else D5_ROOT_RAW
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 SIZE = 512
 EXTS = {".jpg", ".jpeg", ".png", ".webp"}

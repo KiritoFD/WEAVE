@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT" || exit 1
 export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=4
 LOG=runs/v2/run_v2_v3_750.log

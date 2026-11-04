@@ -21,9 +21,9 @@ import torch
 _ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 
-D5_ROOT_REMOTE = Path(r"I:\Github\Latent_Style\Dataset\distinct5_512\train_512clean")
-D5_ROOT_LOCAL = Path(r"G:\GitHub\Latent_Style\Dataset\distinct5_512\train_512clean")
-D5_ROOT = D5_ROOT_REMOTE if D5_ROOT_REMOTE.is_dir() else D5_ROOT_LOCAL
+from paths import datasets_root  # noqa: E402
+
+D5_ROOT = datasets_root("train_512clean")
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 SIZE = 512
 EXTS = {".jpg", ".jpeg", ".png", ".webp"}

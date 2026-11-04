@@ -3,7 +3,8 @@
 # 只把 V4 的推理超参通过环境变量注入。NFE 与旧模型 8 步 ODE 不同，报告里必须分开写。
 # Usage: eval_v4_trt.sh <tag> <ckpt> <out_dir> [batch=8] [steps=20] [strength=0.45] [cfg=1.0] [seed=0]
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
 tag="$1"; ckpt="$2"; out="$3"
 batch="${4:-8}"; steps="${5:-20}"; strength="${6:-0.45}"; cfg="${7:-1.0}"; seed="${8:-0}"
 export V4_NUM_STEPS="$steps"

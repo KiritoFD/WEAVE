@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # 低强度补点：全量 750 all-pairs，20 步，cfg 1.0，强度 0.05/0.08/0.10/0.20。
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
 root=runs/v4/prior/full
 ck=runs/v4/prior/step_10000.pt
 exec > "$root/full_eval_lowstrength.log" 2>&1

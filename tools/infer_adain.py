@@ -26,6 +26,10 @@ from torchvision import transforms
 from torchvision.models import vgg19
 from tqdm import tqdm
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from paths import datasets_root  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -37,7 +41,7 @@ STYLE_NAMES = [
     "Ukiyo_e",
 ]
 
-DATASET_ROOT = Path(r"G:\GitHub\Latent_Style\Dataset\distinct5_512")
+DATASET_ROOT = datasets_root("distinct5_512")
 TEST_DIR = DATASET_ROOT / "test"
 TRAIN_DIR = DATASET_ROOT / "train"
 OUTPUT_ROOT = Path(r"G:\GitHub\Latent_Style\SchrodingerBridge\exp\baseline_images")

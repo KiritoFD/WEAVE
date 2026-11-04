@@ -31,6 +31,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 sys.path.insert(0, str(_ROOT / "tools" / "trt"))
 
+from paths import hf_cache_root, runs_root  # noqa: E402
 from utils.inference import load_vae, decode_latent  # noqa: E402
 
 TRT_INPUT = "z"
@@ -146,11 +147,11 @@ def main() -> None:
     ap.add_argument("--compile-modes", default="reduce-overhead,max-autotune")
     ap.add_argument("--warmup", type=int, default=20)
     ap.add_argument("--iters", type=int, default=50)
-    ap.add_argument("--latents", default=str(_ROOT / "runs" / "trt" / "latents" / "real_latents.pt"))
-    ap.add_argument("--onnx_dir", default=str(_ROOT / "runs" / "trt" / "onnx"))
-    ap.add_argument("--engine_dir", default=str(_ROOT / "runs" / "trt" / "engines"))
-    ap.add_argument("--out_dir", default=str(_ROOT / "runs" / "trt" / "bench"))
-    ap.add_argument("--vae_cache", default="/mnt/i/Latent_Style/eval_cache/hf")
+    ap.add_argument("--latents", default=str(runs_root("trt", "latents") / "real_latents.pt"))
+    ap.add_argument("--onnx_dir", default=str(runs_root("trt", "onnx")))
+    ap.add_argument("--engine_dir", default=str(runs_root("trt", "engines")))
+    ap.add_argument("--out_dir", default=str(runs_root("trt", "bench")))
+    ap.add_argument("--vae_cache", default=str(hf_cache_root()))
     args = ap.parse_args()
 
     torch.backends.cudnn.benchmark = True

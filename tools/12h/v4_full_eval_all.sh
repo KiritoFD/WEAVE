@@ -2,7 +2,8 @@
 # P4: full 750 all-pairs eval sweep for the V4 diffusion prior.
 # 20-step main configs + identity / null-condition references + 50-step follow-ups.
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
 exec > runs/v4/prior/full_eval_driver.log 2>&1
 root=runs/v4/prior/full
 ck=runs/v4/prior/step_10000.pt

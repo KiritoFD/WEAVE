@@ -2,7 +2,8 @@
 # Loss-quality curve: A1/A2 x {200,400,600,1000,2000} steps on the SAME eval path.
 # Env: DECODER=torch|trt (default torch).  Missing ckpt -> writes MISSING marker.
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
 decoder="${DECODER:-torch}"
 mkdir -p runs/12h/eval_curve
 for arm in A1 A2; do

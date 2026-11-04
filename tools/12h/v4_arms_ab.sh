@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # A/B 两臂：batch 256 / accum 1 / lr 2.8e-4 / 6000 step（各 1.536M 样本，等预算）。
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
 mkdir -p runs/v4/arms
 exec > runs/v4/arms/arms_AB.log 2>&1
 for arm in A B; do

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # (1) network vs post-processing attribution: 3 ckpts x 3 AdaIN modes.
 set -u
-cd /mnt/i/Latent_Style/WEAVE || exit 1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT" || exit 1
 base=archive/runs_submission/canonical_oriented_epoch4/epoch_0004.pt
 a3=runs/12h/A3/step_002000.pt
 a4=runs/12h/A4/step_002000.pt

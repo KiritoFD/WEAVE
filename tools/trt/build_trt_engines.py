@@ -14,10 +14,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 
 import tensorrt as trt
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from paths import runs_root  # noqa: E402
 
 
 def parse_onnx(path: Path, strongly_typed: bool) -> tuple[trt.INetworkDefinition, object]:
@@ -71,8 +76,8 @@ def build(onnx_path: Path, size: int, batch: int, *, precision: str,
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--onnx_dir", default="/mnt/i/Latent_Style/WEAVE/runs/trt/onnx")
-    ap.add_argument("--engine_dir", default="/mnt/i/Latent_Style/WEAVE/runs/trt/engines")
+    ap.add_argument("--onnx_dir", default=str(runs_root("trt", "onnx")))
+    ap.add_argument("--engine_dir", default=str(runs_root("trt", "engines")))
     ap.add_argument("--sizes", default="64,512")
     ap.add_argument("--batches", default="1,8,32")
     ap.add_argument("--precision", choices=["fp16", "fp32"], default="fp16")

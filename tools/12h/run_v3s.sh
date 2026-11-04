@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # V3-SWD 一键训练 + 四个评测点（512 口径）。
 set -euo pipefail
-cd /mnt/i/Latent_Style/WEAVE
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT"
 export SB_STRICT_CKPT=1
 export OMP_NUM_THREADS=4
 

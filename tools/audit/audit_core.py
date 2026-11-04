@@ -26,10 +26,12 @@ import torch.nn.functional as F
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from paths import dino_cache_root, hf_cache_root  # noqa: E402
+
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 SHORT = ["ER", "Imp", "Min", "Roc", "Uki"]
 PACKED = ROOT / "data/train/.latent_cache/packed/packed"
-DINO_CACHE = Path("/mnt/i/Latent_Style/dino_cache/content_5k")
+DINO_CACHE = dino_cache_root("content_5k")
 AUDIT_DIR = ROOT / "runs/audit"
 AUDIT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -352,14 +354,14 @@ _METRIC_STATE: dict[str, Any] = {}
 
 def load_metric_models(device: str = "cuda", need_clip: bool = True, need_lpips: bool = True, need_dino: bool = True):
     import os
-    os.environ.setdefault("HF_HOME", "/mnt/i/Latent_Style/eval_cache/hf")
+    os.environ.setdefault("HF_HOME", str(hf_cache_root()))
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
     os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
     if _METRIC_STATE.get("loaded"):
         return _METRIC_STATE
     if need_clip:
         from transformers import CLIPModel, CLIPProcessor
-        cdir = "/mnt/i/Latent_Style/eval_cache/hf/hub"
+        cdir = str(hf_cache_root("hub"))
         model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32", cache_dir=cdir,
                                           local_files_only=True).to(device).eval()
         proc = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32", cache_dir=cdir)
@@ -374,12 +376,12 @@ def load_metric_models(device: str = "cuda", need_clip: bool = True, need_lpips:
         from transformers import AutoModel
         # DINOv2-small matches the frozen eval protocol used for the 512 anchor.
         d = AutoModel.from_pretrained("facebook/dinov2-small",
-                                      cache_dir="/mnt/i/Latent_Style/eval_cache/hf/hub",
+                                      cache_dir=str(hf_cache_root("hub")),
                                       local_files_only=True).to(device).eval()
         _METRIC_STATE["dino"] = d
     from utils.inference import load_vae
     _METRIC_STATE["vae"] = load_vae(device, model_id="ema",
-                                    cache_dir="/mnt/i/Latent_Style/eval_cache/hf",
+                                    cache_dir=str(hf_cache_root()),
                                     compile_decoder=False)
     _METRIC_STATE["device"] = device
     _METRIC_STATE["loaded"] = True
