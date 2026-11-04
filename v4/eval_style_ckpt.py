@@ -155,6 +155,9 @@ def main() -> None:
     ap.add_argument("--cfg-scale", type=float, default=1.0)
     ap.add_argument("--swap-strength", type=float, default=0.45)
     ap.add_argument("--swap-content", type=int, default=8)
+    ap.add_argument("--guide-clf", default="", help="swap 阶段可选的引导分类器")
+    ap.add_argument("--guide-scale", type=float, default=0.0)
+    ap.add_argument("--guide-t-max", type=int, default=700)
     ap.add_argument("--decode", action="store_true")
     ap.add_argument("--vae-cache", default="eval_cache/hf")
     ap.add_argument("--seed", type=int, default=0)
@@ -199,13 +202,20 @@ def main() -> None:
     report["gen"]["per_style"] = args.gen_per_style
 
     content = val[: args.swap_content].to(device)
+    guide = {}
+    if args.guide_clf and args.guide_scale != 0.0:
+        from .style_classifier import make_guidance_fn
+        guide = {sid: make_guidance_fn(args.guide_clf, sid, device, t_min=0, t_max=args.guide_t_max)
+                 for sid in range(cfg.num_styles)}
     outs = []
     for sid in range(cfg.num_styles):
         g = torch.Generator(device=device).manual_seed(args.seed + 21)
         outs.append(sdedit(model, content, torch.full((content.shape[0],), sid, device=device),
                            schedule, strength=args.swap_strength,
                            num_steps=args.ddim_steps, cfg_scale=args.cfg_scale,
-                           prediction_type=cfg.prediction_type, generator=g))
+                           prediction_type=cfg.prediction_type,
+                           guidance_fn=guide.get(sid), guidance_scale=args.guide_scale,
+                           generator=g))
     outs = torch.stack(outs, 0)
     flat = outs.reshape(-1, *outs.shape[2:])
     target = torch.arange(cfg.num_styles, device=device).repeat_interleave(content.shape[0])
@@ -221,7 +231,8 @@ def main() -> None:
                           [float((outs[s] - content).pow(2).mean().sqrt().item())
                            for s in range(cfg.num_styles)]
                       )), 4),
-                      "strength": args.swap_strength}
+                      "strength": args.swap_strength,
+                      "guide_scale": args.guide_scale}
 
     if args.decode:
         report["dino"] = decode_dino_style(out.cpu(), sids.cpu(),
