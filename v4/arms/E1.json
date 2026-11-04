@@ -12,8 +12,10 @@
   "grad_accum": 1,
   "lr": 1e-4,
   "warmup_steps": 500,
-  "max_steps": 6000,
-  "milestones": [2000, 4000, 6000],
+  "max_steps": 4000,
+  "milestones": [2000, 4000],
   "val_every": 250,
+  "early_stop_after": 2000,
+  "early_stop_patience": 4,
   "seed": 42
 }
