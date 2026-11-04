@@ -17,6 +17,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from config_schema import ExperimentConfig, load_experiment_config
+from paths import WEAVE_ROOT, resolve_dataset_path
 from style_families import validate_i2sb_contract, validate_pure_latent_contract
 from trainer import SBTrainer
 from utils.dataset import AdaCUTLatentDataset
@@ -186,7 +187,7 @@ def _run_full_eval_for_checkpoint(config: ExperimentConfig, checkpoint_path: Pat
     train_cfg = config.training
     eval_subdir = _resolve_eval_subdir(train_cfg)
     out_dir = checkpoint_path.parent / eval_subdir / checkpoint_path.stem
-    eval_script = Path(__file__).resolve().parent / "utils" / "run_evaluation.py"
+    eval_script = WEAVE_ROOT / "utils" / "run_evaluation.py"
     cmd = [
         sys.executable,
         str(eval_script),
@@ -340,7 +341,7 @@ def _run_full_eval_for_checkpoint(config: ExperimentConfig, checkpoint_path: Pat
     wall = time.perf_counter() - start
     logger.info("Full eval completed for %s in %.1fs", checkpoint_path.name, wall)
     _append_full_eval_runtime_row(checkpoint_path=checkpoint_path, out_dir=out_dir, wall_sec=wall)
-    project_root = Path(__file__).resolve().parent
+    project_root = WEAVE_ROOT
     collector = project_root / "tools" / "experiments" / "collect_round2_eval_curve.py"
     convergence = project_root / "tools" / "experiments" / "report_round2_convergence.py"
     manifest = project_root / "tools" / "experiments" / "update_round2_family_manifest.py"
@@ -486,7 +487,7 @@ def main() -> None:
 
     data_cfg = config.data
     dataset = AdaCUTLatentDataset(
-        data_root=data_cfg.data_root,
+        data_root=str(resolve_dataset_path(data_cfg.data_root)),
         style_subdirs=data_cfg.style_subdirs,
         allow_hflip=bool(data_cfg.allow_hflip),
         identity_ratio=data_cfg.identity_ratio,
@@ -518,7 +519,7 @@ def main() -> None:
         pairing_cache_aux_target_topk=int(data_cfg.pairing_cache_aux_target_topk),
         pairing_cache_cross_only=bool(data_cfg.pairing_cache_cross_only),
         latent_cache_mode=str(data_cfg.latent_cache_mode),
-        latent_cache_dir=str(data_cfg.latent_cache_dir),
+        latent_cache_dir=str(resolve_dataset_path(data_cfg.latent_cache_dir)),
         style_caption_path=str(getattr(data_cfg, "style_caption_path", "")),
         reference_dino_cache_dir=str(getattr(data_cfg, "reference_dino_cache_dir", "")),
         device=str(device),

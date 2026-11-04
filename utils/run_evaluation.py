@@ -41,6 +41,8 @@ _SRC_ROOT = Path(__file__).resolve().parents[1]
 if str(_SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(_SRC_ROOT))
 
+from paths import ASSET_ROOT, WEAVE_ROOT
+
 from utils.inference import LGTInference, ORTVAEDecoder, PassthroughVAE, load_vae, encode_image, decode_latent
 from utils.artfid_metric import (
     compute_artfid_content_distance_from_paths,
@@ -70,8 +72,8 @@ try:
 except Exception:
     FrechetInceptionDistance = None
 
-_PROJECT_ROOT = _SRC_ROOT
-_WORKSPACE_ROOT = _PROJECT_ROOT.parent
+_PROJECT_ROOT = WEAVE_ROOT
+_WORKSPACE_ROOT = ASSET_ROOT
 _DEFAULT_HF_CLIP_REPO = "openai/clip-vit-base-patch32"
 _ALLOWED_CLIP_REPO = "openai/clip-vit-base-patch32"
 _CLIP_PROTOCOL_ERROR = (

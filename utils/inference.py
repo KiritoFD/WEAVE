@@ -25,6 +25,8 @@ _SRC_ROOT = Path(__file__).resolve().parents[1]
 if str(_SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(_SRC_ROOT))
 
+from paths import ASSET_ROOT
+
 from config_schema import ExperimentConfig, load_config, merge_config_dicts, resolve_inference_section
 from model import build_model_from_config
 from style_families import prune_state_dict_for_tokenizer_family, validate_i2sb_contract, validate_pure_latent_contract
@@ -571,7 +573,7 @@ class LGTInference:
         raw_path = str(getattr(config.model, "transport_stats_bank_path", "") or "").strip()
         if not raw_path:
             return
-        base_dirs = [Path(model_path).resolve().parent, _SRC_ROOT.parent]
+        base_dirs = [Path(model_path).resolve().parent, ASSET_ROOT]
         if config_override_path:
             base_dirs.insert(0, Path(config_override_path).resolve().parent)
         resolved = _resolve_optional_host_path(raw_path, base_dirs=base_dirs)

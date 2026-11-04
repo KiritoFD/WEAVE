@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
 from config_schema import ExperimentConfig, compact_runtime_config
+from paths import WEAVE_ROOT
 from internal_dynamics import (
     ConstantProbeReadingsError,
     InternalDynamicsState,
@@ -85,7 +86,7 @@ def _host_can_resolve_path(path: Path) -> bool:
 
 
 def _assert_active_source_modules(module_names: list[str]) -> None:
-    package_dir = Path(__file__).resolve().parent
+    package_dir = WEAVE_ROOT
     forbidden_snapshot_dir = package_dir / "exp"
     origins: list[str] = []
     for name in module_names:
@@ -450,7 +451,7 @@ class SBTrainer:
         write_config_and_source_snapshot(
             checkpoint_dir=self.checkpoint_dir,
             serialized_config=self.serialized_config,
-            package_dir=Path(__file__).parent,
+            package_dir=WEAVE_ROOT,
         )
 
         self.log_file = self.log_dir / f"training_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
@@ -1128,7 +1129,7 @@ class SBTrainer:
         raw_path = str(getattr(self.config.model, "transport_stats_bank_path", "") or "").strip()
         if not raw_path:
             return
-        base_dirs = [Path(__file__).resolve().parent]
+        base_dirs = [WEAVE_ROOT]
         if self.config_path:
             base_dirs.insert(0, Path(self.config_path).resolve().parent)
         resolved = _resolve_optional_host_path(raw_path, base_dirs=base_dirs)

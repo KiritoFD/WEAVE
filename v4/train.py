@@ -18,10 +18,11 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from paths import resolve_config_path
 from .config import V4Config
 from .data import (STYLE_NAMES, build_split, content_clusters, cross_style_topk,
                    duplicate_groups, latent_descriptor, load_bank, save_json)
-from .diffusion import Schedule, training_loss
+from .diffusion import Schedule, pred_to_x0_eps, training_loss, v_target
 from .model import V4UNet, count_parameters
 
 
@@ -96,6 +97,7 @@ def validate(model, val: dict, schedule: Schedule, cfg: V4Config) -> dict:
     bins = np.zeros(6, dtype=np.float64)
     counts = np.zeros(6, dtype=np.float64)
     total = 0.0
+    x0_total = 0.0
     n = val["latents"].shape[0]
     for b in range(cfg.val_batches):
         idx = torch.randint(0, n, (cfg.batch_size,), device=val["latents"].device, generator=gen)
@@ -106,8 +108,12 @@ def validate(model, val: dict, schedule: Schedule, cfg: V4Config) -> dict:
         zt = schedule.q_sample(z0, t, noise)
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=cfg.use_bf16):
             pred = model(zt, t.float(), sid)
-        err = (pred.float() - noise) ** 2
+        pred = pred.float()
+        target = v_target(z0, noise, t, schedule) if cfg.prediction_type == "v" else noise
+        err = (pred - target) ** 2
+        x0_pred, _ = pred_to_x0_eps(pred, zt, t, schedule, cfg.prediction_type)
         per = err.flatten(1).mean(1)
+        x0_total += float(((x0_pred - z0) ** 2).flatten(1).mean(1).sum())
         b_idx = (t * 6 // schedule.timesteps).cpu().numpy()
         for k in range(6):
             sel = b_idx == k
@@ -117,7 +123,9 @@ def validate(model, val: dict, schedule: Schedule, cfg: V4Config) -> dict:
         total += float(per.sum())
     model.train()
     bin_means = (bins / np.maximum(counts, 1)).tolist()
-    return {"val_loss": total / max(1, cfg.val_batches * cfg.batch_size), "val_bins": bin_means}
+    denom = max(1, cfg.val_batches * cfg.batch_size)
+    return {"val_loss": total / denom, "val_x0_mse": x0_total / denom,
+            "val_bins": bin_means, "prediction_type": cfg.prediction_type}
 
 
 def style_response_probe(model, schedule: Schedule, cfg: V4Config, *, step: int) -> dict:
@@ -139,7 +147,7 @@ def style_response_probe(model, schedule: Schedule, cfg: V4Config, *, step: int)
 
 
 def bench(cfg: V4Config, mbs: tuple[int, ...] = (16, 32, 64, 96, 128, 192, 256)) -> None:
-    bank = load_bank(cfg.packed_dir)
+    bank = load_bank(resolve_config_path(cfg.packed_dir))
     schedule = Schedule.linear(cfg.timesteps, cfg.beta_start, cfg.beta_end, device="cuda")
     model = V4UNet(cfg).cuda()
     opt = torch.optim.AdamW(model.parameters(), lr=cfg.lr)
@@ -160,7 +168,8 @@ def bench(cfg: V4Config, mbs: tuple[int, ...] = (16, 32, 64, 96, 128, 192, 256))
             with torch.autocast("cuda", dtype=torch.bfloat16, enabled=cfg.use_bf16):
                 loss, _ = training_loss(model, latents.index_select(0, idx),
                                         styles.index_select(0, idx), schedule,
-                                        cfg_dropout=cfg.cfg_dropout)
+                                        cfg_dropout=cfg.cfg_dropout,
+                                        prediction_type=cfg.prediction_type)
             loss.backward()
             opt.step()
             opt.zero_grad(set_to_none=True)
@@ -187,7 +196,7 @@ def main() -> None:
         bench(cfg, mbs)
         return
 
-    out = Path(cfg.out_dir) / cfg.run_name
+    out = resolve_config_path(cfg.out_dir) / cfg.run_name
     out.mkdir(parents=True, exist_ok=True)
     log_path = out / "train.jsonl"
     log = open(log_path, "a", encoding="utf-8")
@@ -197,7 +206,7 @@ def main() -> None:
         log.write(json.dumps(payload, ensure_ascii=False) + "\n")
         log.flush()
 
-    bank = load_bank(cfg.packed_dir)
+    bank = load_bank(resolve_config_path(cfg.packed_dir))
     desc = latent_descriptor(bank.latents)
     dup_group, dup_pairs = duplicate_groups(desc)
     clusters = content_clusters(desc, k=20, seed=cfg.seed)
@@ -251,6 +260,7 @@ def main() -> None:
                 loss, stats = training_loss(
                     model, train_lat.index_select(0, idx), train_sid.index_select(0, idx),
                     schedule, cfg_dropout=cfg.cfg_dropout,
+                    prediction_type=cfg.prediction_type,
                 )
             (loss / cfg.grad_accum).backward()
             loss_acc += float(loss.detach()) / cfg.grad_accum
@@ -328,6 +338,8 @@ def _save(path: Path, ema: EMA, model, cfg: V4Config, schedule: Schedule, step: 
         "val": val,
         "schedule": {"timesteps": cfg.timesteps, "beta_start": cfg.beta_start,
                      "beta_end": cfg.beta_end, "beta_schedule": cfg.beta_schedule},
+        "prediction_type": cfg.prediction_type,
+        "cond_mode": cfg.cond_mode,
         "latent_scale_factor": cfg.latent_scale_factor,
     }
     tmp = path.with_suffix(".tmp")

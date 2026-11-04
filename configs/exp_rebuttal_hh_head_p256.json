@@ -524,7 +524,7 @@
     "internal_probe_fixed_t": 0.5
   },
   "data": {
-    "data_root": "G:/GitHub/Latent_Style/Dataset/distinct5_512/train",
+    "data_root": "../Dataset/distinct5_512/train",
     "style_subdirs": [
       "Early_Renaissance",
       "Impressionism",
@@ -557,7 +557,7 @@
     "pairing_cache_cross_only": true,
     "style_caption_path": "",
     "latent_cache_mode": "packed",
-    "latent_cache_dir": "G:/GitHub/Latent_Style/WEAVE/data/train_d5/.latent_cache",
+    "latent_cache_dir": "data/train_d5/.latent_cache",
     "dino_cache_path": "",
     "dino_cache_required": false,
     "dino_bank_limit_per_style": 8

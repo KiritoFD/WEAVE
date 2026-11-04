@@ -31,9 +31,6 @@ KNOWN_DEBT = {
     "BASELINE_PROGRESS.md",
     "Plan.md",
     "REPOSITORY_INVENTORY.md",
-    "configs/exp_rebuttal_hh_head_p256.json",
-    "configs/exp_rebuttal_w03_p256.json",
-    "configs/exp_rebuttal_w10_p256.json",
     "configs/configs/exp_rebuttal_hh_head_p256.json",
     "configs/configs/exp_rebuttal_w03_p256.json",
     "configs/configs/exp_rebuttal_w10_p256.json",
@@ -139,10 +136,10 @@ ABSOLUTE_PATH_RE = re.compile(
 
 
 def _repo_files() -> list[Path]:
-    """git 跟踪 + 未忽略的新文件；git 不可用时退回 rglob。"""
+    """git 跟踪的文件；git 不可用时退回 rglob。"""
     try:
         out = subprocess.run(
-            ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+            ["git", "ls-files", "--cached"],
             cwd=PROJECT_ROOT,
             check=True,
             capture_output=True,
