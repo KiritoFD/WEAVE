@@ -61,6 +61,20 @@ class FlowMatchingObjective:
             raise ValueError(
                 f"bridge.endpoint_mode must be target_hf|pseudo|mixed, got {self.endpoint_mode!r}"
             )
+        # === T8: 内容锚定 HF 端点 (默认 raw, 数值行为不变) ===
+        # H* = (1-α)·H_c + α·StyleTransform(H_c, S_s)
+        # StyleTransform 只把内容自身的 HF 逐通道对齐到目标风格 HF 的 mean/std,
+        # 保留内容的空间 HF 布局, 不再复制另一张画的空间 HF。
+        self.hf_endpoint_mode = str(getattr(self.bridge_cfg, "hf_endpoint_mode", "raw")).strip().lower()
+        if self.hf_endpoint_mode not in ("raw", "content_anchored"):
+            raise ValueError(
+                f"bridge.hf_endpoint_mode must be raw|content_anchored, got {self.hf_endpoint_mode!r}"
+            )
+        self.hf_endpoint_alpha = float(getattr(self.bridge_cfg, "hf_endpoint_alpha", 1.0))
+        if not 0.0 <= self.hf_endpoint_alpha <= 1.0:
+            raise ValueError(
+                f"bridge.hf_endpoint_alpha must be in [0, 1], got {self.hf_endpoint_alpha}"
+            )
         # t-sampling honesty fix
         self.t_sampling_mode = str(getattr(self.bridge_cfg, "t_sampling_mode", "uniform")).strip().lower()
         self.t_sampling_legacy_compat = bool(getattr(self.bridge_cfg, "t_sampling_legacy_compat", True))
@@ -200,6 +214,22 @@ class FlowMatchingObjective:
         ll_blended = (1.0 - alpha) * c_f + alpha * ll_style_matched
         return ll_blended.to(dtype=ll_content.dtype)
 
+    def _style_transform_hf(self, hf_content: torch.Tensor, hf_style: torch.Tensor) -> torch.Tensor:
+        """T8 StyleTransform: 内容 HF 逐通道 AdaIN 到目标风格 HF 的 mean/std.
+
+        只改幅度统计, 不改空间布局: H_content 的相位/结构保留, 纹理能量取自风格图.
+        """
+        c = hf_content.float()
+        s = hf_style.float().to(device=c.device, dtype=c.dtype)
+        if s.shape[0] == 1 and c.shape[0] > 1:
+            s = s.expand_as(c)
+        s_mean = s.mean(dim=[2, 3], keepdim=True)
+        s_std = s.std(dim=[2, 3], keepdim=True).clamp_min(1e-6)
+        c_mean = c.mean(dim=[2, 3], keepdim=True)
+        c_std = c.std(dim=[2, 3], keepdim=True).clamp_min(1e-6)
+        matched = (c - c_mean) / c_std * s_std + s_mean
+        return matched.to(dtype=hf_content.dtype)
+
     def _build_training_target(
         self,
         content: torch.Tensor,
@@ -207,12 +237,20 @@ class FlowMatchingObjective:
         style_latent: torch.Tensor,
     ) -> torch.Tensor:
         target = target_style
-        if self.structure_aligned_target:
-            ll_c, _lh_c, _hl_c, _hh_c = dwt2_haar(content)
+        anchor = self.hf_endpoint_mode == "content_anchored"
+        if self.structure_aligned_target or anchor:
+            ll_c, lh_c, hl_c, hh_c = dwt2_haar(content)
             ll_t, lh_t, hl_t, hh_t = dwt2_haar(target)
-            if self.ll_partial_style_enabled and 0.0 < self.ll_partial_alpha <= 1.0:
-                ll_c = self._partial_style_ll(ll_c, ll_t, self.ll_partial_alpha)
-            target = idwt2_haar(ll_c, lh_t, hl_t, hh_t)
+            if anchor:
+                alpha = self.hf_endpoint_alpha
+                lh_t = (1.0 - alpha) * lh_c + alpha * self._style_transform_hf(lh_c, lh_t)
+                hl_t = (1.0 - alpha) * hl_c + alpha * self._style_transform_hf(hl_c, hl_t)
+            if self.structure_aligned_target:
+                if self.ll_partial_style_enabled and 0.0 < self.ll_partial_alpha <= 1.0:
+                    ll_c = self._partial_style_ll(ll_c, ll_t, self.ll_partial_alpha)
+                target = idwt2_haar(ll_c, lh_t, hl_t, hh_t)
+            else:
+                target = idwt2_haar(ll_t, lh_t, hl_t, hh_t)
 
         if self.train_adain_enabled and self.train_adain_scale > 0.0:
             target = self._apply_train_adain(target, style_latent)

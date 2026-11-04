@@ -881,6 +881,12 @@ class BridgeConfig:
     endpoint_mode: str = "target_hf"             # "target_hf" | "pseudo" | "mixed"
     pseudo_target_cache_dir: str = ""
     pseudo_target_min_score: float = 0.0         # cache lookup filters below this score
+    # === T8: 内容锚定 HF 端点 (默认 raw, 数值行为不变) ===
+    # H* = (1-α)·H_c + α·StyleTransform(H_c, S_s)
+    # StyleTransform 把内容自身 HF 逐通道 AdaIN 到目标风格 HF 的 mean/std,
+    # 保留内容空间布局, 避免逐像素复制另一张画的空间 HF。
+    hf_endpoint_mode: str = "raw"                # "raw" | "content_anchored"
+    hf_endpoint_alpha: float = 1.0               # 仅在 content_anchored 生效, [0,1]
     # === Next-gen: t-sampling honesty fix ===
     # Historically t_sampling_mode="logit_normal" was set in configs but
     # _sample_t() actually drew UNIFORM t (paper's "uniform" is correct). To
@@ -934,6 +940,14 @@ class BridgeConfig:
         cfg = cls(**known)
         cfg.extra = extra
         _rehydrate_extra_attributes(cfg)
+        mode = str(cfg.hf_endpoint_mode or "raw").strip().lower()
+        if mode not in ("raw", "content_anchored"):
+            raise ValueError(f"bridge.hf_endpoint_mode must be raw|content_anchored, got {mode!r}")
+        cfg.hf_endpoint_mode = mode
+        alpha = float(cfg.hf_endpoint_alpha)
+        if not 0.0 <= alpha <= 1.0:
+            raise ValueError(f"bridge.hf_endpoint_alpha must be in [0, 1], got {alpha}")
+        cfg.hf_endpoint_alpha = alpha
         return cfg
 
     def to_dict(self) -> dict[str, Any]:
