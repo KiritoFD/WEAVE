@@ -47,6 +47,9 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--strength", type=float, default=0.45)
     ap.add_argument("--cfg", type=float, default=1.0)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--guide-clf", default="", help="噪声条件风格分类器 ckpt；空=不加引导")
+    ap.add_argument("--guide-scale", type=float, default=0.0)
+    ap.add_argument("--guide-t-max", type=int, default=700)
     ap.add_argument("--lpips", action="store_true")
     ap.add_argument("--lpips-only", action="store_true", help="不重跑生成，只对已有 metrics.csv 补算 LPIPS")
     ap.add_argument("--lpips-net", default="alex")
@@ -118,6 +121,14 @@ def main() -> int:
             raise SystemExit(f"没有源图: {test_dir / name}")
         sources.extend((sid, p) for p in files)
 
+    guidance = {}
+    if args.guide_clf and args.guide_scale != 0.0:
+        from v4.style_classifier import make_guidance_fn
+        clf_path = str(resolve(args.guide_clf))
+        guidance = {sid: make_guidance_fn(clf_path, sid, torch.device("cuda"),
+                                           t_min=0, t_max=args.guide_t_max)
+                    for sid in range(cfg.num_styles)}
+
     # 源图编码只做一次
     src_cache: dict[Path, torch.Tensor] = {}
     for _, path in sources:
@@ -133,7 +144,8 @@ def main() -> int:
                 z = sdedit(model, src_cache[path], torch.tensor([tgt_sid], device="cuda"),
                            schedule, strength=args.strength, num_steps=args.steps,
                            cfg_scale=args.cfg, prediction_type=cfg.prediction_type,
-                           generator=gen)
+                           guidance_fn=guidance.get(tgt_sid),
+                           guidance_scale=args.guide_scale, generator=gen)
             img = decode_latent(vae, z.float())[0].float().cpu().clamp(0, 1)
             rel_dir = STYLE_NAMES[tgt_sid]
             (img_dir / rel_dir).mkdir(parents=True, exist_ok=True)
@@ -156,7 +168,8 @@ def main() -> int:
         "ckpt": str(args.ckpt), "step": payload.get("step"), "n": len(rows),
         "steps": args.steps, "strength": args.strength, "cfg": args.cfg, "seed": args.seed,
         "src_per_style": args.src_per_style, "prediction_type": cfg.prediction_type,
-        "content_lpips": None,
+        "guide_clf": (args.guide_clf or None), "guide_scale": args.guide_scale,
+        "guide_t_max": args.guide_t_max, "content_lpips": None,
     }
     rc = 0
     if args.lpips:
