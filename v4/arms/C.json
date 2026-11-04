@@ -1,0 +1,14 @@
+{
+  "out_dir": "runs/v4/arms",
+  "run_name": "C",
+  "channels": [128, 224, 320, 416],
+  "film_init_std": 0.02,
+  "cfg_dropout": 0.0,
+  "batch_size": 256,
+  "grad_accum": 1,
+  "lr": 2.8e-4,
+  "max_steps": 6000,
+  "warmup_steps": 500,
+  "milestones": [1000, 3000, 6000],
+  "seed": 42
+}
