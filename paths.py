@@ -38,10 +38,12 @@ def resolve(raw: str | Path | None, *, base: Path = WEAVE_ROOT) -> Path:
 
 
 def resolve_config_path(raw: str | Path | None) -> Path | str:
-    """配置字段专用：相对路径相对 ``WEAVE_ROOT``，空串保持“未配置”。"""
+    """配置字段专用：``@asset/...`` 相对资产根，其余相对 ``WEAVE_ROOT``。"""
     text = str(raw or "").strip()
     if not text:
         return ""
+    if text.startswith("@asset/"):
+        return ASSET_ROOT / text[len("@asset/") :]
     path = Path(text)
     return path if path.is_absolute() else WEAVE_ROOT / path
 

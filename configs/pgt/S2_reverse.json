@@ -1,0 +1,43 @@
+{
+  "_comment": "S2 reverse: 显式配对缓存（z0=贴入异风格 patch 的真实目标图，z1=真实目标图）。cap=2000 steps，内部早停优先。",
+  "_base": "../../config.json",
+  "model": {
+    "target_latent_hf_subband_fusion_enabled": true,
+    "target_latent_hf_head_fusion_gate_init": 0.05
+  },
+  "bridge": {
+    "paired_latent_passthrough": true
+  },
+  "data": {
+    "train_sample_limit": 0,
+    "paired_latent_cache_dir": "@asset/pseudo_gt_24h/pairs/reverse",
+    "content_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0],
+    "target_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0]
+  },
+  "training": {
+    "batch_size": 96,
+    "accumulation_steps": 1,
+    "num_epochs": 14,
+    "save_interval": 1,
+    "stop_after_global_steps": 2000,
+    "full_eval_each_epoch": false,
+    "internal_probe_enabled": true,
+    "internal_probe_every": 1,
+    "internal_probe_batch_size": 4,
+    "internal_probe_fixed_t": 0.5,
+    "internal_early_stop_enabled": true,
+    "internal_early_stop_record_only": false,
+    "internal_early_stop_min_epoch": 3,
+    "internal_early_stop_gate_delta_threshold": 0.0,
+    "internal_early_stop_shared_ratio_drop_threshold": 0.65
+  },
+  "checkpoint": {
+    "save_dir": "runs/pgt/S2_reverse"
+  },
+  "ablation": {
+    "name": "S2_reverse",
+    "axis": "pseudo_gt_pairing",
+    "stage": "pgt_round",
+    "notes": "reverse: z0=real target polluted with cross-style patches, z1=real target; paired passthrough; b96; 27,504 pairs; early stop (min_epoch=3, gate_delta>0, rho ratio<=0.65), 2000-step cap."
+  }
+}

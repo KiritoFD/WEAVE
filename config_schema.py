@@ -894,6 +894,10 @@ class BridgeConfig:
     endpoint_mode: str = "target_hf"             # "target_hf" | "pseudo" | "mixed"
     pseudo_target_cache_dir: str = ""
     pseudo_target_min_score: float = 0.0         # cache lookup filters below this score
+    # === 伪GT 实验：配对 latent 直通 ===
+    # True 时训练终点直接使用 data 侧给出的 z1（已离线构造好的伪GT/真实GT），
+    # 不再执行 SAT / LL partial AdaIN / train AdaIN，保证比较的是构造本身。
+    paired_latent_passthrough: bool = False
     # === T8: 内容锚定 HF 端点 (默认 raw, 数值行为不变) ===
     # H* = (1-α)·H_c + α·StyleTransform(H_c, S_s)
     # StyleTransform 把内容自身 HF 逐通道 AdaIN 到目标风格 HF 的 mean/std,
@@ -1207,6 +1211,15 @@ class DataConfig:
     style_caption_path: str = ""
     latent_cache_mode: str = "off"
     latent_cache_dir: str = ""
+    # 多根 packed 读取（opt-in）。每项形如
+    #   {"path": "...", "manifest": "...", "split": "train", "stem_prefix": "new__"}
+    # 按 style 逐个 root 读取并按行 torch.cat；不物理合并、不写任何 root。
+    # 为空时保持旧的单根行为（A0-A3 逐位不变）。
+    latent_roots: list[dict[str, Any]] | None = None
+    # 伪GT 实验：显式配对 latent shard 目录（含 manifest.json）；非空时走 PairedLatentDataset。
+    paired_latent_cache_dir: str = ""
+    # 每类必须读到的张数；不等则 fail-fast（None = 不检查）。
+    expected_style_counts: dict[str, int] | None = None
     # Route C: DINOv2 patch-token cache root (tools/extract_dino_cache.py output).
     # Empty -> old Style-ID-only dataset path, byte-identical to previous runs.
     reference_dino_cache_dir: str = ""

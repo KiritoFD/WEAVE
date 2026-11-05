@@ -1,0 +1,34 @@
+{
+  "_comment": "S0 smoke: 仅验证配对缓存 + 直通接线能否跑通（5 步即停，不参与实验结论）。",
+  "_base": "../../config.json",
+  "model": {
+    "target_latent_hf_subband_fusion_enabled": true,
+    "target_latent_hf_head_fusion_gate_init": 0.05
+  },
+  "bridge": {
+    "paired_latent_passthrough": true
+  },
+  "data": {
+    "train_sample_limit": 0,
+    "paired_latent_cache_dir": "@asset/pseudo_gt_24h/pairs/base"
+  },
+  "training": {
+    "batch_size": 32,
+    "accumulation_steps": 1,
+    "num_epochs": 1,
+    "save_interval": 1,
+    "stop_after_global_steps": 5,
+    "full_eval_each_epoch": false,
+    "internal_probe_enabled": false,
+    "internal_early_stop_enabled": false
+  },
+  "checkpoint": {
+    "save_dir": "runs/pgt/_smoke"
+  },
+  "ablation": {
+    "name": "S0_smoke",
+    "axis": "pseudo_gt_pairing",
+    "stage": "pgt_round",
+    "notes": "wiring smoke only"
+  }
+}

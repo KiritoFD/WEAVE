@@ -17,10 +17,10 @@ import torch
 from torch.utils.data import DataLoader
 
 from config_schema import ExperimentConfig, load_experiment_config
-from paths import WEAVE_ROOT, resolve_dataset_path
+from paths import WEAVE_ROOT, resolve_config_path, resolve_dataset_path
 from style_families import validate_i2sb_contract, validate_pure_latent_contract
 from trainer import SBTrainer
-from utils.dataset import AdaCUTLatentDataset
+from utils.dataset import AdaCUTLatentDataset, PairedLatentDataset
 
 logging.basicConfig(
     level=logging.INFO,
@@ -486,44 +486,60 @@ def main() -> None:
         )
 
     data_cfg = config.data
-    dataset = AdaCUTLatentDataset(
-        data_root=str(resolve_dataset_path(data_cfg.data_root)),
-        style_subdirs=data_cfg.style_subdirs,
-        allow_hflip=bool(data_cfg.allow_hflip),
-        identity_ratio=data_cfg.identity_ratio,
-        batch_size_hint=int(train_cfg.batch_size),
-        balance_target_styles_per_batch=bool(data_cfg.balance_target_styles_per_batch),
-        preload_to_gpu=bool(data_cfg.preload_to_gpu),
-        preload_max_vram_gb=float(data_cfg.preload_max_vram_gb),
-        preload_reserve_ratio=float(data_cfg.preload_reserve_ratio),
-        virtual_length_multiplier=float(data_cfg.virtual_length_multiplier),
-        limit_per_style=int(getattr(data_cfg, "packed_limit_per_style", 0) or 0),
-        train_sample_limit=int(getattr(data_cfg, "train_sample_limit", 0) or 0),
-        pairing_mode=str(getattr(data_cfg, "pairing_mode", "epoch") or "epoch"),
-        pairing_seed=int(getattr(data_cfg, "pairing_seed", 0) or 0),
-        identity_prob=float(getattr(data_cfg, "identity_prob", 0.0) or 0.0),
-        content_style_sampling_weights=data_cfg.content_style_sampling_weights,
-        target_style_sampling_weights=data_cfg.target_style_sampling_weights,
-        pairing_cache_path=data_cfg.pairing_cache_path,
-        pairing_cache_topk=int(data_cfg.pairing_cache_topk),
-        pairing_cache_active_topk=int(data_cfg.pairing_cache_active_topk),
-        pairing_cache_sample_mode=str(data_cfg.pairing_cache_sample_mode),
-        pairing_cache_rank_schedule=str(data_cfg.pairing_cache_rank_schedule),
-        pairing_cache_min_topk=int(data_cfg.pairing_cache_min_topk),
-        pairing_cache_curriculum_epochs=int(data_cfg.pairing_cache_curriculum_epochs),
-        pairing_cache_rank_power=float(data_cfg.pairing_cache_rank_power),
-        pairing_cache_explore_prob=float(data_cfg.pairing_cache_explore_prob),
-        pairing_cache_explore_topk=int(data_cfg.pairing_cache_explore_topk),
-        pairing_cache_dual_target_mix=float(data_cfg.pairing_cache_dual_target_mix),
-        pairing_cache_dual_target_topk=int(data_cfg.pairing_cache_dual_target_topk),
-        pairing_cache_aux_target_topk=int(data_cfg.pairing_cache_aux_target_topk),
-        pairing_cache_cross_only=bool(data_cfg.pairing_cache_cross_only),
-        latent_cache_mode=str(data_cfg.latent_cache_mode),
-        latent_cache_dir=str(resolve_dataset_path(data_cfg.latent_cache_dir)),
-        style_caption_path=str(getattr(data_cfg, "style_caption_path", "")),
-        reference_dino_cache_dir=str(getattr(data_cfg, "reference_dino_cache_dir", "")),
-        device=str(device),
-    )
+    _paired_dir = str(getattr(data_cfg, "paired_latent_cache_dir", "") or "")
+    if _paired_dir:
+        dataset = PairedLatentDataset(
+            cache_dir=str(resolve_dataset_path(_paired_dir)),
+            style_names=list(data_cfg.style_subdirs),
+        )
+    else:
+        dataset = AdaCUTLatentDataset(
+            data_root=str(resolve_dataset_path(data_cfg.data_root)),
+            style_subdirs=data_cfg.style_subdirs,
+            allow_hflip=bool(data_cfg.allow_hflip),
+            identity_ratio=data_cfg.identity_ratio,
+            batch_size_hint=int(train_cfg.batch_size),
+            balance_target_styles_per_batch=bool(data_cfg.balance_target_styles_per_batch),
+            preload_to_gpu=bool(data_cfg.preload_to_gpu),
+            preload_max_vram_gb=float(data_cfg.preload_max_vram_gb),
+            preload_reserve_ratio=float(data_cfg.preload_reserve_ratio),
+            virtual_length_multiplier=float(data_cfg.virtual_length_multiplier),
+            limit_per_style=int(getattr(data_cfg, "packed_limit_per_style", 0) or 0),
+            train_sample_limit=int(getattr(data_cfg, "train_sample_limit", 0) or 0),
+            pairing_mode=str(getattr(data_cfg, "pairing_mode", "epoch") or "epoch"),
+            pairing_seed=int(getattr(data_cfg, "pairing_seed", 0) or 0),
+            identity_prob=float(getattr(data_cfg, "identity_prob", 0.0) or 0.0),
+            content_style_sampling_weights=data_cfg.content_style_sampling_weights,
+            target_style_sampling_weights=data_cfg.target_style_sampling_weights,
+            pairing_cache_path=data_cfg.pairing_cache_path,
+            pairing_cache_topk=int(data_cfg.pairing_cache_topk),
+            pairing_cache_active_topk=int(data_cfg.pairing_cache_active_topk),
+            pairing_cache_sample_mode=str(data_cfg.pairing_cache_sample_mode),
+            pairing_cache_rank_schedule=str(data_cfg.pairing_cache_rank_schedule),
+            pairing_cache_min_topk=int(data_cfg.pairing_cache_min_topk),
+            pairing_cache_curriculum_epochs=int(data_cfg.pairing_cache_curriculum_epochs),
+            pairing_cache_rank_power=float(data_cfg.pairing_cache_rank_power),
+            pairing_cache_explore_prob=float(data_cfg.pairing_cache_explore_prob),
+            pairing_cache_explore_topk=int(data_cfg.pairing_cache_explore_topk),
+            pairing_cache_dual_target_mix=float(data_cfg.pairing_cache_dual_target_mix),
+            pairing_cache_dual_target_topk=int(data_cfg.pairing_cache_dual_target_topk),
+            pairing_cache_aux_target_topk=int(data_cfg.pairing_cache_aux_target_topk),
+            pairing_cache_cross_only=bool(data_cfg.pairing_cache_cross_only),
+            latent_cache_mode=str(data_cfg.latent_cache_mode),
+            latent_cache_dir=str(resolve_dataset_path(data_cfg.latent_cache_dir)),
+            latent_roots=[
+                {
+                    **root,
+                    "path": str(resolve_config_path(root.get("path", ""))),
+                    "manifest": str(resolve_config_path(root.get("manifest", ""))) if root.get("manifest") else "",
+                }
+                for root in (getattr(data_cfg, "latent_roots", None) or [])
+            ],
+            expected_style_counts=getattr(data_cfg, "expected_style_counts", None),
+            style_caption_path=str(getattr(data_cfg, "style_caption_path", "")),
+            reference_dino_cache_dir=str(getattr(data_cfg, "reference_dino_cache_dir", "")),
+            device=str(device),
+        )
 
     style_count = len(dataset.style_subdirs)
     if int(config.model.num_styles) != style_count:

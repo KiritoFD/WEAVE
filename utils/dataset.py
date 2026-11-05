@@ -199,6 +199,8 @@ class AdaCUTLatentDataset(Dataset):
         pairing_cache_cross_only: bool = True,
         latent_cache_mode: str = "off",
         latent_cache_dir: str = "",
+        latent_roots: Sequence[Any] | None = None,
+        expected_style_counts: Dict[str, int] | None = None,
         style_caption_path: str = "",
         reference_dino_cache_dir: str = "",
         device: str = "cpu",
@@ -283,17 +285,44 @@ class AdaCUTLatentDataset(Dataset):
         self.latent_cache_dir = Path(latent_cache_dir) if str(latent_cache_dir or "").strip() else (self.data_root / ".latent_cache")
         if not self.latent_cache_dir.is_absolute():
             self.latent_cache_dir = (self.data_root / self.latent_cache_dir).resolve()
+        self.latent_roots = self._normalize_latent_roots(latent_roots)
+        self.expected_style_counts = (
+            {str(k): int(v) for k, v in dict(expected_style_counts).items()}
+            if expected_style_counts
+            else None
+        )
+        if self.latent_roots and self.latent_cache_mode != "packed":
+            raise ValueError("latent_roots 只支持 latent_cache_mode='packed'")
         self._latent_manifest: dict[str, list[Path]] | None = None
-        if self.latent_cache_mode != "off":
+        if self.latent_cache_mode != "off" and not self.latent_roots:
             self._latent_manifest = self._load_or_build_manifest(force_refresh=self.latent_cache_mode == "refresh")
 
         self.style_tensors: Dict[int, torch.Tensor] = {}
         logger.info("Loading latent dataset from %s", self.data_root)
         for style_id, subdir in enumerate(self.style_subdirs):
-            files = self._resolve_style_files(subdir)
-            if not files:
-                raise RuntimeError(f"No latent files found for style={subdir} under {self.data_root}")
-            stack = self._load_style_stack(style_id, subdir, files)
+            if self.latent_roots:
+                files, stack = self._load_multi_root_style_stack(style_id, subdir)
+            else:
+                files = self._resolve_style_files(subdir)
+                if not files:
+                    raise RuntimeError(f"No latent files found for style={subdir} under {self.data_root}")
+                stack = self._load_style_stack(style_id, subdir, files)
+            if self.expected_style_counts is not None:
+                expected = self.expected_style_counts.get(subdir)
+                if expected is None:
+                    raise RuntimeError(
+                        f"expected_style_counts 缺少 style={subdir}（已配置 {sorted(self.expected_style_counts)}）"
+                    )
+                if int(stack.shape[0]) != int(expected):
+                    roots = (
+                        ", ".join(f"{r['path']}" for r in self.latent_roots)
+                        if self.latent_roots
+                        else str(self.data_root)
+                    )
+                    raise RuntimeError(
+                        f"[fail-fast] style={subdir} 实际读到 {int(stack.shape[0])} 张，"
+                        f"期望 {int(expected)} 张（roots={roots}）。数据不齐不要静默少读。"
+                    )
             caps = [c for c in (
                 int(self._train_limit_per_style[style_id]) if self._train_limit_per_style is not None else 0,
                 self.limit_per_style,
@@ -442,6 +471,108 @@ class AdaCUTLatentDataset(Dataset):
         if self._latent_manifest is not None and subdir in self._latent_manifest:
             return list(self._latent_manifest[subdir])
         return self._scan_style_files(subdir)
+
+    def _normalize_latent_roots(self, latent_roots: Sequence[Any] | None) -> list[dict[str, Any]]:
+        """规范化多根 packed 配置；空输入 => 返回 []，调用方走旧的单根路径。"""
+        roots: list[dict[str, Any]] = []
+        for idx, raw in enumerate(latent_roots or []):
+            if isinstance(raw, (str, Path)):
+                spec: dict[str, Any] = {"path": str(raw)}
+            elif isinstance(raw, dict):
+                spec = dict(raw)
+            else:
+                raise ValueError(f"latent_roots[{idx}] 必须是 str 或 dict，得到 {type(raw).__name__}")
+            path_text = str(spec.get("path", "") or "").strip()
+            if not path_text:
+                raise ValueError(f"latent_roots[{idx}] 缺少 path")
+            root_path = Path(path_text)
+            manifest_text = str(spec.get("manifest", "") or "").strip()
+            split = str(spec.get("split", "") or "").strip().lower()
+            if split and split not in {"train", "val"}:
+                raise ValueError(f"latent_roots[{idx}].split 只支持 train/val，得到 {split!r}")
+            if split and not manifest_text:
+                raise ValueError(f"latent_roots[{idx}] 指定了 split={split}，必须同时给 manifest（逐张 split 在 sidecar 里）")
+            if not root_path.is_dir():
+                raise RuntimeError(f"latent_roots[{idx}] 目录不存在: {root_path}")
+            roots.append(
+                {
+                    "path": root_path,
+                    "manifest": Path(manifest_text) if manifest_text else None,
+                    "split": split,
+                    "stem_prefix": str(spec.get("stem_prefix", "") or ""),
+                }
+            )
+        return roots
+
+    def _select_sidecar_indices(self, root: dict[str, Any], packed_name: str) -> list[int]:
+        """按 sidecar manifest.json 的 split 过滤，返回该 packed 文件内的行号（tensor 行序）。"""
+        payload = json.loads(root["manifest"].read_text(encoding="utf-8"))
+        samples = payload.get("samples")
+        if not isinstance(samples, list):
+            raise RuntimeError(f"sidecar {root['manifest']} 缺少 samples 列表")
+        wanted = root["split"]
+        indices: list[int] = []
+        row_in_file = 0
+        for sample in samples:
+            packed = str(sample.get("packed", "")).replace("\\", "/").rstrip("/")
+            if Path(packed).name != packed_name:
+                continue
+            row = int(sample.get("index", row_in_file))
+            row_in_file += 1
+            if str(sample.get("split", "")).strip().lower() != wanted:
+                continue
+            indices.append(row)
+        if not indices:
+            raise RuntimeError(f"sidecar {root['manifest']} 中 {packed_name} 没有任何 split={wanted} 的行")
+        return indices
+
+    def _load_multi_root_style_stack(self, style_id: int, subdir: str) -> tuple[list[Path], torch.Tensor]:
+        """多根读取：每根按 {sid:02d}_{Style}.pt 加载，按需 split 过滤后按行 cat。只读，不落盘。"""
+        packed_name = self._style_cache_name(style_id, subdir)
+        tensors: list[torch.Tensor] = []
+        files: list[Path] = []
+        parts: list[str] = []
+        for root in self.latent_roots:
+            packed_path = root["path"] / packed_name
+            if not packed_path.exists():
+                raise RuntimeError(f"[latent_roots] 缺少 packed 文件: {packed_path} (style={subdir})")
+            payload = torch.load(packed_path, map_location="cpu", weights_only=False)
+            if not (
+                isinstance(payload, dict)
+                and payload.get("schema") == 1
+                and payload.get("subdir") == subdir
+            ):
+                raise RuntimeError(f"[latent_roots] packed 内容校验失败: {packed_path}")
+            latents = torch.as_tensor(payload["latents"]).float()
+            raw_files = [str(x) for x in payload.get("files", [])]
+            if latents.ndim != 4 or int(latents.shape[0]) != len(raw_files):
+                raise RuntimeError(
+                    f"[latent_roots] {packed_path} latents {tuple(latents.shape)} 与 files {len(raw_files)} 不一致"
+                )
+            if root["split"]:
+                indices = self._select_sidecar_indices(root, packed_name)
+                if max(indices) >= int(latents.shape[0]):
+                    raise RuntimeError(
+                        f"[latent_roots] sidecar 行号越界: max={max(indices)} >= {int(latents.shape[0])} ({packed_path})"
+                    )
+                latents = latents.index_select(0, torch.as_tensor(indices, dtype=torch.long))
+                raw_files = [raw_files[i] for i in indices]
+            tensors.append(latents)
+            prefix = str(root["stem_prefix"])
+            for raw in raw_files:
+                stem = Path(raw.replace("\\", "/")).stem
+                files.append(Path(f"{prefix}{stem}.pt"))
+            tag = f"{root['path']}{'[' + root['split'] + ']' if root['split'] else ''}"
+            parts.append(f"{tag}={int(latents.shape[0])}")
+        stack = torch.cat(tensors, dim=0) if len(tensors) > 1 else tensors[0]
+        if len(files) != int(stack.shape[0]):
+            raise RuntimeError(f"[latent_roots] style={subdir} stems={len(files)} 与 latents={int(stack.shape[0])} 不一致")
+        logger.info("  [multi-root] style=%s id=%d total=%d parts=%s", subdir, style_id, int(stack.shape[0]), parts)
+        try:
+            stack.share_memory_()
+        except Exception:
+            pass
+        return files, stack
 
     def _load_style_stack(self, style_id: int, subdir: str, files: list[Path]) -> torch.Tensor:
         if self.latent_cache_mode == "packed":
@@ -1030,4 +1161,73 @@ class AdaCUTLatentDataset(Dataset):
             item["target_style_caption"] = caption_text
             item["target_style_caption_rel_path"] = matched_rel
         return item
+
+
+class PairedLatentDataset(Dataset):
+    """读取 ``tools/pseudo_gt/cache.py`` 写出的显式配对 shard（z0, z1）。
+
+    与 ``AdaCUTLatentDataset`` 返回相同键，但 content/target 是离线构造好的
+    固定配对；配合 ``bridge.paired_latent_passthrough=true`` 使用，训练时
+    不再做任何二次风格化。
+    """
+
+    def __init__(self, cache_dir: str, *, style_names: list[str] | None = None):
+        import json as _json
+
+        self.root = Path(cache_dir)
+        manifest_path = self.root / "manifest.json"
+        if not manifest_path.exists():
+            raise FileNotFoundError(f"缺少配对缓存 manifest: {manifest_path}")
+        payload = _json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.records = payload["records"]
+        if not self.records:
+            raise RuntimeError(f"{self.root} 没有任何配对样本")
+        self.style_names = style_names or [
+            "Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"
+        ]
+        self.style_subdirs = list(self.style_names)
+        self.style_to_id = {s: i for i, s in enumerate(self.style_names)}
+        # sample_id -> (shard_idx, row_idx)
+        self._index = {}
+        total = 0
+        for shard_idx, path in enumerate(sorted(self.root.glob("shard_*.pt"))):
+            shard = torch.load(path, map_location="cpu", weights_only=False)
+            for row in range(len(shard["meta"])):
+                self._index[shard["meta"][row]["sample_id"]] = (shard_idx, row)
+            total += len(shard["meta"])
+        self._cache: dict[int, dict] = {}
+
+    def __len__(self) -> int:
+        return len(self.records)
+
+    def set_epoch(self, epoch: int) -> None:
+        """显式配对缓存是固定配对，epoch 只影响打乱顺序（由 sampler 负责）。"""
+        self.epoch = int(epoch)
+
+    def _shard(self, idx: int) -> dict:
+        if idx in self._cache:
+            return self._cache[idx]
+        if len(self._cache) >= 2:
+            self._cache.pop(next(iter(self._cache)))
+        path = sorted(self.root.glob("shard_*.pt"))[idx]
+        self._cache[idx] = torch.load(path, map_location="cpu", weights_only=False)
+        return self._cache[idx]
+
+    def __getitem__(self, index: int) -> dict:
+        rec = self.records[index]
+        shard_idx, row = self._index[rec["sample_id"]]
+        shard = self._shard(shard_idx)
+        z0 = shard["z0"][row].float()
+        z1 = shard["z1"][row].float()
+        tgt_id = self.style_to_id.get(rec["target_style"], 0)
+        src_id = self.style_to_id.get(rec["source_style"], 0)
+        return {
+            "content": z0,
+            "target_style": z1,
+            "target_style_id": torch.tensor(tgt_id, dtype=torch.long),
+            "source_style_id": torch.tensor(src_id, dtype=torch.long),
+            "content_id": rec["source_id"],
+            "target_id": rec["donor_id"],
+            "pair_sample_id": rec["sample_id"],
+        }
 

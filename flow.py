@@ -42,6 +42,8 @@ class FlowMatchingObjective:
         self.w_hh = float(getattr(self.bridge_cfg, "spectral_w_hh", 2.0))
         self.loss_type = str(getattr(self.bridge_cfg, "loss_type", "mse")).lower().strip()
         self.structure_aligned_target = bool(getattr(self.bridge_cfg, "structure_aligned_target", False))
+        # 伪GT 实验：z1 已在离线缓存中构造完毕，训练时不得二次风格化。
+        self.paired_latent_passthrough = bool(getattr(self.bridge_cfg, "paired_latent_passthrough", False))
         # Stage9: 训练时 Stepwise AdaIN (默认关闭, 推理时用 endpoint_adain_scale)
         self.train_adain_enabled = bool(getattr(self.bridge_cfg, "train_adain_enabled", False))
         self.train_adain_scale = float(getattr(self.bridge_cfg, "train_adain_scale", 0.0))
@@ -237,6 +239,10 @@ class FlowMatchingObjective:
         style_latent: torch.Tensor,
     ) -> torch.Tensor:
         target = target_style
+        if self.paired_latent_passthrough:
+            # 配对 latent 直通：z1 就是构造结果，禁止再做 SAT / AdaIN。
+            # z_tau 与 u 由后续流程按 (1-τ)z0+τz1、u=z1-z0 计算。
+            return target
         anchor = self.hf_endpoint_mode == "content_anchored"
         if self.structure_aligned_target or anchor:
             ll_c, lh_c, hl_c, hh_c = dwt2_haar(content)
