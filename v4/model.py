@@ -75,7 +75,11 @@ class ResBlock(nn.Module):
 
 
 class SelfAttention2d(nn.Module):
-    """SAGAN 风格空间自注意力，残余缩放 1/sqrt(head_dim)。"""
+    """SAGAN 风格空间（token）自注意力，缩放 1/sqrt(HW)。
+
+    注意力矩阵为 [B, heads, HW, HW]：查询与键在**空间位置**间做点积。
+    （旧实现 reshape 后直接 q@k^T，实际是 [B, heads, C_h, C_h] 通道注意力。）
+    """
 
     def __init__(self, channels: int, *, heads: int = 4, norm_groups: int = 8) -> None:
         super().__init__()
@@ -86,13 +90,16 @@ class SelfAttention2d(nn.Module):
         self.proj = nn.Conv2d(channels, channels, 1)
         nn.init.zeros_(self.proj.weight)
         nn.init.zeros_(self.proj.bias)
-        self.scale = (channels // heads) ** -0.5
 
     def forward(self, h: torch.Tensor) -> torch.Tensor:
         b, c, hh, ww = h.shape
         q, k, v = self.qkv(self.norm(h)).reshape(b, 3, self.heads, c // self.heads, hh * ww).unbind(1)
-        attn = torch.softmax(q @ k.transpose(-1, -2) * self.scale, dim=-1)
-        out = (attn @ v).reshape(b, c, hh, ww)
+        q = q.permute(0, 1, 3, 2)  # [B, heads, HW, C_h]
+        k = k.permute(0, 1, 3, 2)
+        v = v.permute(0, 1, 3, 2)
+        scale = (hh * ww) ** -0.5  # 空间注意力按 token 数缩放
+        attn = torch.softmax(q @ k.transpose(-1, -2) * scale, dim=-1)  # [B, heads, HW, HW]
+        out = (attn @ v).permute(0, 1, 3, 2).reshape(b, c, hh, ww)
         return h + self.proj(out)
 
 

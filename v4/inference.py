@@ -62,6 +62,7 @@ class V4Inference:
               f"(100%) step={payload.get('step')}", flush=True)
 
         self.net = net.to(device).eval()
+        self.prediction_type = cfg.prediction_type
         self.model = _ScaleShim(payload.get("latent_scale_factor", cfg.latent_scale_factor))
         self.schedule = Schedule.linear(cfg.timesteps, cfg.beta_start, cfg.beta_end, device=device)
         self.device = device
@@ -74,6 +75,7 @@ class V4Inference:
         self._calls = 0
         print(f"[v4-inference] steps={self.num_steps} strength={self.strength} "
               f"cfg={self.cfg_scale} seed={self.seed} force_null={self.force_null} "
+              f"prediction_type={self.prediction_type} "
               f"NFE/call={self.num_steps * (2 if self.cfg_scale != 1.0 else 1)}", flush=True)
 
     @torch.no_grad()
@@ -100,7 +102,9 @@ class V4Inference:
                             enabled=self.device == "cuda"):
             out = sdedit(self.net, x0.to(self.device).float(), sid, self.schedule,
                          strength=self.strength, num_steps=self.num_steps,
-                         cfg_scale=self.cfg_scale, generator=self._noise_gen())
+                         cfg_scale=self.cfg_scale,
+                         prediction_type=self.prediction_type,
+                         generator=self._noise_gen())
         return out.float()
 
     @torch.no_grad()
@@ -115,7 +119,7 @@ class V4Inference:
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.device == "cuda"):
             out = ddim_sample(self.net, z, style_ids.long().to(self.device), self.schedule,
                               t_start=self.schedule.timesteps - 1, num_steps=steps,
-                              cfg_scale=cfg)
+                              cfg_scale=cfg, prediction_type=self.prediction_type)
         return out.float()
 
 
