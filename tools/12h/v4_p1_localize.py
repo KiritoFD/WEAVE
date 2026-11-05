@@ -74,7 +74,7 @@ def haar_bands(x: torch.Tensor) -> dict[str, torch.Tensor]:
 
 
 def _rmse(x: torch.Tensor) -> float:
-    return float(x.pow(2).mean().sqrt())
+    return float(x.detach().pow(2).mean().sqrt())
 
 
 def latent_metrics(hat: torch.Tensor, z0: torch.Tensor) -> dict:
@@ -261,9 +261,9 @@ def main() -> int:
 
     image_metrics: dict = {"dino_c": {}, "lpips": {}}
     if not args.no_image_metrics:
-        src_x = torch.cat([load_image(Path(r["src"])) for r in rows], 0)
-        single_x = torch.cat([load_image(img_dir / f"{r['tag']}_single.png") for r in rows], 0)
-        full_x = torch.cat([load_image(img_dir / f"{r['tag']}_full.png") for r in rows], 0)
+        src_x = torch.stack([load_image(Path(r["src"])) for r in rows], 0)
+        single_x = torch.stack([load_image(img_dir / f"{r['tag']}_single.png") for r in rows], 0)
+        full_x = torch.stack([load_image(img_dir / f"{r['tag']}_full.png") for r in rows], 0)
 
         try:
             import lpips
