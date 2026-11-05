@@ -51,6 +51,7 @@ def parse_args() -> argparse.Namespace:
                     help="控制实验：只做 encode→decode，不跑扩散，用于分离 VAE 往返损伤")
     ap.add_argument("--guide-clf", default="", help="噪声条件风格分类器 ckpt；空=不加引导")
     ap.add_argument("--guide-scale", type=float, default=0.0)
+    ap.add_argument("--guide-t-min", type=int, default=0)
     ap.add_argument("--guide-t-max", type=int, default=700)
     ap.add_argument("--lpips", action="store_true")
     ap.add_argument("--lpips-only", action="store_true", help="不重跑生成，只对已有 metrics.csv 补算 LPIPS")
@@ -128,7 +129,7 @@ def main() -> int:
         from v4.style_classifier import make_guidance_fn
         clf_path = str(resolve(args.guide_clf))
         guidance = {sid: make_guidance_fn(clf_path, sid, torch.device("cuda"),
-                                           t_min=0, t_max=args.guide_t_max)
+                                           t_min=args.guide_t_min, t_max=args.guide_t_max)
                     for sid in range(cfg.num_styles)}
 
     # 源图编码只做一次
@@ -176,7 +177,7 @@ def main() -> int:
         "src_per_style": args.src_per_style, "prediction_type": cfg.prediction_type,
         "mode": ("vae_roundtrip" if args.vae_roundtrip else "sdedit"),
         "guide_clf": (args.guide_clf or None), "guide_scale": args.guide_scale,
-        "guide_t_max": args.guide_t_max, "content_lpips": None,
+        "guide_t_min": args.guide_t_min, "guide_t_max": args.guide_t_max, "content_lpips": None,
     }
     rc = 0
     if args.lpips:

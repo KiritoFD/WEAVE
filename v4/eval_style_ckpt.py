@@ -157,6 +157,7 @@ def main() -> None:
     ap.add_argument("--swap-content", type=int, default=8)
     ap.add_argument("--guide-clf", default="", help="swap 阶段可选的引导分类器")
     ap.add_argument("--guide-scale", type=float, default=0.0)
+    ap.add_argument("--guide-t-min", type=int, default=0)
     ap.add_argument("--guide-t-max", type=int, default=700)
     ap.add_argument("--decode", action="store_true")
     ap.add_argument("--vae-cache", default="eval_cache/hf")
@@ -205,7 +206,8 @@ def main() -> None:
     guide = {}
     if args.guide_clf and args.guide_scale != 0.0:
         from .style_classifier import make_guidance_fn
-        guide = {sid: make_guidance_fn(args.guide_clf, sid, device, t_min=0, t_max=args.guide_t_max)
+        guide = {sid: make_guidance_fn(args.guide_clf, sid, device,
+                                       t_min=args.guide_t_min, t_max=args.guide_t_max)
                  for sid in range(cfg.num_styles)}
     outs = []
     for sid in range(cfg.num_styles):
