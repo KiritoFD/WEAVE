@@ -20,6 +20,8 @@ from utils.inference import encode_image, load_vae
 
 logger = logging.getLogger(__name__)
 
+_ROOT = Path(__file__).resolve().parents[1]
+
 
 # -------------------------
 # Dataset
