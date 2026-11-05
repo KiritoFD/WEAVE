@@ -79,10 +79,10 @@ class _Relu2AttentionFn(torch.autograd.Function):
             gates = torch.relu(logits) ** 2
             out[:, :, start:stop] = torch.matmul(gates, v)
             with torch.no_grad():
-                g = gates.detach().to(acc_dtype)
+                g = gates.detach().to(acc_dtype).reshape(-1)
                 acc_sum += g.sum()
-                acc_sq += g.pow(2).sum()
-                acc_active += (g > 0.0).sum()
+                acc_sq += torch.dot(g, g)
+                acc_active += torch.count_nonzero(g).float()
                 count += g.numel()
         ctx.save_for_backward(q, k, v)
         ctx.scale = float(scale)
