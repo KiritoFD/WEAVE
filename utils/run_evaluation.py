@@ -4718,6 +4718,7 @@ def main(argv: list[str] | None = None):
         idt_baselines=idt_baselines,
         save_generated_images=bool(args.save_generated_images),
         test_dir=test_dir,
+        eval_protocol=eval_protocol,
     )
 
 def generate_summary_json(
@@ -4747,6 +4748,7 @@ def generate_summary_json(
     idt_baselines: dict[str, object] | None = None,
     save_generated_images: bool = False,
     test_dir: str | Path | None = None,
+    eval_protocol: dict | None = None,
 ):
     print("\n妫ｅ啯鎯?Generating Summary...")
     rows = []
@@ -5122,7 +5124,7 @@ def generate_summary_json(
             'delta_kid_ratio': "delta_kid / kid_baseline (relative improvement ratio).",
         },
         'settings': dict(settings or {}),
-        'eval_protocol': eval_protocol,
+        'eval_protocol': dict(eval_protocol or {}),
         'timings_sec': {str(k): float(v) for k, v in sorted((timings or {}).items())},
         'idt_baselines': dict(idt_baselines or {}),
         'matrix_breakdown': matrix_json,

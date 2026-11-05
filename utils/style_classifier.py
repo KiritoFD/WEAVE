@@ -1218,7 +1218,7 @@ def load_style_classifier_checkpoint(ckpt_path: Path, device: torch.device | str
     return model, meta, temperature
 
 
-def _open_image_as_tensor(path: Path, image_size: int = 256) -> torch.Tensor:
+def _open_image_as_tensor(path: Path, image_size: int = 512) -> torch.Tensor:
     with Image.open(path) as img:
         img = img.convert("RGB")
         if int(image_size) > 0 and img.size != (int(image_size), int(image_size)):
@@ -1267,7 +1267,7 @@ def score_eval_dir(
     temperature: float,
     device: torch.device,
     *,
-    image_size: int = 256,
+    image_size: int = 512,
     batch_size: int = 8,
     vae_cache_dir: Optional[Path] = None,
 ) -> Dict[str, Any]:
@@ -1397,7 +1397,7 @@ def main():
     parser.add_argument("--classifier_ckpt", type=str, default="")
     parser.add_argument("--eval_dirs", nargs="*", default=[])
     parser.add_argument("--csv_out", type=str, default=str(_ROOT / "style_classifier_eval_dirs.csv"))
-    parser.add_argument("--score_image_size", type=int, default=256)
+    parser.add_argument("--score_image_size", type=int, default=512)
     parser.add_argument("--score_batch_size", type=int, default=8)
     parser.add_argument("--vae_cache_dir", type=str, default="")
 
