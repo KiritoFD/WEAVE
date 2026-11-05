@@ -1242,11 +1242,12 @@ def _resolve_eval_dir(path: Path) -> Path:
 
 
 def _parse_target_style_id(path: Path, class_to_idx: Dict[str, int]) -> Optional[int]:
-    m = re.search(r"_to_([^._\\/\s]+)$", path.stem)
-    if not m:
+    # Style names may contain underscores (Early_Renaissance, Ukiyo_e), so match
+    # against the known class names instead of an underscore-free character class.
+    hits = [(len(name), idx) for name, idx in class_to_idx.items() if path.stem.endswith("_to_" + name)]
+    if not hits:
         return None
-    target = m.group(1)
-    return class_to_idx.get(target)
+    return max(hits)[1]
 
 
 def _summarize_confusion(conf: torch.Tensor, classes: list[str]) -> Dict[str, Any]:
