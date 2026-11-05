@@ -1,0 +1,37 @@
+{
+  "_comment": "D0 diagnostic arm: internal-dynamics gate probe on the 1M backbone. Adds target_latent_hf_subband fusion head ONLY to measure gate_delta/rho; NOT a comparison arm. Stops after 3 epochs-worth of updates (93 steps) so the probe fires twice.",
+  "_base": "../../config.json",
+  "model": {
+    "target_latent_hf_subband_fusion_enabled": true,
+    "target_latent_hf_head_fusion_gate_init": 0.05
+  },
+  "data": {
+    "train_sample_limit": 4500
+  },
+  "training": {
+    "batch_size": 96,
+    "accumulation_steps": 1,
+    "num_epochs": 15,
+    "stop_after_global_steps": 93,
+    "save_interval": 1,
+    "full_eval_each_epoch": false,
+    "internal_probe_enabled": true,
+    "internal_probe_every": 1,
+    "internal_probe_batch_size": 4,
+    "internal_probe_fixed_t": 0.5,
+    "internal_early_stop_enabled": false,
+    "internal_early_stop_record_only": true,
+    "internal_early_stop_min_epoch": 3,
+    "internal_early_stop_gate_delta_threshold": 0.0,
+    "internal_early_stop_shared_ratio_drop_threshold": 0.65
+  },
+  "checkpoint": {
+    "save_dir": "runs/1m/D0_gate_probe"
+  },
+  "ablation": {
+    "name": "D0_gate_probe",
+    "axis": "diagnostics",
+    "stage": "1m_round",
+    "notes": "Diagnostic-only: enables target_latent_hf_subband fusion head (encoder+proj+delta LH/HL) to produce real gate_delta / rho readings. Changes parameter count and HF velocity routing, so it must never be compared against A0-A3 as a training arm."
+  }
+}
