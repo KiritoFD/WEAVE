@@ -1,0 +1,21 @@
+{
+  "out_dir": "runs/v4/style_breakthrough",
+  "run_name": "E5",
+  "channels": [64, 128, 192, 256],
+  "blocks_per_stage": [2, 2, 2, 2],
+  "mid_blocks": 2,
+  "cond_mode": "sum",
+  "film_init_std": 0.02,
+  "prediction_type": "v",
+  "cfg_dropout": 0.1,
+  "batch_size": 128,
+  "grad_accum": 1,
+  "lr": 1e-4,
+  "warmup_steps": 500,
+  "max_steps": 8000,
+  "milestones": [2000, 4000, 6000, 8000],
+  "val_every": 250,
+  "early_stop_after": 6000,
+  "early_stop_patience": 8,
+  "seed": 42
+}
