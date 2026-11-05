@@ -737,6 +737,8 @@ class WEAVE(nn.Module):
         cross_attention_enabled = bool(getattr(model_cfg, "style_cross_attention_enabled", True))
         attn_temperature = float(getattr(model_cfg, "style_attn_temperature", 1.0))
         shortcut_alpha = getattr(model_cfg, "style_shortcut_alpha", 1.0)
+        relu2_impl = str(getattr(model_cfg, "attn_relu2_impl", "recomputed"))
+        relu2_chunk = int(getattr(model_cfg, "attn_relu2_chunk", 256))
         dwt_route = bool(getattr(model_cfg, "cross_attn_dwt_route", False))
         dwt_route_train_prob = float(getattr(model_cfg, "dwt_route_train_prob", 0.0))
         # 712 Phase StyleInject: 方向2 Style-AdaLN flag
@@ -750,6 +752,8 @@ class WEAVE(nn.Module):
                 style_shortcut_alpha=shortcut_alpha,
                 layer_idx=idx, num_layers=depth,
                 attn_temperature=attn_temperature,
+                relu2_impl=relu2_impl,
+                relu2_chunk=relu2_chunk,
                 dwt_route=dwt_route,
                 dwt_route_train_prob=dwt_route_train_prob,
                 style_adaln_enabled=self.style_adaln_enabled,

@@ -392,6 +392,11 @@ class ModelConfig:
     style_attn_num_heads: int = 4
     style_attn_sharpen_scale: float = 0
     style_attn_temperature: float = 1.0  # 630 Phase 72: 修复重复定义 bug (旧 L307=0.08 已删), <1 sharpens, >1 smooths
+    # ReLU² cross-attention memory path: "recomputed" evaluates in query chunks and
+    # rebuilds gates in backward (no [B,H,Q,K] graph tensors); "legacy" keeps the
+    # original full-tensor implementation for exact historical reproduction.
+    attn_relu2_impl: str = "recomputed"
+    attn_relu2_chunk: int = 256
     style_cross_attn_gate_init: float = 0.05
     style_cross_attention_enabled: bool = True
     # 712 Phase StyleInject: 训练时 style 注入改进（方向1+2）
@@ -747,6 +752,14 @@ class ModelConfig:
         cfg.extra = extra
         cfg = _normalize_model_contract_defaults(cfg)
         _rehydrate_extra_attributes(cfg)
+        impl = str(getattr(cfg, "attn_relu2_impl", "recomputed") or "recomputed").strip().lower()
+        if impl not in ("recomputed", "legacy"):
+            raise ValueError(f"model.attn_relu2_impl must be recomputed|legacy, got {impl!r}")
+        cfg.attn_relu2_impl = impl
+        chunk = int(getattr(cfg, "attn_relu2_chunk", 256))
+        if chunk < 1:
+            raise ValueError(f"model.attn_relu2_chunk must be >= 1, got {chunk}")
+        cfg.attn_relu2_chunk = chunk
         return cfg
 
     def validated(self, *, use_checkpointing: bool | None = None) -> "ModelConfig":

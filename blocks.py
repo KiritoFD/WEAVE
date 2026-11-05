@@ -44,6 +44,91 @@ from torch import nn
 from wavelet import dwt2_haar, idwt2_haar
 
 
+class _Relu2AttentionFn(torch.autograd.Function):
+    """Memory-lean ReLU² attention with exact recomputation.
+
+    The reference implementation materialises ``logits`` and ``gates`` as two
+    full ``[B, H, Q, K]`` tensors and autograd keeps both alive because
+    ``relu`` and ``pow`` are differentiable (the extra ``float()`` copy used
+    for the diagnostics is a third transient of the same size). At the
+    training shapes (B=256, H=4, Q=3072, K=256, bf16) that is ~1.6 GB per
+    tensor per block.
+
+    This kernel evaluates the same expression query-chunk by query-chunk so
+    only one ``[B, H, chunk, K]`` tile exists at a time, and it re-derives
+    the gates in backward instead of storing them. The arithmetic is
+    unchanged (no mask, no normaliser, relu applied AFTER the dot product),
+    so it is numerically equivalent to the legacy path, not an approximation
+    of a different kernel form.
+    """
+
+    @staticmethod
+    def forward(ctx, q, k, v, scale, chunk):
+        b, heads, n_q, _ = q.shape
+        chunk = max(1, int(chunk))
+        k_t = k.transpose(-2, -1)
+        out = q.new_empty((b, heads, n_q, v.shape[-1]))
+        acc_dtype = torch.float64 if q.dtype == torch.float64 else torch.float32
+        acc_sum = torch.zeros((), dtype=acc_dtype, device=q.device)
+        acc_sq = torch.zeros((), dtype=acc_dtype, device=q.device)
+        acc_active = torch.zeros((), dtype=torch.float32, device=q.device)
+        count = 0
+        for start in range(0, n_q, chunk):
+            stop = min(start + chunk, n_q)
+            logits = torch.matmul(q[:, :, start:stop], k_t) * scale
+            gates = torch.relu(logits) ** 2
+            out[:, :, start:stop] = torch.matmul(gates, v)
+            with torch.no_grad():
+                g = gates.detach().to(acc_dtype)
+                acc_sum += g.sum()
+                acc_sq += g.pow(2).sum()
+                acc_active += (g > 0.0).sum()
+                count += g.numel()
+        ctx.save_for_backward(q, k, v)
+        ctx.scale = float(scale)
+        ctx.chunk = chunk
+        count = max(1, int(count))
+        mean = acc_sum / count
+        # torch.std default correction=1 (unbiased); match that exactly.
+        var = (acc_sq - acc_sum * mean) / max(1, count - 1)
+        var = var.clamp_min(0.0)
+        return out, mean, var.sqrt(), acc_active / count
+
+    @staticmethod
+    def backward(ctx, grad_out, *grad_stats):
+        if grad_out is None:
+            return None, None, None, None, None
+        q, k, v = ctx.saved_tensors
+        scale, chunk = ctx.scale, ctx.chunk
+        d_q = torch.zeros_like(q)
+        d_k = torch.zeros_like(k)
+        d_v = torch.zeros_like(v)
+        grad_out = grad_out.contiguous()
+        for start in range(0, q.shape[2], chunk):
+            stop = min(start + chunk, q.shape[2])
+            with torch.enable_grad():
+                q_c = q[:, :, start:stop].detach().requires_grad_(True)
+                k_c = k.detach().requires_grad_(True)
+                v_c = v.detach().requires_grad_(True)
+                logits = torch.matmul(q_c, k_c.transpose(-2, -1)) * scale
+                gates = torch.relu(logits) ** 2
+                out_c = torch.matmul(gates, v_c)
+            g_q, g_k, g_v = torch.autograd.grad(
+                out_c, (q_c, k_c, v_c), grad_out[:, :, start:stop]
+            )
+            d_q[:, :, start:stop] = g_q
+            d_k += g_k
+            d_v += g_v
+        return d_q, d_k, d_v, None, None
+
+
+def _relu2_attn_legacy(q, k, v, scale):
+    """Reference ReLU² attention; identical maths, full [B,H,Q,K] graph."""
+    logits = torch.matmul(q, k.transpose(-2, -1)) * scale
+    gates = torch.relu(logits) ** 2
+    return torch.matmul(gates, v)
+
+
 def _make_norm(dim: int) -> nn.Module:
     """Normalization layer (GroupNorm)."""
     return nn.GroupNorm(1, dim, affine=False)
@@ -70,6 +155,8 @@ class ResidualBlock(nn.Module):
         dwt_route: bool = False,
         dwt_route_train_prob: float = 0.0,
         attn_mode: str = "relu2",
+        relu2_impl: str = "recomputed",
+        relu2_chunk: int = 256,
         style_adaln_enabled: bool = False,
         style_adaln_nonzero_init: bool = False,
         style_adaln_init_std: float = 0.1,
@@ -86,6 +173,11 @@ class ResidualBlock(nn.Module):
         self.cross_attn_guidance: torch.Tensor | None = None
         self.dwt_route = bool(dwt_route)
         self.dwt_route_train_prob = float(dwt_route_train_prob)
+        _impl = str(relu2_impl or "recomputed").strip().lower()
+        if _impl not in ("recomputed", "legacy"):
+            raise ValueError(f"relu2_impl must be recomputed|legacy, got {relu2_impl!r}")
+        self.relu2_impl = _impl
+        self.relu2_chunk = max(1, int(relu2_chunk))
         self.shortcut_alpha = float(style_shortcut_alpha) if not isinstance(style_shortcut_alpha, (list, tuple)) else (
             float(style_shortcut_alpha[self.layer_idx]) if self.layer_idx < len(style_shortcut_alpha) else 1.0
         )
@@ -258,13 +350,19 @@ class ResidualBlock(nn.Module):
         temp = max(self.attn_temperature, 1e-4)
         if self.attn_mode == "relu2":
             # ReLU^2 attention: sparse, magnitude-preserving (clean_base_v2 active mode)
-            logits = torch.matmul(q, k.transpose(-2, -1)) * scale_attn / temp
-            gates = torch.relu(logits) ** 2
-            attended = torch.matmul(gates, v)
-            with torch.no_grad():
-                gate_mean = gates.detach().float().mean()
-                gate_std = gates.detach().float().std()
-                active_ratio = (gates > 0.0).float().mean()
+            if self.relu2_impl == "legacy":
+                logits = torch.matmul(q, k.transpose(-2, -1)) * scale_attn / temp
+                gates = torch.relu(logits) ** 2
+                attended = torch.matmul(gates, v)
+                with torch.no_grad():
+                    gate_mean = gates.detach().float().mean()
+                    gate_std = gates.detach().float().std()
+                    active_ratio = (gates > 0.0).float().mean()
+                    actual_attn_entropy = -torch.log(active_ratio.clamp_min(1e-8))
+            else:
+                attended, gate_mean, gate_std, active_ratio = _Relu2AttentionFn.apply(
+                    q, k, v, scale_attn / temp, self.relu2_chunk
+                )
                 actual_attn_entropy = -torch.log(active_ratio.clamp_min(1e-8))
         else:
             # Standard softmax attention (clean_base fallback mode)
