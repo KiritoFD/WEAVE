@@ -87,3 +87,18 @@ def test_attention_is_not_channel_wise():
         attn = torch.softmax(q.permute(0, 1, 3, 2) @ k.permute(0, 1, 3, 2).transpose(-1, -2)
                              * (16 ** -0.5), dim=-1)
     assert attn.shape[-2:] == (16, 16), "注意力矩阵应为 HW×HW=16×16"
+
+
+def test_channel_impl_reproduces_legacy_math():
+    """历史 ckpt 对照路径：impl="channel" 必须逐元素等于旧实现（[B,H,C_h,C_h] + 1/sqrt(C_h)）。"""
+    torch.manual_seed(5)
+    mod = SelfAttention2d(16, heads=2, norm_groups=4, impl="channel").eval()
+    _nonzero_proj(mod, seed=6)
+    h = torch.randn(2, 16, 4, 4)
+    with torch.no_grad():
+        q, k, v = mod.qkv(mod.norm(h)).reshape(2, 3, 2, 8, 16).unbind(1)
+        attn = torch.softmax(q @ k.transpose(-1, -2) * (8 ** -0.5), dim=-1)
+        exp = h + mod.proj((attn @ v).reshape(2, 16, 4, 4))
+        got = mod(h)
+    err = (got - exp).abs().max().item()
+    assert torch.allclose(got, exp, atol=1e-6, rtol=1e-5), f"max_abs_err={err:.3e} (tol atol=1e-6)"

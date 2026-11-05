@@ -81,11 +81,15 @@ class SelfAttention2d(nn.Module):
     （旧实现 reshape 后直接 q@k^T，实际是 [B, heads, C_h, C_h] 通道注意力。）
     """
 
-    def __init__(self, channels: int, *, heads: int = 4, norm_groups: int = 8) -> None:
+    def __init__(self, channels: int, *, heads: int = 4, norm_groups: int = 8,
+                 impl: str = "spatial") -> None:
         super().__init__()
+        if impl not in ("spatial", "channel"):
+            raise ValueError(f"attn impl must be 'spatial' or 'channel', got {impl!r}")
         groups = norm_groups if channels % norm_groups == 0 else 1
         self.norm = nn.GroupNorm(groups, channels)
         self.heads = heads
+        self.impl = impl
         self.qkv = nn.Conv2d(channels, channels * 3, 1)
         self.proj = nn.Conv2d(channels, channels, 1)
         nn.init.zeros_(self.proj.weight)
@@ -94,6 +98,11 @@ class SelfAttention2d(nn.Module):
     def forward(self, h: torch.Tensor) -> torch.Tensor:
         b, c, hh, ww = h.shape
         q, k, v = self.qkv(self.norm(h)).reshape(b, 3, self.heads, c // self.heads, hh * ww).unbind(1)
+        if self.impl == "channel":
+            # 旧实现：[B, heads, C_h, C_h] 通道注意力，按 head_dim 缩放；仅用于历史 ckpt 对照
+            attn = torch.softmax(q @ k.transpose(-1, -2) * (c // self.heads) ** -0.5, dim=-1)
+            out = (attn @ v).reshape(b, c, hh, ww)
+            return h + self.proj(out)
         q = q.permute(0, 1, 3, 2)  # [B, heads, HW, C_h]
         k = k.permute(0, 1, 3, 2)
         v = v.permute(0, 1, 3, 2)
@@ -158,19 +167,19 @@ class V4UNet(nn.Module):
         self.down1 = nn.Conv2d(c1, c2, 3, stride=2, padding=1)
         self.stage2 = nn.ModuleList([_make_resblock(c2, cfg, cond_dim, ng)
                                      for _ in range(cfg.blocks_per_stage[2])])
-        self.attn2 = SelfAttention2d(c2, heads=cfg.attn_heads, norm_groups=ng)
+        self.attn2 = SelfAttention2d(c2, heads=cfg.attn_heads, norm_groups=ng, impl=cfg.attn_impl)
         self.down2 = nn.Conv2d(c2, c3, 3, stride=2, padding=1)
         self.stage3 = nn.ModuleList([_make_resblock(c3, cfg, cond_dim, ng)
                                      for _ in range(cfg.blocks_per_stage[3])])
-        self.attn3 = SelfAttention2d(c3, heads=cfg.attn_heads, norm_groups=ng)
+        self.attn3 = SelfAttention2d(c3, heads=cfg.attn_heads, norm_groups=ng, impl=cfg.attn_impl)
 
         self.mid = nn.ModuleList([_make_resblock(c3, cfg, cond_dim, ng)
                                   for _ in range(cfg.mid_blocks)])
-        self.mid_attn = SelfAttention2d(c3, heads=cfg.attn_heads, norm_groups=ng)
+        self.mid_attn = SelfAttention2d(c3, heads=cfg.attn_heads, norm_groups=ng, impl=cfg.attn_impl)
 
         self.up3 = nn.Conv2d(c3, c2, 3, padding=1)
         self.up3_res = nn.ModuleList([_make_resblock(c2, cfg, cond_dim, ng)])
-        self.up3_attn = SelfAttention2d(c2, heads=cfg.attn_heads, norm_groups=ng)
+        self.up3_attn = SelfAttention2d(c2, heads=cfg.attn_heads, norm_groups=ng, impl=cfg.attn_impl)
         self.up2 = nn.Conv2d(c2 + c1, c1, 3, padding=1)
         self.up2_res = nn.ModuleList([_make_resblock(c1, cfg, cond_dim, ng)])
         self.up1 = nn.Conv2d(c1 + c0, c0, 3, padding=1)

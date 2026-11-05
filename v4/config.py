@@ -31,6 +31,10 @@ class V4Config:
     blocks_per_stage: tuple[int, ...] = (1, 1, 1, 1)
     mid_blocks: int = 1
     attn_heads: int = 4
+    # 注意力实现："spatial" = 修正版 HW×HW 空间（token）注意力；
+    # "channel" = 旧版 [B,H,C_h,C_h] 通道注意力（所有历史 ckpt 训练时用的实现，
+    # 仅供复现/对照加载旧权重，不用于新训练）。
+    attn_impl: str = "spatial"
     norm_groups: int = 8
     time_embed_dim: int = 256
     style_embed_dim: int = 64
@@ -95,6 +99,8 @@ class V4Config:
             raise ValueError(f"prediction_type must be 'eps' or 'v', got {self.prediction_type!r}")
         if self.cond_mode not in ("sum", "split"):
             raise ValueError(f"cond_mode must be 'sum' or 'split', got {self.cond_mode!r}")
+        if self.attn_impl not in ("spatial", "channel"):
+            raise ValueError(f"attn_impl must be 'spatial' or 'channel', got {self.attn_impl!r}")
         if not 0.0 < self.ema_decay <= 1.0:
             raise ValueError("v4.ema_decay must be in (0, 1]")
 
