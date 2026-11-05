@@ -24,7 +24,7 @@ def _ref_spatial_attention(h: torch.Tensor, mod: SelfAttention2d) -> torch.Tenso
     q = q.permute(0, 1, 3, 2)  # [B, heads, HW, C_h]
     k = k.permute(0, 1, 3, 2)
     v = v.permute(0, 1, 3, 2)
-    scale = (hh * ww) ** -0.5  # 空间注意力按 token 数缩放
+    scale = (c // heads) ** -0.5  # 标准 SDPA 默认：按 head 维度缩放
     attn = torch.softmax(q @ k.transpose(-1, -2) * scale, dim=-1)
     assert attn.shape == (b, heads, hh * ww, hh * ww), f"attention matrix must be HW×HW, got {tuple(attn.shape)}"
     out = (attn @ v).permute(0, 1, 3, 2).reshape(b, c, hh, ww)
@@ -62,14 +62,35 @@ def test_matches_sdpa_reference_8x8():
     with torch.no_grad():
         q, k, v = mod.qkv(mod.norm(h)).reshape(b, 3, mod.heads, c // mod.heads, hh * ww).unbind(1)
         q, k, v = (x.permute(0, 1, 3, 2) for x in (q, k, v))
-        o = F.scaled_dot_product_attention(q, k, v)  # 内部 scale 默认 1/sqrt(C_h)
-        # 参考实现用 1/sqrt(HW) 缩放，故这里显式对齐 scale
-        o = F.scaled_dot_product_attention(q, k, v, scale=(hh * ww) ** -0.5)
+        o = F.scaled_dot_product_attention(q, k, v)  # 不传 scale：默认 1/sqrt(C_h)
         o = o.permute(0, 1, 3, 2).reshape(b, c, hh, ww)
         exp = h + mod.proj(o)
         got = mod(h)
     err = (got - exp).abs().max().item()
     assert torch.allclose(got, exp, atol=1e-5, rtol=1e-4), f"max_abs_err={err:.3e} (tol atol=1e-5)"
+
+
+def test_hw_scaling_is_not_sdpa_default():
+    """守卫：按 token 数缩放（1/√HW）与标准 SDPA 默认（1/√C_h）不是同一个函数。
+
+    c=256/heads=4 → C_h=64；16×16 → HW=256，两种 logit 缩放相差 √(HW/C_h)=2 倍。
+    """
+    torch.manual_seed(7)
+    mod = SelfAttention2d(256, heads=4, norm_groups=8).eval()
+    _nonzero_proj(mod, seed=8)
+    h = torch.randn(1, 256, 16, 16)
+    b, c, hh, ww = h.shape
+    with torch.no_grad():
+        q, k, v = mod.qkv(mod.norm(h)).reshape(b, 3, mod.heads, c // mod.heads, hh * ww).unbind(1)
+        q, k, v = (x.permute(0, 1, 3, 2) for x in (q, k, v))
+        o_std = F.scaled_dot_product_attention(q, k, v)
+        o_hw = F.scaled_dot_product_attention(q, k, v, scale=(hh * ww) ** -0.5)
+        d = (o_std - o_hw).abs().max().item()
+        exp = h + mod.proj(o_std.permute(0, 1, 3, 2).reshape(b, c, hh, ww))
+        got = mod(h)
+    err = (got - exp).abs().max().item()
+    assert torch.allclose(got, exp, atol=1e-5, rtol=1e-4), f"max_abs_err={err:.3e}（应等于 SDPA 默认）"
+    assert d > 1e-2, f"HW 缩放与默认缩放应当不同，实测 max_abs_diff={d:.3e}"
 
 
 def test_attention_is_not_channel_wise():
@@ -85,7 +106,7 @@ def test_attention_is_not_channel_wise():
     with torch.no_grad():
         q, k, v = mod.qkv(mod.norm(h)).reshape(1, 3, 2, 8, 16).unbind(1)
         attn = torch.softmax(q.permute(0, 1, 3, 2) @ k.permute(0, 1, 3, 2).transpose(-1, -2)
-                             * (16 ** -0.5), dim=-1)
+                             * (8 ** -0.5), dim=-1)
     assert attn.shape[-2:] == (16, 16), "注意力矩阵应为 HW×HW=16×16"
 
 

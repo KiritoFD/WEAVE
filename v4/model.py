@@ -75,7 +75,7 @@ class ResBlock(nn.Module):
 
 
 class SelfAttention2d(nn.Module):
-    """SAGAN 风格空间（token）自注意力，缩放 1/sqrt(HW)。
+    """空间（token）自注意力，缩放 1/sqrt(C_h)（标准 SDPA 默认）。
 
     注意力矩阵为 [B, heads, HW, HW]：查询与键在**空间位置**间做点积。
     （旧实现 reshape 后直接 q@k^T，实际是 [B, heads, C_h, C_h] 通道注意力。）
@@ -106,9 +106,9 @@ class SelfAttention2d(nn.Module):
         q = q.permute(0, 1, 3, 2)  # [B, heads, HW, C_h]
         k = k.permute(0, 1, 3, 2)
         v = v.permute(0, 1, 3, 2)
-        scale = (hh * ww) ** -0.5  # 空间注意力按 token 数缩放
-        attn = torch.softmax(q @ k.transpose(-1, -2) * scale, dim=-1)  # [B, heads, HW, HW]
-        out = (attn @ v).permute(0, 1, 3, 2).reshape(b, c, hh, ww)
+        # 不显式传 scale：按 SDPA 默认的 1/sqrt(C_h) 缩放（与标准实现一致）
+        out = F.scaled_dot_product_attention(q, k, v)
+        out = out.permute(0, 1, 3, 2).reshape(b, c, hh, ww)
         return h + self.proj(out)
 
 
