@@ -5,8 +5,8 @@
     "train_sample_limit": 4500
   },
   "training": {
-    "batch_size": 256,
-    "accumulation_steps": 1,
+    "batch_size": 128,
+    "accumulation_steps": 2,
     "num_epochs": 15,
     "save_interval": 1,
     "full_eval_each_epoch": false,
@@ -20,6 +20,6 @@
     "name": "A1_hf_b256",
     "axis": "supervision_target",
     "stage": "1m_round",
-    "notes": "Batch-256 counterpart of A0. 4500/256 = 17 steps per epoch, so epoch 4 lands at step 68 (slightly below A0's 184 steps at the same 4500-sample exposure)."
+    "notes": "Batch-256 counterpart of A0, realized as microbatch 128 x accumulation 2: the relu2 attention keeps two full [B,heads,Q,K] tensors alive, so a single 256 forward needs >12GB on this card (measured: mb128 peak 7.39GB, mb256 OOM). 4500/(128*2) = 17-18 optimizer steps per epoch, so epoch 4 lands at ~70 updates."
   }
 }
