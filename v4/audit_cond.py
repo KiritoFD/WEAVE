@@ -46,7 +46,7 @@ def load_model(ckpt: str, config_path: str, device: torch.device):
     info: dict = {"ckpt": ckpt or "fresh-init", "step": 0}
     if ckpt:
         payload = torch.load(ckpt, map_location="cpu", weights_only=False)
-        cfg = V4Config.from_mapping(payload.get("v4_config"))
+        cfg = V4Config.from_ckpt_payload(payload)
         state = payload["model"]
         info.update({"step": payload.get("step"), "val": payload.get("val"),
                      "prediction_type": payload.get("prediction_type", cfg.prediction_type)})

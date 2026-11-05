@@ -117,6 +117,17 @@ class V4Config:
         cfg.validate()
         return cfg
 
+    @classmethod
+    def from_ckpt_payload(cls, payload: Mapping[str, Any] | None) -> "V4Config":
+        """从 ckpt payload 的 ``v4_config`` 构造配置。
+
+        历史 ckpt 的 ``v4_config`` 里没有 ``attn_impl`` 字段，而这些 ckpt 都是按旧版
+        通道注意力训练的，所以缺省补 ``"channel"``；新 ckpt 会在 payload 里显式写入。
+        """
+        data = dict((payload or {}).get("v4_config") or {})
+        data.setdefault("attn_impl", "channel")
+        return cls.from_mapping(data)
+
     def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
         for name in ("channels", "blocks_per_stage", "milestones"):

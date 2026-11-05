@@ -28,7 +28,7 @@ def build_model(ckpt_path: str) -> tuple[V4UNet, V4Config, Schedule, dict]:
     info = {}
     if ckpt_path:
         payload = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-        cfg = V4Config.from_mapping(payload["v4_config"])
+        cfg = V4Config.from_ckpt_payload(payload)
         sd = payload["model"]
         info = {"ckpt": ckpt_path, "step": payload.get("step"), "val": payload.get("val")}
     else:

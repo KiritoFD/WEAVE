@@ -40,7 +40,7 @@ class V4Inference:
     def __init__(self, payload: dict, *, device: str = "cuda", num_steps_fallback: int = 20) -> None:
         if str(payload.get("variant", "")) != "V4DIFF":
             raise SystemExit(f"V4Inference 只接受 variant=V4DIFF，收到 {payload.get('variant')!r}")
-        cfg = V4Config.from_mapping(payload.get("v4_config"))
+        cfg = V4Config.from_ckpt_payload(payload)
         state = payload.get("model")
         if not isinstance(state, dict):
             raise SystemExit("ckpt 缺少裸键 'model'，拒绝评测")

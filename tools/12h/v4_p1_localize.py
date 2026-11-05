@@ -181,7 +181,8 @@ def main() -> int:
     payload = torch.load(resolve(args.ckpt), map_location="cpu", weights_only=False)
     if str(payload.get("variant")) != "V4DIFF":
         raise SystemExit(f"unexpected variant {payload.get('variant')!r}")
-    cfg = V4Config.from_mapping(dict(payload["v4_config"], attn_impl=args.attn_impl))
+    cfg = V4Config.from_ckpt_payload(payload)
+    cfg.attn_impl = args.attn_impl
     model = V4UNet(cfg).cuda()
     model.load_state_dict({k: v.float() for k, v in payload["model"].items()}, strict=True)
     model.eval()

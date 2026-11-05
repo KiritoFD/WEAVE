@@ -102,3 +102,13 @@ def test_channel_impl_reproduces_legacy_math():
         got = mod(h)
     err = (got - exp).abs().max().item()
     assert torch.allclose(got, exp, atol=1e-6, rtol=1e-5), f"max_abs_err={err:.3e} (tol atol=1e-6)"
+
+
+def test_from_ckpt_payload_defaults_legacy_to_channel():
+    """历史 ckpt（payload 无 attn_impl）必须回落到 channel；新 ckpt 显式字段优先。"""
+    from v4.config import V4Config
+
+    legacy = {"v4_config": {"channels": [64, 128, 192, 256]}}
+    assert V4Config.from_ckpt_payload(legacy).attn_impl == "channel"
+    fresh = {"v4_config": {"channels": [64, 128, 192, 256], "attn_impl": "spatial"}}
+    assert V4Config.from_ckpt_payload(fresh).attn_impl == "spatial"
