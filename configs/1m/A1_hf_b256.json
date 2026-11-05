@@ -1,0 +1,25 @@
+{
+  "_comment": "A1: original HF endpoint, effective batch 256 (single step, no accumulation), same 15-epoch cosine and same 4500 sample exposure target.",
+  "_base": "../../config.json",
+  "data": {
+    "train_sample_limit": 4500
+  },
+  "training": {
+    "batch_size": 256,
+    "accumulation_steps": 1,
+    "num_epochs": 15,
+    "save_interval": 1,
+    "full_eval_each_epoch": false,
+    "internal_early_stop_enabled": false,
+    "internal_probe_enabled": false
+  },
+  "checkpoint": {
+    "save_dir": "runs/1m/A1_hf_b256"
+  },
+  "ablation": {
+    "name": "A1_hf_b256",
+    "axis": "supervision_target",
+    "stage": "1m_round",
+    "notes": "Batch-256 counterpart of A0. 4500/256 = 17 steps per epoch, so epoch 4 lands at step 68 (slightly below A0's 184 steps at the same 4500-sample exposure)."
+  }
+}

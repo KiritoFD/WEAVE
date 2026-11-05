@@ -1,0 +1,25 @@
+{
+  "_comment": "A0 anchor: original HF endpoint (hf_endpoint_mode=raw), batch 96, 15-epoch cosine kept uncompressed, stop externally after epoch 4.",
+  "_base": "../../config.json",
+  "data": {
+    "train_sample_limit": 4500
+  },
+  "training": {
+    "batch_size": 96,
+    "accumulation_steps": 1,
+    "num_epochs": 15,
+    "save_interval": 1,
+    "full_eval_each_epoch": false,
+    "internal_early_stop_enabled": false,
+    "internal_probe_enabled": false
+  },
+  "checkpoint": {
+    "save_dir": "runs/1m/A0_hf_b96"
+  },
+  "ablation": {
+    "name": "A0_hf_b96",
+    "axis": "supervision_target",
+    "stage": "1m_round",
+    "notes": "Anchor reproduction of the historical ~1M WEAVE band-FM route. Fixed split: 900 train / 100 val per style (prefix/suffix of sorted stems). 15-epoch cosine is NOT compressed; training is stopped after epoch 4 by the operator."
+  }
+}

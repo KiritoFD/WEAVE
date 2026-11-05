@@ -1,0 +1,29 @@
+{
+  "_comment": "A2: content-anchored HF endpoint, alpha=0.5. Approximate supervision, not real cross-style GT.",
+  "_base": "../../config.json",
+  "bridge": {
+    "hf_endpoint_mode": "content_anchored",
+    "hf_endpoint_alpha": 0.5
+  },
+  "data": {
+    "train_sample_limit": 4500
+  },
+  "training": {
+    "batch_size": 256,
+    "accumulation_steps": 1,
+    "num_epochs": 15,
+    "save_interval": 1,
+    "full_eval_each_epoch": false,
+    "internal_early_stop_enabled": false,
+    "internal_probe_enabled": false
+  },
+  "checkpoint": {
+    "save_dir": "runs/1m/A2_ca005_b256"
+  },
+  "ablation": {
+    "name": "A2_ca005_b256",
+    "axis": "supervision_target",
+    "stage": "1m_round",
+    "notes": "H* = (1-a)H_c + a*StyleTransform(H_c, H_s) with a=0.5. Approximate supervision; spatial layout comes from the source, band statistics from the target. Internal early stop disabled by design."
+  }
+}
