@@ -20,6 +20,7 @@ METRICS = [
     "outside_change", "R_active", "band_inside_frac", "band_outside_frac",
     "band_LL", "band_LH", "band_HL", "band_HH",
     "argmax_source", "argmax_donor", "csd_margin",
+    "quad_tl", "quad_tr", "quad_bl", "quad_br",
 ]
 
 PATTERNS = ["R64", "G64", "C64", "S64", "F64", "R128", "G128", "C128"]
@@ -63,6 +64,9 @@ def derive(row: dict) -> dict:
         "csd_margin": row["csd_T"] - row["csd_S"],
         "argmax_base_source": float(row["argmax_base"] == row["source_style"]),
     }
+    quad = row["mask"].get("quadrant_coverage", {}) or {}
+    for k, src in (("quad_tl", "q_tl"), ("quad_tr", "q_tr"), ("quad_bl", "q_bl"), ("quad_br", "q_br")):
+        out[k] = float(quad.get(src, float("nan")))
     return out
 
 
@@ -152,17 +156,22 @@ def main() -> None:
         for s in styles:
             sl = [r for r in rows.values() if r["source_style"] == s]
             if sl:
-                per_style[s] = {k: float(np.mean([r[k] for r in sl])) for k in ("dT_F", "dM_F", "dM_R", "csd_margin")}
+                per_style[s] = {k: float(np.mean([r[k] for r in sl]))
+                                for k in ("dT_F", "dS_F", "dM_F", "dT_R", "dS_R", "dM_R", "csd_margin",
+                                          "dino_c", "lpips", "dino_patch_cos", "seam_ratio")}
         summary[cfg] = {"stats": cur, "per_style": per_style,
                         "n": len(rows), "ids": sorted(rows)}
 
-    # 共同可行集
+    # 共同可行集（分 64px 五种 / 128px 三种）
     feasible = {c: set(by_cfg.get(c, {})) for c in PATTERNS}
-    common = set.intersection(*feasible.values()) if all(feasible.values()) else set()
+    c64 = set.intersection(*[feasible[c] for c in PATTERNS[:5]]) if all(feasible[c] for c in PATTERNS[:5]) else set()
+    c128 = set.intersection(*[feasible[c] for c in PATTERNS[5:]]) if all(feasible[c] for c in PATTERNS[5:]) else set()
+    common = c64
     summary["_feasibility"] = {
         "per_pattern_n": {c: len(feasible[c]) for c in PATTERNS},
-        "common_n": len(common),
-        "common_ids": sorted(common),
+        "common64_n": len(c64),
+        "common128_n": len(c128),
+        "common64_ids": sorted(c64),
         "coverage_actual_mean": {c: float(np.mean([by_cfg[c][i]["coverage"] for i in feasible[c]]))
                                  if feasible[c] else 0.0 for c in PATTERNS},
     }
@@ -246,7 +255,8 @@ def main() -> None:
     md.append("|---|---|---|")
     for c, n in summary["_feasibility"]["per_pattern_n"].items():
         md.append(f"| {c} | {n} | {summary['_feasibility']['coverage_actual_mean'][c]:.4f} |")
-    md.append(f"\n共同可行集：{summary['_feasibility']['common_n']}")
+    md.append(f"\n共同可行集（5 种 64px）：{summary['_feasibility']['common64_n']}；"
+              f"共同可行集（3 种 128px）：{summary['_feasibility']['common128_n']}")
     md.append("")
     md.append("## 逐配置指标（95% CI，分风格分层 bootstrap）")
     md.append("| 配置 | n | ΔT_F | ΔS_F | ΔM | ΔT_R | ΔS_R | R_seam | R_active | inside | argmax=源 | argmax=供体 |")
@@ -283,12 +293,51 @@ def main() -> None:
         ps = summary[cfg]["per_style"]
         md.append(f"| {cfg} | " + " | ".join(f"{ps.get(s, {}).get('dT_F', float('nan')):.3f}" for s in styles) + " |")
     md.append("")
+    md.append("## 五类逐风格 ΔT_R（反向，目标=真实图自身风格）")
+    md.append("| 配置 | " + " | ".join(styles) + " |")
+    md.append("|---|" + "---|" * len(styles))
+    for cfg in ORDER:
+        if cfg not in summary:
+            continue
+        ps = summary[cfg]["per_style"]
+        md.append(f"| {cfg} | " + " | ".join(f"{ps.get(s, {}).get('dT_R', float('nan')):.3f}" for s in styles) + " |")
+    md.append("")
+    md.append("## 四象限覆盖")
+    md.append("| 配置 | tl | tr | bl | br |")
+    md.append("|---|---|---|---|---|")
+    for cfg in ORDER:
+        if cfg not in summary:
+            continue
+        s = summary[cfg]["stats"]
+        md.append(f"| {cfg} | {s['quad_tl']['mean']:.3f} | {s['quad_tr']['mean']:.3f} | "
+                  f"{s['quad_bl']['mean']:.3f} | {s['quad_br']['mean']:.3f} |")
+    md.append("")
     md.append("## 配对差（同一图像）")
     md.append("| 配置 | vs | 指标 | 均值差 | 95% CI | n |")
     md.append("|---|---|---|---|---|---|")
     for p in pairs:
         md.append(f"| {p['config']} | {p['vs']} | {p['metric']} | {p['mean']:.4f} | "
                   f"[{p['lo']:.4f}, {p['hi']:.4f}] | {p['n']} |")
+    md.append("")
+    md.append("## 分层：接缝长度 / 匹配质量四分位（Pattern 独立可行集内）")
+    md.append("| 配置 | 接缝Q1 ΔM | 接缝Q4 ΔM | qQ1 ΔM | qQ4 ΔM | 接缝Q4 平均 R_seam |")
+    md.append("|---|---|---|---|---|---|")
+    for cfg, t in strata_tables.items():
+        sb, qb = t["seam_bands"], t["q_bands"]
+        md.append(f"| {cfg} | {sb[0]['dM_F']:.3f} | {sb[3]['dM_F']:.3f} | {qb[0]['dM_F']:.3f} | "
+                  f"{qb[3]['dM_F']:.3f} | {sb[3]['seam_ratio']:.2f} |")
+    md.append("")
+    md.append("## 共同可行集 vs 各 Pattern 独立可行集")
+    md.append("| 配置 | 独立集 n | 独立集 ΔM | 共同集 n | 共同集 ΔM | 差异 |")
+    md.append("|---|---|---|---|---|---|")
+    for cfg in PATTERNS:
+        rows = by_cfg.get(cfg, {})
+        if not rows:
+            continue
+        own = float(np.mean([r["dM_F"] for r in rows.values()]))
+        sel = [rows[i] for i in common if i in rows]
+        cmean = float(np.mean([r["dM_F"] for r in sel])) if sel else float("nan")
+        md.append(f"| {cfg} | {len(rows)} | {own:.4f} | {len(sel)} | {cmean:.4f} | {cmean - own:+.4f} |")
     md.append("")
     md.append("## 5 层筛选")
     md.append("| 配置 | L1 正确性 | L2 真实性 | L3 风格 | L4 监督 | 正风格数 |")

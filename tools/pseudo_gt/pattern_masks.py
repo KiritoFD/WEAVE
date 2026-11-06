@@ -46,6 +46,12 @@ def cells_of(size: int) -> int:
     return IMAGE // size
 
 
+def nominal_coverage(spec: str) -> float:
+    """名义覆盖率 = (patch 边长² × patch 数) / 512²。"""
+    s = PATTERN_SPECS.get(spec) or ABLATION_SPECS[spec]
+    return float(s["size"] ** 2 * s["k"] / (IMAGE ** 2))
+
+
 def rects_from_cells(cells: Sequence[Tuple[int, int]], size: int):
     from tools.pseudo_gt.masks import Rect
 

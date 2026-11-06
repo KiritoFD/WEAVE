@@ -183,7 +183,8 @@ def main() -> None:
                 else:
                     zb = C.construct_D(z_src, z_don, m)
             rects = layout(seed)
-            cov = float(sum(r.area for r in rects) / 512 ** 2)
+            cov_nominal = float(sum(r.area for r in rects) / 512 ** 2)
+            cov_effective = float(sum(getattr(x.src, "area", 0) for x in m) / 512 ** 2)
             rec = SampleRecord(
                 sample_id=sid,
                 source_id=src["id"],
@@ -194,8 +195,9 @@ def main() -> None:
                 patch_spec=args.spec,
                 seed=seed,
                 match_score=float(best_q),
-                nominal_coverage=cov,
-                effective_coverage=cov,
+                nominal_coverage=cov_nominal,
+                effective_coverage=cov_effective,
+                effective_coverage_measured=cov_effective,
                 z0_is_original=(args.arm != "reverse"),
                 z1_is_original=(args.arm in {"reverse", "base"}),
             )

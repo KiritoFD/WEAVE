@@ -120,6 +120,14 @@ def _sub_mask(rects: Sequence[Rect]) -> torch.Tensor:
     return subband_mask(rects, feather=False) > 0.5
 
 
+def _latent_mask(rects: Sequence[Rect], latent_size: int = 64) -> torch.Tensor:
+    """latent 分辨率（64×64）上的注入区掩码，用于“掩码外变化量”。"""
+    m = torch.zeros(latent_size, latent_size, dtype=torch.bool)
+    for r in rects:
+        m[r.y // 8 : (r.y + r.h) // 8, r.x // 8 : (r.x + r.w) // 8] = True
+    return m
+
+
 def seam_stats(image: torch.Tensor, rects: Sequence[Rect]) -> Tuple[float, float, float]:
     """(边界平均梯度, 内部平均梯度, 比值 R_seam)。"""
     gray = image.mean(dim=1, keepdim=True) if image.dim() == 4 else image.mean(dim=0, keepdim=True)[None]
@@ -457,6 +465,7 @@ def main() -> None:
         token_mask_cache: Dict[tuple, torch.Tensor] = {}
         pixel_mask_cache: Dict[tuple, torch.Tensor] = {}
         sub_mask_cache: Dict[tuple, torch.Tensor] = {}
+        latent_mask_cache: Dict[tuple, torch.Tensor] = {}
         for s in range(0, len(score_items), 8):
             chunk = score_items[s : s + 8]
             t_s = time.time()
@@ -465,24 +474,31 @@ def main() -> None:
             for j, (cfg, h, rects, alpha_sum, maskm) in enumerate(chunk):
                 gen = res["pils"][j]
                 arr = np.asarray(gen, dtype=np.uint8)
-                tm = pm = sm = None
+                tm = pm = sm = lm = None
                 if rects:
                     key = tuple((r.x, r.y, r.w, r.h) for r in rects)
                     if key not in token_mask_cache:
                         token_mask_cache[key] = _token_mask(rects)
                         pixel_mask_cache[key] = _pixel_mask(rects)
                         sub_mask_cache[key] = _sub_mask(rects)
+                        latent_mask_cache[key] = _latent_mask(rects)
                     tm, pm, sm = token_mask_cache[key], pixel_mask_cache[key], sub_mask_cache[key]
+                    lm = latent_mask_cache[key]
                 bm, im, seam = seam_stats(
                     torch.from_numpy(arr.astype(np.float32) / 255.0).permute(2, 0, 1)[None], rects
                 ) if rects else (0.0, 0.0, 0.0)
                 parts = band_parts(z_src, z_by[cfg], rects)
                 dino_cos = float(res["cls"][j] @ src_cls)
                 patch_cos = float(
-                    (res["pat"][j] * src_pat_n).sum(-1)[tm.cuda()].mean()
+                    (res["pat"][j] * src_pat_n).sum(-1)[tm.view(-1).cuda()].mean()
                 ) if tm is not None else 0.0
                 struct = structure_corr(arr, res["arr_src"], pm) if pm is not None else 0.0
-                outside = float((z_by[cfg] - z_src)[:, :, ~sm].abs().mean()) if sm is not None else 0.0
+                diff = (z_by[cfg] - z_src).abs()
+                if lm is not None:
+                    w_out = (~lm).float()[None, None].to(diff.device)
+                    outside = float((diff * w_out).sum() / (w_out.sum() * diff.shape[1]).clamp_min(1.0))
+                else:
+                    outside = float(diff.mean())
                 csd5 = np.asarray(res["csd5"][j], dtype=np.float64)
                 record = {
                     "config": cfg,
