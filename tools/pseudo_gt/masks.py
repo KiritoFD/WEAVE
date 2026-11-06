@@ -130,12 +130,21 @@ def rasterize(
     *,
     image_size: int = IMAGE_SIZE,
     feather: bool = False,
+    feather_width: float | None = None,
+    alpha_scale: float = 1.0,
 ) -> torch.Tensor:
-    """把矩形列表画成 (image_size, image_size) 的 [0,1] 掩码。"""
+    """把矩形列表画成 (image_size, image_size) 的 [0,1] 掩码。
+
+    ``feather_width`` 缺省为该 patch 边长的 1/8（历史行为）；``alpha_scale``
+    用于“等有效注入量”对照（权重整体放大后截断到 1）。
+    """
     mask = torch.zeros(image_size, image_size, dtype=torch.float32)
     for rect in rects:
         if feather:
-            weight = _feather_weight(rect, image_size, rect.w / 8.0)
+            w_px = rect.w / 8.0 if feather_width is None else float(feather_width)
+            weight = _feather_weight(rect, image_size, w_px)
+            if alpha_scale != 1.0:
+                weight = torch.clamp(weight * float(alpha_scale), 0.0, 1.0)
         else:
             weight = torch.ones(rect.h, rect.w, dtype=torch.float32)
         mask[rect.y : rect.y + rect.h, rect.x : rect.x + rect.w] = torch.maximum(

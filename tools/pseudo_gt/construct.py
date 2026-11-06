@@ -14,10 +14,6 @@ from tools.pseudo_gt.masks import Rect, rasterize, subband_mask
 from wavelet import dwt2_haar, idwt2_haar
 
 
-def _patch_alpha(rects: Sequence[Rect], feather: bool, image_size: int = 512) -> torch.Tensor:
-    return rasterize(rects, image_size=image_size, feather=feather)
-
-
 def construct_A(src: torch.Tensor, donor: torch.Tensor, matches: Sequence[Match]) -> torch.Tensor:
     """硬替换：把供体 patch 逐像素贴到源的对应位置（无羽化）。"""
     out = src.clone()
@@ -30,8 +26,23 @@ def construct_A(src: torch.Tensor, donor: torch.Tensor, matches: Sequence[Match]
 
 def construct_B(src: torch.Tensor, donor: torch.Tensor, matches: Sequence[Match]) -> torch.Tensor:
     """羽化混合：alpha = smoothstep(距离 / (p/8))。"""
+    return construct_feather(src, donor, matches, feather_width=None)
+
+
+def construct_feather(
+    src: torch.Tensor,
+    donor: torch.Tensor,
+    matches: Sequence[Match],
+    *,
+    feather_width: float | None = None,
+    alpha_scale: float = 1.0,
+) -> torch.Tensor:
+    """可调过渡宽度的羽化混合；``alpha_scale`` 用于等有效注入量对照。"""
     src_rects = [m.src for m in matches]
-    alpha = _patch_alpha(src_rects, feather=True, image_size=src.shape[-1]).to(src.device)[None, None]
+    alpha = rasterize(
+        src_rects, image_size=src.shape[-1], feather=True,
+        feather_width=feather_width, alpha_scale=alpha_scale,
+    ).to(src.device)[None, None]
     donor_placed = src.clone()
     for m in matches:
         donor_placed[:, :, m.src.y : m.src.y + m.src.h, m.src.x : m.src.x + m.src.w] = donor[

@@ -224,6 +224,7 @@ def pick_donor(
 
 
 def main() -> None:
+    global SEED, N_PER_STYLE
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(Path(paths.project_root()) / "runs/p2/pgt_q0.json"))
     ap.add_argument("--limit", type=int, default=0, help="调试用：只跑前 N 个源图")
@@ -231,7 +232,6 @@ def main() -> None:
     ap.add_argument("--n-per-style", type=int, default=N_PER_STYLE, help="每风格源图数")
     ap.add_argument("--configs", default="", help="逗号分隔的子集，如 A_P5,A_P2,A_P7,E7")
     args = ap.parse_args()
-    global SEED, N_PER_STYLE
     SEED, N_PER_STYLE = args.seed, args.n_per_style
     run_cfgs = CONFIGS + DIAGNOSTIC
     if args.configs:

@@ -1,0 +1,44 @@
+{
+  "_comment": "P4 T5（无 Style-ID 对照）：与 T3 完全相同的输入/GT，但 manifest 把 target_style 全部改写为同一风格，使 Style-ID 不含方向信息。",
+  "_base": "../../config.json",
+  "model": {
+    "target_latent_hf_subband_fusion_enabled": true,
+    "target_latent_hf_head_fusion_gate_init": 0.05
+  },
+  "bridge": {
+    "paired_latent_passthrough": true
+  },
+  "data": {
+    "train_sample_limit": 0,
+    "paired_latent_cache_dir": "@asset/pseudo_gt_24h/pairs/pattern_R64_reverse_nostyle",
+    "content_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0],
+    "target_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0]
+  },
+  "training": {
+    "batch_size": 32,
+    "accumulation_steps": 8,
+    "num_epochs": 8,
+    "save_interval": 1,
+    "save_step_milestones": [200, 400, 600],
+    "stop_after_global_steps": 600,
+    "full_eval_each_epoch": false,
+    "internal_probe_enabled": true,
+    "internal_probe_every": 1,
+    "internal_probe_batch_size": 4,
+    "internal_probe_fixed_t": 0.5,
+    "internal_early_stop_enabled": true,
+    "internal_early_stop_record_only": false,
+    "internal_early_stop_min_epoch": 3,
+    "internal_early_stop_gate_delta_threshold": 0.0,
+    "internal_early_stop_shared_ratio_drop_threshold": 0.65
+  },
+  "checkpoint": {
+    "save_dir": "runs/pgt/T5_R64_reverse_nostyle"
+  },
+  "ablation": {
+    "name": "T5_R64_reverse_nostyle",
+    "axis": "pseudo_gt_pairing",
+    "stage": "pgt_p4",
+    "notes": "无 Style-ID 对照：输入/GT 与 T3 相同，target_style 常量；若同样能恢复，说明该构造主要监督图像修补。"
+  }
+}
