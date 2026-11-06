@@ -227,7 +227,19 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(Path(paths.project_root()) / "runs/p2/pgt_q0.json"))
     ap.add_argument("--limit", type=int, default=0, help="调试用：只跑前 N 个源图")
+    ap.add_argument("--seed", type=int, default=SEED, help="源图采样与布局种子（用于跨 seed 复核）")
+    ap.add_argument("--n-per-style", type=int, default=N_PER_STYLE, help="每风格源图数")
+    ap.add_argument("--configs", default="", help="逗号分隔的子集，如 A_P5,A_P2,A_P7,E7")
     args = ap.parse_args()
+    global SEED, N_PER_STYLE
+    SEED, N_PER_STYLE = args.seed, args.n_per_style
+    run_cfgs = CONFIGS + DIAGNOSTIC
+    if args.configs:
+        wanted = {x.strip() for x in args.configs.split(",") if x.strip()}
+        run_cfgs = [(m, s) for m, s in run_cfgs
+                    if f"{m}_{s}" in wanted or (m == "E" and s in wanted)]
+        if not run_cfgs:
+            raise SystemExit(f"--configs 未匹配任何配置: {sorted(wanted)}")
     t_start = time.time()
 
     items = load_manifest()
@@ -278,7 +290,7 @@ def main() -> None:
             print(f"  match {k+1}/{len(sources)}  {time.time()-t_match:.1f}s", flush=True)
     print(f"[q0] 共享匹配完成 {sum(1 for p in plans if p)}/{len(plans)}  {time.time()-t_match:.1f}s", flush=True)
 
-    rows: Dict[str, List[dict]] = {f"{m}_{s}": [] for m, s in CONFIGS + DIAGNOSTIC}
+    rows: Dict[str, List[dict]] = {f"{m}_{s}": [] for m, s in run_cfgs}
     failed: Dict[str, int] = {k: 0 for k in rows}
     errs: Dict[str, str] = {}
     id_map = {it["id"]: it for it in items}
@@ -296,7 +308,7 @@ def main() -> None:
         proto_s = protos[src_it["style"]]
         base = metric.source_baseline(src_img, proto_t, proto_s)
         todo, rgb_todo = [], []
-        for method, spec in CONFIGS + DIAGNOSTIC:
+        for method, spec in run_cfgs:
             if spec not in plan["matches"]:
                 failed[f"{method}_{spec}"] += 1
                 continue
