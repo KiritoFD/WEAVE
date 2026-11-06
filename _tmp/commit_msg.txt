@@ -1,0 +1,13 @@
+feat(pseudo-gt): add paired-latent passthrough training path and pseudo-GT constructors
+
+动机：按 docs/gt-build.md 跑 WEAVE 伪GT实验，需要在不改主干模型的前提下
+用成对 latent 缓存训练 HF 子带融合门控，并复用同一套构造/匹配/打分链路。
+
+- paths.py/run.py: 接入 paired_latent_cache_dir，训练时按 paired 模式喂入成对 latent
+- flow.py: 增加 paired_latent_passthrough，绕开在线 VAE 编码
+- config_schema.py: 合并 base 配置并暴露 cache 目录字段
+- utils/dataset.py: PairedLatentDataset，按 sample_id 读分片、支持断点续跑
+- tools/pseudo_gt/: masks(A-E 布局)、matching(双向NN+3x3一致性)、construct、
+  build_assets、q0_quality、select、build_train_cache、pgt_render、q0_controls、q0_extra_checks
+- tools/12h/p2_metrics.py: P0 历史 cell 缺失时跳过对照而非硬失败
+- tests: 覆盖布局、构造与 passthrough 接线

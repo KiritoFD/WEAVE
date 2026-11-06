@@ -1,0 +1,471 @@
+{
+ "per_style": {
+  "Early_Renaissance": {
+   "all": {
+    "csd": {
+     "auroc": 0.9704057722446555,
+     "auroc_content_hard_top25": 0.9320098789348266,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.7377614378929138,
+     "content_neg_mean": 0.5663095571251883
+    },
+    "dino": {
+     "auroc": 0.8116025865979625,
+     "auroc_content_hard_top25": 0.670581141926483,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.7377614378929138,
+     "content_neg_mean": 0.5663095571251883
+    },
+    "stat": {
+     "auroc": 0.7753759662146459,
+     "auroc_content_hard_top25": 0.6362111670000189,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.7377614378929138,
+     "content_neg_mean": 0.5663095571251883
+    }
+   },
+   "artist": {
+    "csd": {
+     "auroc": 0.9678158517786998,
+     "auroc_content_hard_top25": 0.9263079133290888,
+     "n_pos": 40063,
+     "n_neg": 40063,
+     "n_pos_dropped_same_artist": 4787,
+     "content_pos_mean": 0.7352613806724548,
+     "content_neg_mean": 0.5666612175476937
+    },
+    "dino": {
+     "auroc": 0.805261205900335,
+     "auroc_content_hard_top25": 0.662617467802315,
+     "n_pos": 40063,
+     "n_neg": 40063,
+     "n_pos_dropped_same_artist": 4787,
+     "content_pos_mean": 0.7352613806724548,
+     "content_neg_mean": 0.5666612175476937
+    },
+    "stat": {
+     "auroc": 0.7679276049789013,
+     "auroc_content_hard_top25": 0.6264458296438159,
+     "n_pos": 40063,
+     "n_neg": 40063,
+     "n_pos_dropped_same_artist": 4787,
+     "content_pos_mean": 0.7352613806724548,
+     "content_neg_mean": 0.5666612175476937
+    }
+   }
+  },
+  "Impressionism": {
+   "all": {
+    "csd": {
+     "auroc": 0.8525865308491454,
+     "auroc_content_hard_top25": 0.7652810095466311,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.678023636341095,
+     "content_neg_mean": 0.5516681556797347
+    },
+    "dino": {
+     "auroc": 0.7320698341679002,
+     "auroc_content_hard_top25": 0.5800609790544793,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.678023636341095,
+     "content_neg_mean": 0.5516681556797347
+    },
+    "stat": {
+     "auroc": 0.6954777115344223,
+     "auroc_content_hard_top25": 0.5423837546857538,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.678023636341095,
+     "content_neg_mean": 0.5516681556797347
+    }
+   },
+   "artist": {
+    "csd": {
+     "auroc": 0.8469400631928894,
+     "auroc_content_hard_top25": 0.7594647837701153,
+     "n_pos": 43447,
+     "n_neg": 43447,
+     "n_pos_dropped_same_artist": 1403,
+     "content_pos_mean": 0.676110565662384,
+     "content_neg_mean": 0.551724249849161
+    },
+    "dino": {
+     "auroc": 0.7261467776697247,
+     "auroc_content_hard_top25": 0.5712287013038925,
+     "n_pos": 43447,
+     "n_neg": 43447,
+     "n_pos_dropped_same_artist": 1403,
+     "content_pos_mean": 0.676110565662384,
+     "content_neg_mean": 0.551724249849161
+    },
+    "stat": {
+     "auroc": 0.6909193538634956,
+     "auroc_content_hard_top25": 0.5355627542547554,
+     "n_pos": 43447,
+     "n_neg": 43447,
+     "n_pos_dropped_same_artist": 1403,
+     "content_pos_mean": 0.676110565662384,
+     "content_neg_mean": 0.551724249849161
+    }
+   }
+  },
+  "Minimalism": {
+   "all": {
+    "csd": {
+     "auroc": 0.9856993467528379,
+     "auroc_content_hard_top25": 0.96344884632891,
+     "n_pos": 2701,
+     "n_neg": 2701,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.7645383477210999,
+     "content_neg_mean": 0.5228504717669986
+    },
+    "dino": {
+     "auroc": 0.9269412332509207,
+     "auroc_content_hard_top25": 0.868511694268408,
+     "n_pos": 2701,
+     "n_neg": 2701,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.7645383477210999,
+     "content_neg_mean": 0.5228504717669986
+    },
+    "stat": {
+     "auroc": 0.8136491743222888,
+     "auroc_content_hard_top25": 0.6963210321767445,
+     "n_pos": 2701,
+     "n_neg": 2701,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.7645383477210999,
+     "content_neg_mean": 0.5228504717669986
+    }
+   },
+   "artist": {
+    "csd": {
+     "auroc": 0.9834385946406832,
+     "auroc_content_hard_top25": 0.9555482605658107,
+     "n_pos": 2385,
+     "n_neg": 2385,
+     "n_pos_dropped_same_artist": 316,
+     "content_pos_mean": 0.7569594383239746,
+     "content_neg_mean": 0.5243640245006769
+    },
+    "dino": {
+     "auroc": 0.9203129271433531,
+     "auroc_content_hard_top25": 0.8341315735573457,
+     "n_pos": 2385,
+     "n_neg": 2385,
+     "n_pos_dropped_same_artist": 316,
+     "content_pos_mean": 0.7569594383239746,
+     "content_neg_mean": 0.5243640245006769
+    },
+    "stat": {
+     "auroc": 0.8092564903814459,
+     "auroc_content_hard_top25": 0.6925021534248574,
+     "n_pos": 2385,
+     "n_neg": 2385,
+     "n_pos_dropped_same_artist": 316,
+     "content_pos_mean": 0.7569594383239746,
+     "content_neg_mean": 0.5243640245006769
+    }
+   }
+  },
+  "Rococo": {
+   "all": {
+    "csd": {
+     "auroc": 0.9066328077364285,
+     "auroc_content_hard_top25": 0.7933041594417062,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.6500412821769714,
+     "content_neg_mean": 0.5309592326362529
+    },
+    "dino": {
+     "auroc": 0.804638868817028,
+     "auroc_content_hard_top25": 0.6491321588966394,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.6500412821769714,
+     "content_neg_mean": 0.5309592326362529
+    },
+    "stat": {
+     "auroc": 0.7729500554927922,
+     "auroc_content_hard_top25": 0.617712529639282,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.6500412821769714,
+     "content_neg_mean": 0.5309592326362529
+    }
+   },
+   "artist": {
+    "csd": {
+     "auroc": 0.9012765518103005,
+     "auroc_content_hard_top25": 0.7854073734382383,
+     "n_pos": 41901,
+     "n_neg": 41901,
+     "n_pos_dropped_same_artist": 2949,
+     "content_pos_mean": 0.6450493931770325,
+     "content_neg_mean": 0.5311778182901007
+    },
+    "dino": {
+     "auroc": 0.7974365166651289,
+     "auroc_content_hard_top25": 0.6370383619075277,
+     "n_pos": 41901,
+     "n_neg": 41901,
+     "n_pos_dropped_same_artist": 2949,
+     "content_pos_mean": 0.6450493931770325,
+     "content_neg_mean": 0.5311778182901007
+    },
+    "stat": {
+     "auroc": 0.7643377531068699,
+     "auroc_content_hard_top25": 0.6020343905763401,
+     "n_pos": 41901,
+     "n_neg": 41901,
+     "n_pos_dropped_same_artist": 2949,
+     "content_pos_mean": 0.6450493931770325,
+     "content_neg_mean": 0.5311778182901007
+    }
+   }
+  },
+  "Ukiyo_e": {
+   "all": {
+    "csd": {
+     "auroc": 0.9925319890779248,
+     "auroc_content_hard_top25": 0.9829206981751706,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.7703520655632019,
+     "content_neg_mean": 0.5663919371539268
+    },
+    "dino": {
+     "auroc": 0.8317553837951104,
+     "auroc_content_hard_top25": 0.7511379837119248,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.7703520655632019,
+     "content_neg_mean": 0.5663919371539268
+    },
+    "stat": {
+     "auroc": 0.8155883202897308,
+     "auroc_content_hard_top25": 0.7621335531628547,
+     "n_pos": 44850,
+     "n_neg": 44850,
+     "n_pos_dropped_same_artist": 0,
+     "content_pos_mean": 0.7703520655632019,
+     "content_neg_mean": 0.5663919371539268
+    }
+   },
+   "artist": {
+    "csd": {
+     "auroc": 0.9916558927723154,
+     "auroc_content_hard_top25": 0.9811638640170826,
+     "n_pos": 34654,
+     "n_neg": 34654,
+     "n_pos_dropped_same_artist": 10196,
+     "content_pos_mean": 0.7643397450447083,
+     "content_neg_mean": 0.5662310782596602
+    },
+    "dino": {
+     "auroc": 0.8166543699973695,
+     "auroc_content_hard_top25": 0.7326522355990382,
+     "n_pos": 34654,
+     "n_neg": 34654,
+     "n_pos_dropped_same_artist": 10196,
+     "content_pos_mean": 0.7643397450447083,
+     "content_neg_mean": 0.5662310782596602
+    },
+    "stat": {
+     "auroc": 0.8013493110027515,
+     "auroc_content_hard_top25": 0.7439378627897615,
+     "n_pos": 34654,
+     "n_neg": 34654,
+     "n_pos_dropped_same_artist": 10196,
+     "content_pos_mean": 0.7643397450447083,
+     "content_neg_mean": 0.5662310782596602
+    }
+   }
+  }
+ },
+ "n_per_style": {
+  "Early_Renaissance": 300,
+  "Impressionism": 300,
+  "Minimalism": 74,
+  "Rococo": 300,
+  "Ukiyo_e": 300
+ },
+ "pool_construction": {
+  "Early_Renaissance": {
+   "n_images": 300,
+   "n_unique_artists": 12,
+   "largest_artist": "Sandro Botticelli",
+   "largest_artist_share": 0.2067,
+   "source": "wikiart_new_packed train split, test-directory overlap removed, seeded random sample (numpy seed 42)"
+  },
+  "Impressionism": {
+   "n_images": 300,
+   "n_unique_artists": 59,
+   "largest_artist": "Camille Pissarro",
+   "largest_artist_share": 0.0867,
+   "source": "wikiart_new_packed train split, test-directory overlap removed, seeded random sample (numpy seed 42)"
+  },
+  "Minimalism": {
+   "n_images": 74,
+   "n_unique_artists": 13,
+   "largest_artist": "Johannes Jan Schoonhoven",
+   "largest_artist_share": 0.2568,
+   "source": "wikiart_new_packed train split, test-directory overlap removed, seeded random sample (numpy seed 42)"
+  },
+  "Rococo": {
+   "n_images": 300,
+   "n_unique_artists": 23,
+   "largest_artist": "George Romney",
+   "largest_artist_share": 0.1733,
+   "source": "wikiart_new_packed train split, test-directory overlap removed, seeded random sample (numpy seed 42)"
+  },
+  "Ukiyo_e": {
+   "n_images": 300,
+   "n_unique_artists": 8,
+   "largest_artist": "Utagawa Kuniyoshi",
+   "largest_artist_share": 0.3967,
+   "source": "wikiart_new_packed train split, test-directory overlap removed, seeded random sample (numpy seed 42)"
+  }
+ },
+ "summary": {
+  "all": {
+   "macro": {
+    "csd": 0.9415712893321985,
+    "dino": 0.8214015813257843,
+    "stat": 0.7746082455707759
+   },
+   "macro_content_hard": {
+    "csd": 0.887392918485449,
+    "dino": 0.7038847915715869,
+    "stat": 0.6509524073329308
+   },
+   "micro": {
+    "csd": 0.9269916587494211,
+    "dino": 0.7913464126301567,
+    "stat": 0.7561890011073328
+   }
+  },
+  "artist": {
+   "macro": {
+    "csd": 0.9382253908389776,
+    "dino": 0.8131623594751822,
+    "stat": 0.766758102666693
+   },
+   "macro_content_hard": {
+    "csd": 0.8815784390240671,
+    "dino": 0.6875336680340239,
+    "stat": 0.6400965981379061
+   },
+   "micro": {
+    "csd": 0.9187958683975115,
+    "dino": 0.7803903098531347,
+    "stat": 0.7448286078411701
+   }
+  }
+ },
+ "delta_m_vae": {
+  "csd": {
+   "max_abs": 0.0,
+   "mean_abs": 0.0,
+   "n_compared": 600,
+   "per_src_style_mean": {
+    "Early_Renaissance": 0.0,
+    "Impressionism": 0.0,
+    "Minimalism": 0.0,
+    "Rococo": 0.0,
+    "Ukiyo_e": 0.0
+   }
+  },
+  "dino": {
+   "max_abs": 0.0,
+   "mean_abs": 0.0,
+   "n_compared": 600,
+   "per_src_style_mean": {
+    "Early_Renaissance": 0.0,
+    "Impressionism": 0.0,
+    "Minimalism": 0.0,
+    "Rococo": 0.0,
+    "Ukiyo_e": 0.0
+   }
+  },
+  "stat": {
+   "max_abs": 0.0,
+   "mean_abs": 0.0,
+   "n_compared": 600,
+   "per_src_style_mean": {
+    "Early_Renaissance": 0.0,
+    "Impressionism": 0.0,
+    "Minimalism": 0.0,
+    "Rococo": 0.0,
+    "Ukiyo_e": 0.0
+   }
+  }
+ },
+ "delta_m_setup": {
+  "tolerance": 0.0,
+  "why_zero": "both sides decode the same u8 buffer; the only difference is in-memory tensor vs PNG file bytes, which are byte-identical after round(u8) quantisation, so any non-zero value would indicate a preprocessing inconsistency between the two f() paths",
+  "prototype_images_per_style": 74,
+  "prototype_construction": "first 74 images of the frozen AUROC pool per style (seeded random sample over the train split, test overlap removed; no use of any eval score)",
+  "reference_pool": "same frozen 5-class train pool used for the AUROC (300/300/74/300/300, equal-size truncated to 74 for the prototypes)",
+  "margin_definition": "M = cos(f, proto_target) - cos(f, proto_source_style)",
+  "n_source_images": 150,
+  "n_target_styles_per_source": 4
+ },
+ "provenance": {
+  "descriptor": "CSD (Contrastive Style Descriptor), official checkpoint",
+  "code_repo": "https://github.com/learn2phoenix/CSD",
+  "code_commit": "3a9df32605b869eceb704897839be80977a9f1ea",
+  "weights_repo": "tomg-group-umd/CSD-ViT-L",
+  "weights_revision": "5bc26a6fb0487f3f00a2a7313135103a005b1b67",
+  "weights_file": "pytorch_model.bin",
+  "weights_bytes": 2438228893,
+  "weights_path_rel_cache_root": "models--tomg-group-umd--CSD-ViT-L/snapshots/5bc26a6fb0487f3f00a2a7313135103a005b1b67/pytorch_model.bin",
+  "hf_endpoint_used": "https://hf-mirror.com",
+  "hf_cache_root": "/mnt/i/Latent_Style/eval_cache/hf",
+  "clip_package": "clip-anytorch 2.6.0",
+  "checkpoint_iter": 15000,
+  "backbone": "CLIP ViT-L/14 visual encoder (224px, patch 14, width 1024, 24 layers, 16 heads)",
+  "params": 304752640,
+  "dtype": "torch.float16",
+  "preprocess": "Resize(shorter side 224, bicubic) -> CenterCrop(224) -> ToTensor -> CLIP mean/std",
+  "input_resolution": 224,
+  "patch_grid": "16x16 (+1 CLS) = 257 tokens",
+  "feature_dim": 768,
+  "feature_extraction": "backbone CLS (1024-d) projected by last_layer_style -> L2 normalised (768-d)",
+  "feature_norm": "L2",
+  "similarity": "cosine (= inner product of L2-normalised descriptors)",
+  "single_image_forward_ms": 15.15,
+  "upstream_caveat": "official README (2024-10-03) flags a known discrepancy of the uploaded weights vs the numbers reported in the paper",
+  "dino_comparison": {
+   "model": "facebook/dinov2-small",
+   "feature": "CLS, 384-d, L2-normalised",
+   "input": "engine preprocessing at 512px (WEAVE eval pipeline)"
+  }
+ },
+ "protocol": {
+  "positives": "real artwork pairs inside one style class",
+  "negatives": "real artwork pairs across style classes, sampled to match the positive count",
+  "artist_disjoint": "positives and negatives restricted to different painter names",
+  "content_hard": "negatives whose CLIP ViT-B/32 image cosine sits in the top 25% (content-confusion control)",
+  "patched_stat_descriptor": "DINOv2 patch mean/std - auxiliary only, not a CSD substitute",
+  "test_overlap_removed": true
+ }
+}

@@ -1,0 +1,17 @@
+[INFO] Loading DINOv2 from local snapshot: /mnt/i/Latent_Style/eval_cache/hf/hub/models--facebook--dinov2-small/snapshots/ed25f3a31f01632728cabb09d1542f84ab7b0056
+
+Loading weights:   0%|          | 0/223 [00:00<?, ?it/s]
+Loading weights:  42%|████▏     | 94/223 [00:00<00:00, 933.79it/s]
+Loading weights: 100%|██████████| 223/223 [00:00<00:00, 1173.02it/s]
+/usr/local/lib/python3.10/dist-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/usr/local/lib/python3.10/dist-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=AlexNet_Weights.IMAGENET1K_V1`. You can also use `weights=AlexNet_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+[p2] models ready 19s
+[trt] loaded vae_decoder_512_b8_fp16.engine
+[11/06/2026-17:43:21] [TRT] [W] Using default stream in enqueueV3() may lead to performance issues due to additional calls to cudaStreamSynchronize() by TensorRT to ensure correct synchronization. Please use non-default stream instead.
+/mnt/i/Latent_Style/WEAVE/tools/12h/csd_model.py:89: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast():
+[p2] A_P5: {"root": "/mnt/i/Latent_Style/pseudo_gt_24h/pairs/positive", "records_total": 26144, "sampled": 40, "coverage_nominal_mean": 0.25, "coverage_measured_mean": 0.25, "coverage_weighted_mean": 0.25, "frac_measured_ge_022": 1.0, "frac_measured_lt_018": 0.0, "match_score_mean": 0.5706515939285357, "csd_dT_pseudo": 0.12904336845967918, "csd_dT_reach": 0.06936225763056428, "csd_retention": NaN, "csd_dS_pseudo": -0.08320751935243606, "csd_dS_reach": -0.0634412296116352, "hh_share_u": 0.11877314399133827, "hh_norm_ratio": 0.33976943792288583, "band_share": {"LL": 0.5779751264938813, "LH": 0.1424927043993236, "HL": 0.1607590251154567, "HH": 0.11877314399133827}, "dino_reach_vs_pseudo": 0.9391716167330741, "dino_reach_vs_source": 0.8597573950886727, "dino_pseudo_vs_source": 0.8574896469712258}
+[p2] E7: {"root": "/mnt/i/Latent_Style/pseudo_gt_24h/pairs/reverse", "records_total": 26144, "sampled": 40, "coverage_nominal_mean": 0.25, "coverage_measured_mean": 0.25, "coverage_weighted_mean": 0.25, "frac_measured_ge_022": 1.0, "frac_measured_lt_018": 0.0, "match_score_mean": 0.5706515939285357, "csd_dT_pseudo": 0.08339908719062805, "csd_dT_reach": 0.07272266894578934, "csd_retention": NaN, "csd_dS_pseudo": 0.08339908719062805, "csd_dS_reach": 0.07272266894578934, "hh_share_u": 0.11877251630498384, "hh_norm_ratio": 0.339768574880115, "band_share": {"LL": 0.5779751938286053, "LH": 0.14249281846579537, "HL": 0.16075947140061525, "HH": 0.11877251630498384}, "dino_reach_vs_pseudo": 0.9704926162958145, "dino_reach_vs_source": 0.8660610154271126, "dino_pseudo_vs_source": 0.8575300350785255}
+[p2] done 72s -> /mnt/i/Latent_Style/pseudo_gt_24h/p2_reach.json

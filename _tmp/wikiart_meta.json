@@ -1,0 +1,65 @@
+{
+  "vae": "sd15_ema",
+  "image_root": "/mnt/i/Latent_Style/WEAVE/datasets/wikiart_new_512",
+  "styles": [
+    "Early_Renaissance",
+    "Impressionism",
+    "Minimalism",
+    "Rococo",
+    "Ukiyo_e"
+  ],
+  "total_samples": 10545,
+  "image_size": 512,
+  "batch_size": 8,
+  "encode_seconds": 1407.1,
+  "sec_per_image": 0.1334,
+  "img_per_sec": 7.49,
+  "packed_bytes_total": 691946164,
+  "peak_vram_mib_observed": 3811,
+  "peak_vram_note": "nvidia-smi snapshot during Impressionism (3821/12288 MiB with batch=8); torch max_memory_allocated was lost when the tmux session exited",
+  "per_style": [
+    {
+      "style": "Early_Renaissance",
+      "count": 474,
+      "file": "packed/00_Early_Renaissance.pt",
+      "bytes": 31110980,
+      "bytes_per_image": 65634.97890295359,
+      "seconds": 65.1
+    },
+    {
+      "style": "Impressionism",
+      "count": 7989,
+      "file": "packed/01_Impressionism.pt",
+      "bytes": 524224040,
+      "bytes_per_image": 65618.23006634122,
+      "seconds": 1064.0
+    },
+    {
+      "style": "Minimalism",
+      "count": 84,
+      "file": "packed/02_Minimalism.pt",
+      "bytes": 5512275,
+      "bytes_per_image": 65622.32142857143,
+      "seconds": 11.6
+    },
+    {
+      "style": "Rococo",
+      "count": 1519,
+      "file": "packed/03_Rococo.pt",
+      "bytes": 99668407,
+      "bytes_per_image": 65614.48782093482,
+      "seconds": 202.3
+    },
+    {
+      "style": "Ukiyo_e",
+      "count": 479,
+      "file": "packed/04_Ukiyo_e.pt",
+      "bytes": 31430462,
+      "bytes_per_image": 65616.83089770355,
+      "seconds": 64.0
+    }
+  ],
+  "timing_source": "reconstructed from .pt/manifest mtimes (loop start 17:11:22, VAE load 5.6 s excluded)",
+  "notes": "latents are posterior samples (vae.encode().latent_dist.sample()) scaled by vae.config.scaling_factor, same as D5 packed",
+  "done_at": "2026-11-05T17:34:51"
+}

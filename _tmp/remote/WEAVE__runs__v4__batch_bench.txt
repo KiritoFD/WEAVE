@@ -1,0 +1,6 @@
+batch=32 decode=8 tag=bench_b32 rc=0 total=235s wall=180.95 imgs_per_s=4.14 peak_vram=8782mib trt_miss_lines=0
+batch=64 decode=8 tag=bench_b64 rc=0 total=220s wall=178.79 imgs_per_s=4.19 peak_vram=9116mib trt_miss_lines=0
+batch=96 decode=8 tag=bench_b96 rc=0 total=229s wall=179.86 imgs_per_s=4.17 peak_vram=9637mib trt_miss_lines=0
+batch=128 decode=8 tag=bench_b128 rc=0 total=228s wall=179.24 imgs_per_s=4.18 peak_vram=10056mib trt_miss_lines=0
+batch=32 decode=32 tag=bench_b32_d32 rc=143 total=441s  imgs_per_s=nan peak_vram=11748mib trt_miss_lines=1
+BENCH DONE

@@ -27,7 +27,7 @@ from tools.pseudo_gt import construct as C  # noqa: E402
 from tools.pseudo_gt.build_assets import STYLES, STYLE_IDS, _load_rgb, _to_tensor, load_manifest, pgt_root  # noqa: E402
 from tools.pseudo_gt.cache import SampleRecord, ShardWriter, make_sample_id  # noqa: E402
 from tools.pseudo_gt.matching import DEVICE, assert_cuda, encode_dino, load_dino_model, match_layout  # noqa: E402
-from tools.pseudo_gt.masks import E_SPECS, build_patch_layout  # noqa: E402
+from tools.pseudo_gt.masks import E_SPECS, build_patch_layout, rasterize  # noqa: E402
 from utils.inference import download_vae_with_fallback  # noqa: E402
 
 
@@ -64,6 +64,7 @@ def main() -> None:
     ap.add_argument("--method", default="", help="positive 用：A|B|C|D")
     ap.add_argument("--spec", required=True, help="P2/P5/P7/P9 或 E1–E7")
     ap.add_argument("--versions", type=int, default=2)
+    ap.add_argument("--limit", type=int, default=0, help="只处理前 N 个训练图（质检小样用）")
     ap.add_argument("--out", default="")
     args = ap.parse_args()
     out_root = Path(args.out) if args.out else pgt_root() / "pairs" / args.arm
@@ -74,6 +75,8 @@ def main() -> None:
     t0 = time.time()
     items = [it for it in load_manifest() if it["split"] == "train"]
     id_map = {it["id"]: it for it in items}
+    if args.limit:
+        items = items[: args.limit]
     lat, retrieval = load_latents(), load_retrieval()
     dino = {}
     for style in STYLES:
@@ -185,6 +188,10 @@ def main() -> None:
             rects = layout(seed)
             cov_nominal = float(sum(r.area for r in rects) / 512 ** 2)
             cov_effective = float(sum(getattr(x.src, "area", 0) for x in m) / 512 ** 2)
+            cov_weighted = cov_effective
+            if feather:
+                # 羽化：额外记录权重积分覆盖率 Σα/N²（与硬掩码面积分开，二者不可混用）
+                cov_weighted = float(rasterize([x.src for x in m], feather=True).mean().item())
             rec = SampleRecord(
                 sample_id=sid,
                 source_id=src["id"],
@@ -198,6 +205,7 @@ def main() -> None:
                 nominal_coverage=cov_nominal,
                 effective_coverage=cov_effective,
                 effective_coverage_measured=cov_effective,
+                effective_coverage_weighted=cov_weighted,
                 z0_is_original=(args.arm != "reverse"),
                 z1_is_original=(args.arm in {"reverse", "base"}),
             )

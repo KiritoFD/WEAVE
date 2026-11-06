@@ -11,15 +11,31 @@
   "data": {
     "train_sample_limit": 0,
     "paired_latent_cache_dir": "@asset/pseudo_gt_24h/pairs/pattern_R64_reverse_nostyle",
-    "content_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0],
-    "target_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0]
+    "content_style_sampling_weights": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "target_style_sampling_weights": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
   },
   "training": {
     "batch_size": 32,
     "accumulation_steps": 8,
-    "num_epochs": 8,
+    "num_epochs": 20,
     "save_interval": 1,
-    "save_step_milestones": [200, 400, 600],
+    "save_step_milestones": [
+      200,
+      400,
+      600
+    ],
     "stop_after_global_steps": 600,
     "full_eval_each_epoch": false,
     "internal_probe_enabled": true,

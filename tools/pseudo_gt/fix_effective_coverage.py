@@ -57,9 +57,19 @@ def main() -> None:
             cache[key] = v
             return v
 
+        def pat_any(img_id: str) -> torch.Tensor | None:
+            """reverse 臂的 donor 属于另一风格，record 里没有记它，需跨风格查找。"""
+            for style in dino:
+                v = pat(style, img_id)
+                if v is not None:
+                    return v
+            return None
+
         for r in recs:
             sp = pat(r["source_style"], r["source_id"])
             dp = pat(r["target_style"], r["donor_id"])
+            if dp is None:
+                dp = pat_any(r["donor_id"])
             if sp is None or dp is None:
                 miss += 1
                 continue

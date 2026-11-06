@@ -1,0 +1,66 @@
+{
+  "_comment": "WEAVE V4 S2_E7: effective batch 256 (32×8), 2000-step cosine (num_epochs=20 → 2042 global steps), ckpt 200/400/600/1000/1500/2000.",
+  "_base": "../../config.json",
+  "model": {
+    "target_latent_hf_subband_fusion_enabled": true,
+    "target_latent_hf_head_fusion_gate_init": 0.05
+  },
+  "bridge": {
+    "paired_latent_passthrough": true,
+    "bridge_sigma": 0.0,
+    "t_sampling_mode": "uniform"
+  },
+  "data": {
+    "train_sample_limit": 0,
+    "paired_latent_cache_dir": "@asset/pseudo_gt_24h/pairs/reverse",
+    "paired_min_coverage": 0.22,
+    "content_style_sampling_weights": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "target_style_sampling_weights": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "training": {
+    "batch_size": 32,
+    "accumulation_steps": 8,
+    "num_epochs": 25,
+    "save_interval": 1,
+    "save_step_milestones": [
+      200,
+      400,
+      600,
+      1000,
+      1500,
+      2000
+    ],
+    "stop_after_global_steps": 600,
+    "full_eval_each_epoch": false,
+    "internal_probe_enabled": true,
+    "internal_probe_every": 1,
+    "internal_probe_batch_size": 4,
+    "internal_probe_fixed_t": 0.5,
+    "internal_early_stop_enabled": true,
+    "internal_early_stop_min_epoch": 3,
+    "internal_early_stop_gate_delta_threshold": 0.0,
+    "internal_early_stop_shared_ratio_drop_threshold": 0.65,
+    "internal_early_stop_min_steps": 0
+  },
+  "checkpoint": {
+    "save_dir": "runs/v4/S2_E7"
+  },
+  "ablation": {
+    "name": "S2_E7",
+    "axis": "pseudo_gt_pairing_v4",
+    "stage": "v4_round",
+    "notes": "E7 4×128 25% Hard（反向：拼贴输入→真实图，标签=原图风格）"
+  }
+}

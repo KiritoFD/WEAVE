@@ -491,6 +491,7 @@ def main() -> None:
         dataset = PairedLatentDataset(
             cache_dir=str(resolve_dataset_path(_paired_dir)),
             style_names=list(data_cfg.style_subdirs),
+            min_coverage=float(getattr(data_cfg, "paired_min_coverage", 0.0) or 0.0),
         )
     else:
         dataset = AdaCUTLatentDataset(

@@ -1,0 +1,21 @@
+[pgt_r:b64_t8] sources=150 pairs=750
+There are modules in AutoencoderKL that should be kept in float32: []. Casting directly with `to()` can lead to inconsistent results; set `torch_dtype` in `from_pretrained()` instead to keep these modules in float32.
+
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 398/398 [00:00<00:00, 5453.89it/s]
+[INFO] Loading DINOv2 from local snapshot: /mnt/i/Latent_Style/eval_cache/hf/hub/models--facebook--dinov2-small/snapshots/ed25f3a31f01632728cabb09d1542f84ab7b0056
+
+Loading weights:   0%|          | 0/223 [00:00<?, ?it/s]
+Loading weights:  43%|████▎     | 95/223 [00:00<00:00, 934.52it/s]
+Loading weights: 100%|██████████| 223/223 [00:00<00:00, 1235.29it/s]
+[pgt_r] target latent Early_Renaissance: Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece.jpg
+[pgt_r] target latent Impressionism: Impressionism__alfred-sisley_riverbank-at-veneux-1881.jpg
+[pgt_r] target latent Minimalism: Minimalism__agnes-martin_happy-valley-1967.jpg
+[pgt_r] target latent Rococo: Rococo__antoine-pesne_carl-heinrich-graun.jpg
+[pgt_r] target latent Ukiyo_e: Ukiyo_e__hiroshige_hakone-kosuizu.jpg
+[trt] loaded vae_decoder_512_b8_fp16.engine
+[11/06/2026-20:03:38] [TRT] [W] Using default stream in enqueueV3() may lead to performance issues due to additional calls to cudaStreamSynchronize() by TensorRT to ensure correct synchronization. Please use non-default stream instead.
+[pgt_r:b64_t8] 64/150 sources (46.2s)
+[pgt_r:b64_t8] 128/150 sources (91.2s)
+[pgt_r:b64_t8] 150/150 sources (107.9s)
+[pgt_r] done {"num_images": 750, "wall_sec_render": 107.9, "wall_sec_total": 165.84}

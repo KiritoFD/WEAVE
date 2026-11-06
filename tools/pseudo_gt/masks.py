@@ -38,6 +38,8 @@ E_SPECS: Dict[str, Dict[str, object]] = {
     "E5": {"sizes": [256] * 1, "coverage": 0.25, "feather": True},
     "E6": {"sizes": [128] + [64] * 12, "coverage": 0.25, "feather": True},
     "E7": {"sizes": [128] * 4, "coverage": 0.25, "feather": False},
+    # V4 S4：24×64 = 37.5% 名义覆盖，羽化；介于 25% 与 50% 之间的中间污染强度。
+    "E8": {"sizes": [64] * 24, "coverage": 0.375, "feather": True},
 }
 
 

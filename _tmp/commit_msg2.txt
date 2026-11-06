@@ -1,0 +1,7 @@
+docs(pseudo-gt): add per-config selection rationale and cross-seed flags
+
+动机：用户质疑“大部分伪GT被直接排除是否有充分论据”。逐组清账后发现两处证据不足
+（A_P9 仅擦线超 LPIPS 阈值、E7 的反向方向未验证），需要可复核的记录并补跑。
+
+- docs/gt_pseudogt_selection_rationale.md：28 组逐组构造/全指标/判定/阈值差值/证据强度
+- tools/pseudo_gt/q0_quality.py：新增 --seed/--n-per-style/--configs，用于跨 seed 复核子集

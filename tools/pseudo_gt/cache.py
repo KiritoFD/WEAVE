@@ -31,6 +31,8 @@ class SampleRecord:
     band_energy: Dict[str, float] = field(default_factory=dict)
     seam_grad: float = 0.0
     effective_coverage_measured: float = 0.0
+    #: 羽化权重积分覆盖率 Σα/N²（硬掩码面积见 effective_coverage_measured）
+    effective_coverage_weighted: float = 0.0
 
 
 def make_sample_id(method: str, patch_spec: str, source_id: str, donor_id: str, seed: int) -> str:

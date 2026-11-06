@@ -1171,7 +1171,8 @@ class PairedLatentDataset(Dataset):
     不再做任何二次风格化。
     """
 
-    def __init__(self, cache_dir: str, *, style_names: list[str] | None = None):
+    def __init__(self, cache_dir: str, *, style_names: list[str] | None = None,
+                 min_coverage: float = 0.0):
         import json as _json
 
         self.root = Path(cache_dir)
@@ -1180,6 +1181,13 @@ class PairedLatentDataset(Dataset):
             raise FileNotFoundError(f"缺少配对缓存 manifest: {manifest_path}")
         payload = _json.loads(manifest_path.read_text(encoding="utf-8"))
         self.records = payload["records"]
+        if min_coverage > 0.0:
+            # 实测覆盖率分层：旧 manifest 的 effective_coverage 是名义值，
+            # 必须用 covfix 写出的 effective_coverage_measured（缺字段则不过滤）。
+            self.records = [
+                r for r in self.records
+                if float(r.get("effective_coverage_measured", 1.0) or 1.0) >= min_coverage
+            ]
         if not self.records:
             raise RuntimeError(f"{self.root} 没有任何配对样本")
         self.style_names = style_names or [

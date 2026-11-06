@@ -1,0 +1,36 @@
+{
+  "_comment": "B0d: D5 4,500（A0 原划分）+ 与 B0 完全同一套门控子带融合头 (gate_init=0.05) 与内部早停（真停）。用来把 B0 vs B0d 的差值归因为纯数据效应、B0d vs A0 的差值归因为纯门控头效应。",
+  "_base": "../../config.json",
+  "model": {
+    "target_latent_hf_subband_fusion_enabled": true,
+    "target_latent_hf_head_fusion_gate_init": 0.05
+  },
+  "data": {
+    "train_sample_limit": 4500
+  },
+  "training": {
+    "batch_size": 96,
+    "accumulation_steps": 1,
+    "num_epochs": 15,
+    "save_interval": 1,
+    "full_eval_each_epoch": false,
+    "internal_probe_enabled": true,
+    "internal_probe_every": 1,
+    "internal_probe_batch_size": 4,
+    "internal_probe_fixed_t": 0.5,
+    "internal_early_stop_enabled": true,
+    "internal_early_stop_record_only": false,
+    "internal_early_stop_min_epoch": 3,
+    "internal_early_stop_gate_delta_threshold": 0.0,
+    "internal_early_stop_shared_ratio_drop_threshold": 0.65
+  },
+  "checkpoint": {
+    "save_dir": "runs/1m/B0d_d5_b96_rawHF_head"
+  },
+  "ablation": {
+    "name": "B0d_d5_b96_rawHF_head",
+    "axis": "gate_head_effect_at_A0_recipe",
+    "stage": "1m_round",
+    "notes": "D5 4500 (A0 split) + same gate head/early stop as B0. 47 steps/epoch => ~700 steps over 15 epochs. Answers (a) head-only effect vs A0 (no head) and (b) whether D0's ratio 0.7238@ep2 / 0.9904@ep3 ever triggers over the full 15-epoch cosine."
+  }
+}

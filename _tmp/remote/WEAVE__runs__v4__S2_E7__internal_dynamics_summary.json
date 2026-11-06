@@ -1,0 +1,46 @@
+{
+  "armed": true,
+  "record_only": false,
+  "fired": false,
+  "would_fire": false,
+  "fired_epoch": null,
+  "stop_reason": "max epochs",
+  "min_epoch": 3,
+  "min_steps": 0,
+  "probe_every": 1,
+  "gate_delta_threshold": 0.0,
+  "shared_ratio_drop_threshold": 0.65,
+  "global_step": 600,
+  "probe_epochs": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "rho_series": [
+    2.08885,
+    2.536534,
+    2.680751,
+    5.581608,
+    3.961833,
+    5.067448,
+    6.134732,
+    5.956503
+  ],
+  "gate_mean_series": [
+    0.043308,
+    0.041692,
+    0.043301,
+    0.04571,
+    0.047107,
+    0.048383,
+    0.050245,
+    0.050889
+  ],
+  "style_gain_series": [],
+  "content_keep_series": []
+}

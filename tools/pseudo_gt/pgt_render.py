@@ -17,6 +17,7 @@ import argparse
 import json
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -64,6 +65,8 @@ def main() -> None:
     ap.add_argument("--config", default=str(ROOT / "config.json"))
     ap.add_argument("--config-override", default=str(ROOT / "inference.json"))
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--enable-clip", action="store_true", help="V4：输出历史可比的 CLIP-S")
+    ap.add_argument("--save-threads", type=int, default=8, help="PNG 落盘线程数（不影响像素）")
     args = ap.parse_args()
 
     args.source_latent_cache = True
@@ -99,7 +102,8 @@ def main() -> None:
     trt = trt_vae_decoder.TrtVaeDecoder(args.engine_dir, vae, precision="fp16", device=device)
 
     ns = argparse.Namespace(
-        disable_clip=True, disable_lpips=False, disable_dino=False,
+        disable_clip=not args.enable_clip, disable_lpips=False,
+        disable_dino=False,
         test_dir=str(args.test_dir),
         clip_model="openai/clip-vit-base-patch32", clip_local_only=True,
         clip_cache_dir=str(Path(args.cache_dir) / "hf" / "hub"), clip_skip_processor=False,
@@ -146,6 +150,12 @@ def main() -> None:
     rows_all: list[dict] = []
     sizes: list[int] = []
     t_render = time.perf_counter()
+    save_pool = ThreadPoolExecutor(max_workers=max(1, int(args.save_threads)))
+    save_futs: list = []
+
+    def _save_png(array_u8: np.ndarray, path: Path) -> int:
+        Image.fromarray(array_u8).save(path, format="PNG")
+        return path.stat().st_size
     for b_start in range(0, len(source_paths), args.batch):
         chunk_paths = source_paths[b_start:b_start + args.batch]
         x0 = source_latents[b_start:b_start + len(chunk_paths)].to(device=device, dtype=torch.float32)
@@ -179,12 +189,15 @@ def main() -> None:
             arr = u8.cpu().numpy()
             for i, r in enumerate(rows):
                 png_path = img_dir / r["gen_name"]
-                Image.fromarray(arr[i].transpose(1, 2, 0)).save(png_path, format="PNG")
-                sizes.append(png_path.stat().st_size)
+                save_futs.append(save_pool.submit(_save_png, arr[i].transpose(1, 2, 0).copy(), png_path))
             rows_out, _ = engine.batch_metrics(gen01, rows, timer)
             rows_all.extend(rows_out)
         print(f"[pgt_r:{args.cell}] {min(b_start + args.batch, len(source_paths))}/"
               f"{len(source_paths)} sources ({time.perf_counter() - t_render:.1f}s)", flush=True)
+
+    for fut in save_futs:
+        sizes.append(fut.result())
+    save_pool.shutdown(wait=True)
 
     ef.write_csv(out_dir / "metrics.csv", rows_all, ef.METRIC_HEADER)
     ef.write_csv(out_dir / "dino_metrics.csv", [{

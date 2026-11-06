@@ -1,0 +1,179 @@
+{
+  "latent_stats": {
+    "Early_Renaissance": {
+      "n": 1000,
+      "mean": -0.0013123400276526809,
+      "std": 0.8196521997451782,
+      "per_channel_std": [
+        0.857,
+        0.9648,
+        0.6969,
+        0.6599
+      ],
+      "per_image_std_min": 0.5478488206863403,
+      "per_image_std_median": 0.7854079604148865
+    },
+    "Impressionism": {
+      "n": 1000,
+      "mean": 0.01721455715596676,
+      "std": 0.799124538898468,
+      "per_channel_std": [
+        0.8413,
+        0.9099,
+        0.6744,
+        0.6943
+      ],
+      "per_image_std_min": 0.5331513285636902,
+      "per_image_std_median": 0.7611780762672424
+    },
+    "Minimalism": {
+      "n": 1000,
+      "mean": 0.2589033842086792,
+      "std": 1.0366439819335938,
+      "per_channel_std": [
+        1.0374,
+        1.2169,
+        0.7537,
+        0.7707
+      ],
+      "per_image_std_min": 0.5283681750297546,
+      "per_image_std_median": 0.9906624555587769
+    },
+    "Rococo": {
+      "n": 1000,
+      "mean": -0.04659845307469368,
+      "std": 0.8477960824966431,
+      "per_channel_std": [
+        0.8454,
+        1.0398,
+        0.6934,
+        0.6724
+      ],
+      "per_image_std_min": 0.5614711046218872,
+      "per_image_std_median": 0.8104769587516785
+    },
+    "Ukiyo_e": {
+      "n": 1000,
+      "mean": 0.08572355657815933,
+      "std": 0.8432069420814514,
+      "per_channel_std": [
+        0.9101,
+        0.9327,
+        0.7056,
+        0.6425
+      ],
+      "per_image_std_min": 0.5621029734611511,
+      "per_image_std_median": 0.8143123388290405
+    },
+    "_all": {
+      "mean": 0.06278613954782486,
+      "std": 0.8799948692321777,
+      "implied_raw_std_if_scaled_0.18215": 4.831154823303223
+    }
+  },
+  "dedup": {
+    "threshold": 0.995,
+    "pairs": 9,
+    "groups": 4991
+  },
+  "clusters": {
+    "k": 20,
+    "per_style_unique": [
+      20,
+      20,
+      20,
+      19,
+      20
+    ]
+  },
+  "cross_style_top5_mean_cos_sampled": 0.5212838485836983,
+  "split": {
+    "styles": {
+      "Early_Renaissance": {
+        "total": 1000,
+        "val": 124,
+        "train": 876,
+        "artists_total": 23,
+        "val_artists": [
+          "fra-angelico"
+        ],
+        "artist_holdout": true,
+        "largest_artist_works": 124
+      },
+      "Impressionism": {
+        "total": 1000,
+        "val": 108,
+        "train": 892,
+        "artists_total": 148,
+        "val_artists": [
+          "claude-monet"
+        ],
+        "artist_holdout": true,
+        "largest_artist_works": 108
+      },
+      "Minimalism": {
+        "total": 1000,
+        "val": 128,
+        "train": 872,
+        "artists_total": 109,
+        "val_artists": [
+          "brice-marden",
+          "agnes-martin",
+          "anne-truitt"
+        ],
+        "artist_holdout": true,
+        "largest_artist_works": 53
+      },
+      "Rococo": {
+        "total": 1000,
+        "val": 146,
+        "train": 854,
+        "artists_total": 30,
+        "val_artists": [
+          "joshua-reynolds",
+          "vladimir-borovikovsky"
+        ],
+        "artist_holdout": true,
+        "largest_artist_works": 92
+      },
+      "Ukiyo_e": {
+        "total": 1000,
+        "val": 100,
+        "train": 900,
+        "artists_total": 15,
+        "val_artists": [
+          "kitagawa-utamaro"
+        ],
+        "artist_holdout": true,
+        "largest_artist_works": 290
+      }
+    },
+    "artist_holdout_feasible": {
+      "Early_Renaissance": true,
+      "Impressionism": true,
+      "Minimalism": true,
+      "Rococo": true,
+      "Ukiyo_e": true
+    },
+    "dup_moved_from_val": 0,
+    "train_total": 4394,
+    "val_total": 606
+  },
+  "split_sizes": {
+    "train": 4394,
+    "val": 606
+  },
+  "vae_roundtrip": {
+    "n": 8,
+    "latent_std": 0.765625,
+    "roundtrip_mse": 0.028586149215698242,
+    "latent_scale_used": 0.18215
+  },
+  "dino_context": {
+    "subset": 240,
+    "nmi_dino_vs_latent_clusters": 0.11799782368898165,
+    "latent_cluster_purity_vs_dino": 0.32787251597204903,
+    "latent_cluster_style_entropy": 1.6094379124341005,
+    "dino_available": true
+  }
+}

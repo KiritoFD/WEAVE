@@ -1,0 +1,163 @@
+[p0] sources=300
+  40/300
+  80/300
+  120/300
+  160/300
+  200/300
+  240/300
+  280/300
+{
+  "n_sources": 300,
+  "seed": 2024,
+  "specs": {
+    "P1": {
+      "n": 285,
+      "failed": 15,
+      "nominal_coverage": 0.125,
+      "coverage_mean": 0.125,
+      "coverage_median": 0.125,
+      "coverage_min": 0.125,
+      "coverage_max": 0.125,
+      "patches_mean": 8.0,
+      "nominal_patches": 8,
+      "frac_images_with_drop": 0.0,
+      "q_mean": 0.5483656722660127
+    },
+    "P2": {
+      "n": 283,
+      "failed": 17,
+      "nominal_coverage": 0.25,
+      "coverage_mean": 0.25,
+      "coverage_median": 0.25,
+      "coverage_min": 0.25,
+      "coverage_max": 0.25,
+      "patches_mean": 16.0,
+      "nominal_patches": 16,
+      "frac_images_with_drop": 0.0,
+      "q_mean": 0.548039991178224
+    },
+    "P3": {
+      "n": 284,
+      "failed": 16,
+      "nominal_coverage": 0.5,
+      "coverage_mean": 0.5,
+      "coverage_median": 0.5,
+      "coverage_min": 0.5,
+      "coverage_max": 0.5,
+      "patches_mean": 32.0,
+      "nominal_patches": 32,
+      "frac_images_with_drop": 0.0,
+      "q_mean": 0.5518880046241668
+    },
+    "P4": {
+      "n": 243,
+      "failed": 57,
+      "nominal_coverage": 0.125,
+      "coverage_mean": 0.125,
+      "coverage_median": 0.125,
+      "coverage_min": 0.125,
+      "coverage_max": 0.125,
+      "patches_mean": 2.0,
+      "nominal_patches": 2,
+      "frac_images_with_drop": 0.0,
+      "q_mean": 0.5440081628997631
+    },
+    "P5": {
+      "n": 289,
+      "failed": 11,
+      "nominal_coverage": 0.25,
+      "coverage_mean": 0.23399653979238755,
+      "coverage_median": 0.25,
+      "coverage_min": 0.1875,
+      "coverage_max": 0.25,
+      "patches_mean": 3.7439446366782008,
+      "nominal_patches": 4,
+      "frac_images_with_drop": 0.2560553633217993,
+      "q_mean": 0.5524143678025528
+    },
+    "P6": {
+      "n": 274,
+      "failed": 26,
+      "nominal_coverage": 0.5,
+      "coverage_mean": 0.47536496350364965,
+      "coverage_median": 0.5,
+      "coverage_min": 0.375,
+      "coverage_max": 0.5,
+      "patches_mean": 7.605839416058394,
+      "nominal_patches": 8,
+      "frac_images_with_drop": 0.31386861313868614,
+      "q_mean": 0.549455203113674
+    },
+    "P7": {
+      "n": 208,
+      "failed": 92,
+      "nominal_coverage": 0.25,
+      "coverage_mean": 0.25,
+      "coverage_median": 0.25,
+      "coverage_min": 0.25,
+      "coverage_max": 0.25,
+      "patches_mean": 1.0,
+      "nominal_patches": 1,
+      "frac_images_with_drop": 0.0,
+      "q_mean": 0.5653551271041999
+    },
+    "P8": {
+      "n": 181,
+      "failed": 119,
+      "nominal_coverage": 0.5,
+      "coverage_mean": 0.5,
+      "coverage_median": 0.5,
+      "coverage_min": 0.5,
+      "coverage_max": 0.5,
+      "patches_mean": 2.0,
+      "nominal_patches": 2,
+      "frac_images_with_drop": 0.0,
+      "q_mean": 0.5817784097313222
+    },
+    "P9": {
+      "n": 276,
+      "failed": 24,
+      "nominal_coverage": 0.25,
+      "coverage_mean": 0.24615036231884058,
+      "coverage_median": 0.25,
+      "coverage_min": 0.1875,
+      "coverage_max": 0.25,
+      "patches_mean": 12.93840579710145,
+      "nominal_patches": 13,
+      "frac_images_with_drop": 0.06159420289855073,
+      "q_mean": 0.5451140389156491
+    },
+    "E1": {
+      "n": 283,
+      "failed": 17,
+      "nominal_coverage": 0.25,
+      "coverage_mean": 0.25,
+      "coverage_median": 0.25,
+      "coverage_min": 0.25,
+      "coverage_max": 0.25,
+      "patches_mean": 16.0,
+      "nominal_patches": 16,
+      "frac_images_with_drop": 0.0,
+      "q_mean": 0.548039991178224
+    },
+    "E2": {
+      "n": 284,
+      "failed": 16,
+      "nominal_coverage": 0.5,
+      "coverage_mean": 0.5,
+      "coverage_median": 0.5,
+      "coverage_min": 0.5,
+      "coverage_max": 0.5,
+      "patches_mean": 32.0,
+      "nominal_patches": 32,
+      "frac_images_with_drop": 0.0,
+      "q_mean": 0.5518880046241668
+    },
+    "E3": {
+      "n": 289,
+      "failed": 11,
+      "nominal_coverage": 0.25,
+      "coverage_mean": 0.23399653979238755,
+      "coverage_median": 0.25,
+      "coverage_min": 0.1875,
+      

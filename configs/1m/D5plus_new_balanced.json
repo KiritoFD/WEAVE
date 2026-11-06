@@ -1,0 +1,48 @@
+{
+  "_comment": "D5 (5x1000 train) + wikiart_new_512 (8752 train, split 过滤自 sidecar) 多根读取。不物理合并、不写 D5 latent_cache；采样侧每类等概率（style 权重全 1）。不改 config.json / configs/1m/A0-A3 / D0。",
+  "_base": "../../config.json",
+  "data": {
+    "data_root": "data/train",
+    "latent_roots": [
+      {
+        "path": "data/train/.latent_cache/packed/packed",
+        "stem_prefix": ""
+      },
+      {
+        "path": "data/wikiart_new_packed/packed",
+        "manifest": "data/wikiart_new_packed/manifest.json",
+        "split": "train",
+        "stem_prefix": "new__"
+      }
+    ],
+    "expected_style_counts": {
+      "Early_Renaissance": 1400,
+      "Impressionism": 7759,
+      "Minimalism": 1074,
+      "Rococo": 2181,
+      "Ukiyo_e": 1338
+    },
+    "content_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0],
+    "target_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0],
+    "train_sample_limit": 0,
+    "latent_cache_dir": ".latent_cache/packed_d5plus_new"
+  },
+  "training": {
+    "batch_size": 256,
+    "accumulation_steps": 1,
+    "num_epochs": 15,
+    "save_interval": 1,
+    "full_eval_each_epoch": false,
+    "internal_early_stop_enabled": false,
+    "internal_probe_enabled": false
+  },
+  "checkpoint": {
+    "save_dir": "runs/1m/D5plus_new_balanced"
+  },
+  "ablation": {
+    "name": "D5plus_new_balanced",
+    "axis": "data_volume",
+    "stage": "1m_round",
+    "notes": "唯一变量 vs A1：(1) 每类样本池 1000 -> 1000+新 train 类数（ER1400/Imp7759/Min1074/Roc2181/Ukiyo1338，合计 13752）；(2) 多根读取（D5 packed/packed + wikiart_new packed，val 由 sidecar split 过滤剔除）。采样先验仍为每类等概率（两套 style 权重均 1）。13752/256=53 steps/epoch，15-epoch cosine => 795 steps；batch/架构/seed/划分与 A1 相同。latent_cache_dir 在 multi-root 模式下不使用（只读，不落盘）。"
+  }
+}

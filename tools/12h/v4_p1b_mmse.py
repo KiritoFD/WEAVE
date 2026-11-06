@@ -32,7 +32,7 @@ sys.path.insert(0, str(ROOT))
 
 from paths import hf_cache_root, resolve  # noqa: E402
 from v4.config import V4Config  # noqa: E402
-from v4.data import STYLE_NAMES  # noqa: E402
+from v4.data import STYLE_NAMES, load_bank  # noqa: E402
 from v4.diffusion import Schedule, ddim_sample, pred_to_x0_eps  # noqa: E402
 from v4.model import V4UNet  # noqa: E402
 
@@ -151,16 +151,15 @@ def main() -> int:
     vae = load_vae("cuda", model_id="ema", cache_dir=str(hf_cache_root()))
 
     # ---- 1) 用训练 latent 估 Style × 子带 × 通道 方差 ----
-    train_dir = resolve(args.train_dir)
+    bank = load_bank(resolve(args.train_dir))  # 打包好的 [N,4,64,64]
     var = torch.zeros(len(STYLE_NAMES), 4, cfg.latent_channels, device="cuda")
     bands_key = ["LL", "LH", "HL", "HH"]
-    for sid, name in enumerate(STYLE_NAMES):
-        files = sorted([p for p in (train_dir / name).iterdir()
-                        if p.suffix.lower() in IMAGE_EXTS])[: args.var_per_style]
-        zs = [encode_image(vae, load_image(p).unsqueeze(0).cuda()).float() for p in files]
-        zb = [haar(z) for z in zs]
+    for sid in range(len(STYLE_NAMES)):
+        idx = torch.nonzero(bank.style_ids == sid).flatten()[: args.var_per_style]
+        zs = bank.latents.index_select(0, idx).cuda().float()
+        zb = haar(zs)
         for bi, k in enumerate(bands_key):
-            stack = torch.cat([b[k] for b in zb], 0)  # [N,C,H,W]
+            stack = zb[k]  # [N,C,H,W]
             var[sid, bi] = stack.var(dim=(0, 2, 3), unbiased=False)
     print("[A] band var mean LL/HH:", float(var[:, 0].mean()), float(var[:, 3].mean()), flush=True)
 

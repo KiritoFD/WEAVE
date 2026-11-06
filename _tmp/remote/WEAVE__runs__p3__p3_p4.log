@@ -1,0 +1,62 @@
+[p3] cells=['A', 'C', 'B_r0', 'B_r1', 'B_r2', 'B_r3', 'D_r0', 'D_r1', 'D_r2', 'D_r3'] cross=600
+[p3] CSD: <All keys matched successfully>
+[INFO] Loading DINOv2 from local snapshot: /mnt/i/Latent_Style/eval_cache/hf/hub/models--facebook--dinov2-small/snapshots/ed25f3a31f01632728cabb09d1542f84ab7b0056
+
+Loading weights:   0%|          | 0/223 [00:00<?, ?it/s]
+Loading weights:  51%|█████     | 114/223 [00:00<00:00, 1118.41it/s]
+Loading weights: 100%|██████████| 223/223 [00:00<00:00, 1337.15it/s]
+[p3] SWD refs ready
+[p3] A feats 27.0s
+[p3] C feats 27.1s
+[p3] B_r0 feats 26.8s
+[p3] B_r1 feats 25.0s
+[p3] B_r2 feats 25.1s
+[p3] B_r3 feats 25.1s
+[p3] D_r0 feats 27.1s
+[p3] D_r1 feats 24.7s
+[p3] D_r2 feats 24.5s
+[p3] D_r3 feats 24.8s
+[p3] A      CSD dM +0.0000 [+0.0000,+0.0000]  DINO dM +0.0000  SWD +0.0000
+[p3] C      CSD dM +0.0163 [+0.0116,+0.0208]  DINO dM +0.0371  SWD +0.0005
+[p3] B_r0   CSD dM +0.1460 [+0.1342,+0.1572]  DINO dM +0.1101  SWD +0.0005
+[p3] B_r1   CSD dM +0.1358 [+0.1240,+0.1471]  DINO dM +0.1165  SWD +nan
+[p3] B_r2   CSD dM +0.1264 [+0.1150,+0.1375]  DINO dM +0.1137  SWD +nan
+[p3] B_r3   CSD dM +0.1205 [+0.1090,+0.1318]  DINO dM +0.1004  SWD +nan
+[p3] D_r0   CSD dM +0.0222 [+0.0174,+0.0271]  DINO dM +0.0348  SWD +0.0004
+[p3] D_r1   CSD dM +0.0193 [+0.0146,+0.0240]  DINO dM +0.0332  SWD +nan
+[p3] D_r2   CSD dM +0.0217 [+0.0168,+0.0265]  DINO dM +0.0349  SWD +nan
+[p3] D_r3   CSD dM +0.0182 [+0.0137,+0.0227]  DINO dM +0.0323  SWD +nan
+[p4] K=  4 means={'C': 0.0151, 'B_r0': 0.1246, 'D_r0': 0.0205} rank stable 1.00
+[p4] K=  8 means={'C': 0.0145, 'B_r0': 0.137, 'D_r0': 0.0219} rank stable 1.00
+[p4] K= 16 means={'C': 0.0158, 'B_r0': 0.1429, 'D_r0': 0.0216} rank stable 1.00
+[p4] K= 32 means={'C': 0.0167, 'B_r0': 0.1444, 'D_r0': 0.0223} rank stable 1.00
+[p4] K= 74 means={'C': 0.0163, 'B_r0': 0.146, 'D_r0': 0.0222} rank stable 1.00
+
+===== P3 decomposition (600 cross pairs) =====
+condition                 CSD dT    CSD dS    CSD dM   DINO dM  SWD gain
+VAE round-trip           +0.0000   +0.0000   +0.0000   +0.0000   +0.0000
+AdaIN-only (B_r0)        +0.0338   -0.1122   +0.1460   +0.1101   +0.0005
+ODE-only (C)             +0.0187   +0.0024   +0.0163   +0.0371   +0.0005
+full WEAVE (D_r0)        +0.0203   -0.0019   +0.0222   +0.0348   +0.0004
+
+===== all ten cells (CSD ΔMargin, 95% CI) =====
+A      +0.0000 [+0.0000,+0.0000] frac>0 0.000
+C      +0.0163 [+0.0116,+0.0208] frac>0 0.602
+B_r0   +0.1460 [+0.1342,+0.1572] frac>0 0.825
+D_r0   +0.0222 [+0.0174,+0.0271] frac>0 0.590
+B_r1   +0.1358 [+0.1240,+0.1471] frac>0 0.788
+D_r1   +0.0193 [+0.0146,+0.0240] frac>0 0.590
+B_r2   +0.1264 [+0.1150,+0.1375] frac>0 0.763
+D_r2   +0.0217 [+0.0168,+0.0265] frac>0 0.587
+B_r3   +0.1205 [+0.1090,+0.1318] frac>0 0.765
+D_r3   +0.0182 [+0.0137,+0.0227] frac>0 0.583
+
+===== paired CSD ΔMargin differences (source-image bootstrap) =====
+D_r0 - C       +0.0058 [+0.0033,+0.0086]  median -0.0004  frac>0 0.488
+D_r0 - B_r0    -0.1238 [-0.1348,-0.1128]  median -0.0745  frac>0 0.178
+D_r0 - A       +0.0222 [+0.0174,+0.0271]  median +0.0116  frac>0 0.590
+C - A          +0.0163 [+0.0116,+0.0208]  median +0.0156  frac>0 0.602
+B_r0 - A       +0.1460 [+0.1342,+0.1572]  median +0.0889  frac>0 0.825
+C - B_r0       -0.1296 [-0.1408,-0.1185]  median -0.0743  frac>0 0.180
+
+[p3] wrote /mnt/i/Latent_Style/WEAVE/runs/p3/p3_p4.json wall=312.8s

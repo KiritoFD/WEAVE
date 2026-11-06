@@ -1,0 +1,176 @@
+{
+ "seam_limit": 5.742395639050481,
+ "screened": {
+  "A_P1": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "A_P2": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "A_P3": {
+   "ok": false,
+   "reason": "dino_c 0.703 < 0.80"
+  },
+  "A_P4": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "A_P5": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "A_P6": {
+   "ok": false,
+   "reason": "dino_c 0.691 < 0.80"
+  },
+  "A_P7": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "A_P8": {
+   "ok": false,
+   "reason": "dino_c 0.712 < 0.80"
+  },
+  "A_P9": {
+   "ok": false,
+   "reason": "lpips 0.357 > 0.35"
+  },
+  "B_P2": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "B_P5": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "B_P7": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "B_P9": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "C_P2": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "C_P5": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "C_P7": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "C_P9": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "D_P2": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "D_P5": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "D_P7": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "D_P9": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "E_E1": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "E_E2": {
+   "ok": false,
+   "reason": "dino_c 0.708 < 0.80"
+  },
+  "E_E3": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "E_E4": {
+   "ok": false,
+   "reason": "dino_c 0.696 < 0.80"
+  },
+  "E_E5": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "E_E6": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "E_E7": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  },
+  "D_HF_P5": {
+   "ok": true,
+   "reason": "ok; scale_risk: n=222 pass_rate=0.74"
+  }
+ },
+ "positive": {
+  "key": "A_P5",
+  "metrics": {
+   "csd_dT": 0.1149275888361641,
+   "csd_dM": 0.2031462926350467,
+   "dino_c": 0.8309331781960823,
+   "lpips": 0.2897642107831465,
+   "seam": 4.4424426454619645,
+   "coverage": 0.24690315315315314
+  }
+ },
+ "reverse": {
+  "key": "E_E7",
+  "metrics": {
+   "csd_dT": 0.11510376563413185,
+   "csd_dS": -0.0881917877038857,
+   "dino_c": 0.8310264244272902,
+   "lpips": 0.2897623219602817,
+   "seam": 4.442449229102733,
+   "coverage": 0.24690315315315314
+  }
+ },
+ "positive_ranked": [
+  "A_P5",
+  "A_P2",
+  "A_P7",
+  "B_P9",
+  "B_P2",
+  "B_P5",
+  "A_P4",
+  "D_P2",
+  "C_P9",
+  "D_P9",
+  "B_P7",
+  "C_P2",
+  "C_P5",
+  "A_P1",
+  "C_P7",
+  "D_P5",
+  "D_P7",
+  "D_HF_P5"
+ ],
+ "reverse_ranked": [
+  "E_E7",
+  "E_E1",
+  "E_E6",
+  "E_E3",
+  "E_E5"
+ ],
+ "scale_risk": {
+  "n": 222,
+  "pass_rate": 0.74,
+  "note": "匹配在 28 个配置间共享；n<240/300 只作规模化风险标注，不淘汰配置"
+ },
+ "note": "正向按 CSD ΔM 排序（内容/接缝先过关）；反向按 ΔT 排序。未设 +0.01 成功门槛。"
+}

@@ -1,0 +1,4 @@
+tag=bench_mb32 rc=0 elapsed=161s global_step=NA peak_vram=2069mib 2026-11-06 20:13:03,468 - INFO - Epoch 1/25 | loss=0.6448 flow=0.6448 ll=0.8558 lh=0.1845 hl=0.2035 kin=0.0000 ot=0.0000 tswd=0.0000 gini=0.000 hub=0.000 otd=0.0000 fiber=0.000 leak=0.0000 tgtshift=0.
+tag=bench_mb64 rc=0 elapsed=148s global_step=NA peak_vram=2759mib 2026-11-06 20:15:37,774 - INFO - Epoch 1/25 | loss=0.6449 flow=0.6449 ll=0.8562 lh=0.1845 hl=0.2035 kin=0.0000 ot=0.0000 tswd=0.0000 gini=0.000 hub=0.000 otd=0.0000 fiber=0.000 leak=0.0000 tgtshift=0.
+tag=bench_mb128 rc=0 elapsed=135s global_step=NA peak_vram=4149mib 2026-11-06 20:17:55,635 - INFO - Epoch 1/25 | loss=0.6451 flow=0.6451 ll=0.8565 lh=0.1846 hl=0.2036 kin=0.0000 ot=0.0000 tswd=0.0000 gini=0.000 hub=0.000 otd=0.0000 fiber=0.000 leak=0.0000 tgtshift=0.
+TRAIN BENCH DONE

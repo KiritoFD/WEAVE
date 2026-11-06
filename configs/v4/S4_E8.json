@@ -1,0 +1,62 @@
+{
+  "_comment": "WEAVE V4 S4_E8: effective batch 256 (32×8), 2000-step cosine (num_epochs=20 → 2042 global steps), ckpt 200/400/600/1000/1500/2000.",
+  "_base": "../../config.json",
+  "model": {
+    "target_latent_hf_subband_fusion_enabled": true,
+    "target_latent_hf_head_fusion_gate_init": 0.05
+  },
+  "bridge": {
+    "paired_latent_passthrough": true,
+    "bridge_sigma": 0.0,
+    "t_sampling_mode": "uniform"
+  },
+  "data": {
+    "train_sample_limit": 0,
+    "paired_latent_cache_dir": "@asset/pseudo_gt_24h/pairs/reverse_e8",
+    "paired_min_coverage": 0.33,
+    "content_style_sampling_weights": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "target_style_sampling_weights": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "training": {
+    "batch_size": 32,
+    "accumulation_steps": 8,
+    "num_epochs": 20,
+    "save_interval": 1,
+    "save_step_milestones": [
+      200,
+      400,
+      600,
+      1000,
+      1500,
+      2000
+    ],
+    "stop_after_global_steps": 2000,
+    "full_eval_each_epoch": false,
+    "internal_probe_enabled": true,
+    "internal_probe_every": 1,
+    "internal_probe_batch_size": 4,
+    "internal_probe_fixed_t": 0.5,
+    "internal_early_stop_enabled": false
+  },
+  "checkpoint": {
+    "save_dir": "runs/v4/S4_E8"
+  },
+  "ablation": {
+    "name": "S4_E8",
+    "axis": "pseudo_gt_pairing_v4",
+    "stage": "v4_round",
+    "notes": "E8 24×64 37.5% Feather（与 S2/S3 同一基础配对集）"
+  }
+}

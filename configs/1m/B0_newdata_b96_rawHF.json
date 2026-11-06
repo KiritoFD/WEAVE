@@ -1,0 +1,57 @@
+{
+  "_comment": "B0: A0 配方 (b96, raw HF endpoint, 15-ep cosine 不压缩, lr2e-4, seed42) × 合并 13,752（多根 latent, 两套 style 权重全 1）+ 论文口径门控子带融合头 (gate_init=0.05) + 内部早停（真停，非 record_only）。其余逐字段沿用 A0_hf_b96.json。",
+  "_base": "../../config.json",
+  "model": {
+    "target_latent_hf_subband_fusion_enabled": true,
+    "target_latent_hf_head_fusion_gate_init": 0.05
+  },
+  "data": {
+    "train_sample_limit": 0,
+    "latent_roots": [
+      {
+        "path": "data/train/.latent_cache/packed/packed",
+        "stem_prefix": ""
+      },
+      {
+        "path": "data/wikiart_new_packed/packed",
+        "manifest": "data/wikiart_new_packed/manifest.json",
+        "split": "train",
+        "stem_prefix": "new__"
+      }
+    ],
+    "expected_style_counts": {
+      "Early_Renaissance": 1400,
+      "Impressionism": 7759,
+      "Minimalism": 1074,
+      "Rococo": 2181,
+      "Ukiyo_e": 1338
+    },
+    "content_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0],
+    "target_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0]
+  },
+  "training": {
+    "batch_size": 96,
+    "accumulation_steps": 1,
+    "num_epochs": 15,
+    "save_interval": 1,
+    "full_eval_each_epoch": false,
+    "internal_probe_enabled": true,
+    "internal_probe_every": 1,
+    "internal_probe_batch_size": 4,
+    "internal_probe_fixed_t": 0.5,
+    "internal_early_stop_enabled": true,
+    "internal_early_stop_record_only": false,
+    "internal_early_stop_min_epoch": 3,
+    "internal_early_stop_gate_delta_threshold": 0.0,
+    "internal_early_stop_shared_ratio_drop_threshold": 0.65
+  },
+  "checkpoint": {
+    "save_dir": "runs/1m/B0_newdata_b96_rawHF"
+  },
+  "ablation": {
+    "name": "B0_newdata_b96_rawHF",
+    "axis": "data_volume_at_A0_recipe_with_gate_head",
+    "stage": "1m_round",
+    "notes": "A0 recipe + gate head (gate_init=0.05) + real internal early stop (min_epoch=3, gate_delta>0, ratio drop<0.65). Data: D5+newdata multi-root 13752 (ER1400 Imp7759 Min1074 Roc2181 Ukiyo1338), class-uniform weights, no per-style cap => 143 steps/epoch, 2149 steps nominal. Save every epoch even if early stop fires. Variables vs B0d: data pool only; vs A0: data + gate head."
+  }
+}

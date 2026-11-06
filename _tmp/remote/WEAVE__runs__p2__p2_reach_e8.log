@@ -1,0 +1,17 @@
+[INFO] Loading DINOv2 from local snapshot: /mnt/i/Latent_Style/eval_cache/hf/hub/models--facebook--dinov2-small/snapshots/ed25f3a31f01632728cabb09d1542f84ab7b0056
+
+Loading weights:   0%|          | 0/223 [00:00<?, ?it/s]
+Loading weights:  38%|███▊      | 84/223 [00:00<00:00, 836.71it/s]
+Loading weights:  75%|███████▌  | 168/223 [00:00<00:00, 796.41it/s]
+Loading weights: 100%|██████████| 223/223 [00:00<00:00, 1015.81it/s]
+/usr/local/lib/python3.10/dist-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/usr/local/lib/python3.10/dist-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=AlexNet_Weights.IMAGENET1K_V1`. You can also use `weights=AlexNet_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+[p2] models ready 19s
+[trt] loaded vae_decoder_512_b8_fp16.engine
+[11/06/2026-17:54:31] [TRT] [W] Using default stream in enqueueV3() may lead to performance issues due to additional calls to cudaStreamSynchronize() by TensorRT to ensure correct synchronization. Please use non-default stream instead.
+/mnt/i/Latent_Style/WEAVE/tools/12h/csd_model.py:89: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast():
+[p2] S4_preview: {"root": "/mnt/i/Latent_Style/pseudo_gt_24h/pairs/reverse_e8", "records_total": 284, "sampled": 40, "coverage_nominal_mean": 0.375, "coverage_measured_mean": 0.375, "coverage_weighted_mean": 0.2781486511230469, "frac_measured_ge_022": 1.0, "frac_measured_lt_018": 0.0, "match_score_mean": 0.5752211279546222, "csd_dT_pseudo": 0.09785598963499069, "csd_dT_reach": 0.0033369753509759903, "csd_retention": NaN, "csd_dS_pseudo": 0.09785598963499069, "csd_dS_reach": 0.0033369753509759903, "hh_share_u": 0.1469659968534914, "hh_norm_ratio": 0.3811020833087257, "band_share": {"LL": 0.4678894825164134, "LH": 0.18628681009640086, "HL": 0.1988577105336941, "HH": 0.1469659968534914}, "dino_reach_vs_pseudo": 0.9547883421182632, "dino_reach_vs_source": 0.8399878218770027, "dino_pseudo_vs_source": 0.8339912757277489}
+[p2] done 34s -> /mnt/i/Latent_Style/pseudo_gt_24h/p2_reach_e8.json

@@ -1218,6 +1218,8 @@ class DataConfig:
     latent_roots: list[dict[str, Any]] | None = None
     # 伪GT 实验：显式配对 latent shard 目录（含 manifest.json）；非空时走 PairedLatentDataset。
     paired_latent_cache_dir: str = ""
+    # V4：按实测覆盖率分层，只保留 effective_coverage_measured >= 该值的配对（0 = 不过滤）。
+    paired_min_coverage: float = 0.0
     # 每类必须读到的张数；不等则 fail-fast（None = 不检查）。
     expected_style_counts: dict[str, int] | None = None
     # Route C: DINOv2 patch-token cache root (tools/extract_dino_cache.py output).
