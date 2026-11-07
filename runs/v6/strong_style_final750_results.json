@@ -1,0 +1,598 @@
+{
+  "D1_T1_strong (Ours Strong)": {
+    "paper_rgb_v1": {
+      "protocol": "paper_rgb_v1",
+      "n_total_evaluated": 750,
+      "cross600": {
+        "n": 600,
+        "CSD_dT": 0.05701859283881883,
+        "CSD_dS": -0.14455358908822138,
+        "CSD_dM": 0.2015721819270402,
+        "Target_Top1": 0.065,
+        "Source_Top1": 0.005,
+        "Target_Top1_Gain": 0.060000000000000005,
+        "Target_Margin": -0.25503273693223794,
+        "Target_Margin_Gain": 0.19927260170380273,
+        "CSD_MMD": 0.15993068218231202,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.11970961093902588,
+          "Impressionism": 0.07876837253570557,
+          "Minimalism": 0.2626272439956665,
+          "Rococo": 0.16749930381774902,
+          "Ukiyo_e": 0.17104887962341309
+        },
+        "DINO_C": 0.8696833298106988,
+        "DINO_SSM": 1.7563866306247177e-07,
+        "DINO_S": 0.3930294751484568,
+        "CLIP_S": 0.6571396712462108,
+        "LPIPS": 0.39693671132127445,
+        "frac_dT_positive": 0.7383333333333333,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.01733173298028608,
+        "per_target_dT": {
+          "Early_Renaissance": 0.047865178404996794,
+          "Impressionism": 0.103932959617426,
+          "Minimalism": 0.058418365412702164,
+          "Rococo": 0.05754472777868311,
+          "Ukiyo_e": 0.01733173298028608
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.016666666666666666,
+          "Impressionism": 0.075,
+          "Minimalism": 0.15,
+          "Rococo": 0.08333333333333333,
+          "Ukiyo_e": 0.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.30281957276165483,
+          "Impressionism": -0.29453264276186625,
+          "Minimalism": -0.10177506934851407,
+          "Rococo": -0.20146628512690465,
+          "Ukiyo_e": -0.3745701146622499
+        }
+      },
+      "same150": {
+        "n": 150,
+        "CSD_dT": -0.016174328128496805,
+        "CSD_dS": -0.016174328128496805,
+        "CSD_dM": 0.0,
+        "Target_Top1": 0.98,
+        "Source_Top1": 0.98,
+        "Target_Top1_Gain": 0.0,
+        "Target_Margin": 0.3490512386957804,
+        "Target_Margin_Gain": -0.01630767454703649,
+        "CSD_MMD": 0.15993068218231202,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.11970961093902588,
+          "Impressionism": 0.07876837253570557,
+          "Minimalism": 0.2626272439956665,
+          "Rococo": 0.16749930381774902,
+          "Ukiyo_e": 0.17104887962341309
+        },
+        "DINO_C": 0.8938262971242269,
+        "DINO_SSM": 1.5860282393494647e-07,
+        "DINO_S": 0.5968484406669935,
+        "CLIP_S": 0.8235032455126444,
+        "LPIPS": 0.2660111776491006,
+        "frac_dT_positive": 0.47333333333333333,
+        "styles_improved": 2,
+        "ukiyo_dT": -0.007501622041066487,
+        "per_target_dT": {
+          "Early_Renaissance": -0.026913580298423768,
+          "Impressionism": 0.051211581627527876,
+          "Minimalism": -0.13776296277840933,
+          "Rococo": 0.04009494284788768,
+          "Ukiyo_e": -0.007501622041066487
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.9666666666666667,
+          "Impressionism": 0.9666666666666667,
+          "Minimalism": 0.9666666666666667,
+          "Rococo": 1.0,
+          "Ukiyo_e": 1.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": 0.31084093898534776,
+          "Impressionism": 0.34611768275499344,
+          "Minimalism": 0.290985906124115,
+          "Rococo": 0.36797678073247275,
+          "Ukiyo_e": 0.42933488488197324
+        }
+      },
+      "all750": {
+        "n": 750,
+        "CSD_dT": 0.0423800086453557,
+        "CSD_dS": -0.11887773689627647,
+        "CSD_dM": 0.16125774554163216,
+        "Target_Top1": 0.248,
+        "Source_Top1": 0.2,
+        "Target_Top1_Gain": 0.04799999999999999,
+        "Target_Margin": -0.13421594180663426,
+        "Target_Margin_Gain": 0.1561565464536349,
+        "CSD_MMD": 0.15993068218231202,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.11970961093902588,
+          "Impressionism": 0.07876837253570557,
+          "Minimalism": 0.2626272439956665,
+          "Rococo": 0.16749930381774902,
+          "Ukiyo_e": 0.17104887962341309
+        },
+        "DINO_C": 0.8745119232734044,
+        "DINO_SSM": 1.7223149523696673e-07,
+        "DINO_S": 0.43379326825216413,
+        "CLIP_S": 0.6904123860994975,
+        "LPIPS": 0.3707516045868397,
+        "frac_dT_positive": 0.6853333333333333,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.012365061976015567,
+        "per_target_dT": {
+          "Early_Renaissance": 0.03290942666431268,
+          "Impressionism": 0.09338868401944637,
+          "Minimalism": 0.019182099774479867,
+          "Rococo": 0.05405477079252402,
+          "Ukiyo_e": 0.012365061976015567
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.20666666666666667,
+          "Impressionism": 0.25333333333333335,
+          "Minimalism": 0.31333333333333335,
+          "Rococo": 0.26666666666666666,
+          "Ukiyo_e": 0.2
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.18008747041225434,
+          "Impressionism": -0.1664025776584943,
+          "Minimalism": -0.023222874253988265,
+          "Rococo": -0.08757767195502918,
+          "Ukiyo_e": -0.21378911475340526
+        }
+      }
+    },
+    "latent_v1": {
+      "protocol": "latent_v1",
+      "n_total_evaluated": 750,
+      "cross600": {
+        "n": 600,
+        "CSD_dT": 0.035137131121009586,
+        "CSD_dS": -0.17093240917970737,
+        "CSD_dM": 0.20606954030071695,
+        "Target_Top1": 0.065,
+        "Source_Top1": 0.008333333333333333,
+        "Target_Top1_Gain": 0.05666666666666667,
+        "Target_Margin": -0.25503273693223794,
+        "Target_Margin_Gain": 0.2036159378538529,
+        "CSD_MMD": 0.15993068218231202,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.11970961093902588,
+          "Impressionism": 0.07876837253570557,
+          "Minimalism": 0.2626272439956665,
+          "Rococo": 0.16749930381774902,
+          "Ukiyo_e": 0.17104887962341309
+        },
+        "DINO_C": 0.8784346213440101,
+        "DINO_SSM": 1.6006588367349178e-07,
+        "DINO_S": 0.3930294751484568,
+        "CLIP_S": 0.6571396712462108,
+        "LPIPS": 0.39693671132127445,
+        "frac_dT_positive": 0.6916666666666667,
+        "styles_improved": 4,
+        "ukiyo_dT": -0.013922607650359471,
+        "per_target_dT": {
+          "Early_Renaissance": 0.03041398155813416,
+          "Impressionism": 0.07004779841129978,
+          "Minimalism": 0.042779624772568546,
+          "Rococo": 0.04636685851340493,
+          "Ukiyo_e": -0.013922607650359471
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.016666666666666666,
+          "Impressionism": 0.075,
+          "Minimalism": 0.15,
+          "Rococo": 0.08333333333333333,
+          "Ukiyo_e": 0.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.30281957276165483,
+          "Impressionism": -0.29453264276186625,
+          "Minimalism": -0.10177506934851407,
+          "Rococo": -0.20146628512690465,
+          "Ukiyo_e": -0.3745701146622499
+        }
+      },
+      "same150": {
+        "n": 150,
+        "CSD_dT": -0.04255314846833547,
+        "CSD_dS": -0.04255314846833547,
+        "CSD_dM": 0.0,
+        "Target_Top1": 0.98,
+        "Source_Top1": 0.9666666666666667,
+        "Target_Top1_Gain": 0.013333333333333308,
+        "Target_Margin": 0.3490512386957804,
+        "Target_Margin_Gain": -0.018444828589757285,
+        "CSD_MMD": 0.15993068218231202,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.11970961093902588,
+          "Impressionism": 0.07876837253570557,
+          "Minimalism": 0.2626272439956665,
+          "Rococo": 0.16749930381774902,
+          "Ukiyo_e": 0.17104887962341309
+        },
+        "DINO_C": 0.9053649107615153,
+        "DINO_SSM": 1.366311578484177e-07,
+        "DINO_S": 0.5968484406669935,
+        "CLIP_S": 0.8235032455126444,
+        "LPIPS": 0.2660111776491006,
+        "frac_dT_positive": 0.37333333333333335,
+        "styles_improved": 1,
+        "ukiyo_dT": -0.04594785372416178,
+        "per_target_dT": {
+          "Early_Renaissance": -0.04244407812754313,
+          "Impressionism": 0.03477237224578857,
+          "Minimalism": -0.15897687872250874,
+          "Rococo": -0.0001693040132522583,
+          "Ukiyo_e": -0.04594785372416178
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.9666666666666667,
+          "Impressionism": 0.9666666666666667,
+          "Minimalism": 0.9666666666666667,
+          "Rococo": 1.0,
+          "Ukiyo_e": 1.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": 0.31084093898534776,
+          "Impressionism": 0.34611768275499344,
+          "Minimalism": 0.290985906124115,
+          "Rococo": 0.36797678073247275,
+          "Ukiyo_e": 0.42933488488197324
+        }
+      },
+      "all750": {
+        "n": 750,
+        "CSD_dT": 0.019599075203140578,
+        "CSD_dS": -0.14525655703743298,
+        "CSD_dM": 0.16485563224057356,
+        "Target_Top1": 0.248,
+        "Source_Top1": 0.2,
+        "Target_Top1_Gain": 0.04799999999999999,
+        "Target_Margin": -0.13421594180663426,
+        "Target_Margin_Gain": 0.15920378456513087,
+        "CSD_MMD": 0.15993068218231202,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.11970961093902588,
+          "Impressionism": 0.07876837253570557,
+          "Minimalism": 0.2626272439956665,
+          "Rococo": 0.16749930381774902,
+          "Ukiyo_e": 0.17104887962341309
+        },
+        "DINO_C": 0.8838206792275111,
+        "DINO_SSM": 1.5537893850847694e-07,
+        "DINO_S": 0.43379326825216413,
+        "CLIP_S": 0.6904123860994975,
+        "LPIPS": 0.3707516045868397,
+        "frac_dT_positive": 0.628,
+        "styles_improved": 4,
+        "ukiyo_dT": -0.020327656865119934,
+        "per_target_dT": {
+          "Early_Renaissance": 0.0158423696209987,
+          "Impressionism": 0.06299271317819755,
+          "Minimalism": 0.0024283240735530854,
+          "Rococo": 0.03705962600807349,
+          "Ukiyo_e": -0.020327656865119934
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.20666666666666667,
+          "Impressionism": 0.25333333333333335,
+          "Minimalism": 0.31333333333333335,
+          "Rococo": 0.26666666666666666,
+          "Ukiyo_e": 0.2
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.18008747041225434,
+          "Impressionism": -0.1664025776584943,
+          "Minimalism": -0.023222874253988265,
+          "Rococo": -0.08757767195502918,
+          "Ukiyo_e": -0.21378911475340526
+        }
+      }
+    }
+  },
+  "ScoreDiff_strong (Ours Strong)": {
+    "paper_rgb_v1": {
+      "protocol": "paper_rgb_v1",
+      "n_total_evaluated": 750,
+      "cross600": {
+        "n": 600,
+        "CSD_dT": 0.07677845770182709,
+        "CSD_dS": -0.2110423678656419,
+        "CSD_dM": 0.287820825567469,
+        "Target_Top1": 0.17166666666666666,
+        "Source_Top1": 0.005,
+        "Target_Top1_Gain": 0.16666666666666666,
+        "Target_Margin": -0.18437663290649653,
+        "Target_Margin_Gain": 0.26992870572954414,
+        "CSD_MMD": 0.13107335567474365,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.10544323921203613,
+          "Impressionism": 0.06097841262817383,
+          "Minimalism": 0.21825313568115234,
+          "Rococo": 0.1273956298828125,
+          "Ukiyo_e": 0.14329636096954346
+        },
+        "DINO_C": 0.7734842709203561,
+        "DINO_SSM": 3.135928161235313e-07,
+        "DINO_S": 0.40186381625632445,
+        "CLIP_S": 0.6643162345389525,
+        "LPIPS": 0.4056062040415903,
+        "frac_dT_positive": 0.7833333333333333,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.03008641895527641,
+        "per_target_dT": {
+          "Early_Renaissance": 0.024877373796577253,
+          "Impressionism": 0.12015302615861098,
+          "Minimalism": 0.16912713137765725,
+          "Rococo": 0.039648338221013546,
+          "Ukiyo_e": 0.03008641895527641
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.06666666666666667,
+          "Impressionism": 0.08333333333333333,
+          "Minimalism": 0.6583333333333333,
+          "Rococo": 0.025,
+          "Ukiyo_e": 0.025
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.24180862698704003,
+          "Impressionism": -0.21267431567733486,
+          "Minimalism": 0.05346445025255283,
+          "Rococo": -0.2643746686478456,
+          "Ukiyo_e": -0.256490003472815
+        }
+      },
+      "same150": {
+        "n": 150,
+        "CSD_dT": 0.026389331718285877,
+        "CSD_dS": 0.026389331718285877,
+        "CSD_dM": 0.0,
+        "Target_Top1": 0.9666666666666667,
+        "Source_Top1": 0.98,
+        "Target_Top1_Gain": -0.013333333333333308,
+        "Target_Margin": 0.36751746813456215,
+        "Target_Margin_Gain": 0.0021585548917452493,
+        "CSD_MMD": 0.13107335567474365,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.10544323921203613,
+          "Impressionism": 0.06097841262817383,
+          "Minimalism": 0.21825313568115234,
+          "Rococo": 0.1273956298828125,
+          "Ukiyo_e": 0.14329636096954346
+        },
+        "DINO_C": 0.9803063142299652,
+        "DINO_SSM": 4.946346357688943e-08,
+        "DINO_S": 0.6031061908602715,
+        "CLIP_S": 0.82542751232783,
+        "LPIPS": 0.07450104147816698,
+        "frac_dT_positive": 0.7133333333333334,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.038500632842381796,
+        "per_target_dT": {
+          "Early_Renaissance": 0.015525044004122416,
+          "Impressionism": 0.016430145998795827,
+          "Minimalism": 0.021214985847473146,
+          "Rococo": 0.04027584989865621,
+          "Ukiyo_e": 0.038500632842381796
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 1.0,
+          "Impressionism": 0.9666666666666667,
+          "Minimalism": 1.0,
+          "Rococo": 0.8666666666666667,
+          "Ukiyo_e": 1.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": 0.3360101689894994,
+          "Impressionism": 0.289879501859347,
+          "Minimalism": 0.40324363112449646,
+          "Rococo": 0.3004839907089869,
+          "Ukiyo_e": 0.5079700479904811
+        }
+      },
+      "all750": {
+        "n": 750,
+        "CSD_dT": 0.06670063250511885,
+        "CSD_dS": -0.16355602794885635,
+        "CSD_dM": 0.2302566604539752,
+        "Target_Top1": 0.33066666666666666,
+        "Source_Top1": 0.2,
+        "Target_Top1_Gain": 0.13066666666666665,
+        "Target_Margin": -0.07399781269828479,
+        "Target_Margin_Gain": 0.2163746755619844,
+        "CSD_MMD": 0.13107335567474365,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.10544323921203613,
+          "Impressionism": 0.06097841262817383,
+          "Minimalism": 0.21825313568115234,
+          "Rococo": 0.1273956298828125,
+          "Ukiyo_e": 0.14329636096954346
+        },
+        "DINO_C": 0.8148486795822779,
+        "DINO_SSM": 2.607669456142029e-07,
+        "DINO_S": 0.44211229117711387,
+        "CLIP_S": 0.696538490096728,
+        "LPIPS": 0.3393851715289056,
+        "frac_dT_positive": 0.7693333333333333,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.031769261732697486,
+        "per_target_dT": {
+          "Early_Renaissance": 0.023006907838086288,
+          "Impressionism": 0.09940845012664795,
+          "Minimalism": 0.13954470227162044,
+          "Rococo": 0.03977384055654208,
+          "Ukiyo_e": 0.031769261732697486
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.25333333333333335,
+          "Impressionism": 0.26,
+          "Minimalism": 0.7266666666666667,
+          "Rococo": 0.19333333333333333,
+          "Ukiyo_e": 0.22
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.12624486779173216,
+          "Impressionism": -0.11216355216999849,
+          "Minimalism": 0.12342028642694156,
+          "Rococo": -0.1514029367764791,
+          "Ukiyo_e": -0.10359799318015575
+        }
+      }
+    },
+    "latent_v1": {
+      "protocol": "latent_v1",
+      "n_total_evaluated": 750,
+      "cross600": {
+        "n": 600,
+        "CSD_dT": 0.0548969962572058,
+        "CSD_dS": -0.23742118787020444,
+        "CSD_dM": 0.29231818412741023,
+        "Target_Top1": 0.17166666666666666,
+        "Source_Top1": 0.008333333333333333,
+        "Target_Top1_Gain": 0.16333333333333333,
+        "Target_Margin": -0.18437663290649653,
+        "Target_Margin_Gain": 0.2742720418795943,
+        "CSD_MMD": 0.13107335567474365,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.10544323921203613,
+          "Impressionism": 0.06097841262817383,
+          "Minimalism": 0.21825313568115234,
+          "Rococo": 0.1273956298828125,
+          "Ukiyo_e": 0.14329636096954346
+        },
+        "DINO_C": 0.7800412096828222,
+        "DINO_SSM": 2.9820899603905106e-07,
+        "DINO_S": 0.40186381625632445,
+        "CLIP_S": 0.6643162345389525,
+        "LPIPS": 0.4056062040415903,
+        "frac_dT_positive": 0.7483333333333333,
+        "styles_improved": 4,
+        "ukiyo_dT": -0.0011679218461116156,
+        "per_target_dT": {
+          "Early_Renaissance": 0.007426177089413007,
+          "Impressionism": 0.08626786532501379,
+          "Minimalism": 0.15348839089274408,
+          "Rococo": 0.028470469824969768,
+          "Ukiyo_e": -0.0011679218461116156
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.06666666666666667,
+          "Impressionism": 0.08333333333333333,
+          "Minimalism": 0.6583333333333333,
+          "Rococo": 0.025,
+          "Ukiyo_e": 0.025
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.24180862698704003,
+          "Impressionism": -0.21267431567733486,
+          "Minimalism": 0.05346445025255283,
+          "Rococo": -0.2643746686478456,
+          "Ukiyo_e": -0.256490003472815
+        }
+      },
+      "same150": {
+        "n": 150,
+        "CSD_dT": 1.0511577129364013e-05,
+        "CSD_dS": 1.0511577129364013e-05,
+        "CSD_dM": 0.0,
+        "Target_Top1": 0.9666666666666667,
+        "Source_Top1": 0.9666666666666667,
+        "Target_Top1_Gain": 0.0,
+        "Target_Margin": 0.36751746813456215,
+        "Target_Margin_Gain": 2.1400849024454753e-05,
+        "CSD_MMD": 0.13107335567474365,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.10544323921203613,
+          "Impressionism": 0.06097841262817383,
+          "Minimalism": 0.21825313568115234,
+          "Rococo": 0.1273956298828125,
+          "Ukiyo_e": 0.14329636096954346
+        },
+        "DINO_C": 0.9999961837132771,
+        "DINO_SSM": 1.4895592444682155e-11,
+        "DINO_S": 0.6031061908602715,
+        "CLIP_S": 0.82542751232783,
+        "LPIPS": 0.07450104147816698,
+        "frac_dT_positive": 0.49333333333333335,
+        "styles_improved": 3,
+        "ukiyo_dT": 5.4401159286499026e-05,
+        "per_target_dT": {
+          "Early_Renaissance": -5.452831586201986e-06,
+          "Impressionism": -9.063382943471273e-06,
+          "Minimalism": 1.0699033737182617e-06,
+          "Rococo": 1.1603037516276041e-05,
+          "Ukiyo_e": 5.4401159286499026e-05
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 1.0,
+          "Impressionism": 0.9666666666666667,
+          "Minimalism": 1.0,
+          "Rococo": 0.8666666666666667,
+          "Ukiyo_e": 1.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": 0.3360101689894994,
+          "Impressionism": 0.289879501859347,
+          "Minimalism": 0.40324363112449646,
+          "Rococo": 0.3004839907089869,
+          "Ukiyo_e": 0.5079700479904811
+        }
+      },
+      "all750": {
+        "n": 750,
+        "CSD_dT": 0.04391969932119052,
+        "CSD_dS": -0.18993484798073768,
+        "CSD_dM": 0.2338545473019282,
+        "Target_Top1": 0.33066666666666666,
+        "Source_Top1": 0.2,
+        "Target_Top1_Gain": 0.13066666666666665,
+        "Target_Margin": -0.07399781269828479,
+        "Target_Margin_Gain": 0.21942191367348035,
+        "CSD_MMD": 0.13107335567474365,
+        "CSD_MMD_by_style": {
+          "Early_Renaissance": 0.10544323921203613,
+          "Impressionism": 0.06097841262817383,
+          "Minimalism": 0.21825313568115234,
+          "Rococo": 0.1273956298828125,
+          "Ukiyo_e": 0.14329636096954346
+        },
+        "DINO_C": 0.8240322044889132,
+        "DINO_SSM": 2.3857017594972976e-07,
+        "DINO_S": 0.44211229117711387,
+        "CLIP_S": 0.696538490096728,
+        "LPIPS": 0.3393851715289056,
+        "frac_dT_positive": 0.6973333333333334,
+        "styles_improved": 4,
+        "ukiyo_dT": -0.0009234572450319926,
+        "per_target_dT": {
+          "Early_Renaissance": 0.005939851105213165,
+          "Impressionism": 0.06901247958342234,
+          "Minimalism": 0.12279092669486999,
+          "Rococo": 0.02277869646747907,
+          "Ukiyo_e": -0.0009234572450319926
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.25333333333333335,
+          "Impressionism": 0.26,
+          "Minimalism": 0.7266666666666667,
+          "Rococo": 0.19333333333333333,
+          "Ukiyo_e": 0.22
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.12624486779173216,
+          "Impressionism": -0.11216355216999849,
+          "Minimalism": 0.12342028642694156,
+          "Rococo": -0.1514029367764791,
+          "Ukiyo_e": -0.10359799318015575
+        }
+      }
+    }
+  }
+}

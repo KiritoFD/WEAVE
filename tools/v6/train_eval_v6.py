@@ -849,7 +849,7 @@ def train_and_evaluate(args) -> dict:
                 l_style_same = compute_style_distribution_loss(
                     z1_est, y_real, style_targets, b1_encoder=b1_encoder, b1_protos=b1_protos
                 )
-                loss = l_rec + args.w_style_dist * l_style_same
+                loss = args.w_rec * l_rec + args.w_style_dist * l_style_same
 
                 if args.w_cross > 0.0:
                     # Cross-style pass on the exact same canonical content c_in with shifted target Style-ID
@@ -968,6 +968,7 @@ def main() -> None:
     ap.add_argument("--accum", type=int, default=3)
     ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--coherence-beta", type=float, default=0.65)
+    ap.add_argument("--w-rec", type=float, default=1.0)
     ap.add_argument("--w-style-dist", type=float, default=0.5)
     ap.add_argument("--w-cross", type=float, default=0.5)
     ap.add_argument("--w-canon-inv", type=float, default=1.5)
