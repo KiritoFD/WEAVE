@@ -19,6 +19,8 @@ env/
 .task_release/
 .vscode/
 .idea/
+.tools/
+foi26/
 *.swp
 *.swo
 *~
@@ -29,7 +31,9 @@ Thumbs.db
 desktop.ini
 
 # ============ Runtime artifacts (large, excluded) ============
-runs/
+runs/*
+!runs/v5/
+!runs/v6/
 data/
 datasets/
 results/

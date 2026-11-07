@@ -1,0 +1,359 @@
+# WEAVE V5：24小时连续分支突破实验
+
+这轮不再围绕伪GT做局部改良，而是直接裁决三种可能的正确路线：
+
+1. 确定性风格算子：直接学习内容保持的风格分布变换。
+2. 无配对终点监督Flow：保留ODE，但不再使用人工配对速度标签。
+3. 真实艺术分布生成先验：从18K真实画作训练风格条件生成模型，再利用输入图像进行编辑。
+
+第三条尤其重要。艺术风格迁移是欠定问题，确定性Style-ID映射未必能表达目标风格的多种合理结果；已有多样化风格迁移研究明确讨论过这一限制。
+
+[image](https://www.google.com/s2/favicons?domain=https://openaccess.thecvf.com\&sz=32)
+
+openaccess.thecvf.com
+
+
+
+三条路线不是同时盲目训练，而是由实验结果连续切换。任何分支失败，都在24小时内执行下一项实验，不出现“停止研究、下轮再说”的断点。
+
+## 一、固定实验条件
+
+| 项目   | V5规定                         |
+| ---- | ---------------------------- |
+| GPU  | RTX 3060 12GB，单进程            |
+| 系统内存 | WSL 15GB，避免同时加载多个大模型         |
+| 数据   | 现有D5五风格18K，完全只读              |
+| 输入   | 已缓存的SD1.5 VAE latent         |
+| 生成尺度 | 4×64×64                      |
+| 主要模型 | 1M–2M参数                      |
+| 条件   | 首轮仅Style-ID，消除参考GT泄漏         |
+| 禁止   | GAN、RGB训练损失、CSD反传、额外大型教师     |
+| 风格指标 | CSD ΔT为主，ΔS、ΔM辅助             |
+| 内容指标 | DINO-C、LPIPS                 |
+| 训练选择 | 独立验证集200个跨风格任务               |
+| 最终评估 | 固定600 cross＋150 same，750历史对照 |
+
+此前S1/S2的600跨风格ΔT均约+0.016，明显不足；S2还造成LPIPS退化。这两组直接保留为失败基线，不重复扩训。
+
+## 二、完整实验分支
+
+\#chatgpt-mermaid-\_r_uv\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_uv\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_uv\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_uv\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_uv\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_uv\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_uv\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_uv\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_uv\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_uv\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_uv\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_uv\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_uv\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_uv\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_uv\_ p{margin:0;}#chatgpt-mermaid-\_r_uv\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_uv\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_uv\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_uv\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_uv\_ .label text,#chatgpt-mermaid-\_r_uv\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_uv\_ .node rect,#chatgpt-mermaid-\_r_uv\_ .node circle,#chatgpt-mermaid-\_r_uv\_ .node ellipse,#chatgpt-mermaid-\_r_uv\_ .node polygon,#chatgpt-mermaid-\_r_uv\_ .node path{fill:rgb(19, 33, 54);stroke:rgb(31, 78, 148);stroke-width:1px;}#chatgpt-mermaid-\_r_uv\_ .rough-node .label text,#chatgpt-mermaid-\_r_uv\_ .node .label text,#chatgpt-mermaid-\_r_uv\_ .image-shape .label,#chatgpt-mermaid-\_r_uv\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_uv\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_uv\_ .rough-node .label,#chatgpt-mermaid-\_r_uv\_ .node .label,#chatgpt-mermaid-\_r_uv\_ .image-shape .label,#chatgpt-mermaid-\_r_uv\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_uv\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_uv\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_uv\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_uv\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_uv\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_uv\_ .edgeLabel{background-color:rgb(14, 14, 14);text-align:center;}#chatgpt-mermaid-\_r_uv\_ .edgeLabel p{background-color:rgb(14, 14, 14);}#chatgpt-mermaid-\_r_uv\_ .edgeLabel rect{opacity:0.5;background-color:rgb(14, 14, 14);fill:rgb(14, 14, 14);}#chatgpt-mermaid-\_r_uv\_ .labelBkg{background-color:rgba(14, 14, 14, 0.5);}#chatgpt-mermaid-\_r_uv\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_uv\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_uv\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_uv\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_uv\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_uv\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_uv\_ .icon-shape,#chatgpt-mermaid-\_r_uv\_ .image-shape{background-color:rgb(14, 14, 14);text-align:center;}#chatgpt-mermaid-\_r_uv\_ .icon-shape p,#chatgpt-mermaid-\_r_uv\_ .image-shape p{background-color:rgb(14, 14, 14);padding:2px;}#chatgpt-mermaid-\_r_uv\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_uv\_ .image-shape .label rect{opacity:0.5;background-color:rgb(14, 14, 14);fill:rgb(14, 14, 14);}#chatgpt-mermaid-\_r_uv\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_uv\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_uv\_ .node .neo-node{stroke:rgb(31, 78, 148);}#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_uv\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_uv\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].node .neo-line path{stroke:rgb(31, 78, 148);filter:none;}#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_uv\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_uv\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_uv\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_uv\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_uv\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_uv\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(153, 206, 255);}#chatgpt-mermaid-\_r_uv\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_uv\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_uv\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-width:1px;}#chatgpt-mermaid-\_r_uv\_ .node rect,#chatgpt-mermaid-\_r_uv\_ .node circle,#chatgpt-mermaid-\_r_uv\_ .node ellipse,#chatgpt-mermaid-\_r_uv\_ .node polygon,#chatgpt-mermaid-\_r_uv\_ .node path{fill:rgb(0, 40, 77);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_uv\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_uv\_ .mermaid-decision .label-container{fill:rgb(0, 14, 26);stroke:rgb(26, 62, 95);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_uv\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_uv\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_uv\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}P0 · 条件与指标审计0–1.5hP1 · Latent Oracle1.5–4.5hOracle能兼顾风格与内容？路线A直接风格算子 M1vs 无配对终点Flow M2路线B · 修正监督目标区分风格特征失效与结构约束过强修正后Oracle是否成功？训练修正目标的M1路线C · 真实艺术分布条件Rectified Flow先验验证集是否出现真实增益？延长训练 / 第二seed测试实例风格编码Oracle解蒸馏验证摊销学习瓶颈部分加噪编辑＋内容结构引导P4 · 完整600/150评估17–21hP5 · 复验、失败归因最终模型决策 21–24h成功失败成功失败成功失败
+
+所有分支都在17小时之前汇合到最终评测。 不存在Oracle失败就不训练、模型失败就没有后续的情况。
+
+## 三、P0：修复真实的信息流问题（0–1.5h）
+
+首先处理V4发现的训练－推理条件不一致。
+
+现有paired-latent路径会在没有独立风格latent时，把监督终点`z1`作为风格条件，而推理使用独立参考图。
+
+V5统一采用：
+
+\\[ v\_\theta(z,\tau,t) \quad\text{或}\quad G\_\theta(z,t) \\]
+
+首轮只依赖Style-ID，不依赖当前样本GT。
+
+同时固定VAE posterior mean、验证集、随机种子及输入latent。将真实风格样本的多尺度latent描述符预先缓存。
+
+交付： 条件交换测试、风格指标基线、可复现的数据流。无论条件泄漏影响大小，都继续P1。
+
+## 四、P1：Latent Oracle，判断问题是否可解（1.5–4.5h）
+
+不训练生成器，直接优化源图latent。
+
+\\[ z'=z+\delta \\]
+
+目标为：
+
+\\[ \mathcal L= D\_{\rm style}(\Phi(z'),P_t) +\lambda D\_{\rm structure}(\Psi(z'),\Psi(z)) \\]
+
+\\(\Phi\\)使用真实画作多尺度latent统计与patch分布；\\(\Psi\\)使用归一化空间自相似和结构特征，不强制源图LL统计保持不变。
+
+### 测试矩阵
+
+| Oracle | 允许修改        | 内容约束 |
+| ------ | ----------- | ---- |
+| O1     | LL          | 弱、强  |
+| O2     | LL＋LH＋HL    | 弱、强  |
+| O3     | LL＋LH＋HL＋HH | 弱、强  |
+
+先测100个固定跨风格任务，每组64次latent优化迭代。
+
+另外保留一个无内容约束的小样本诊断，区分“风格目标无效”和“内容约束过强”。
+
+### 分支G1
+
+A：Oracle成功。
+
+判据：在独立CSD评估中，目标风格显著靠近，且DINO-C、LPIPS满足内容约束。
+
+立即进入M1/M2训练。
+
+B：Oracle失败。
+
+不停止，进入监督目标修复。
+
+| 失败现象           | 直接执行的实验                 |
+| -------------- | ----------------------- |
+| 无约束也无法提高CSD ΔT | 训练一个D5内部风格表征器，替换无效的风格统计 |
+| 无约束有效，加结构约束就失效 | 更换内容结构约束，解除过强的LL空间锁定    |
+| O3有效，O2失败      | 下一模型允许HH输出              |
+| 目标风格改善但内容崩塌    | 调整结构损失，寻找Pareto前沿       |
+
+新风格表征器只使用真实D5训练作品，采用同风格对比与类别监督，并检查留画家、内容困难负样本表现。
+
+修正后再次做小规模Oracle。成功就进入M1；仍失败就进入真实分布生成先验路线C。
+
+因此Oracle失败也不会造成实验链条中断。
+
+## 五、路线A：真正比较两种模型范式（4.5–12h）
+
+这是Oracle成功后的主线。
+
+### M1：直接风格算子
+
+\\[ \boxed{z'=z+R\_\theta(z,t)} \\]
+
+设计：
+
+- 1M–2M参数。
+- 4个残差块，采用FiLM/AdaLN风格条件。
+- LL与HF分别输出残差。
+- 输出零初始化，初始严格等于输入。
+- HH是否可训练由Oracle决定。
+
+监督直接作用于最终latent：
+
+\\[ \mathcal L\_{\rm M1} = \mathcal L\_{\rm style} +\lambda_c\mathcal L\_{\rm structure} +\lambda_i\mathcal L\_{\rm identity} \\]
+
+训练时每个batch固定或分组目标风格，从真实目标风格latent库采样统计目标。SWD按样本集合计算，不把随机目标图当成逐像素GT。
+
+这是真正不依赖伪GT、不需要ODE的模型。
+
+### M2：无配对终点监督Flow
+
+保持现有WEAVE约1M规模，输出：
+
+\\[ z'=ODE\_\theta(z,t) \\]
+
+训练不使用人工速度标签：
+
+\\[ \boxed{ \mathcal L\_{\rm M2} = \mathcal L\_{\rm style}(z',P_t) +\lambda_c\mathcal L\_{\rm structure} +\lambda_i\mathcal L\_{\rm identity} } \\]
+
+首轮使用2步可微ODE，随后比较4步训练与8步推理。
+
+它与M1使用完全相同的风格和内容目标。
+
+这样能够直接回答：真正有效的是监督目标，还是ODE提供了必要的模型能力？
+
+### 训练配置
+
+| 项目    | M1             | M2        |
+| ----- | -------------- | --------- |
+| 参数规模  | 1M–2M          | 约1M       |
+| Batch | 有效256          | 按显存使用梯度累积 |
+| LR    | 2×10⁻⁴         | 2×10⁻⁴    |
+| 初始步数  | 1200           | 800       |
+| 最大扩展  | 2500           | 1600      |
+| 风格条件  | Style-ID       | Style-ID  |
+| 训练损失  | 分布＋结构＋Identity | 相同        |
+| 额外教师  | 无              | 无         |
+
+先实测100步吞吐，再在固定时间窗口内训练。两者GPU开销不同，比较时同时报告训练墙钟和优化步数。
+
+## 六、路线B：Oracle失败后，如何继续（4.5–12h）
+
+这条路线要明确区分两种根因。
+
+### B1：原风格描述符失效
+
+若latent统计SWD下降，但CSD和视觉效果不改善，说明原风格目标可能不够表达真实画风。
+
+立即建立一个轻量Style Encoder：
+
+\\[ E_s:z\rightarrow h_s \\]
+
+使用18K真实画作训练，学习五类风格的分布表征。
+
+先验证其在留画家和内容相似负样本上的风格区分能力。达标后冻结编码器，以其特征分布重新运行Oracle。
+
+若成功： 用新监督训练M1。
+
+若仍失败： 不再反复调整统计量，直接切换路线C。
+
+### B2：内容约束过强
+
+若无约束时可以明显靠近目标风格，但内容损坏，说明当前内容保持定义不合理。
+
+对比两种约束：
+
+\\[ L\_{\rm local\ selfsim} \\]
+
+与
+
+\\[ L\_{\rm coarse\ geometry} \\]
+
+并检查LL外观变化是否仍然被结构损失过度抑制。
+
+若存在有效Pareto点： 使用对应目标训练M1。
+
+若仍不存在： 进入路线C，用真实生成先验重新建立风格－内容权衡。
+
+这保证P1失败后，仍然有明确的模型训练工作，而不是仅仅得到一份诊断报告。
+
+## 七、路线C：训练真正的艺术风格生成先验（7–17h）
+
+这是整轮最重要的备用方向，也可能反而是真正正确的模型。
+
+不再让网络学习“源图应该去往哪张图”。
+
+直接学习：
+
+\\[ p(z\mid t) \\]
+
+其中 \\(z\\) 是真实艺术作品latent，\\(t\\) 是五种风格类别。
+
+采用Style-Conditional Rectified Flow：
+
+\\[ z\_\tau=(1-\tau)\epsilon+\tau z\_{\rm real} \\]
+
+\\[ \boxed{ v^\*=z\_{\rm real}-\epsilon } \\]
+
+这一次FM监督是合法且明确的生成建模目标：从噪声分布学习到真实目标风格作品分布，而不是拟合人为拼贴的目标图。
+
+模型约2M参数，单卡3060训练约2000–4000步，依据实测吞吐调整。
+
+### 如何实现风格迁移？
+
+借鉴SDEdit的部分加噪编辑思想：把真实源图映射到中间噪声水平，再利用目标风格生成先验恢复。原始SDEdit依赖预训练生成先验；这里需要自行训练D5小模型，不能假设能够获得相同质量。
+
+[image](https://www.google.com/s2/favicons?domain=https://arxiv.org\&sz=32)
+
+arxiv.org
+
+
+
+设：
+
+\\[ z\_{\tau_0}=\tau_0z\_{\rm source}+(1-\tau_0)\epsilon \\]
+
+从\\(\tau_0\\)积分至1，目标条件为\\(t\\)。
+
+固定测试：
+
+| 输入保留比例 \\(\tau_0\\) | 预计取舍          |
+| ------------------- | ------------- |
+| 0.35                | 风格自由度较高，内容风险大 |
+| 0.55                | 平衡档           |
+| 0.75                | 内容保留较多，风格改变较弱 |
+
+另测试一种结构引导：保留源图归一化的粗尺度空间布局，但允许LL颜色统计变化。
+
+### 路线C的后续也不能中断
+
+| 结果                  | 继续执行                     |
+| ------------------- | ------------------------ |
+| 能生成合理目标风格，但内容差      | 扫描部分加噪强度与结构引导            |
+| 内容很好，但目标风格弱         | 降低输入保留比例，增加目标风格生成自由度     |
+| 从纯噪声都不能生成可信艺术latent | 改成低/中噪声去噪训练，测试局部生成先验能否成立 |
+| 生成质量与内容都达标          | 测试两个随机种子的风格多样性及泛化        |
+
+这条路线的意义是验证：我们是否真正需要一个会生成艺术画风的模型，而不是仅会修改输入的确定性网络。
+
+如果低噪声去噪也失败，则可进一步将失败定位到模型容量、数据规模或训练表示，而不再归咎于伪GT。
+
+## 八、模型训练失败后的第三层分支（12–17h）
+
+即使Oracle成功，M1和M2也可能都失败。这种情况同样有预定后续。
+
+| 结果                 | 后续实验                  |
+| ------------------ | --------------------- |
+| M1成功，M2失败          | M1延长训练＋第二seed；不再投入ODE |
+| M2成功，M1失败          | M2扩展到4步可微训练，检查ODE实际价值 |
+| M1/M2都成功           | 比较同质量下的计算量和风格多样性，选择主线 |
+| Oracle成功，但M1/M2都失败 | 进行Oracle解蒸馏实验         |
+| Oracle修复失败         | 直接运行路线C               |
+
+### Oracle解蒸馏
+
+如果单张latent可以优化到正确风格，但网络不能一步预测到那里，问题就是优化结果无法被有效摊销到模型参数中。
+
+从已经成功的Oracle生成约1000个经过内容约束与独立风格评估的解：
+
+\\[ (z,\hat z\_{\rm oracle},t) \\]
+
+用M1学习：
+
+\\[ R\_\theta(z,t)\approx \hat z\_{\rm oracle}-z \\]
+
+这里的终点不是Patch拼贴伪GT，而是已经实际验证风格和内容都合格的优化解。
+
+训练后检查：
+
+- 是否能拟合这些可行变换。
+- 是否能泛化到未参与Oracle优化的源图。
+- 是否只需要增加模型容量，还是需要迭代式优化。
+
+若蒸馏有效： 后续采用Oracle指导的迭代训练。
+
+若蒸馏失败： 在剩余预算内运行路线C的小规模生成先验试验，判断问题是否来自确定性变换。
+
+## 九、24小时固定时间表
+
+所有分支共享同一时间窗口，不会因为前面某一项失败导致后面无事可做。
+
+| 时间       | 主线成功时                 | 主线失败时                    |
+| -------- | --------------------- | ------------------------ |
+| 0–1.5h   | 条件泄漏修复、评测冻结           | 相同                       |
+| 1.5–4.5h | Latent Oracle         | 相同                       |
+| 4.5–7h   | 构建M1/M2，开始训练          | 修复风格表征或内容约束，重做Oracle     |
+| 7–12h    | M1/M2训练及200验证         | 训练修正目标M1；若仍失败，启动真实风格RF先验 |
+| 12–17h   | 成功则扩训/复验；失败则Oracle解蒸馏 | 继续RF先验、部分加噪与结构引导实验       |
+| 17–21h   | 最优模型完整600/150评测       | RF或补救模型完整600/150评测       |
+| 21–24h   | 第二seed、失败案例分析、模型定型    | 低噪声补救/结构约束复核、完整失败归因      |
+| 总计       | 24h                   | 24h                      |
+
+这次每个时间窗口固定资源预算，未使用的时间立即转给当前最优路线，不再增开新研究主题。
+
+工程上维持单GPU任务、串行评估、FP16 latent缓存、单独加载CSD，以及已实测的batch/渲染档位。
+
+## 十、统一成功标准
+
+所有路线，包括Oracle、M1、M2和生成先验，都使用相同的独立风格与内容评价。
+
+| 指标            | 要求                  |
+| ------------- | ------------------- |
+| 600跨风格CSD ΔT  | 挑战目标≥+0.04          |
+| 相比同协议旧WEAVE   | 配对95% CI支持正向改善      |
+| DINO-C        | 不低于旧基线超过0.01        |
+| LPIPS         | 不高于旧基线超过0.01        |
+| 目标风格覆盖        | 至少4/5风格改善           |
+| Ukiyo-e       | ΔT必须转正              |
+| Style-ID条件选择性 | 显著高于错误ID            |
+| 150同风格保持      | 不出现明显额外风格损伤         |
+| 可视化           | 不允许明显纹理作弊、语义改变或结构崩塌 |
+
+对于随机生成路线，两个随机种子都要报告，采用平均性能，不允许只选最好的一张。
+
+如果某模型风格有突破但内容未达标，保留它作为风格能力证据，并进入内容引导分支；不能直接宣布成功。
+
+## 十一、24小时结束时必须交付的结果
+
+| 必须回答的问题                | 对应证据                |
+| ---------------------- | ------------------- |
+| 现有VAE latent能否表达强风格迁移？ | O1/O2/O3与Oracle补救实验 |
+| 原监督是否根本错误？             | 修正条件后的FM、M1/M2结果    |
+| 直接算子是否比ODE合理？          | M1与M2同监督、同评估对照      |
+| 主要瓶颈是否为模型不能摊销优化解？      | Oracle解蒸馏           |
+| 是否真正需要生成先验和随机性？        | 路线C噪声－真实作品Flow与编辑实验 |
+| 该使用什么模型继续研究？           | 600跨风格主表＋内容Pareto前沿 |
+
+最后的裁决只有三类：
+
+A. 确定性直接算子成功： WEAVE过去主要错在监督目标，ODE可以退出主线。
+
+B. 无配对Flow或真实艺术先验成功： 需要保留生成过程，但必须使用真正的分布建模，而不是随机画作伪配对。
+
+C. 所有模型都未成功： 通过Oracle与补救实验明确区分是风格目标、内容约束、表示能力，还是小模型生成容量限制，并据此确定下一轮唯一优先方向。
+
+本轮不以“找出哪个超参数更好”为目标，而是要在24小时内决定下一代WEAVE究竟应该是一种风格变换算子，还是一种内容约束的艺术生成模型。

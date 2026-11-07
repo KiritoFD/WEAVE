@@ -1,0 +1,195 @@
+{
+  "ckpt": "runs/v5/route_c/flow_lowmid.pt",
+  "sweep": {
+    "t0.35_g0": {
+      "name": "t0.35_g0",
+      "tau0": 0.35,
+      "guide": false,
+      "seed": 42,
+      "n": 200,
+      "mean_dT": -0.09159632670227438,
+      "dT_ci": [
+        -0.10974635132611729,
+        -0.0717968846046133
+      ],
+      "mean_dS": -0.515508383512497,
+      "mean_dM": 0.4239120568102226,
+      "mean_dino_c": 0.31299351288937033,
+      "mean_lpips": 0.6542304599285126,
+      "frac_dT_positive": 0.255,
+      "per_target_dT": {
+        "Early_Renaissance": -0.19188614217564465,
+        "Impressionism": 0.08447430543601513,
+        "Minimalism": -0.04676142551470548,
+        "Rococo": -0.08936877604573965,
+        "Ukiyo_e": -0.21443959521129727
+      },
+      "styles_improved": 1,
+      "ukiyo_dT": -0.21443959521129727,
+      "peak_vram_mib": 3035.7,
+      "wall_sec": 23.4
+    },
+    "t0.35_g1": {
+      "name": "t0.35_g1",
+      "tau0": 0.35,
+      "guide": true,
+      "seed": 42,
+      "n": 200,
+      "mean_dT": -0.043075312194414433,
+      "dT_ci": [
+        -0.06194687602051999,
+        -0.022362254943232986
+      ],
+      "mean_dS": -0.4030994237959385,
+      "mean_dM": 0.36002411160152403,
+      "mean_dino_c": 0.4608458400517702,
+      "mean_lpips": 0.544080233424902,
+      "frac_dT_positive": 0.305,
+      "per_target_dT": {
+        "Early_Renaissance": -0.13861859254539013,
+        "Impressionism": 0.16346855834126472,
+        "Minimalism": -0.0010391261428594589,
+        "Rococo": -0.09293050721753389,
+        "Ukiyo_e": -0.14625689340755343
+      },
+      "styles_improved": 1,
+      "ukiyo_dT": -0.14625689340755343,
+      "peak_vram_mib": 3035.7,
+      "wall_sec": 23.0
+    },
+    "t0.55_g0": {
+      "name": "t0.55_g0",
+      "tau0": 0.55,
+      "guide": false,
+      "seed": 42,
+      "n": 200,
+      "mean_dT": -0.06349000095855445,
+      "dT_ci": [
+        -0.08160784885345493,
+        -0.044468752519460406
+      ],
+      "mean_dS": -0.43497482158243655,
+      "mean_dM": 0.3714848206238821,
+      "mean_dino_c": 0.47970887444913385,
+      "mean_lpips": 0.5108289876580239,
+      "frac_dT_positive": 0.295,
+      "per_target_dT": {
+        "Early_Renaissance": -0.14630767703056335,
+        "Impressionism": 0.11959602814167739,
+        "Minimalism": -0.044967733416706325,
+        "Rococo": -0.05323151133488864,
+        "Ukiyo_e": -0.1925391111522913
+      },
+      "styles_improved": 1,
+      "ukiyo_dT": -0.1925391111522913,
+      "peak_vram_mib": 3035.7,
+      "wall_sec": 24.8
+    },
+    "t0.55_g1": {
+      "name": "t0.55_g1",
+      "tau0": 0.55,
+      "guide": true,
+      "seed": 42,
+      "n": 200,
+      "mean_dT": -0.00930845782160759,
+      "dT_ci": [
+        -0.028933110598940402,
+        0.011815682173706583
+      ],
+      "mean_dS": -0.31154384031891824,
+      "mean_dM": 0.30223538249731063,
+      "mean_dino_c": 0.6218217923492193,
+      "mean_lpips": 0.40233323343098165,
+      "frac_dT_positive": 0.365,
+      "per_target_dT": {
+        "Early_Renaissance": -0.09623522777110338,
+        "Impressionism": 0.222506838850677,
+        "Minimalism": 0.005093081248924136,
+        "Rococo": -0.04776056627742946,
+        "Ukiyo_e": -0.13014641515910624
+      },
+      "styles_improved": 2,
+      "ukiyo_dT": -0.13014641515910624,
+      "peak_vram_mib": 3035.7,
+      "wall_sec": 23.0
+    },
+    "t0.75_g0": {
+      "name": "t0.75_g0",
+      "tau0": 0.75,
+      "guide": false,
+      "seed": 42,
+      "n": 200,
+      "mean_dT": 0.0032482068752869965,
+      "dT_ci": [
+        -0.01300242166116368,
+        0.02049669487983919
+      ],
+      "mean_dS": -0.2303937640413642,
+      "mean_dM": 0.23364197091665118,
+      "mean_dino_c": 0.7901626293361187,
+      "mean_lpips": 0.2771279811859131,
+      "frac_dT_positive": 0.44,
+      "per_target_dT": {
+        "Early_Renaissance": -0.039628577046096326,
+        "Impressionism": 0.17946356832981109,
+        "Minimalism": -0.019690297660417855,
+        "Rococo": 0.0036994900554418566,
+        "Ukiyo_e": -0.10760314930230379
+      },
+      "styles_improved": 2,
+      "ukiyo_dT": -0.10760314930230379,
+      "peak_vram_mib": 3035.7,
+      "wall_sec": 22.8
+    },
+    "t0.75_g1": {
+      "name": "t0.75_g1",
+      "tau0": 0.75,
+      "guide": true,
+      "seed": 42,
+      "n": 200,
+      "mean_dT": 0.026329398644156753,
+      "dT_ci": [
+        0.011563607665477321,
+        0.04268082469620277
+      ],
+      "mean_dS": -0.13973037082701922,
+      "mean_dM": 0.16605976947117596,
+      "mean_dino_c": 0.8595280718803405,
+      "mean_lpips": 0.21958597356453538,
+      "frac_dT_positive": 0.52,
+      "per_target_dT": {
+        "Early_Renaissance": -0.007820902764797211,
+        "Impressionism": 0.20338820144534112,
+        "Minimalism": -0.0012394627323374153,
+        "Rococo": 0.006026371475309133,
+        "Ukiyo_e": -0.06870721420273185
+      },
+      "styles_improved": 2,
+      "ukiyo_dT": -0.06870721420273185,
+      "peak_vram_mib": 3035.7,
+      "wall_sec": 23.0
+    }
+  },
+  "timestamp": "2026-11-07 10:15:51",
+  "decision": {
+    "ckpt": "runs/v5/route_c/flow_lowmid.pt",
+    "gate_passed": false,
+    "best": "t0.75_g1",
+    "best_config": {
+      "ckpt": "runs/v5/route_c/flow_lowmid.pt",
+      "tau0": 0.75,
+      "guide": true,
+      "seed": 42
+    },
+    "best_dT": 0.026329398644156753,
+    "best_dino_c": 0.8595280718803405,
+    "best_lpips": 0.21958597356453538,
+    "style_id_selectivity": {
+      "cos_correct_id": 0.1764244457380846,
+      "cos_wrong_id": 0.1750081181526184,
+      "margin": 0.0014163275854661983,
+      "selective": false
+    },
+    "next_stage": "final_750_full_eval"
+  }
+}

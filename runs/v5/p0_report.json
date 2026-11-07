@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-11-06 23:01:29",
+  "condition_swap": {
+    "status": "passed",
+    "checkpoint": "/mnt/i/Latent_Style/WEAVE/runs/12h/A1/epoch_2000.pt",
+    "diffs": {
+      "ll": {
+        "cosine_similarity": 0.999999463558197,
+        "l2_diff": 0.0008856461499817669
+      },
+      "lh": {
+        "cosine_similarity": 0.9999995231628418,
+        "l2_diff": 0.0008755933376960456
+      },
+      "hl": {
+        "cosine_similarity": 0.9999996423721313,
+        "l2_diff": 0.0008349869749508798
+      }
+    }
+  },
+  "baseline": {
+    "num_sources": 50,
+    "num_tasks": 200,
+    "mean_src_cos_target": 0.150095046851784,
+    "mean_src_cos_source": 0.6011237987875938
+  }
+}

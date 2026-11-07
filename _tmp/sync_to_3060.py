@@ -8,7 +8,7 @@ import sys
 import tarfile
 from pathlib import Path
 
-ROOT = Path(r"M:\WEAVE")
+ROOT = Path(__file__).resolve().parent.parent
 REMOTE = "/mnt/i/Latent_Style/WEAVE"
 
 FILES = [

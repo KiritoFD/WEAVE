@@ -1,0 +1,1 @@
+{"ckpt": "runs/v5/route_c/flow_lowmid.pt", "tau0": 0.75, "guide": true, "seed": 42}

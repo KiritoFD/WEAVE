@@ -1,0 +1,114 @@
+{
+  "route": "C",
+  "ckpt": "runs/v5/route_c/flow_lowmid.pt",
+  "best_config": {
+    "ckpt": "runs/v5/route_c/flow_lowmid.pt",
+    "tau0": 0.75,
+    "guide": true,
+    "seed": 42
+  },
+  "per_seed": {
+    "s42": {
+      "cross600": {
+        "n": 600,
+        "CSD_dT": 0.029063338625710457,
+        "CSD_dS": -0.14437339128305515,
+        "CSD_dM": 0.1734367299087656,
+        "DINO_S": 0.414780591527621,
+        "DINO_C": 0.8077287297447523,
+        "CLIP_S": 0.6819523228208224,
+        "LPIPS": 0.2203196901579698
+      },
+      "same150": {
+        "n": 150,
+        "CSD_dT": -0.14262364978591602,
+        "CSD_dS": -0.14262364978591602,
+        "CSD_dM": 0.0,
+        "DINO_S": 0.8112545637289683,
+        "DINO_C": 0.808055880467097,
+        "CLIP_S": 0.8410984158515931,
+        "LPIPS": 0.21883754598597685
+      },
+      "all750": {
+        "n": 750,
+        "CSD_dT": -0.005274059056614836,
+        "CSD_dS": -0.14402344298362732,
+        "CSD_dM": 0.13874938392701247,
+        "DINO_S": 0.4940753859678904,
+        "DINO_C": 0.8077941598892212,
+        "CLIP_S": 0.7137815414269765,
+        "LPIPS": 0.2200232613235712
+      }
+    },
+    "s43": {
+      "cross600": {
+        "n": 600,
+        "CSD_dT": 0.02873284322132046,
+        "CSD_dS": -0.14476028932879367,
+        "CSD_dM": 0.17349313255011414,
+        "DINO_S": 0.4177074734121561,
+        "DINO_C": 0.8109230674803257,
+        "CLIP_S": 0.683581922352314,
+        "LPIPS": 0.21975785257915656
+      },
+      "same150": {
+        "n": 150,
+        "CSD_dT": -0.1428331895172596,
+        "CSD_dS": -0.1428331895172596,
+        "CSD_dM": 0.0,
+        "DINO_S": 0.8128189222017924,
+        "DINO_C": 0.8112892520427704,
+        "CLIP_S": 0.8395514019330342,
+        "LPIPS": 0.21834210619330408
+      },
+      "all750": {
+        "n": 750,
+        "CSD_dT": -0.005580363326395552,
+        "CSD_dS": -0.14437486936648686,
+        "CSD_dM": 0.1387945060400913,
+        "DINO_S": 0.4967297631700834,
+        "DINO_C": 0.8109963043928147,
+        "CLIP_S": 0.714775818268458,
+        "LPIPS": 0.21947470330198607
+      }
+    }
+  },
+  "two_seed_mean_cross600": {
+    "CSD_dT": 0.02889809092351546,
+    "CSD_dS": -0.14456684030592443,
+    "CSD_dM": 0.17346493122943987,
+    "DINO_S": 0.4162440324698885,
+    "DINO_C": 0.809325898612539,
+    "CLIP_S": 0.6827671225865681,
+    "LPIPS": 0.22003877136856317
+  },
+  "two_seed_mean_same150": {
+    "CSD_dT": -0.1427284196515878,
+    "CSD_dS": -0.1427284196515878,
+    "CSD_dM": 0.0,
+    "DINO_C": 0.8096725662549337,
+    "LPIPS": 0.21858982608964045
+  },
+  "seed_gap_cross600_dT": 0.0003304954043899973,
+  "anchor_600cross_base_ep10": {
+    "CSD_dT": 0.020284,
+    "DINO_C": 0.878826,
+    "LPIPS": 0.265337
+  },
+  "success_criteria": {
+    "csd_dT_challenge_0.04": false,
+    "csd_dT_beats_old_WEAVE": true,
+    "dino_c_within_0.01": false,
+    "lpips_within_0.01": true,
+    "same_style_no_extra_damage": true
+  },
+  "final_verdict": "C_all_models_failed",
+  "answers": {
+    "VAE_latent_can_express_strong_style_transfer": "No: P1 O1/O2/O3 + B1 encoder Oracle all dT<+0.01",
+    "original_supervision_wrong": "Yes: paired pseudo-GT endpoints replaced by real distribution flow; see p1/b1 reports",
+    "direct_operator_vs_ODE": "Not entered: Oracle failed, so M1/M2 branch was skipped by the decision tree",
+    "amortisation_bottleneck": "Not the primary cause: per-image Oracle itself could not reach target style",
+    "need_generative_prior_randomness": "Route C tested; two-seed mean cross600 CSD_dT=+0.02890",
+    "model_to_continue": "C_all_models_failed"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "train_stats": {
+    "final_train_acc": 0.8969121904149244,
+    "final_val_acc": 0.8768092634287552,
+    "train_time_sec": 120.09
+  },
+  "oracle_b1_matrix": {
+    "B1_unconstrained": {
+      "name": "B1_unconstrained",
+      "lambda_struct": 0.0,
+      "opt_time_sec": 2.51,
+      "peak_vram_mib": 5017.7,
+      "mean_dT": 0.008680603578686713,
+      "std_dT": 0.08997671373202827,
+      "mean_dS": -0.26323396556079387,
+      "mean_dM": 0.2719145691394806,
+      "mean_dino_c": 0.8104376798868179,
+      "frac_dT_positive": 0.5,
+      "frac_dM_positive": 0.98
+    },
+    "B1_weak": {
+      "name": "B1_weak",
+      "lambda_struct": 0.5,
+      "opt_time_sec": 2.79,
+      "peak_vram_mib": 5061.5,
+      "mean_dT": 0.004253520667552948,
+      "std_dT": 0.055808401823417064,
+      "mean_dS": -0.13007699579000473,
+      "mean_dM": 0.13433051645755767,
+      "mean_dino_c": 0.8973143780231476,
+      "frac_dT_positive": 0.59,
+      "frac_dM_positive": 0.92
+    },
+    "B1_strong": {
+      "name": "B1_strong",
+      "lambda_struct": 2.0,
+      "opt_time_sec": 2.47,
+      "peak_vram_mib": 5061.5,
+      "mean_dT": 0.0018915575090795755,
+      "std_dT": 0.05749716291906933,
+      "mean_dS": -0.11015765234827996,
+      "mean_dM": 0.11204920985735953,
+      "mean_dino_c": 0.9102688980102539,
+      "frac_dT_positive": 0.57,
+      "frac_dM_positive": 0.88
+    }
+  },
+  "timestamp": "2026-11-06 23:24:51",
+  "decision": {
+    "best_arm": "B1_weak",
+    "best_arm_dT": 0.004253520667552948,
+    "best_arm_dino_c": 0.8973143780231476,
+    "b1_success": false,
+    "next_decision": "Route_C_Real_Art_Distribution_Flow_Prior"
+  }
+}

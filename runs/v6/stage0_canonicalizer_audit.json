@@ -1,0 +1,126 @@
+{
+  "candidates": {
+    "raw": {
+      "mode": "raw",
+      "augment_train": false,
+      "leakage_probes": {
+        "stats_mlp": {
+          "val_balanced_acc": 0.712,
+          "content_matched_acc": 0.5787
+        },
+        "spatial_cnn": {
+          "val_balanced_acc": 0.731,
+          "content_matched_acc": 0.6707
+        }
+      },
+      "sufficiency": {
+        "spatial_selfsim_cos": 1.0,
+        "normalized_grad_cos": 1.0,
+        "decoded_dino_c_vs_source": 1.0
+      }
+    },
+    "C1_band_norm": {
+      "mode": "c1",
+      "augment_train": false,
+      "leakage_probes": {
+        "stats_mlp": {
+          "val_balanced_acc": 0.463,
+          "content_matched_acc": 0.364
+        },
+        "spatial_cnn": {
+          "val_balanced_acc": 0.718,
+          "content_matched_acc": 0.6693
+        }
+      },
+      "sufficiency": {
+        "spatial_selfsim_cos": 0.619,
+        "normalized_grad_cos": 0.8374,
+        "decoded_dino_c_vs_source": 0.8134
+      }
+    },
+    "C1_aug_views": {
+      "mode": "c1",
+      "augment_train": true,
+      "leakage_probes": {
+        "stats_mlp": {
+          "val_balanced_acc": 0.463,
+          "content_matched_acc": 0.3867
+        },
+        "spatial_cnn": {
+          "val_balanced_acc": 0.732,
+          "content_matched_acc": 0.6453
+        }
+      },
+      "sufficiency": {
+        "spatial_selfsim_cos": 0.619,
+        "normalized_grad_cos": 0.8374,
+        "decoded_dino_c_vs_source": 0.8134
+      }
+    },
+    "C2_zca_aggressive": {
+      "mode": "c2_zca",
+      "augment_train": false,
+      "leakage_probes": {
+        "stats_mlp": {
+          "val_balanced_acc": 0.422,
+          "content_matched_acc": 0.332
+        },
+        "spatial_cnn": {
+          "val_balanced_acc": 0.701,
+          "content_matched_acc": 0.612
+        }
+      },
+      "sufficiency": {
+        "spatial_selfsim_cos": 0.4264,
+        "normalized_grad_cos": 0.6946,
+        "decoded_dino_c_vs_source": 0.4782
+      }
+    },
+    "C2_strong_strip": {
+      "mode": "c2",
+      "augment_train": false,
+      "leakage_probes": {
+        "stats_mlp": {
+          "val_balanced_acc": 0.47,
+          "content_matched_acc": 0.3867
+        },
+        "spatial_cnn": {
+          "val_balanced_acc": 0.712,
+          "content_matched_acc": 0.6293
+        }
+      },
+      "sufficiency": {
+        "spatial_selfsim_cos": 0.6077,
+        "normalized_grad_cos": 0.7838,
+        "decoded_dino_c_vs_source": 0.746
+      }
+    },
+    "C2_aug_views": {
+      "mode": "c2",
+      "augment_train": true,
+      "leakage_probes": {
+        "stats_mlp": {
+          "val_balanced_acc": 0.459,
+          "content_matched_acc": 0.34
+        },
+        "spatial_cnn": {
+          "val_balanced_acc": 0.723,
+          "content_matched_acc": 0.6427
+        }
+      },
+      "sufficiency": {
+        "spatial_selfsim_cos": 0.6077,
+        "normalized_grad_cos": 0.7838,
+        "decoded_dino_c_vs_source": 0.746
+      }
+    }
+  },
+  "chance_level": 0.2,
+  "decision": {
+    "selected_canonicalizer": "c1",
+    "selected_candidate_name": "C1_aug_views",
+    "use_random_appearance_views": true,
+    "elapsed_sec": 74.9,
+    "rationale": "Aggressive ZCA (c2_zca) dropped decoded DINO-C to 0.4782 (loses object polarity). Structure-safe C1_aug_views (c1 + stochastic appearance views xi_k) reduces stats leakage on content-matched subset from 0.5787 (raw) to 0.3867 (near 0.20 chance), while keeping decoded DINO-C=0.8134 and normalized gradient cosine=0.8374."
+  }
+}

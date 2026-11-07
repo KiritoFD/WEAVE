@@ -1,0 +1,83 @@
+{
+  "train_stats": {
+    "n_params": 3274180,
+    "steps": 1000,
+    "train_wall_sec": 334.2,
+    "peak_vram_mib": 8194.3,
+    "final_loss": 0.6037869542837143
+  },
+  "denoise_selectivity_random_val": {
+    "L_correct": 0.6768026351928711,
+    "L_wrong": 0.6834959387779236,
+    "paired_diff": 0.006693215575069189,
+    "paired_diff_95ci": [
+      0.005319683346897364,
+      0.008026614785194397
+    ],
+    "frac_correct_smaller": 0.9
+  },
+  "denoise_selectivity_content_matched": {
+    "L_correct": 0.7044094800949097,
+    "L_wrong": 0.7082297801971436,
+    "paired_diff": 0.0038203203584998846,
+    "paired_diff_95ci": [
+      0.003318079747259617,
+      0.004325392656028271
+    ],
+    "frac_correct_smaller": 0.85
+  },
+  "target_direction_mean_pairwise_cos": 0.2864,
+  "max_same_style_drift_g_ss": 0.0,
+  "eval200_sweep": {
+    "sd_s12_lr0.08_a0.10": {
+      "num_steps": 12,
+      "step_size": 0.08,
+      "struct_anchor_weight": 0.1,
+      "mean_dT": 0.04369565280154347,
+      "dT_ci": [
+        0.03230977247422561,
+        0.05518071280932053
+      ],
+      "mean_dS": -0.15349501356482506,
+      "mean_dM": 0.19719066636636853,
+      "mean_dino_c": 0.8638510133326054,
+      "mean_lpips": 0.333303302526474,
+      "per_target_dT": {
+        "Early_Renaissance": 0.0008217427879571914,
+        "Impressionism": 0.05684259692206979,
+        "Minimalism": 0.14219130035489796,
+        "Rococo": 0.023082116758450864,
+        "Ukiyo_e": -0.00445949281565845
+      },
+      "styles_improved": 4,
+      "ukiyo_dT": -0.00445949281565845,
+      "same_style_dS": 0.0,
+      "same_style_dino_c": 1.0
+    },
+    "sd_s16_lr0.12_a0.15": {
+      "num_steps": 16,
+      "step_size": 0.12,
+      "struct_anchor_weight": 0.15,
+      "mean_dT": 0.06867943283170462,
+      "dT_ci": [
+        0.050508414172101765,
+        0.08649035384645684
+      ],
+      "mean_dS": -0.300011381059885,
+      "mean_dM": 0.36869081389158964,
+      "mean_dino_c": 0.7114279527962207,
+      "mean_lpips": 0.5144814848899841,
+      "per_target_dT": {
+        "Early_Renaissance": -0.013272947445511819,
+        "Impressionism": 0.12521435879170895,
+        "Minimalism": 0.19705570302903652,
+        "Rococo": 0.03872120808809996,
+        "Ukiyo_e": -0.004321158304810524
+      },
+      "styles_improved": 3,
+      "ukiyo_dT": -0.004321158304810524,
+      "same_style_dS": 0.0,
+      "same_style_dino_c": 1.0
+    }
+  }
+}

@@ -1,0 +1,902 @@
+[
+  {
+    "task_id": 0,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 1,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 2,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 3,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 4,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_maria-with-the-sleeping-child-1455",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_maria-with-the-sleeping-child-1455.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 5,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_maria-with-the-sleeping-child-1455",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_maria-with-the-sleeping-child-1455.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 6,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_maria-with-the-sleeping-child-1455",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_maria-with-the-sleeping-child-1455.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 7,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_maria-with-the-sleeping-child-1455",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_maria-with-the-sleeping-child-1455.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 8,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_scenes-from-the-life-of-st-james-1448-2",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_scenes-from-the-life-of-st-james-1448-2.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 9,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_scenes-from-the-life-of-st-james-1448-2",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_scenes-from-the-life-of-st-james-1448-2.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 10,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_scenes-from-the-life-of-st-james-1448-2",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_scenes-from-the-life-of-st-james-1448-2.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 11,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_scenes-from-the-life-of-st-james-1448-2",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_scenes-from-the-life-of-st-james-1448-2.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 12,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 13,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 14,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 15,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 16,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__antonello-da-messina_painter-self-portrait",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__antonello-da-messina_painter-self-portrait.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 17,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__antonello-da-messina_painter-self-portrait",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__antonello-da-messina_painter-self-portrait.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 18,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__antonello-da-messina_painter-self-portrait",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__antonello-da-messina_painter-self-portrait.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 19,
+    "src_style": "Early_Renaissance",
+    "src_style_id": 0,
+    "src_stem": "Early_Renaissance__antonello-da-messina_painter-self-portrait",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Early_Renaissance/Early_Renaissance__antonello-da-messina_painter-self-portrait.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 20,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__alfred-sisley_riverbank-at-veneux-1881",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__alfred-sisley_riverbank-at-veneux-1881.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 21,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__alfred-sisley_riverbank-at-veneux-1881",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__alfred-sisley_riverbank-at-veneux-1881.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 22,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__alfred-sisley_riverbank-at-veneux-1881",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__alfred-sisley_riverbank-at-veneux-1881.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 23,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__alfred-sisley_riverbank-at-veneux-1881",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__alfred-sisley_riverbank-at-veneux-1881.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 24,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__alfred-sisley_the-banks-of-the-oise-1878",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__alfred-sisley_the-banks-of-the-oise-1878.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 25,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__alfred-sisley_the-banks-of-the-oise-1878",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__alfred-sisley_the-banks-of-the-oise-1878.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 26,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__alfred-sisley_the-banks-of-the-oise-1878",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__alfred-sisley_the-banks-of-the-oise-1878.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 27,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__alfred-sisley_the-banks-of-the-oise-1878",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__alfred-sisley_the-banks-of-the-oise-1878.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 28,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__antoine-blanchard_place-de-la-madeleine-hiver",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__antoine-blanchard_place-de-la-madeleine-hiver.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 29,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__antoine-blanchard_place-de-la-madeleine-hiver",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__antoine-blanchard_place-de-la-madeleine-hiver.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 30,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__antoine-blanchard_place-de-la-madeleine-hiver",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__antoine-blanchard_place-de-la-madeleine-hiver.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 31,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__antoine-blanchard_place-de-la-madeleine-hiver",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__antoine-blanchard_place-de-la-madeleine-hiver.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 32,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__armand-guillaumin_valley-in-pontgibaud-1890",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__armand-guillaumin_valley-in-pontgibaud-1890.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 33,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__armand-guillaumin_valley-in-pontgibaud-1890",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__armand-guillaumin_valley-in-pontgibaud-1890.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 34,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__armand-guillaumin_valley-in-pontgibaud-1890",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__armand-guillaumin_valley-in-pontgibaud-1890.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 35,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__armand-guillaumin_valley-in-pontgibaud-1890",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__armand-guillaumin_valley-in-pontgibaud-1890.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 36,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__augustus-john_proven-al-landscape",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__augustus-john_proven-al-landscape.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 37,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__augustus-john_proven-al-landscape",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__augustus-john_proven-al-landscape.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 38,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__augustus-john_proven-al-landscape",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__augustus-john_proven-al-landscape.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 39,
+    "src_style": "Impressionism",
+    "src_style_id": 1,
+    "src_stem": "Impressionism__augustus-john_proven-al-landscape",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Impressionism/Impressionism__augustus-john_proven-al-landscape.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 40,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__agnes-martin_happy-valley-1967",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__agnes-martin_happy-valley-1967.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 41,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__agnes-martin_happy-valley-1967",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__agnes-martin_happy-valley-1967.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 42,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__agnes-martin_happy-valley-1967",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__agnes-martin_happy-valley-1967.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 43,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__agnes-martin_happy-valley-1967",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__agnes-martin_happy-valley-1967.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 44,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__alvaro-lapa_criminals-and-their-properties-1974",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__alvaro-lapa_criminals-and-their-properties-1974.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 45,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__alvaro-lapa_criminals-and-their-properties-1974",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__alvaro-lapa_criminals-and-their-properties-1974.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 46,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__alvaro-lapa_criminals-and-their-properties-1974",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__alvaro-lapa_criminals-and-their-properties-1974.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 47,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__alvaro-lapa_criminals-and-their-properties-1974",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__alvaro-lapa_criminals-and-their-properties-1974.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 48,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__brice-marden_joined-2011",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__brice-marden_joined-2011.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 49,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__brice-marden_joined-2011",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__brice-marden_joined-2011.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 50,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__brice-marden_joined-2011",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__brice-marden_joined-2011.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 51,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__brice-marden_joined-2011",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__brice-marden_joined-2011.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 52,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__bruce-nauman_la-brea-art-tips-rat-spit-tar-pits-1972",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__bruce-nauman_la-brea-art-tips-rat-spit-tar-pits-1972.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 53,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__bruce-nauman_la-brea-art-tips-rat-spit-tar-pits-1972",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__bruce-nauman_la-brea-art-tips-rat-spit-tar-pits-1972.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 54,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__bruce-nauman_la-brea-art-tips-rat-spit-tar-pits-1972",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__bruce-nauman_la-brea-art-tips-rat-spit-tar-pits-1972.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 55,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__bruce-nauman_la-brea-art-tips-rat-spit-tar-pits-1972",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__bruce-nauman_la-brea-art-tips-rat-spit-tar-pits-1972.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 56,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__dan-flavin_greens-crossing-greens-to-piet-mondrian-who-lacked-green-1966",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__dan-flavin_greens-crossing-greens-to-piet-mondrian-who-lacked-green-1966.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 57,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__dan-flavin_greens-crossing-greens-to-piet-mondrian-who-lacked-green-1966",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__dan-flavin_greens-crossing-greens-to-piet-mondrian-who-lacked-green-1966.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 58,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__dan-flavin_greens-crossing-greens-to-piet-mondrian-who-lacked-green-1966",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__dan-flavin_greens-crossing-greens-to-piet-mondrian-who-lacked-green-1966.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 59,
+    "src_style": "Minimalism",
+    "src_style_id": 2,
+    "src_stem": "Minimalism__dan-flavin_greens-crossing-greens-to-piet-mondrian-who-lacked-green-1966",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Minimalism/Minimalism__dan-flavin_greens-crossing-greens-to-piet-mondrian-who-lacked-green-1966.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 60,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-pesne_carl-heinrich-graun",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-pesne_carl-heinrich-graun.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 61,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-pesne_carl-heinrich-graun",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-pesne_carl-heinrich-graun.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 62,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-pesne_carl-heinrich-graun",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-pesne_carl-heinrich-graun.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 63,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-pesne_carl-heinrich-graun",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-pesne_carl-heinrich-graun.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 64,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-watteau_head-of-a-man",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-watteau_head-of-a-man.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 65,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-watteau_head-of-a-man",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-watteau_head-of-a-man.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 66,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-watteau_head-of-a-man",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-watteau_head-of-a-man.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 67,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-watteau_head-of-a-man",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-watteau_head-of-a-man.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 68,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-watteau_the-delicate-musician",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-watteau_the-delicate-musician.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 69,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-watteau_the-delicate-musician",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-watteau_the-delicate-musician.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 70,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-watteau_the-delicate-musician",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-watteau_the-delicate-musician.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 71,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__antoine-watteau_the-delicate-musician",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__antoine-watteau_the-delicate-musician.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 72,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__benjamin-west_self-portrait-1770",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__benjamin-west_self-portrait-1770.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 73,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__benjamin-west_self-portrait-1770",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__benjamin-west_self-portrait-1770.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 74,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__benjamin-west_self-portrait-1770",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__benjamin-west_self-portrait-1770.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 75,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__benjamin-west_self-portrait-1770",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__benjamin-west_self-portrait-1770.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 76,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__benjamin-west_the-angel-of-the-lord-announcing-the-resurrection-1805",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__benjamin-west_the-angel-of-the-lord-announcing-the-resurrection-1805.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 77,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__benjamin-west_the-angel-of-the-lord-announcing-the-resurrection-1805",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__benjamin-west_the-angel-of-the-lord-announcing-the-resurrection-1805.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 78,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__benjamin-west_the-angel-of-the-lord-announcing-the-resurrection-1805",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__benjamin-west_the-angel-of-the-lord-announcing-the-resurrection-1805.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 79,
+    "src_style": "Rococo",
+    "src_style_id": 3,
+    "src_stem": "Rococo__benjamin-west_the-angel-of-the-lord-announcing-the-resurrection-1805",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Rococo/Rococo__benjamin-west_the-angel-of-the-lord-announcing-the-resurrection-1805.jpg",
+    "tgt_style": "Ukiyo_e",
+    "tgt_style_id": 4
+  },
+  {
+    "task_id": 80,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__hiroshige_hakone-kosuizu",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__hiroshige_hakone-kosuizu.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 81,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__hiroshige_hakone-kosuizu",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__hiroshige_hakone-kosuizu.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 82,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__hiroshige_hakone-kosuizu",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__hiroshige_hakone-kosuizu.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 83,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__hiroshige_hakone-kosuizu",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__hiroshige_hakone-kosuizu.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 84,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__hiroshige_oiso-toraga-ame-shower-1835",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__hiroshige_oiso-toraga-ame-shower-1835.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 85,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__hiroshige_oiso-toraga-ame-shower-1835",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__hiroshige_oiso-toraga-ame-shower-1835.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 86,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__hiroshige_oiso-toraga-ame-shower-1835",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__hiroshige_oiso-toraga-ame-shower-1835.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 87,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__hiroshige_oiso-toraga-ame-shower-1835",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__hiroshige_oiso-toraga-ame-shower-1835.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 88,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_cargo-ship-and-wave",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_cargo-ship-and-wave.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 89,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_cargo-ship-and-wave",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_cargo-ship-and-wave.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 90,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_cargo-ship-and-wave",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_cargo-ship-and-wave.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 91,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_cargo-ship-and-wave",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_cargo-ship-and-wave.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 92,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_fishing-in-the-bay-uraga",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_fishing-in-the-bay-uraga.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 93,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_fishing-in-the-bay-uraga",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_fishing-in-the-bay-uraga.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 94,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_fishing-in-the-bay-uraga",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_fishing-in-the-bay-uraga.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 95,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_fishing-in-the-bay-uraga",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_fishing-in-the-bay-uraga.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  },
+  {
+    "task_id": 96,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_fishing-in-the-river-kinu",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_fishing-in-the-river-kinu.jpg",
+    "tgt_style": "Early_Renaissance",
+    "tgt_style_id": 0
+  },
+  {
+    "task_id": 97,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_fishing-in-the-river-kinu",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_fishing-in-the-river-kinu.jpg",
+    "tgt_style": "Impressionism",
+    "tgt_style_id": 1
+  },
+  {
+    "task_id": 98,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_fishing-in-the-river-kinu",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_fishing-in-the-river-kinu.jpg",
+    "tgt_style": "Minimalism",
+    "tgt_style_id": 2
+  },
+  {
+    "task_id": 99,
+    "src_style": "Ukiyo_e",
+    "src_style_id": 4,
+    "src_stem": "Ukiyo_e__katsushika-hokusai_fishing-in-the-river-kinu",
+    "src_path": "/mnt/i/Latent_Style/WEAVE/data/test/Ukiyo_e/Ukiyo_e__katsushika-hokusai_fishing-in-the-river-kinu.jpg",
+    "tgt_style": "Rococo",
+    "tgt_style_id": 3
+  }
+]

@@ -1,0 +1,111 @@
+{
+  "name": "D1_c1_soft",
+  "mode": "direct",
+  "canon_mode": "c1_soft",
+  "n_params": 1881792,
+  "steps": 800,
+  "effective_batch": 240,
+  "coherence_beta": 0.0,
+  "w_style_dist": 0.3,
+  "w_cross": 0.45,
+  "w_canon_inv": 1.5,
+  "ode_steps": 8,
+  "sigma0": 0.1,
+  "seed": 42,
+  "train_wall_sec": 1139.0,
+  "peak_vram_mib": 6742.7,
+  "final_loss": 0.3944406586885452,
+  "conditioning_validity": {
+    "check1_training_condition_validity": {
+      "n_samples": 200,
+      "L_correct_mean": 0.10155604779720306,
+      "L_wrong_mean": 0.21565575897693634,
+      "paired_diff_wrong_minus_correct": 0.11409971117973328,
+      "paired_diff_95ci": [
+        0.09588528424501419,
+        0.13149891793727875
+      ],
+      "frac_L_correct_smaller": 0.905,
+      "passed": true
+    },
+    "check2_target_style_selectivity": {
+      "n_contents": 25,
+      "csd_5x5_matrix": [
+        [
+          0.3461,
+          0.28,
+          0.1502,
+          0.2083,
+          0.1225
+        ],
+        [
+          0.313,
+          0.3264,
+          0.1568,
+          0.1544,
+          0.1417
+        ],
+        [
+          0.1769,
+          0.1511,
+          0.18,
+          0.1211,
+          0.0609
+        ],
+        [
+          0.2694,
+          0.1992,
+          0.1242,
+          0.2254,
+          0.074
+        ],
+        [
+          0.3383,
+          0.3088,
+          0.1523,
+          0.1897,
+          0.1537
+        ]
+      ],
+      "diag_mean": 0.2463,
+      "offdiag_mean": 0.1846,
+      "selectivity_margin": 0.0617,
+      "column_top1_matches_out_of_5": 5,
+      "mean_cross_style_latent_l2": 0.5266,
+      "passed": true
+    },
+    "check3_content_condition_validity": {
+      "dino_c_own_content": 0.9379,
+      "dino_c_swapped_content": 0.3514,
+      "dino_c_margin": 0.5864,
+      "selfsim_own_content": 0.6787,
+      "selfsim_swapped_content": 0.3176,
+      "passed": true
+    },
+    "all_three_passed": true
+  },
+  "eval200": {
+    "n_cross": 200,
+    "mean_dT": 0.03038790707476437,
+    "dT_ci": [
+      0.022074874412501232,
+      0.03965191290760412
+    ],
+    "mean_dS": -0.10693280503153801,
+    "mean_dM": 0.13732071210630237,
+    "mean_dino_c": 0.9183774334192276,
+    "mean_lpips": 0.35699964288622144,
+    "frac_dT_positive": 0.695,
+    "per_target_dT": {
+      "Early_Renaissance": 0.034463427402079104,
+      "Impressionism": 0.040659986436367035,
+      "Minimalism": 0.022170868469402194,
+      "Rococo": 0.05927859162911773,
+      "Ukiyo_e": -0.004633338563144207
+    },
+    "styles_improved": 4,
+    "ukiyo_dT": -0.004633338563144207,
+    "same50_mean_dS": -0.0049442631006240845,
+    "same50_mean_dino_c": 0.9321698796749115
+  }
+}
