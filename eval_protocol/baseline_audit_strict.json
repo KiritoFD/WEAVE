@@ -1,0 +1,142 @@
+{
+  "adain": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "aespa": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "cut": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "identity": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "samam": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "samst": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "sdturbo": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "seedream": {
+    "valid": 720,
+    "cross": 576,
+    "same": 144,
+    "missing": 30,
+    "unmatched_files": 30
+  },
+  "stylealigned": {
+    "valid": 15,
+    "cross": 12,
+    "same": 3,
+    "missing": 735,
+    "unmatched_files": 735
+  },
+  "styleid": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "styleshot": {
+    "valid": 745,
+    "cross": 596,
+    "same": 149,
+    "missing": 5,
+    "unmatched_files": 0
+  },
+  "stytr2": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "tgt": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "wct": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "weave": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "weave_eval_baseline": {
+    "valid": 0,
+    "cross": 0,
+    "same": 0,
+    "missing": 750,
+    "unmatched_files": 0
+  },
+  "weave_oriented_e4": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "weave_yfix": {
+    "valid": 750,
+    "cross": 600,
+    "same": 150,
+    "missing": 0,
+    "unmatched_files": 0
+  },
+  "weave_yfix_eval": {
+    "valid": 0,
+    "cross": 0,
+    "same": 0,
+    "missing": 750,
+    "unmatched_files": 0
+  },
+  "zstar": {
+    "valid": 15,
+    "cross": 12,
+    "same": 3,
+    "missing": 735,
+    "unmatched_files": 735
+  }
+}

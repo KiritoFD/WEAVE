@@ -1,0 +1,1223 @@
+{
+  "description": "Unified frozen references v1 (5 styles x 30 images = 150 refs, strictly test-disjoint)",
+  "num_styles": 5,
+  "references_per_style": {
+    "Early_Renaissance": 30,
+    "Impressionism": 30,
+    "Minimalism": 30,
+    "Rococo": 30,
+    "Ukiyo_e": 30
+  },
+  "references": {
+    "Early_Renaissance": [
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__filippo-lippi_madonna-and-child-enthroned-with-saints.jpg",
+        "stem": "Early_Renaissance__filippo-lippi_madonna-and-child-enthroned-with-saints",
+        "rel_path": "datasets/wikiart_new_512/Early_Renaissance/Early_Renaissance__filippo-lippi_madonna-and-child-enthroned-with-saints.jpg",
+        "sha256": "a3324f09c52a4c2cbcd6c73cfd25e6c93d36057c62767a179598cbcef09a96af"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__filippo-lippi_adoration-of-the-child-with-saints.jpg",
+        "stem": "Early_Renaissance__filippo-lippi_adoration-of-the-child-with-saints",
+        "rel_path": "datasets/wikiart_new_512/Early_Renaissance/Early_Renaissance__filippo-lippi_adoration-of-the-child-with-saints.jpg",
+        "sha256": "128bf2b90ce3fbb7bee2c1023680d017cf2055984eb50c5c482af24fbbf37f17"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__sandro-botticelli_venus-and-the-graces-offering-gifts-to-a-young-girl.jpg",
+        "stem": "Early_Renaissance__sandro-botticelli_venus-and-the-graces-offering-gifts-to-a-young-girl",
+        "rel_path": "datasets/wikiart_new_512/Early_Renaissance/Early_Renaissance__sandro-botticelli_venus-and-the-graces-offering-gifts-to-a-young-girl.jpg",
+        "sha256": "fc8c07a4c6e1aa92202045af64eef62c952182803d1c1bd6a6d4cc5351ce913d"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__filippo-lippi_madonna-della-cintola.jpg",
+        "stem": "Early_Renaissance__filippo-lippi_madonna-della-cintola",
+        "rel_path": "datasets/wikiart_new_512/Early_Renaissance/Early_Renaissance__filippo-lippi_madonna-della-cintola.jpg",
+        "sha256": "4529683c839d774616a94c5f35978d5ee8854b9352d3b46d2cdeffdf61447b0d"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__filippo-lippi_death-of-the-virgin.jpg",
+        "stem": "Early_Renaissance__filippo-lippi_death-of-the-virgin",
+        "rel_path": "datasets/wikiart_new_512/Early_Renaissance/Early_Renaissance__filippo-lippi_death-of-the-virgin.jpg",
+        "sha256": "307ed895e77c527d0cd035efabb393d3bcdd3e24b22769cdc83bb3150502949b"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__domenico-ghirlandaio_the-annunciation.jpg",
+        "stem": "Early_Renaissance__domenico-ghirlandaio_the-annunciation",
+        "rel_path": "datasets/wikiart_new_512/Early_Renaissance/Early_Renaissance__domenico-ghirlandaio_the-annunciation.jpg",
+        "sha256": "d4220fed5bf7393443d98e2bf38b294313329635097b4b85b1d3edbc00ef3f37"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__benozzo-gozzoli_fall-of-simon-magus.jpg",
+        "stem": "Early_Renaissance__benozzo-gozzoli_fall-of-simon-magus",
+        "rel_path": "datasets/wikiart_new_512/Early_Renaissance/Early_Renaissance__benozzo-gozzoli_fall-of-simon-magus.jpg",
+        "sha256": "235ce72991623e1a2540fcc03541a95069933ab58e170368d5c99bcd2b1596cd"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__benozzo-gozzoli_san-domenico-annunciation.jpg",
+        "stem": "Early_Renaissance__benozzo-gozzoli_san-domenico-annunciation",
+        "rel_path": "datasets/wikiart_new_512/Early_Renaissance/Early_Renaissance__benozzo-gozzoli_san-domenico-annunciation.jpg",
+        "sha256": "5601175d5e5b7d51ec8e22e07616711af7c73170cc06c50edfe381878440fe8e"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_david-with-the-head-of-goliath.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_david-with-the-head-of-goliath",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_david-with-the-head-of-goliath.jpg",
+        "sha256": "e1f2a2d395da9f53069f66f3d2728f4ebce0ec994bb4c131f8fb080a02027cec"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_deposition-of-christ.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_deposition-of-christ",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_deposition-of-christ.jpg",
+        "sha256": "bac61ee099be0adef1b093421765d630f4a47be51bdff3ea49381a4461198f3a"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_dormition-of-the-virgin.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_dormition-of-the-virgin",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_dormition-of-the-virgin.jpg",
+        "sha256": "34a51d61804bfaffd22d238be837f7c2b0e9d8509f6001379f9526cbec887a13"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_farinata-degli-uberti.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_farinata-degli-uberti",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_farinata-degli-uberti.jpg",
+        "sha256": "04e25f6723abce080fcf22f20cbf0b774b8edb970d39f30d10f13615e51f587d"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_giovanni-boccaccio.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_giovanni-boccaccio",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_giovanni-boccaccio.jpg",
+        "sha256": "ac3c1df2eb2e149c43cc8083e5b7c75b679d2193c1fa8a4c56eaeead0b695279"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_god-the-father-1442.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_god-the-father-1442",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_god-the-father-1442.jpg",
+        "sha256": "9278bce4db5ca29ac9cab2fe6e1ce3a4bcdb6959a42174df92ae074e4a54b2cc"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_lying-saint.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_lying-saint",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_lying-saint.jpg",
+        "sha256": "db170242040c32044b5f76bc842fb2efbe5fd15037cfc137484f025d2508a38d"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_madonna-and-child-with-saints.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_madonna-and-child-with-saints",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_madonna-and-child-with-saints.jpg",
+        "sha256": "a972382944098fa044d76f83bdddd717469759cc69bf773d90986abf278257e6"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_martyrdom-of-st-thomas.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_martyrdom-of-st-thomas",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_martyrdom-of-st-thomas.jpg",
+        "sha256": "420284876119d6517f59cd50417485a86395a14bff7ecb167c2c27e331738687"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_mary-seated-under-the-cross.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_mary-seated-under-the-cross",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_mary-seated-under-the-cross.jpg",
+        "sha256": "cfc195a68ba56f337c4473a1fc8a34880c8c9dee0589d883369c5fe81161f21a"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_our-lady-of-the-assumption-with-saints-miniato-and-julian-1450.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_our-lady-of-the-assumption-with-saints-miniato-and-julian-1450",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_our-lady-of-the-assumption-with-saints-miniato-and-julian-1450.jpg",
+        "sha256": "fcac0610d2a7c913a1805a6e4507917809298ab13c667cb263a84b1e62db9c2d"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_petrarch.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_petrarch",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_petrarch.jpg",
+        "sha256": "61d57a5ff91bd3277b856757edbd47010f3ea80c87613356585c9897f0688c9c"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_piet.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_piet",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_piet.jpg",
+        "sha256": "66f595ded8a2b18f9dc8d70c10ce38cc76dbf4bf135dd45f0539a825f81c3b95"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_portrait-of-a-gentleman.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_portrait-of-a-gentleman",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_portrait-of-a-gentleman.jpg",
+        "sha256": "d2e6668ff24aacac4d813f1b0534800a3cd556285877d449bd4e2f78c059a1d5"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_portraits-of-two-members-of-medici-family.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_portraits-of-two-members-of-medici-family",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_portraits-of-two-members-of-medici-family.jpg",
+        "sha256": "f75cea2b0fa93ccd8a670e39d6b6c5a5172877cf2a44d19f67cb5505f269fb1e"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_queen-tomyris.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_queen-tomyris",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_queen-tomyris.jpg",
+        "sha256": "c52d5028bd6c6f6f5ac3626fac1ab51435aef018ecc8d363bc681c38c5db6de0"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_st-jerome.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_st-jerome",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_st-jerome.jpg",
+        "sha256": "b9fd059b94d1e75d30c333a926b652f704dab78e515aaf88448c658d4e5548c2"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_st-john-the-baptist-1442.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_st-john-the-baptist-1442",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_st-john-the-baptist-1442.jpg",
+        "sha256": "f7c1ffa12297571f84947a02e3026f8eba21365a55a47f10f20ee54e2b914353"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_st-john-the-evangelist-1442.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_st-john-the-evangelist-1442",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_st-john-the-evangelist-1442.jpg",
+        "sha256": "e79b923e4f6b9b6e1be7efc754f5f39b77ebaff431b5223148676cb185449d0f"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_st-mark-1442.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_st-mark-1442",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_st-mark-1442.jpg",
+        "sha256": "e13772fa756087a1888b0eff63dac8e80e3db8504d88221b211c9b8e0ddacf2e"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_stories-of-christ-s-passion-1447-1.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_stories-of-christ-s-passion-1447-1",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_stories-of-christ-s-passion-1447-1.jpg",
+        "sha256": "3d026d94a03165dc62111a887443a63667ca21857efa90036ea3ee513e792efe"
+      },
+      {
+        "style": "Early_Renaissance",
+        "style_id": 0,
+        "filename": "Early_Renaissance__andrea-del-castagno_stories-of-christ-s-passion-1447-2.jpg",
+        "stem": "Early_Renaissance__andrea-del-castagno_stories-of-christ-s-passion-1447-2",
+        "rel_path": "datasets/distinct5_512/train/Early_Renaissance/Early_Renaissance__andrea-del-castagno_stories-of-christ-s-passion-1447-2.jpg",
+        "sha256": "a00bf78725b0ab8ab503c865f09b53a4c520a885eb7d6aff29ac9d8d989f1e6a"
+      }
+    ],
+    "Impressionism": [
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__rudolf-schweitzer-cumpana_street-during-winter.jpg",
+        "stem": "Impressionism__rudolf-schweitzer-cumpana_street-during-winter",
+        "rel_path": "datasets/wikiart_new_512/Impressionism/Impressionism__rudolf-schweitzer-cumpana_street-during-winter.jpg",
+        "sha256": "71d94c88b82f0575bd5eff45f8dd82f159f61a9d650ed3ead9759afa5444c964"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__claude-monet_the-village-of-lavacourt.jpg",
+        "stem": "Impressionism__claude-monet_the-village-of-lavacourt",
+        "rel_path": "datasets/wikiart_new_512/Impressionism/Impressionism__claude-monet_the-village-of-lavacourt.jpg",
+        "sha256": "2fb9009463fa115643837e327351158c5648c07c1e5f279da2becdf657ae2ba1"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__berthe-morisot_woman-and-child-in-a-garden.jpg",
+        "stem": "Impressionism__berthe-morisot_woman-and-child-in-a-garden",
+        "rel_path": "datasets/wikiart_new_512/Impressionism/Impressionism__berthe-morisot_woman-and-child-in-a-garden.jpg",
+        "sha256": "63513aa3e2f03e747c34374ad537be83db8199a8fce464023f59d99346e36ac3"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__willard-metcalf_the-fire-of-autumn.jpg",
+        "stem": "Impressionism__willard-metcalf_the-fire-of-autumn",
+        "rel_path": "datasets/wikiart_new_512/Impressionism/Impressionism__willard-metcalf_the-fire-of-autumn.jpg",
+        "sha256": "b772c9f22b18dbf55999db58640d5fe273507697a45f275462ca74c0db133675"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__claude-monet_the-entrance-to-giverny-under-the-snow.jpg",
+        "stem": "Impressionism__claude-monet_the-entrance-to-giverny-under-the-snow",
+        "rel_path": "datasets/wikiart_new_512/Impressionism/Impressionism__claude-monet_the-entrance-to-giverny-under-the-snow.jpg",
+        "sha256": "af0887ce94a2702c1a2e834629f516830cde9bd4eb160d187d7bed8f8b5fe1fe"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__berthe-morisot_woman-and-child-seated-in-a-meadow.jpg",
+        "stem": "Impressionism__berthe-morisot_woman-and-child-seated-in-a-meadow",
+        "rel_path": "datasets/wikiart_new_512/Impressionism/Impressionism__berthe-morisot_woman-and-child-seated-in-a-meadow.jpg",
+        "sha256": "f1dd2f7fcc4e86818633e0f07dc51f336c525abe9e87cb6fb30d470604517d68"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__edgar-degas_landscape-by-the-sea.jpg",
+        "stem": "Impressionism__edgar-degas_landscape-by-the-sea",
+        "rel_path": "datasets/wikiart_new_512/Impressionism/Impressionism__edgar-degas_landscape-by-the-sea.jpg",
+        "sha256": "d9b9c556297d2d4a4592937c3a8289075ab9f5696c257959f7b7a782438e45cc"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__nicolae-vermont_autumn-allegory-the-art-and-the-wine.jpg",
+        "stem": "Impressionism__nicolae-vermont_autumn-allegory-the-art-and-the-wine",
+        "rel_path": "datasets/wikiart_new_512/Impressionism/Impressionism__nicolae-vermont_autumn-allegory-the-art-and-the-wine.jpg",
+        "sha256": "c20e77c92694543280438f94a0fb79b7146e987f8664985d0e238691aa0dbf32"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__abraham-manievich_flowers-on-a-yellow-table.jpg",
+        "stem": "Impressionism__abraham-manievich_flowers-on-a-yellow-table",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__abraham-manievich_flowers-on-a-yellow-table.jpg",
+        "sha256": "c88deb9c13914f0fb1aac32ace5904cc440d623313364e5c2b914044d3440a1d"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__abraham-manievich_flowers-vase-on-a-hamper.jpg",
+        "stem": "Impressionism__abraham-manievich_flowers-vase-on-a-hamper",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__abraham-manievich_flowers-vase-on-a-hamper.jpg",
+        "sha256": "0e96b3c315186307dd2a53fb95274086b7afbb7f7b38de0650f924a878f89f2f"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__abraham-manievich_still-life-with-glass.jpg",
+        "stem": "Impressionism__abraham-manievich_still-life-with-glass",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__abraham-manievich_still-life-with-glass.jpg",
+        "sha256": "8990658abc988d27c6a3c7828e84924b46173947f6a5423cf6624b119f609cb2"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adam-baltatu_cup-with-geraniums.jpg",
+        "stem": "Impressionism__adam-baltatu_cup-with-geraniums",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adam-baltatu_cup-with-geraniums.jpg",
+        "sha256": "97e0a4e31eb1b4e7d1625cdfdeb5ff5695985ba86ab8b8b3668e0a60eea1d9e7"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adam-baltatu_ia-i-outskirts-houses.jpg",
+        "stem": "Impressionism__adam-baltatu_ia-i-outskirts-houses",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adam-baltatu_ia-i-outskirts-houses.jpg",
+        "sha256": "bbecca0d2e4b44d7077f3ac353c1f93b8bae7938e95a625d4ec90e414f8d9c75"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adam-baltatu_landscape-with-houses.jpg",
+        "stem": "Impressionism__adam-baltatu_landscape-with-houses",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adam-baltatu_landscape-with-houses.jpg",
+        "sha256": "5fcfa489d5a8e8d625492c3bc0cce6844339735a8c1d50a70ac0b5631e8c7ff7"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adam-baltatu_pipkin-with-flowers.jpg",
+        "stem": "Impressionism__adam-baltatu_pipkin-with-flowers",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adam-baltatu_pipkin-with-flowers.jpg",
+        "sha256": "054a469964af8cfa6e27aa429ec093e5d6809bbb55819b3d9129b7716d457d10"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adam-baltatu_spring-landscape.jpg",
+        "stem": "Impressionism__adam-baltatu_spring-landscape",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adam-baltatu_spring-landscape.jpg",
+        "sha256": "f860a65a6ffb440b4af87573ad838989f81acd5b1ed7f9aeb889c9c0e16bceb3"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adam-baltatu_view-towards-san-giorgio-venice.jpg",
+        "stem": "Impressionism__adam-baltatu_view-towards-san-giorgio-venice",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adam-baltatu_view-towards-san-giorgio-venice.jpg",
+        "sha256": "149324a5e3d1e8b83a787302c1ff33b73ecd1a627178204e20739d2dc53f719e"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adam-baltatu_winter-landscape-1.jpg",
+        "stem": "Impressionism__adam-baltatu_winter-landscape-1",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adam-baltatu_winter-landscape-1.jpg",
+        "sha256": "b531c45844562bbc972c166294119e2f356c549c2e0f7ff63740807a0335816f"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adolf-hitler_linz-landscape.jpg",
+        "stem": "Impressionism__adolf-hitler_linz-landscape",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adolf-hitler_linz-landscape.jpg",
+        "sha256": "bb309b9634ebcb68263fdf6690b9b5c6c746d6f49cd5fdd49aaaa6efb0d7ed1e"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adolf-hitler_rolling-hills.jpg",
+        "stem": "Impressionism__adolf-hitler_rolling-hills",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adolf-hitler_rolling-hills.jpg",
+        "sha256": "5aacd4cdbb031c36edd9963e355e4e2e5016ce00a45a79a6e4da765e311e10b7"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adolf-hitler_st-peter-s-church-in-vienna.jpg",
+        "stem": "Impressionism__adolf-hitler_st-peter-s-church-in-vienna",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adolf-hitler_st-peter-s-church-in-vienna.jpg",
+        "sha256": "2bde3a754ee95c232add4c81d6324a0624b010b56d0100597c88cb481e5d710d"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adolf-hitler_tank-patrol-1917.jpg",
+        "stem": "Impressionism__adolf-hitler_tank-patrol-1917",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adolf-hitler_tank-patrol-1917.jpg",
+        "sha256": "a9648279ee990b0ec9109ff255a429906f17b9fe86e92b621807ee27d0d7cd0f"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__adolf-hitler_the-basler-gate.jpg",
+        "stem": "Impressionism__adolf-hitler_the-basler-gate",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__adolf-hitler_the-basler-gate.jpg",
+        "sha256": "c9835735c334c0e789e19e0ddd4c39bbb0f312318d80d81541963e7ff7b58d67"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__alfred-sisley_an-autumn-evening-near-paris-1879.jpg",
+        "stem": "Impressionism__alfred-sisley_an-autumn-evening-near-paris-1879",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__alfred-sisley_an-autumn-evening-near-paris-1879.jpg",
+        "sha256": "4f293a538c8a8a8518198a06a07813a43bd9ddb3301fd8937bcb8b566818f0a2"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__alfred-sisley_autumn-landscape-louveciennnes.jpg",
+        "stem": "Impressionism__alfred-sisley_autumn-landscape-louveciennnes",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__alfred-sisley_autumn-landscape-louveciennnes.jpg",
+        "sha256": "72e4623cdaf33a5bfc737176b03547a583f028ed050676cc3ccd4d0e3b544dc7"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__alfred-sisley_banks-of-the-loing-1890.jpg",
+        "stem": "Impressionism__alfred-sisley_banks-of-the-loing-1890",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__alfred-sisley_banks-of-the-loing-1890.jpg",
+        "sha256": "00c1c1be8c4ce6d9894c26639706790d60d4ac39fdfb31e8001703ad78a6467a"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__alfred-sisley_banks-of-the-loing-saint-mammes-1885.jpg",
+        "stem": "Impressionism__alfred-sisley_banks-of-the-loing-saint-mammes-1885",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__alfred-sisley_banks-of-the-loing-saint-mammes-1885.jpg",
+        "sha256": "8bcf3420eef93330a697a41334886d29ac03bc0a0d8b9faf623b6543e2280095"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__alfred-sisley_barge-garage-at-saint-mammes-1885.jpg",
+        "stem": "Impressionism__alfred-sisley_barge-garage-at-saint-mammes-1885",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__alfred-sisley_barge-garage-at-saint-mammes-1885.jpg",
+        "sha256": "da512c8adba954f8087485475306ea74d27d88cdee733d319bcd308279c52b93"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__alfred-sisley_boats-at-bougival-1873.jpg",
+        "stem": "Impressionism__alfred-sisley_boats-at-bougival-1873",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__alfred-sisley_boats-at-bougival-1873.jpg",
+        "sha256": "4e241c706b05e47b862b982aeaf1c5df79d32778b11e6dc0107bb33c12e8c7ad"
+      },
+      {
+        "style": "Impressionism",
+        "style_id": 1,
+        "filename": "Impressionism__alfred-sisley_cabins-by-the-river-loing-morning-1896.jpg",
+        "stem": "Impressionism__alfred-sisley_cabins-by-the-river-loing-morning-1896",
+        "rel_path": "datasets/distinct5_512/train/Impressionism/Impressionism__alfred-sisley_cabins-by-the-river-loing-morning-1896.jpg",
+        "sha256": "4e3c607d4aa3c73142f6e1f48566aae454a58e07ee369622441e908c528f98e2"
+      }
+    ],
+    "Minimalism": [
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__rudolf-de-crignis_painting-92091.jpg",
+        "stem": "Minimalism__rudolf-de-crignis_painting-92091",
+        "rel_path": "datasets/wikiart_new_512/Minimalism/Minimalism__rudolf-de-crignis_painting-92091.jpg",
+        "sha256": "4a2933a5e4d1e2b20a54c8af4c14cc63070ab4f1b8fcf62b4c8db51380e2a1be"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__rudolf-de-crignis_painting-92138.jpg",
+        "stem": "Minimalism__rudolf-de-crignis_painting-92138",
+        "rel_path": "datasets/wikiart_new_512/Minimalism/Minimalism__rudolf-de-crignis_painting-92138.jpg",
+        "sha256": "24a7453a6108a249d5f61bdd91ebe16efd0003fe76d85dee64b607a44a1a9cd0"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__rudolf-de-crignis_painting-91019.jpg",
+        "stem": "Minimalism__rudolf-de-crignis_painting-91019",
+        "rel_path": "datasets/wikiart_new_512/Minimalism/Minimalism__rudolf-de-crignis_painting-91019.jpg",
+        "sha256": "238d5297e07fd151d1b7bb6889decf0b54bad1fca999519012f2d00dad8c0c06"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__rudolf-de-crignis_painting-92137.jpg",
+        "stem": "Minimalism__rudolf-de-crignis_painting-92137",
+        "rel_path": "datasets/wikiart_new_512/Minimalism/Minimalism__rudolf-de-crignis_painting-92137.jpg",
+        "sha256": "2988c8026072c7c12769be5e1aca31ec76df40326c73a952ba765a6c3f39c432"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__rudolf-de-crignis_painting-93065.jpg",
+        "stem": "Minimalism__rudolf-de-crignis_painting-93065",
+        "rel_path": "datasets/wikiart_new_512/Minimalism/Minimalism__rudolf-de-crignis_painting-93065.jpg",
+        "sha256": "94de4673781f2e322d4dd696ecdcaace978eb13dd10e087595bb1b03a4b87c21"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__rudolf-de-crignis_painting-92131.jpg",
+        "stem": "Minimalism__rudolf-de-crignis_painting-92131",
+        "rel_path": "datasets/wikiart_new_512/Minimalism/Minimalism__rudolf-de-crignis_painting-92131.jpg",
+        "sha256": "671e3e9984414ac9b5a20d8b2fbdf5778b7025f8a4e6858adbaceeef89f234e2"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__rudolf-de-crignis_painting-91121.jpg",
+        "stem": "Minimalism__rudolf-de-crignis_painting-91121",
+        "rel_path": "datasets/wikiart_new_512/Minimalism/Minimalism__rudolf-de-crignis_painting-91121.jpg",
+        "sha256": "8152cbf8233f2497557c4183341c852d932908aefb59f588c5d9bb63a133a206"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__bob-law_drawing-24-4-60.jpg",
+        "stem": "Minimalism__bob-law_drawing-24-4-60",
+        "rel_path": "datasets/wikiart_new_512/Minimalism/Minimalism__bob-law_drawing-24-4-60.jpg",
+        "sha256": "35f5b768d8c4e06bdee0c6448e4c877958ef7068f287c914dc04e156fa53496b"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_aspiration-1960.jpg",
+        "stem": "Minimalism__agnes-martin_aspiration-1960",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_aspiration-1960.jpg",
+        "sha256": "c3d8f6250968754bafa38b970af651177e5de5aae3684808261d6e1a691047f8"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_black-1.jpg",
+        "stem": "Minimalism__agnes-martin_black-1",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_black-1.jpg",
+        "sha256": "78cf5af45f38d8784a8dc4149029d67e5cb6fe9c10a71f0ffab7d902a9bc611d"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_columns.jpg",
+        "stem": "Minimalism__agnes-martin_columns",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_columns.jpg",
+        "sha256": "5de32e12eea29f3fba759fd340c30c24cec130ee2451db6e209c84f5e64b7842"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_desert-rain-1957.jpg",
+        "stem": "Minimalism__agnes-martin_desert-rain-1957",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_desert-rain-1957.jpg",
+        "sha256": "764e1766c63e657fe54d61dff683432ae7bbbb2361edef08fa72b1c6f0ff759c"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_drops-1961.jpg",
+        "stem": "Minimalism__agnes-martin_drops-1961",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_drops-1961.jpg",
+        "sha256": "b5c6390e59ade471287311c1f6462a1a9e82ea1c49264462f8d77668bbd898b3"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_falling-blue-1963.jpg",
+        "stem": "Minimalism__agnes-martin_falling-blue-1963",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_falling-blue-1963.jpg",
+        "sha256": "44685eaa37ebd6b2ce1c4978bcab450570160fd4400e1bcb030ab36ae674a2df"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_grattitude-2001.jpg",
+        "stem": "Minimalism__agnes-martin_grattitude-2001",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_grattitude-2001.jpg",
+        "sha256": "c386c8e45c987e3290ad2fc82e83ad0f24350b276d380c2759dafcc85a211a24"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_happy-holiday-1999.jpg",
+        "stem": "Minimalism__agnes-martin_happy-holiday-1999",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_happy-holiday-1999.jpg",
+        "sha256": "076804335e3ba5cb5a86dc0f0860be1f0d867055b48a79e4170df92439653b6b"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_i-love-life.jpg",
+        "stem": "Minimalism__agnes-martin_i-love-life",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_i-love-life.jpg",
+        "sha256": "289f91c6f744b93e6085a47f4dd4d5fbabeff902aac87a62ad14f7b1c7410164"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_loving-love.jpg",
+        "stem": "Minimalism__agnes-martin_loving-love",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_loving-love.jpg",
+        "sha256": "fff9ca76fcd6114f6978f6da99aaaeabcb9877c41011f4e3534e133ea2c4a2ef"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_morning-star-1962.jpg",
+        "stem": "Minimalism__agnes-martin_morning-star-1962",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_morning-star-1962.jpg",
+        "sha256": "f9ac764c2b6a2d72bd1245d3f8c9d15822c7e26e1a788d255f7d8143cd516c2d"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_mountain-i-1966.jpg",
+        "stem": "Minimalism__agnes-martin_mountain-i-1966",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_mountain-i-1966.jpg",
+        "sha256": "3b52499a906875bd88af90213005e42ac1c9da5e0f98f835c1f72588a436172e"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_night-sea-1963.jpg",
+        "stem": "Minimalism__agnes-martin_night-sea-1963",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_night-sea-1963.jpg",
+        "sha256": "3f1e69c83fe4e5fd3e2e0a2edcc04b547c040b598f59fcc8e07713c62baafc6a"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_on-a-clear-day-1-1973.jpg",
+        "stem": "Minimalism__agnes-martin_on-a-clear-day-1-1973",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_on-a-clear-day-1-1973.jpg",
+        "sha256": "650cfabb68ce0b3ae52eb0cb1a3114162ff676a5f6e2fd1d3d6e7493d841dc52"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_on-a-clear-day-2-1973.jpg",
+        "stem": "Minimalism__agnes-martin_on-a-clear-day-2-1973",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_on-a-clear-day-2-1973.jpg",
+        "sha256": "aa2d67ea28fa19127dcc4e2248defca89e550582bb6a2fc1deb9c3809568582f"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_petal-1964.jpg",
+        "stem": "Minimalism__agnes-martin_petal-1964",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_petal-1964.jpg",
+        "sha256": "4661b6657e5dea54272a504270e8ae8b418af5d7c9c703ded54c9a73585eb9bb"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_praise-1976(1).jpg",
+        "stem": "Minimalism__agnes-martin_praise-1976(1)",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_praise-1976(1).jpg",
+        "sha256": "2626b3633c049d947120c0e2bfc37efd12bffb6c9d261285f18a1a76c032c449"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_red-bird-1964.jpg",
+        "stem": "Minimalism__agnes-martin_red-bird-1964",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_red-bird-1964.jpg",
+        "sha256": "3cab18349e3a6d0641f2991d5ef838156d4c8bec55ca76856d24b2fa547aa3dc"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_stars-1963.jpg",
+        "stem": "Minimalism__agnes-martin_stars-1963",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_stars-1963.jpg",
+        "sha256": "a2db0c15a55888ea4e31c29da4718290337ac449328e6c3f68a99ff0a57f82cf"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_the-desert-1965.jpg",
+        "stem": "Minimalism__agnes-martin_the-desert-1965",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_the-desert-1965.jpg",
+        "sha256": "cb650213e787838bdd29402fc53d950452af9cf63cd2612b9dc0f83e0eec8687"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_the-harvest-1965.jpg",
+        "stem": "Minimalism__agnes-martin_the-harvest-1965",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_the-harvest-1965.jpg",
+        "sha256": "2cad5548ea5bcc6690c694b65531213adfff01b841e5953975f19652646adcc7"
+      },
+      {
+        "style": "Minimalism",
+        "style_id": 2,
+        "filename": "Minimalism__agnes-martin_the-islands-1961(1).jpg",
+        "stem": "Minimalism__agnes-martin_the-islands-1961(1)",
+        "rel_path": "datasets/distinct5_512/train/Minimalism/Minimalism__agnes-martin_the-islands-1961(1).jpg",
+        "sha256": "570fce7111fb582291eecccd7663e3e37f3dc90737127edef6c04d304d00477d"
+      }
+    ],
+    "Rococo": [
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__vladimir-borovikovsky_portrait-of-torsukov-ardalyon.jpg",
+        "stem": "Rococo__vladimir-borovikovsky_portrait-of-torsukov-ardalyon",
+        "rel_path": "datasets/wikiart_new_512/Rococo/Rococo__vladimir-borovikovsky_portrait-of-torsukov-ardalyon.jpg",
+        "sha256": "c8002fc17908a286e44547a54d6f47b63e81f7a2374adc5533d2d75c94f1bece"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__thomas-gainsborough_portrait-of-georgiana-duchess-of-devonshire.jpg",
+        "stem": "Rococo__thomas-gainsborough_portrait-of-georgiana-duchess-of-devonshire",
+        "rel_path": "datasets/wikiart_new_512/Rococo/Rococo__thomas-gainsborough_portrait-of-georgiana-duchess-of-devonshire.jpg",
+        "sha256": "824dd969eefddbf2a94c4e1ba3aa69d380926ed220fe65263b1642d971658adc"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__joshua-reynolds_george-grenville-earl-temple-mary-countess-temple-and-their-son-richard.jpg",
+        "stem": "Rococo__joshua-reynolds_george-grenville-earl-temple-mary-countess-temple-and-their-son-richard",
+        "rel_path": "datasets/wikiart_new_512/Rococo/Rococo__joshua-reynolds_george-grenville-earl-temple-mary-countess-temple-and-their-son-richard.jpg",
+        "sha256": "439c16c7117129cf70050e6ff20e999e29835deb0f402843e4c8d877f0f15ae1"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__george-romney_richard-pennant-1737-1808-baron-penrhyn-of-penrhyn.jpg",
+        "stem": "Rococo__george-romney_richard-pennant-1737-1808-baron-penrhyn-of-penrhyn",
+        "rel_path": "datasets/wikiart_new_512/Rococo/Rococo__george-romney_richard-pennant-1737-1808-baron-penrhyn-of-penrhyn.jpg",
+        "sha256": "aa28b0c7e274c3c443c9fc0afd1bb16a4dc7e396119e9e98cde937c66d1d7f97"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__george-romney_percivall-pott-1713-1788.jpg",
+        "stem": "Rococo__george-romney_percivall-pott-1713-1788",
+        "rel_path": "datasets/wikiart_new_512/Rococo/Rococo__george-romney_percivall-pott-1713-1788.jpg",
+        "sha256": "70f3bb23291010672901aabd4fc0ac1e3b41bc4f96b0683f5215444b815d7d7b"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__john-jackson_portrait-of-a-woman-in-a-black-dress-with-a-gold-necklace.jpg",
+        "stem": "Rococo__john-jackson_portrait-of-a-woman-in-a-black-dress-with-a-gold-necklace",
+        "rel_path": "datasets/wikiart_new_512/Rococo/Rococo__john-jackson_portrait-of-a-woman-in-a-black-dress-with-a-gold-necklace.jpg",
+        "sha256": "33e46e3d369ad41e0387e6caea5cb2ca3093a1bdf26f9cd3981fbfafb91fbcf6"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__george-romney_jemima-yorke-1763-1804-mrs-reginald-pole-carew.jpg",
+        "stem": "Rococo__george-romney_jemima-yorke-1763-1804-mrs-reginald-pole-carew",
+        "rel_path": "datasets/wikiart_new_512/Rococo/Rococo__george-romney_jemima-yorke-1763-1804-mrs-reginald-pole-carew.jpg",
+        "sha256": "e0e68e6c37d9d88b9a101e3044b6b39b51839aa1a2fb41255e99419faa78b906"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__dmitry-levitzky_portrait-of-ivan-ivanovich-shuvalov.jpg",
+        "stem": "Rococo__dmitry-levitzky_portrait-of-ivan-ivanovich-shuvalov",
+        "rel_path": "datasets/wikiart_new_512/Rococo/Rococo__dmitry-levitzky_portrait-of-ivan-ivanovich-shuvalov.jpg",
+        "sha256": "284c47c8d791fcb15de3e1f8ff4ad90c1ce44a0d6fbdc54f45991ec72f8fc87f"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_charlotte-sophia-of-mecklenburg-strelitz-1762.jpg",
+        "stem": "Rococo__allan-ramsay_charlotte-sophia-of-mecklenburg-strelitz-1762",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_charlotte-sophia-of-mecklenburg-strelitz-1762.jpg",
+        "sha256": "d45a3260f9d2c76322c37d6cb66c5874e11f68256dd35f7476261c025de2dbfd"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_general-sir-james-abercromby-also-spelled-abercrombie.jpg",
+        "stem": "Rococo__allan-ramsay_general-sir-james-abercromby-also-spelled-abercrombie",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_general-sir-james-abercromby-also-spelled-abercrombie.jpg",
+        "sha256": "ba3fb14f985972e46a90bd71ee82e5e4558e3ee8aa91bffc215d672337a84362"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_john-reid.jpg",
+        "stem": "Rococo__allan-ramsay_john-reid",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_john-reid.jpg",
+        "sha256": "d751fa4d09ad4456a93817c9e816fa6ede71b02152d8ffe672683ef9f2c31467"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_lady-holland-1766.jpg",
+        "stem": "Rococo__allan-ramsay_lady-holland-1766",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_lady-holland-1766.jpg",
+        "sha256": "f12d2130c177734b251ea6bc30f13b844fe4f999143ae898b06d7eb4060fe086"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_mary-digges-1737-1829-lady-robert-manners.jpg",
+        "stem": "Rococo__allan-ramsay_mary-digges-1737-1829-lady-robert-manners",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_mary-digges-1737-1829-lady-robert-manners.jpg",
+        "sha256": "ed395c5bac0bfbaf42edc831320c28f1c2aeaa9a798e0f1e804a0de67c05150b"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_norman-the-red-man-22nd-chief-of-macleod.jpg",
+        "stem": "Rococo__allan-ramsay_norman-the-red-man-22nd-chief-of-macleod",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_norman-the-red-man-22nd-chief-of-macleod.jpg",
+        "sha256": "2022e505e99a26306addbab08fe92bcfd50aa9c776f820dae2d4c976dd3982d0"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_portrait-of-a-naval-officer.jpg",
+        "stem": "Rococo__allan-ramsay_portrait-of-a-naval-officer",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_portrait-of-a-naval-officer.jpg",
+        "sha256": "73099fe533a7b5816fa58568fcd8a4d8ae938ba9818e1c4da6066f1282303929"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_portrait-of-agnes-murray-kynnynmond.jpg",
+        "stem": "Rococo__allan-ramsay_portrait-of-agnes-murray-kynnynmond",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_portrait-of-agnes-murray-kynnynmond.jpg",
+        "sha256": "a08cb59e05966b50827b26d3744b0b089a1f0ce5e32df465e953000d4fb477f9"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_portrait-of-anne-brown.jpg",
+        "stem": "Rococo__allan-ramsay_portrait-of-anne-brown",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_portrait-of-anne-brown.jpg",
+        "sha256": "fb052b7fa8e2f664bdd0a098d8c47e45cbc4e8e124693c309d098bc2f82c0aee"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_portrait-of-elizabeth-gunning-duchess-of-argyll.jpg",
+        "stem": "Rococo__allan-ramsay_portrait-of-elizabeth-gunning-duchess-of-argyll",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_portrait-of-elizabeth-gunning-duchess-of-argyll.jpg",
+        "sha256": "0c9bcba8e000de4bfa2a0d91d49843e5ad94f791103766adc4c22061ab39692f"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_portrait-of-janet-dick.jpg",
+        "stem": "Rococo__allan-ramsay_portrait-of-janet-dick",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_portrait-of-janet-dick.jpg",
+        "sha256": "208cad424ee75ababac0356dcf414987dabd8de72f745d9008e0180d5384fd36"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_portrait-of-jean-abercromby-mrs-morison.jpg",
+        "stem": "Rococo__allan-ramsay_portrait-of-jean-abercromby-mrs-morison",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_portrait-of-jean-abercromby-mrs-morison.jpg",
+        "sha256": "d4d27560d5576e23561ffe6f0c752ee26b450ec2eb79a071f5ef02dfd669ceae"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_portrait-of-king-george-iii.jpg",
+        "stem": "Rococo__allan-ramsay_portrait-of-king-george-iii",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_portrait-of-king-george-iii.jpg",
+        "sha256": "d1fa8e93e15a99f4eac33819f6b0dfa9887f1eae6d5b7de4ac4c77d4ee663efe"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_portrait-of-martha-countess-of-elgin.jpg",
+        "stem": "Rococo__allan-ramsay_portrait-of-martha-countess-of-elgin",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_portrait-of-martha-countess-of-elgin.jpg",
+        "sha256": "9d91b84360b422c2c4807ca4612279d3f0a05579e993fb0762056ef6c7c12159"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_portrait-of-queen-charlotte-1762.jpg",
+        "stem": "Rococo__allan-ramsay_portrait-of-queen-charlotte-1762",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_portrait-of-queen-charlotte-1762.jpg",
+        "sha256": "b97f12d4a7ca2ab750b1b3664ea56fbe622c8138ee2cb8b558f8c7f6d2465ca5"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_portrait-of-sir-john-hynde-cotton-3rd-bt.jpg",
+        "stem": "Rococo__allan-ramsay_portrait-of-sir-john-hynde-cotton-3rd-bt",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_portrait-of-sir-john-hynde-cotton-3rd-bt.jpg",
+        "sha256": "b1b456cf626729e1c60f7dec49316dad24dedcee9ae16c99cf37808388f19b0a"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_robert-wood.jpg",
+        "stem": "Rococo__allan-ramsay_robert-wood",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_robert-wood.jpg",
+        "sha256": "c185be91da3787918970b5d97e13b061f3b8d47051e721d7dfcc3d98729bd177"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_self-portrait.jpg",
+        "stem": "Rococo__allan-ramsay_self-portrait",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_self-portrait.jpg",
+        "sha256": "d020b04639818330839d606cf6e174920f5096e34888dbc50cbb2ce11d33ffd1"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_sir-andrew-mitchell.jpg",
+        "stem": "Rococo__allan-ramsay_sir-andrew-mitchell",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_sir-andrew-mitchell.jpg",
+        "sha256": "564805d43f9ad65fbc60642620739e8099790c2f87574fb3f62347ddee038443"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__allan-ramsay_the-painter-s-wife-margaret-lindsay.jpg",
+        "stem": "Rococo__allan-ramsay_the-painter-s-wife-margaret-lindsay",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__allan-ramsay_the-painter-s-wife-margaret-lindsay.jpg",
+        "sha256": "9b3f63ea336c0a568e643098f46f1190ea8a9b36727c99ab63b5d88baaeabfcf"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__antoine-pesne_birth-of-christ-1745.jpg",
+        "stem": "Rococo__antoine-pesne_birth-of-christ-1745",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__antoine-pesne_birth-of-christ-1745.jpg",
+        "sha256": "eeee078831b3d57f0f47bcbab9543b7a225b51e1b4dd2b44ef055af4a981c9a7"
+      },
+      {
+        "style": "Rococo",
+        "style_id": 3,
+        "filename": "Rococo__antoine-pesne_frederick-ii-of-prussia-as-general-1745.jpg",
+        "stem": "Rococo__antoine-pesne_frederick-ii-of-prussia-as-general-1745",
+        "rel_path": "datasets/distinct5_512/train/Rococo/Rococo__antoine-pesne_frederick-ii-of-prussia-as-general-1745.jpg",
+        "sha256": "20c70ea355938659b121e48ddc235c79cb0910a6e4736a9f07c0b391e0b0932d"
+      }
+    ],
+    "Ukiyo_e": [
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__utagawa-kuniyoshi_women.jpg",
+        "stem": "Ukiyo_e__utagawa-kuniyoshi_women",
+        "rel_path": "datasets/wikiart_new_512/Ukiyo_e/Ukiyo_e__utagawa-kuniyoshi_women.jpg",
+        "sha256": "98fc66f7ac157433d957b339b482bda0e62777e78c87ace8062283db58fb3f3e"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__utagawa-kuniyoshi_woman-doing-her-laundry-in-the-river.jpg",
+        "stem": "Ukiyo_e__utagawa-kuniyoshi_woman-doing-her-laundry-in-the-river",
+        "rel_path": "datasets/wikiart_new_512/Ukiyo_e/Ukiyo_e__utagawa-kuniyoshi_woman-doing-her-laundry-in-the-river.jpg",
+        "sha256": "4a5743ec6a9b2aebaf51a6dad4131eac5cb49e89ba4af6b7a92f375725c800a5"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__keisai-eisen_the-courtesan-tamagawa-of-the-maruebiya-house.jpg",
+        "stem": "Ukiyo_e__keisai-eisen_the-courtesan-tamagawa-of-the-maruebiya-house",
+        "rel_path": "datasets/wikiart_new_512/Ukiyo_e/Ukiyo_e__keisai-eisen_the-courtesan-tamagawa-of-the-maruebiya-house.jpg",
+        "sha256": "522d1730d02ad6bd6d72f7fa5b27a3c3c1b10676746da1d466428f1b2cd468e1"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__utagawa-kuniyoshi_young-emperor.jpg",
+        "stem": "Ukiyo_e__utagawa-kuniyoshi_young-emperor",
+        "rel_path": "datasets/wikiart_new_512/Ukiyo_e/Ukiyo_e__utagawa-kuniyoshi_young-emperor.jpg",
+        "sha256": "6c4ff1ac98315b7edf4a6b288bcbe55de72122b19bbc336c29105795d33dd3b8"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__keisai-eisen_okitsu-no-18-from-an-untitled-series-of-the-fifty-three-stations-of-the-t-kaid-road.jpg",
+        "stem": "Ukiyo_e__keisai-eisen_okitsu-no-18-from-an-untitled-series-of-the-fifty-three-stations-of-the-t-kaid-road",
+        "rel_path": "datasets/wikiart_new_512/Ukiyo_e/Ukiyo_e__keisai-eisen_okitsu-no-18-from-an-untitled-series-of-the-fifty-three-stations-of-the-t-kaid-road.jpg",
+        "sha256": "33b8392c9fb28da44c827c8c284d3f476a4e15572ef27029f7df13e18e4fc80b"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__tsukioka-yoshitoshi_amaterasu-mikami-appearing-from-the-cave.jpg",
+        "stem": "Ukiyo_e__tsukioka-yoshitoshi_amaterasu-mikami-appearing-from-the-cave",
+        "rel_path": "datasets/wikiart_new_512/Ukiyo_e/Ukiyo_e__tsukioka-yoshitoshi_amaterasu-mikami-appearing-from-the-cave.jpg",
+        "sha256": "2dc1d6d6d34a9a83eced27b38406193a9814eeb6064b5fd2c8659f49632ae274"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__keisai-eisen_the-ninth-month-ch-y.jpg",
+        "stem": "Ukiyo_e__keisai-eisen_the-ninth-month-ch-y",
+        "rel_path": "datasets/wikiart_new_512/Ukiyo_e/Ukiyo_e__keisai-eisen_the-ninth-month-ch-y.jpg",
+        "sha256": "e6a7f8ae02f727a876d74702f767a34ec9eee71f820f812b8abe30d6a48c7802"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__keisai-eisen_kanbara-kaoyo-of-the-tamaya-from-the-series-a-t-kaid-board-game-of-courtesans.jpg",
+        "stem": "Ukiyo_e__keisai-eisen_kanbara-kaoyo-of-the-tamaya-from-the-series-a-t-kaid-board-game-of-courtesans",
+        "rel_path": "datasets/wikiart_new_512/Ukiyo_e/Ukiyo_e__keisai-eisen_kanbara-kaoyo-of-the-tamaya-from-the-series-a-t-kaid-board-game-of-courtesans.jpg",
+        "sha256": "7e18894e9bf855a5c9bc10357ad6dcd1643642545fe680d9a1822be9bb8e9034"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_a-bridge-across-a-deep-gorge.jpg",
+        "stem": "Ukiyo_e__hiroshige_a-bridge-across-a-deep-gorge",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_a-bridge-across-a-deep-gorge.jpg",
+        "sha256": "ff68ad8832389beea09eb3eedf5d9d6edbf1dfd0817d39aa8c50fd593968a462"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_a-shrine-among-trees-on-a-moor.jpg",
+        "stem": "Ukiyo_e__hiroshige_a-shrine-among-trees-on-a-moor",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_a-shrine-among-trees-on-a-moor.jpg",
+        "sha256": "6380c22fd6f78cd4d472801710279d36939f4a1da3d2c6618d4ebe0eb0f025c3"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_amanohashidate-peninsula-in-tango-province.jpg",
+        "stem": "Ukiyo_e__hiroshige_amanohashidate-peninsula-in-tango-province",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_amanohashidate-peninsula-in-tango-province.jpg",
+        "sha256": "2dd48d10c5f5d1261dda8a0ab13d0efa6ec546dcdcabf2ec505e9c343dc8f0f2"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_ashida.jpg",
+        "stem": "Ukiyo_e__hiroshige_ashida",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_ashida.jpg",
+        "sha256": "2dfa4ec0cd8fd760015f4b794d462508ff7f5872d1d2ccced0426b9e36756697"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_autumn-flowers-in-front-of-full-moon.jpg",
+        "stem": "Ukiyo_e__hiroshige_autumn-flowers-in-front-of-full-moon",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_autumn-flowers-in-front-of-full-moon.jpg",
+        "sha256": "d558b7f9d6cc75bff8fb7466b769ba03a1296d8d879fa8d91d824ccef753454e"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_bay-at-kominato-in-awa-province.jpg",
+        "stem": "Ukiyo_e__hiroshige_bay-at-kominato-in-awa-province",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_bay-at-kominato-in-awa-province.jpg",
+        "sha256": "ade6a866eff727e43358df02c9437503d6e00bf693302665fb8e37a22b497fe0"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_camellia-and-bush-warbler-1844.jpg",
+        "stem": "Ukiyo_e__hiroshige_camellia-and-bush-warbler-1844",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_camellia-and-bush-warbler-1844.jpg",
+        "sha256": "148436cb8357bd96a70c33e989cd5043749755ce9829d31f727a57a5e15d7e6f"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_cherry-tree.jpg",
+        "stem": "Ukiyo_e__hiroshige_cherry-tree",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_cherry-tree.jpg",
+        "sha256": "6bc80dfbd1d3c3b4409b3a87643d81ec89efc78cbabf09796f65e49fec433e7a"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_crane-in-waves-1835.jpg",
+        "stem": "Ukiyo_e__hiroshige_crane-in-waves-1835",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_crane-in-waves-1835.jpg",
+        "sha256": "d2594aaf4992a05b9204ce516231d1af7a24b7dfe5c9554942c25a24e2a8cf96"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_descending-geese-katata.jpg",
+        "stem": "Ukiyo_e__hiroshige_descending-geese-katata",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_descending-geese-katata.jpg",
+        "sha256": "748b6f8c764c96b90857d1ad5423d37350704b660eb395b98ceecc4cb3af81d0"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_drum-bridge-and-setting-sun-hill-meguro.jpg",
+        "stem": "Ukiyo_e__hiroshige_drum-bridge-and-setting-sun-hill-meguro",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_drum-bridge-and-setting-sun-hill-meguro.jpg",
+        "sha256": "7a74cb7d2db776c14133753fd9f0defe07574c9cce748e67fb665b82a1623932"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_eagle-over-100-000-acre-plain-at-susaki-fukagawa-juman-tsubo.jpg",
+        "stem": "Ukiyo_e__hiroshige_eagle-over-100-000-acre-plain-at-susaki-fukagawa-juman-tsubo",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_eagle-over-100-000-acre-plain-at-susaki-fukagawa-juman-tsubo.jpg",
+        "sha256": "2215cd67f8ea70bbbd0095c33a98fabf480ae6a5fd65e15fbaddbbd2bf22d294"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_evening-shower-at-nihonbashi-bridge.jpg",
+        "stem": "Ukiyo_e__hiroshige_evening-shower-at-nihonbashi-bridge",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_evening-shower-at-nihonbashi-bridge.jpg",
+        "sha256": "c0885eb3bec116918a7dc78a525d1de1b4887770d896b515b9b4caba2c217dd9"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_evening-snow-on-mount-hira.jpg",
+        "stem": "Ukiyo_e__hiroshige_evening-snow-on-mount-hira",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_evening-snow-on-mount-hira.jpg",
+        "sha256": "4fb8b2537d3898e80f838efd9269ba39105e2a24ec789b4da7b21f4f0fbc301e"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_evening-snow-on-the-asuka-mountain-1841.jpg",
+        "stem": "Ukiyo_e__hiroshige_evening-snow-on-the-asuka-mountain-1841",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_evening-snow-on-the-asuka-mountain-1841.jpg",
+        "sha256": "df46222fe976d59e2d07a3da585b3667e8dc755973e0830bff3188be0ec0a45b"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_evening-view-of-a-temple-in-the-hills.jpg",
+        "stem": "Ukiyo_e__hiroshige_evening-view-of-a-temple-in-the-hills",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_evening-view-of-a-temple-in-the-hills.jpg",
+        "sha256": "b13ddc45efa8e4b216fe1d0502ec958525b5512601054efc70237dca656dbe2b"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_first-cuckoo-of-the-year-at-tsukudajima.jpg",
+        "stem": "Ukiyo_e__hiroshige_first-cuckoo-of-the-year-at-tsukudajima",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_first-cuckoo-of-the-year-at-tsukudajima.jpg",
+        "sha256": "e38c0ce528735774ee205761cae8635343b39e1a3fc31170dd739639663edce4"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_folio-from-the-upright-gojusan-tsuji-tokaido-1858.jpg",
+        "stem": "Ukiyo_e__hiroshige_folio-from-the-upright-gojusan-tsuji-tokaido-1858",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_folio-from-the-upright-gojusan-tsuji-tokaido-1858.jpg",
+        "sha256": "dbe4473cbf7684e243b0e0d7a59839c67efeadfcd8edf4df6c4289de3266d919"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_four-swallows.jpg",
+        "stem": "Ukiyo_e__hiroshige_four-swallows",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_four-swallows.jpg",
+        "sha256": "46852eabac89c3628881e3bda5a9675e32ec7871638823681c05bcbabd7b4226"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_grey-mullet-and-camellia.jpg",
+        "stem": "Ukiyo_e__hiroshige_grey-mullet-and-camellia",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_grey-mullet-and-camellia.jpg",
+        "sha256": "09fdbdaeaae3859517e927d1d6f6b0627afc5dc8a7bf88f85252b71b6dd9c22c"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_hibiscus.jpg",
+        "stem": "Ukiyo_e__hiroshige_hibiscus",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_hibiscus.jpg",
+        "sha256": "8c7de56b4234aab27f83f3769e73fd09cc063ca4c849e34c10a2078c14a5669d"
+      },
+      {
+        "style": "Ukiyo_e",
+        "style_id": 4,
+        "filename": "Ukiyo_e__hiroshige_hodogaya-shinkame-bashi-station-5.jpg",
+        "stem": "Ukiyo_e__hiroshige_hodogaya-shinkame-bashi-station-5",
+        "rel_path": "datasets/distinct5_512/train/Ukiyo_e/Ukiyo_e__hiroshige_hodogaya-shinkame-bashi-station-5.jpg",
+        "sha256": "590c5ed0ae049627ab563f51473dedd36ae588869c2909f283df707c4b669245"
+      }
+    ]
+  }
+}
