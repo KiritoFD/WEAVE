@@ -29,9 +29,9 @@ if str(_REPO_ROOT) not in sys.path:
 
 from tools.v8.bridge import sample_bridge  # noqa: E402
 from tools.v8.common import (  # noqa: E402
-    STYLES, V8_ROOT, aggregate_rows, batch_tensors, build_independent_val_tasks,
+    STYLES, V8_ROOT, aggregate_rows, batch_tensors,
     build_source_latents, compute_batch_rows, ensure_dirs, load_d5_latents, load_eval_bundle,
-    save_json,
+    load_frozen_tasks, save_json, source_cache_for_frozen,
 )
 from tools.v8.models import VelocityUNet  # noqa: E402
 from tools.v8.solvers import solve_euler  # noqa: E402
@@ -150,7 +150,8 @@ def main() -> None:
     ap.add_argument("--ckpt", required=True)
     ap.add_argument("--name", required=True)
     ap.add_argument("--weight", choices=["raw", "ema"], default="raw")
-    ap.add_argument("--per-style", type=int, default=10)
+    ap.add_argument("--tasks", choices=["test600", "test750"], default="test750",
+                    help="Official protocols only; the old val200 pool leaked training data and was removed.")
     args = ap.parse_args()
 
     ensure_dirs()
@@ -163,10 +164,11 @@ def main() -> None:
     fit = diagnose_fit(model, train_by_style, device)
     cond = diagnose_condition_response(model, train_by_style, device)
 
-    tasks = build_independent_val_tasks(per_style=args.per_style)
+    all_tasks = load_frozen_tasks()
+    tasks = [t for t in all_tasks if t.get("is_cross", True)] if args.tasks == "test600" else all_tasks
     models, ref_feats, vae, trt = load_eval_bundle(device)
     src_latents = build_source_latents(tasks, vae, device)
-    source_cache: Dict[str, dict] = {}
+    source_cache: Dict[str, dict] = source_cache_for_frozen()
 
     solvers = []
     for spec in ["euler4", "euler8", "euler16", "euler32"]:

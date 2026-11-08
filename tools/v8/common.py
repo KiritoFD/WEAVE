@@ -118,6 +118,22 @@ def train_latent_stems() -> Dict[str, set]:
 
 
 def build_independent_val_tasks(per_style: int = 10, exclude_train_latents: bool = True) -> List[dict]:
+    """DEPRECATED — do not use for reporting.
+
+    Kept only as a data-leakage audit helper. The old 200-task validation pool
+    overlapped the latent training cache (distinct5_512/train is the same data
+    the D5 caches were encoded from), so every reported number must come from
+    the frozen official protocols: 600 cross-style tasks or all 750 tasks.
+
+    Use `load_frozen_tasks()` (750) or filter `is_cross` (600) instead.
+    """
+    raise RuntimeError(
+        "build_independent_val_tasks is retired: it produced the invalid val200 pool. "
+        "Evaluate on the frozen official tasks (600 cross-style / 750 all) via load_frozen_tasks()."
+    )
+
+
+def _legacy_build_holdout_tasks(per_style: int = 10, exclude_train_latents: bool = True) -> List[dict]:
     """Validation tasks drawn from `wikiart_random20_512/images/test` (clean hold-out).
 
     Each candidate must be simultaneously:

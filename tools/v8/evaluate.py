@@ -17,7 +17,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from tools.v8.common import (  # noqa: E402
-    DOCS_V8, STYLES, V8_ROOT, aggregate_rows, batch_tensors, build_independent_val_tasks,
+    DOCS_V8, STYLES, V8_ROOT, aggregate_rows, batch_tensors,
     build_source_latents, compute_batch_rows, ensure_dirs, load_eval_bundle, load_frozen_tasks,
     save_json, source_cache_for_frozen,
 )
@@ -29,7 +29,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt", required=True, help="Path to V8 checkpoint, or NOOP for zero-velocity VAE no-op baseline")
     ap.add_argument("--name", required=True)
-    ap.add_argument("--tasks", choices=["val200", "test750"], default="val200")
+    ap.add_argument("--tasks", choices=["test600", "test750"], default="test750",
+                    help="Official evaluation protocols only. The old val200 pool overlapped the latent "
+                         "training cache and has been removed.")
     ap.add_argument("--solvers", default="euler4,euler8,euler16,heun4,heun8")
     ap.add_argument("--out-suffix", default="", help="Optional suffix for output JSON to isolate solver shards")
     ap.add_argument("--batch", type=int, default=8)
@@ -39,10 +41,14 @@ def main() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"=== V8 Eval {args.name} ckpt={args.ckpt} tasks={args.tasks} Device={device} ===", flush=True)
 
-    tasks = build_independent_val_tasks(10) if args.tasks == "val200" else load_frozen_tasks()
+    all_tasks = load_frozen_tasks()
+    if args.tasks == "test600":
+        tasks = [t for t in all_tasks if t.get("is_cross", True)]
+    else:
+        tasks = all_tasks
     models, ref_feats, vae, trt = load_eval_bundle(device)
     src_latents = build_source_latents(tasks, vae, device)
-    source_cache = source_cache_for_frozen() if args.tasks == "test750" else {}
+    source_cache = source_cache_for_frozen()
 
     if args.ckpt == "NOOP":
         class ZeroVelocity(torch.nn.Module):
@@ -84,7 +90,7 @@ def main() -> None:
         torch.cuda.empty_cache()
         wall = round(time.time() - t0, 1)
         cross = aggregate_rows(rows, only_cross=True)
-        same = aggregate_rows([r for r in rows if not r["is_cross"]]) if args.tasks == "test750" else {}
+        same = aggregate_rows([r for r in rows if not r["is_cross"]])
         allv = aggregate_rows(rows)
         for g in (cross, same, allv):
             if g:
