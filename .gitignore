@@ -100,3 +100,6 @@ _*.ps1
 docs/archive/**/node_modules/
 WEAVE/
 _ref/
+docs/baseline/images/
+docs/baseline/sheets/
+docs/baseline/*.tar.gz
