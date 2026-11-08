@@ -190,7 +190,7 @@ def main() -> None:
         finally:
             state[aid] = rec
             state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
-            if rec.get("eval"):
+            if rec.get("eval") and "target_top1" in rec["eval"]:
                 e = rec["eval"]
                 print(f"[suite] {aid} {rec['status']:6s} top1={e['target_top1']:.4f} "
                       f"margin={e['target_margin']:+.4f} dT={e['csd_dT']:+.4f} "
