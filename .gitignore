@@ -99,3 +99,4 @@ _*.ps1
 **/.codeartsdoer/
 docs/archive/**/node_modules/
 WEAVE/
+_ref/
