@@ -1,0 +1,10 @@
+{
+  "residual_cap": 0.35,
+  "deterministic_max_diff": 0.0,
+  "max_abs_residual": 0.34996047616004944,
+  "within_smooth_bound": true,
+  "same_style_exact_identity": true,
+  "same_style_residual_max": 0.0,
+  "out_conv_grad_norm": 0.796258270740509,
+  "residual_differentiable": true
+}

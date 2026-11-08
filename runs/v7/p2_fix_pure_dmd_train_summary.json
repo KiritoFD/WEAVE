@@ -1,0 +1,22 @@
+{
+  "name": "p2_fix_pure_dmd",
+  "lambda_content": 0.0,
+  "steps": 800,
+  "batch": 40,
+  "dmd_alpha": 0.1,
+  "residual_cap": 0.35,
+  "sigma_dmd": 0.8,
+  "train_wall_sec": 674.7,
+  "peak_vram_mib": 5796.6,
+  "final": {
+    "fake": 0.33063,
+    "dmd": 0.00019,
+    "content": 0.0,
+    "total": 0.00019,
+    "grad_dmd": 0.00169,
+    "grad_content": 0.0,
+    "grad_total": 0.00169,
+    "residual_l2": 38.75443
+  },
+  "checkpoint": "runs/v7/p2_fix_pure_dmd.pt"
+}

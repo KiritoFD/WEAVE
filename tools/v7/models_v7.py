@@ -1,9 +1,10 @@
 """WEAVE V7 model: single-step conditional residual distribution transport operator.
 
-T_theta(z,s,t) = z + 1_{s != t} * R_theta(z, e_t - e_s)
+T_theta(z,s,t) = z + 1_{s != t} * c * tanh(R_theta(z, e_t-e_s) / c)
 
-Unlike V6 D1, the network sees the ORIGINAL latent z (not only C1 canonical content);
-C1/edge canonicalization is used only as a soft transport cost during training.
+The smooth tanh residual bound is differentiable everywhere and is used identically
+in training and inference. Unlike V6 D1, the network sees the ORIGINAL latent z;
+C1/edge canonicalization is only a soft transport cost during training.
 """
 from __future__ import annotations
 
@@ -17,8 +18,9 @@ from tools.v6.models_v6 import StyleAdaLNBlock
 class SingleStepTransportNet(nn.Module):
     """Lightweight pair-conditioned U-Net residual operator (~2M params at base_dim=48)."""
 
-    def __init__(self, base_dim: int = 48, num_styles: int = 5):
+    def __init__(self, base_dim: int = 48, num_styles: int = 5, residual_cap: float = 0.35):
         super().__init__()
+        self.residual_cap = float(residual_cap)
         c1, c2, c3 = base_dim, base_dim * 2, base_dim * 2
         cond_dim = base_dim * 2
 
@@ -81,6 +83,8 @@ class SingleStepTransportNet(nn.Module):
         u1 = self.dec1_2(self.dec1_1(u1, cond), cond)
 
         residual = self.out_conv(F.silu(self.out_norm(u1)))
+        c = self.residual_cap
+        residual_bounded = c * torch.tanh(residual / c)
         same_mask = (src_ids == tgt_ids).view(-1, 1, 1, 1)
-        # Exact same-style identity by construction.
-        return z + torch.where(same_mask, torch.zeros_like(residual), residual)
+        # Exact same-style identity by construction; smooth bound is differentiable.
+        return z + torch.where(same_mask, torch.zeros_like(residual_bounded), residual_bounded)

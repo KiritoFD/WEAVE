@@ -78,12 +78,10 @@ def main() -> None:
         y = apply_transport(transport, z, src_ids, tgt_ids, residual_clip)
         loss_style = compute_style_distribution_loss(y, tgt_ids, style_targets)
         loss_content = content_transport_cost(z, y, canon)
+        # s==t identity is exact by model construction; no invalid identity loss.
+        loss_rec = y.new_tensor(0.0)
 
-        # Same-style pairs must remain exact; this also anchors the residual head.
-        y_same = transport(z, src_ids, src_ids)
-        loss_rec = F.mse_loss(y_same, z)
-
-        loss = lambda_style * loss_style + lambda_content * loss_content + lambda_rec * loss_rec
+        loss = lambda_style * loss_style + lambda_content * loss_content
         opt.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(transport.parameters(), 1.0)

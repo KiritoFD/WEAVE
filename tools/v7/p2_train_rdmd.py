@@ -67,21 +67,18 @@ def content_transport_cost(z: torch.Tensor, y: torch.Tensor, canon: ContentCanon
     return l_low + 0.35 * l_edge
 
 
-class _ClampResidual(torch.autograd.Function):
-    """Forward clips residual magnitude; backward passes through unchanged."""
-
-    @staticmethod
-    def forward(ctx, y, z, cap):
-        return z + (y - z).clamp(-cap, cap)
-
-    @staticmethod
-    def backward(ctx, grad_out):
-        return grad_out, None, None
+class _NoOp:
+    """Deprecated marker: old Straight-Through clamp is intentionally removed."""
 
 
-def apply_transport(transport, z, src_ids, tgt_ids, cap: float):
-    y = transport(z, src_ids, tgt_ids)
-    return _ClampResidual.apply(y, z, cap)
+def apply_transport(transport, z, src_ids, tgt_ids, cap: float | None = None):
+    """Unified train/eval output: the model owns the smooth tanh residual bound.
+
+    ``cap`` is kept only for backward-compatible call signatures; it is ignored.
+    This prevents the previous training/evaluation mismatch where training used
+    a clamp but evaluation used an unbounded residual.
+    """
+    return transport(z, src_ids, tgt_ids)
 
 
 def main() -> None:
@@ -170,8 +167,10 @@ def main() -> None:
             sig_vec = torch.full((B,), sigma_dmd, device=device, dtype=torch.float32)
             eps_real = real_score(y_sig2, sig_vec, tgt_ids)
             eps_fake_det = fake_score(y_sig2, sig_vec, tgt_ids)
-            target = y.detach() + dmd_alpha * (eps_real - eps_fake_det)
-        loss_dmd = F.mse_loss(y.float(), target.float())
+            # Corrected sign: KL(q||p) descent direction is (eps_real-eps_fake)/sigma.
+            direction = (eps_real - eps_fake_det) / sigma_dmd
+            target = y.detach() - dmd_alpha * direction
+        loss_dmd = 0.5 * F.mse_loss(y.float(), target.float())
 
         loss_content = content_transport_cost(z, y, canon)
         loss_g = loss_dmd + lambda_content * loss_content

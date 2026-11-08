@@ -113,31 +113,15 @@ def main() -> None:
             sig_vec = torch.full((B,), sigma_dmd, device=device, dtype=torch.float32)
             eps_real = real_score(y_sig2, sig_vec, tgt_ids)
             eps_fake_det = fake_score(y_sig2, sig_vec, tgt_ids)
-            target = y.detach() + lambda_dmd * (eps_real - eps_fake_det)
-        loss_dmd = F.mse_loss(y.float(), target.float())
+            # Corrected sign: KL(q||p) descent uses target y - alpha*direction.
+            direction = (eps_real - eps_fake_det) / sigma_dmd
+            target = y.detach() - lambda_dmd * direction
+        loss_dmd = 0.5 * F.mse_loss(y.float(), target.float())
 
         loss_content = content_transport_cost(z, y, canon)
         loss_style = compute_style_distribution_loss(y, tgt_ids, style_targets)
-
-        # Same-style exact identity is enforced by construction; this term only
-        # stabilizes early training against runaway residual drift.
-        same_ids = torch.randint(0, len(STYLES), (B,), device=device)
-        z_same = torch.cat([
-            gpu_by_style[s][torch.randint(0, gpu_by_style[s].shape[0], (1,), device=device)]
-            for s in STYLES for _ in range(microbatch_per_style)
-        ], dim=0)
-        # Re-sample correctly per style rather than relying on flattened list order.
-        z_same_list = []
-        for sid, s in enumerate(STYLES):
-            idx = torch.randint(0, gpu_by_style[s].shape[0], (microbatch_per_style,), device=device)
-            z_same_list.append(gpu_by_style[s][idx])
-        z_same = torch.cat(z_same_list, dim=0)
-        same_labels = torch.cat([
-            torch.full((microbatch_per_style,), sid, device=device, dtype=torch.long)
-            for sid in range(len(STYLES))
-        ], dim=0)
-        y_same = transport(z_same, same_labels, same_labels)
-        loss_rec = F.mse_loss(y_same, z_same)
+        # s==t exact identity is enforced by the model mask; no invalid identity loss.
+        loss_rec = y.new_tensor(0.0)
 
         loss_g = (
             lambda_content * loss_content
