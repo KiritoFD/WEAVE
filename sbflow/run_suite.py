@@ -62,7 +62,9 @@ def arm_flags(cfg: dict) -> List[str]:
     keys = ["objective", "edm", "heads_out", "style_cond", "target", "time_sampling",
             "sampler", "ot_ratio", "ot_cost", "eps", "batch", "steps", "width",
             "depth", "heads", "patch", "warmup", "lr", "ema_decay", "pair_rank",
-            "local_conv"]
+            "local_conv", "dist_loss", "style_enc", "lambda_dist", "online",
+            "online_steps", "online_direction", "online_mix", "online_replay",
+            "online_raw_teacher", "online_warmup", "pivot"]
     out: List[str] = []
     for k in keys:
         if k in cfg:
