@@ -1,0 +1,668 @@
+{
+  "protocol": {
+    "tasks": "test750",
+    "n_cross_rows": 600,
+    "solver_reference": "euler4",
+    "note": "paired source-clustered bootstrap on CROSS-STYLE tasks only (same-style rows excluded)"
+  },
+  "vs_vae_noop": {
+    "B0_raw": {
+      "euler4": {
+        "csd_dT": {
+          "n_common": 600,
+          "mean_diff": 0.02563,
+          "ci95": [
+            0.02115,
+            0.03002
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        },
+        "target_top1": {
+          "n_common": 600,
+          "mean_diff": 0.02,
+          "ci95": [
+            0.00996,
+            0.03167
+          ],
+          "p_boot": 0.003,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        },
+        "dino_c": {
+          "n_common": 600,
+          "mean_diff": -0.08736,
+          "ci95": [
+            -0.098,
+            -0.0784
+          ],
+          "p_boot": 0.0,
+          "win_rate": 0.0,
+          "significant_at_05": true
+        },
+        "lpips": {
+          "n_common": 600,
+          "mean_diff": 0.19432,
+          "ci95": [
+            0.18382,
+            0.20625
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        }
+      }
+    },
+    "B0_ema": {
+      "euler4": {
+        "csd_dT": {
+          "n_common": 600,
+          "mean_diff": 0.00348,
+          "ci95": [
+            0.00119,
+            0.00561
+          ],
+          "p_boot": 0.0015,
+          "win_rate": 0.9995,
+          "significant_at_05": true
+        },
+        "target_top1": {
+          "n_common": 600,
+          "mean_diff": -0.00167,
+          "ci95": [
+            -0.005,
+            0.0
+          ],
+          "p_boot": 0.6485,
+          "win_rate": 0.0,
+          "significant_at_05": false
+        },
+        "dino_c": {
+          "n_common": 600,
+          "mean_diff": -0.03292,
+          "ci95": [
+            -0.04026,
+            -0.02728
+          ],
+          "p_boot": 0.0,
+          "win_rate": 0.0,
+          "significant_at_05": true
+        },
+        "lpips": {
+          "n_common": 600,
+          "mean_diff": 0.03739,
+          "ci95": [
+            0.03548,
+            0.03936
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        }
+      }
+    },
+    "B1_ema": {
+      "euler16": {
+        "csd_dT": {
+          "n_common": 600,
+          "mean_diff": 0.00042,
+          "ci95": [
+            -0.00178,
+            0.00246
+          ],
+          "p_boot": 0.696,
+          "win_rate": 0.6555,
+          "significant_at_05": false
+        },
+        "target_top1": {
+          "n_common": 600,
+          "mean_diff": 0.00167,
+          "ci95": [
+            -0.00333,
+            0.00667
+          ],
+          "p_boot": 0.7575,
+          "win_rate": 0.6205,
+          "significant_at_05": false
+        },
+        "dino_c": {
+          "n_common": 600,
+          "mean_diff": -0.03262,
+          "ci95": [
+            -0.04034,
+            -0.0268
+          ],
+          "p_boot": 0.0,
+          "win_rate": 0.0,
+          "significant_at_05": true
+        },
+        "lpips": {
+          "n_common": 600,
+          "mean_diff": 0.03276,
+          "ci95": [
+            0.03104,
+            0.03447
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        }
+      },
+      "euler4": {
+        "csd_dT": {
+          "n_common": 600,
+          "mean_diff": 0.00146,
+          "ci95": [
+            -0.00073,
+            0.00355
+          ],
+          "p_boot": 0.19,
+          "win_rate": 0.896,
+          "significant_at_05": false
+        },
+        "target_top1": {
+          "n_common": 600,
+          "mean_diff": 0.00167,
+          "ci95": [
+            -0.00333,
+            0.00667
+          ],
+          "p_boot": 0.7575,
+          "win_rate": 0.6205,
+          "significant_at_05": false
+        },
+        "dino_c": {
+          "n_common": 600,
+          "mean_diff": -0.03291,
+          "ci95": [
+            -0.0406,
+            -0.02696
+          ],
+          "p_boot": 0.0,
+          "win_rate": 0.0,
+          "significant_at_05": true
+        },
+        "lpips": {
+          "n_common": 600,
+          "mean_diff": 0.03496,
+          "ci95": [
+            0.03309,
+            0.03684
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        }
+      },
+      "euler8": {
+        "csd_dT": {
+          "n_common": 600,
+          "mean_diff": 0.00075,
+          "ci95": [
+            -0.00142,
+            0.00282
+          ],
+          "p_boot": 0.485,
+          "win_rate": 0.745,
+          "significant_at_05": false
+        },
+        "target_top1": {
+          "n_common": 600,
+          "mean_diff": 0.00167,
+          "ci95": [
+            -0.00333,
+            0.00667
+          ],
+          "p_boot": 0.7575,
+          "win_rate": 0.6205,
+          "significant_at_05": false
+        },
+        "dino_c": {
+          "n_common": 600,
+          "mean_diff": -0.0327,
+          "ci95": [
+            -0.04036,
+            -0.02677
+          ],
+          "p_boot": 0.0,
+          "win_rate": 0.0,
+          "significant_at_05": true
+        },
+        "lpips": {
+          "n_common": 600,
+          "mean_diff": 0.0333,
+          "ci95": [
+            0.03155,
+            0.03507
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        }
+      }
+    },
+    "B2_raw": {
+      "euler4": {
+        "csd_dT": {
+          "n_common": 600,
+          "mean_diff": 0.0361,
+          "ci95": [
+            0.03158,
+            0.04043
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        },
+        "target_top1": {
+          "n_common": 600,
+          "mean_diff": 0.01833,
+          "ci95": [
+            0.00667,
+            0.03167
+          ],
+          "p_boot": 0.0065,
+          "win_rate": 0.9995,
+          "significant_at_05": true
+        },
+        "dino_c": {
+          "n_common": 600,
+          "mean_diff": -0.08542,
+          "ci95": [
+            -0.09655,
+            -0.07611
+          ],
+          "p_boot": 0.0,
+          "win_rate": 0.0,
+          "significant_at_05": true
+        },
+        "lpips": {
+          "n_common": 600,
+          "mean_diff": 0.18249,
+          "ci95": [
+            0.1722,
+            0.19352
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        }
+      }
+    },
+    "B2_ema": {
+      "euler4": {
+        "csd_dT": {
+          "n_common": 600,
+          "mean_diff": 0.00384,
+          "ci95": [
+            0.00191,
+            0.00589
+          ],
+          "p_boot": 0.001,
+          "win_rate": 0.9995,
+          "significant_at_05": true
+        },
+        "target_top1": {
+          "n_common": 600,
+          "mean_diff": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "p_boot": 1.0,
+          "win_rate": 0.0,
+          "significant_at_05": false
+        },
+        "dino_c": {
+          "n_common": 600,
+          "mean_diff": -0.02136,
+          "ci95": [
+            -0.02768,
+            -0.01642
+          ],
+          "p_boot": 0.0,
+          "win_rate": 0.0,
+          "significant_at_05": true
+        },
+        "lpips": {
+          "n_common": 600,
+          "mean_diff": 0.02344,
+          "ci95": [
+            0.02204,
+            0.02483
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        }
+      }
+    },
+    "B3_ema": {
+      "euler16": {
+        "csd_dT": {
+          "n_common": 600,
+          "mean_diff": 0.00126,
+          "ci95": [
+            -0.00081,
+            0.00332
+          ],
+          "p_boot": 0.2355,
+          "win_rate": 0.878,
+          "significant_at_05": false
+        },
+        "target_top1": {
+          "n_common": 600,
+          "mean_diff": 0.0,
+          "ci95": [
+            -0.005,
+            0.005
+          ],
+          "p_boot": 1.0,
+          "win_rate": 0.348,
+          "significant_at_05": false
+        },
+        "dino_c": {
+          "n_common": 600,
+          "mean_diff": -0.02526,
+          "ci95": [
+            -0.03247,
+            -0.01967
+          ],
+          "p_boot": 0.0,
+          "win_rate": 0.0,
+          "significant_at_05": true
+        },
+        "lpips": {
+          "n_common": 600,
+          "mean_diff": 0.02696,
+          "ci95": [
+            0.02525,
+            0.02868
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        }
+      },
+      "euler4": {
+        "csd_dT": {
+          "n_common": 600,
+          "mean_diff": 0.00158,
+          "ci95": [
+            -0.00041,
+            0.00356
+          ],
+          "p_boot": 0.1165,
+          "win_rate": 0.9425,
+          "significant_at_05": false
+        },
+        "target_top1": {
+          "n_common": 600,
+          "mean_diff": 0.0,
+          "ci95": [
+            -0.005,
+            0.005
+          ],
+          "p_boot": 1.0,
+          "win_rate": 0.348,
+          "significant_at_05": false
+        },
+        "dino_c": {
+          "n_common": 600,
+          "mean_diff": -0.025,
+          "ci95": [
+            -0.03233,
+            -0.01939
+          ],
+          "p_boot": 0.0,
+          "win_rate": 0.0,
+          "significant_at_05": true
+        },
+        "lpips": {
+          "n_common": 600,
+          "mean_diff": 0.02518,
+          "ci95": [
+            0.02363,
+            0.02675
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        }
+      },
+      "euler8": {
+        "csd_dT": {
+          "n_common": 600,
+          "mean_diff": 0.00134,
+          "ci95": [
+            -0.00066,
+            0.00336
+          ],
+          "p_boot": 0.194,
+          "win_rate": 0.903,
+          "significant_at_05": false
+        },
+        "target_top1": {
+          "n_common": 600,
+          "mean_diff": 0.0,
+          "ci95": [
+            -0.005,
+            0.005
+          ],
+          "p_boot": 1.0,
+          "win_rate": 0.348,
+          "significant_at_05": false
+        },
+        "dino_c": {
+          "n_common": 600,
+          "mean_diff": -0.02519,
+          "ci95": [
+            -0.0324,
+            -0.01957
+          ],
+          "p_boot": 0.0,
+          "win_rate": 0.0,
+          "significant_at_05": true
+        },
+        "lpips": {
+          "n_common": 600,
+          "mean_diff": 0.02625,
+          "ci95": [
+            0.02461,
+            0.02792
+          ],
+          "p_boot": 0.0,
+          "win_rate": 1.0,
+          "significant_at_05": true
+        }
+      }
+    }
+  },
+  "direct_contrasts": {
+    "B2_raw vs B0_raw": {
+      "csd_dT": {
+        "n_common": 600,
+        "mean_diff": 0.01046,
+        "ci95": [
+          0.00768,
+          0.0134
+        ],
+        "p_boot": 0.0,
+        "win_rate": 1.0,
+        "significant_at_05": true
+      },
+      "target_top1": {
+        "n_common": 600,
+        "mean_diff": -0.00167,
+        "ci95": [
+          -0.01167,
+          0.00833
+        ],
+        "p_boot": 0.866,
+        "win_rate": 0.3115,
+        "significant_at_05": false
+      },
+      "dino_c": {
+        "n_common": 600,
+        "mean_diff": 0.00194,
+        "ci95": [
+          -0.00135,
+          0.00497
+        ],
+        "p_boot": 0.2335,
+        "win_rate": 0.874,
+        "significant_at_05": false
+      },
+      "lpips": {
+        "n_common": 600,
+        "mean_diff": -0.01184,
+        "ci95": [
+          -0.01666,
+          -0.00719
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    },
+    "B2_ema vs B0_ema": {
+      "csd_dT": {
+        "n_common": 600,
+        "mean_diff": 0.00036,
+        "ci95": [
+          -0.00197,
+          0.00277
+        ],
+        "p_boot": 0.772,
+        "win_rate": 0.6125,
+        "significant_at_05": false
+      },
+      "target_top1": {
+        "n_common": 600,
+        "mean_diff": 0.00167,
+        "ci95": [
+          0.0,
+          0.005
+        ],
+        "p_boot": 0.6485,
+        "win_rate": 0.6285,
+        "significant_at_05": false
+      },
+      "dino_c": {
+        "n_common": 600,
+        "mean_diff": 0.01156,
+        "ci95": [
+          0.00936,
+          0.01395
+        ],
+        "p_boot": 0.0,
+        "win_rate": 1.0,
+        "significant_at_05": true
+      },
+      "lpips": {
+        "n_common": 600,
+        "mean_diff": -0.01395,
+        "ci95": [
+          -0.01576,
+          -0.01212
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    },
+    "B2_raw vs B2_ema": {
+      "csd_dT": {
+        "n_common": 600,
+        "mean_diff": 0.03225,
+        "ci95": [
+          0.0283,
+          0.0362
+        ],
+        "p_boot": 0.0,
+        "win_rate": 1.0,
+        "significant_at_05": true
+      },
+      "target_top1": {
+        "n_common": 600,
+        "mean_diff": 0.01833,
+        "ci95": [
+          0.00667,
+          0.03167
+        ],
+        "p_boot": 0.0065,
+        "win_rate": 0.9995,
+        "significant_at_05": true
+      },
+      "dino_c": {
+        "n_common": 600,
+        "mean_diff": -0.06405,
+        "ci95": [
+          -0.07202,
+          -0.0572
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      },
+      "lpips": {
+        "n_common": 600,
+        "mean_diff": 0.15904,
+        "ci95": [
+          0.14918,
+          0.16997
+        ],
+        "p_boot": 0.0,
+        "win_rate": 1.0,
+        "significant_at_05": true
+      }
+    },
+    "B0_raw vs B0_ema": {
+      "csd_dT": {
+        "n_common": 600,
+        "mean_diff": 0.02215,
+        "ci95": [
+          0.0186,
+          0.0257
+        ],
+        "p_boot": 0.0,
+        "win_rate": 1.0,
+        "significant_at_05": true
+      },
+      "target_top1": {
+        "n_common": 600,
+        "mean_diff": 0.02167,
+        "ci95": [
+          0.01167,
+          0.03333
+        ],
+        "p_boot": 0.0005,
+        "win_rate": 1.0,
+        "significant_at_05": true
+      },
+      "dino_c": {
+        "n_common": 600,
+        "mean_diff": -0.05444,
+        "ci95": [
+          -0.06062,
+          -0.04902
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      },
+      "lpips": {
+        "n_common": 600,
+        "mean_diff": 0.15693,
+        "ci95": [
+          0.14689,
+          0.16879
+        ],
+        "p_boot": 0.0,
+        "win_rate": 1.0,
+        "significant_at_05": true
+      }
+    }
+  }
+}

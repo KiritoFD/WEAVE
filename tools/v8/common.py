@@ -97,23 +97,73 @@ def load_frozen_tasks() -> List[dict]:
     return tasks
 
 
-def build_independent_val_tasks(per_style: int = 10) -> List[dict]:
-    root = REPO_ROOT / "datasets" / "distinct5_512" / "train"
+def train_latent_stems() -> Dict[str, set]:
+    """Bare image stems recorded inside each D5 latent cache file (exact training pool)."""
+    out = {}
+    for sid, s in enumerate(STYLES):
+        p = D5_LATENT_ROOT / f"{sid:02d}_{s}.pt"
+        d = torch.load(p, map_location="cpu", weights_only=False)
+        stems = set()
+        for raw in d.get("ids", []):
+            name = Path(str(raw)).name
+            # ids look like 'wikiart__Style__Style__artist_title'; strip leading style tags.
+            parts = name.split("__")
+            while len(parts) > 1 and parts[0] in ("d5", "wikiart") :
+                parts = parts[1:]
+            while len(parts) > 2 and parts[1] == s:
+                parts = parts[1:]
+            stems.add("__".join(parts))
+        out[s] = stems
+    return out
+
+
+def build_independent_val_tasks(per_style: int = 10, exclude_train_latents: bool = True) -> List[dict]:
+    """Validation tasks drawn from `wikiart_random20_512/images/test` (clean hold-out).
+
+    Each candidate must be simultaneously:
+      1. absent from every id recorded in the D5 latent training cache, and
+      2. absent from the frozen Test600 source stems.
+    This is the only pool in the workspace that satisfies both conditions.
+    """
+    roots = [
+        REPO_ROOT / "datasets" / "wikiart_random20_512" / "wikiart_random20_512" / "images" / "test",
+        REPO_ROOT / "datasets" / "wikiart_random20_512" / "images" / "test",
+    ]
+    root = next((p for p in roots if p.exists()), None)
+    if root is None:
+        raise FileNotFoundError("No clean hold-out image pool found under wikiart_random20_512")
+
     banned = test_source_stems()
+    banned_short = {b.split("__", 1)[-1] for b in banned}
+    train_ids = train_latent_stems() if exclude_train_latents else {s: set() for s in STYLES}
+
+    def is_train_id(sname: str, stem: str) -> bool:
+        pool = train_ids.get(sname, set())
+        short = stem.split("__", 1)[-1]
+        return any(c in pool for c in {stem, short, f"{sname}__{short}", f"{sname}__{stem}"})
+
     tasks = []
     for sid, sname in enumerate(STYLES):
         sdir = root / sname
+        if not sdir.exists():
+            raise FileNotFoundError(f"Missing hold-out style dir: {sdir}")
         chosen = []
         for p in sorted(list(sdir.glob("*.jpg")) + list(sdir.glob("*.png"))):
-            stem = p.stem
-            short = stem.split("__", 1)[1] if "__" in stem else stem
-            if stem in banned or short in banned:
+            short = p.stem.split("__", 1)[-1]
+            if short in banned_short or p.stem in banned:
+                continue
+            if is_train_id(sname, p.stem):
                 continue
             chosen.append(p)
             if len(chosen) >= per_style:
                 break
         if len(chosen) < per_style:
-            raise RuntimeError(f"Only {len(chosen)} independent sources for {sname}")
+            # Adaptive: this clean pool is small; take everything available and
+            # report the true per-style independent count instead of failing.
+            print(f"[V8 holdout] {sname}: only {len(chosen)} fully-independent sources "
+                  f"(requested {per_style}); using all available.", flush=True)
+        if not chosen:
+            raise RuntimeError(f"No fully-independent source for {sname}")
         for p in chosen:
             for tid, tname in enumerate(STYLES):
                 if tid == sid:

@@ -1,0 +1,111 @@
+{
+  "sinkhorn_checks": [
+    {
+      "n": 16,
+      "m": 16,
+      "row_marginal_max_err": 2.2351741790771484e-08,
+      "col_marginal_max_err": 1.4901161193847656e-08,
+      "row_max_min_expected": 0.0625,
+      "plan_row_max_mean": 0.035922516137361526,
+      "total_mass": 1.0
+    },
+    {
+      "n": 64,
+      "m": 128,
+      "row_marginal_max_err": 7.450580596923828e-09,
+      "col_marginal_max_err": 2.7939677238464355e-09,
+      "row_max_min_expected": 0.0078125,
+      "plan_row_max_mean": 0.002626502886414528,
+      "total_mass": 1.0
+    },
+    {
+      "n": 8,
+      "m": 200,
+      "row_marginal_max_err": 3.725290298461914e-08,
+      "col_marginal_max_err": 4.190951585769653e-09,
+      "row_max_min_expected": 0.005,
+      "plan_row_max_mean": 0.004993976093828678,
+      "total_mass": 0.9999999403953552
+    }
+  ],
+  "ssm": {
+    "ssm_dim": 2016,
+    "expected": 2016
+  },
+  "data": {
+    "scaling_factor": 0.18215,
+    "vae": "stabilityai/sd-vae-ft-ema"
+  },
+  "pairs": {
+    "Early_Renaissance->Impressionism": {
+      "coverage_unique": 64,
+      "coverage_ratio": 1.0,
+      "matched_cost": 1.3009586334228516,
+      "random_cost": 1.7418369054794312,
+      "plan_row_max": 0.0030568656511604786,
+      "plan_row_max_expected_min": 0.0078125,
+      "row_marginal_max_err": 1.1175870895385742e-08,
+      "col_marginal_max_err": 3.725290298461914e-09,
+      "random_cost_exact": 1.7418369054794312,
+      "random_target_baseline": 1.7418367862701416,
+      "n_source": 64,
+      "n_pool": 128
+    },
+    "Impressionism->Minimalism": {
+      "coverage_unique": 64,
+      "coverage_ratio": 1.0,
+      "matched_cost": 1.2920409440994263,
+      "random_cost": 1.7410237789154053,
+      "plan_row_max": 0.0032544080168008804,
+      "plan_row_max_expected_min": 0.0078125,
+      "row_marginal_max_err": 1.1175870895385742e-08,
+      "col_marginal_max_err": 4.190951585769653e-09,
+      "random_cost_exact": 1.7410237789154053,
+      "random_target_baseline": 1.7410237789154053,
+      "n_source": 64,
+      "n_pool": 128
+    },
+    "Minimalism->Rococo": {
+      "coverage_unique": 64,
+      "coverage_ratio": 1.0,
+      "matched_cost": 1.2646820545196533,
+      "random_cost": 1.7381256818771362,
+      "plan_row_max": 0.002852512989193201,
+      "plan_row_max_expected_min": 0.0078125,
+      "row_marginal_max_err": 1.30385160446167e-08,
+      "col_marginal_max_err": 3.725290298461914e-09,
+      "random_cost_exact": 1.7381256818771362,
+      "random_target_baseline": 1.7381256818771362,
+      "n_source": 64,
+      "n_pool": 128
+    },
+    "Rococo->Ukiyo_e": {
+      "coverage_unique": 64,
+      "coverage_ratio": 1.0,
+      "matched_cost": 1.3938682079315186,
+      "random_cost": 1.7831264734268188,
+      "plan_row_max": 0.0028437713626772165,
+      "plan_row_max_expected_min": 0.0078125,
+      "row_marginal_max_err": 1.0244548320770264e-08,
+      "col_marginal_max_err": 4.6566128730773926e-09,
+      "random_cost_exact": 1.7831264734268188,
+      "random_target_baseline": 1.7831264734268188,
+      "n_source": 64,
+      "n_pool": 128
+    },
+    "Ukiyo_e->Early_Renaissance": {
+      "coverage_unique": 64,
+      "coverage_ratio": 1.0,
+      "matched_cost": 1.30685293674469,
+      "random_cost": 1.7639176845550537,
+      "plan_row_max": 0.0034612477757036686,
+      "plan_row_max_expected_min": 0.0078125,
+      "row_marginal_max_err": 1.1175870895385742e-08,
+      "col_marginal_max_err": 3.725290298461914e-09,
+      "random_cost_exact": 1.7639176845550537,
+      "random_target_baseline": 1.7639176845550537,
+      "n_source": 64,
+      "n_pool": 128
+    }
+  }
+}

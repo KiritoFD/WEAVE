@@ -65,6 +65,8 @@ def main() -> None:
     ap.add_argument("--accum", type=int, default=8, help="effective batch=microbatch*accum")
     ap.add_argument("--lr", type=float, default=2e-4)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--ema-decay", type=float, default=0.999)
+    ap.add_argument("--checkpoints", default="", help="Comma separated update counts to additionally save")
     ap.add_argument("--ot-reg", type=float, default=0.08)
     args = ap.parse_args()
 
@@ -88,6 +90,9 @@ def main() -> None:
     B = per_style * len(STYLES)
     src_ids = torch.cat([torch.full((per_style,), sid, device=device, dtype=torch.long) for sid in range(len(STYLES))], 0)
     ema: Dict[str, torch.Tensor] = {}
+    out_dir = V8_ROOT / (args.tag or args.name)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    save_at = {int(x) for x in args.checkpoints.split(",") if x.strip()}
     # Per-step generators are seeded by (global seed, step), so B0-B3 consume the
     # same source/target/tau/noise sequence for an identical update count N.
     hist: Dict[str, List[float]] = {"loss": [], "target_rms": [], "grad": [], "time_low": [], "time_mid": [], "time_high": []}
@@ -118,7 +123,10 @@ def main() -> None:
 
             ot_info = None
             if args.pairing == "ot":
-                # OT is applied per target-style subgroup; all endpoints remain real.
+                # OT pairing uses a SEPARATE generator so the training sampling
+                # stream (z0, target pool ids, tau, bridge noise) is IDENTICAL for
+                # random and OT variants at the same step/accumulation index.
+                ot_gen = make_generator(device, args.seed * 7919 + step * 131 + a)
                 z1_ot = torch.empty_like(z1)
                 for tid in range(len(STYLES)):
                     mask = tgt_ids == tid
@@ -126,10 +134,10 @@ def main() -> None:
                         continue
                     pool = gpu_by_style[STYLES[tid]]
                     ot_batch = min(128, pool.shape[0])
-                    oidx = torch.randint(0, pool.shape[0], (ot_batch,), generator=step_gen, device=device)
+                    oidx = torch.randint(0, pool.shape[0], (ot_batch,), generator=ot_gen, device=device)
+                    ot_seed = int(torch.randint(0, 2**31 - 1, (1,), generator=ot_gen, device=device).item())
                     matched, info = ot_sample_targets(
-                        z0[mask], pool[oidx], canon, reg=args.ot_reg,
-                        seed=int(torch.randint(0, 2**31 - 1, (1,), generator=step_gen, device=device).item()),
+                        z0[mask], pool[oidx], canon, reg=args.ot_reg, seed=ot_seed,
                     )
                     z1_ot[mask] = matched
                     ot_info = info
@@ -154,7 +162,7 @@ def main() -> None:
         grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
         scheduler.step()
-        ema_update(ema, model, 0.999)
+        ema_update(ema, model, args.ema_decay)
 
         hist["loss"].append(total_loss)
         hist["target_rms"].append(float(np.mean(step_target_rms)))
@@ -164,29 +172,44 @@ def main() -> None:
         if ot_info is not None and step % 100 == 0:
             ot_hist.append({"step": step, **ot_info})
 
+        if step in save_at:
+            torch.save({
+                "model": model.state_dict(),
+                "ema": ema,
+                "config": vars(args) | {"step": step},
+            }, out_dir / f"model_step{step}.pt")
+
         if step == 1 or step % 100 == 0 or step == args.steps:
             print(f"[V8 {args.name}] step {step:4d}/{args.steps} loss={np.mean(hist['loss'][-50:]):.4f} "
                   f"target_rms={np.mean(hist['target_rms'][-50:]):.3f} grad={np.mean(hist['grad'][-50:]):.3f} "
                   f"mse[low/mid/high]={np.mean(hist['time_low'][-50:]):.3f}/{np.mean(hist['time_mid'][-50:]):.3f}/{np.mean(hist['time_high'][-50:]):.3f} "
                   f"peak={torch.cuda.max_memory_allocated(0)/(1024**2):.0f}MiB elapsed={time.time()-t0:.1f}s", flush=True)
 
-    out = V8_ROOT / (args.tag or args.name)
-    out.mkdir(parents=True, exist_ok=True)
+    out = out_dir
+    # P0 fix: keep the raw (non-EMA) weights as the primary artefact. With only
+    # 800 updates, EMA(0.999) still carries ~45% of very early weights and can
+    # materially understate the trained model.
     torch.save({
         "model": model.state_dict(),
         "ema": ema,
         "config": vars(args) | {"n_params": n_params, "effective_batch": B * args.accum, "train_wall_sec": round(time.time() - t0, 1)},
     }, out / "model.pt")
+    torch.save({
+        "model": model.state_dict(),
+        "config": vars(args) | {"raw": True},
+    }, out / "model_raw.pt")
     save_json({
         "name": args.name,
         "config": vars(args) | {"n_params": n_params, "effective_batch": B * args.accum},
         "data_meta": data_meta,
         "train_wall_sec": round(time.time() - t0, 1),
         "peak_vram_mib": round(torch.cuda.max_memory_allocated(0) / (1024**2), 1),
+        "loss_curve": {k: [round(float(x), 5) for x in v] for k, v in hist.items()},
         "final": {k: round(float(np.mean(v[-50:])), 5) for k, v in hist.items()},
         "ot_checks": ot_hist,
+        "checkpoints": ["model.pt (raw+ema)", "model_raw.pt"] + [f"model_step{s}.pt" for s in sorted(save_at)],
     }, out / "train_summary.json")
-    print(f"[V8 {args.name}] Saved {out / 'model.pt'}", flush=True)
+    print(f"[V8 {args.name}] Saved {out / 'model.pt'} and {out / 'model_raw.pt'}", flush=True)
 
 
 if __name__ == "__main__":

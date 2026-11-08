@@ -1,0 +1,398 @@
+{
+  "checkpoint": "/mnt/i/Latent_Style/WEAVE/runs/v8/B0/model.pt",
+  "weight": "raw",
+  "data": "stabilityai/sd-vae-ft-ema",
+  "n_val_tasks": 124,
+  "velocity_fit": {
+    "0.00-0.25": {
+      "n": 56,
+      "pred_rms": 0.6714,
+      "target_rms": 1.2912,
+      "mse": 1.1165,
+      "zero_velocity_mse": 1.6673,
+      "mse_improvement_over_zero": 0.3304,
+      "cosine": 0.5777
+    },
+    "0.25-0.50": {
+      "n": 62,
+      "pred_rms": 0.5433,
+      "target_rms": 1.2234,
+      "mse": 1.2365,
+      "zero_velocity_mse": 1.4966,
+      "mse_improvement_over_zero": 0.1738,
+      "cosine": 0.4177
+    },
+    "0.50-0.75": {
+      "n": 65,
+      "pred_rms": 0.6126,
+      "target_rms": 1.2409,
+      "mse": 1.1784,
+      "zero_velocity_mse": 1.5399,
+      "mse_improvement_over_zero": 0.2347,
+      "cosine": 0.4846
+    },
+    "0.75-1.00": {
+      "n": 57,
+      "pred_rms": 0.6096,
+      "target_rms": 1.2326,
+      "mse": 1.1631,
+      "zero_velocity_mse": 1.5193,
+      "mse_improvement_over_zero": 0.2344,
+      "cosine": 0.4843
+    }
+  },
+  "condition_response": {
+    "base_velocity_rms": 0.1779,
+    "per_target_vs_src": {
+      "Impressionism": {
+        "delta_rms": 0.2154,
+        "cos_with_src_velocity": -0.3949
+      },
+      "Minimalism": {
+        "delta_rms": 0.3817,
+        "cos_with_src_velocity": 0.0968
+      },
+      "Rococo": {
+        "delta_rms": 0.2973,
+        "cos_with_src_velocity": -0.064
+      },
+      "Ukiyo_e": {
+        "delta_rms": 0.3345,
+        "cos_with_src_velocity": -0.4235
+      }
+    },
+    "mean_pairwise_cos_between_targets": 0.1151
+  },
+  "solver_convergence": {
+    "euler4": {
+      "latent_l2_mean": 58.2708,
+      "mean_dT": 0.0486,
+      "Top1": 4.0,
+      "DINO_C": 0.8717,
+      "LPIPS": 0.3086
+    },
+    "euler8": {
+      "latent_l2_mean": 55.8359,
+      "mean_dT": 0.0482,
+      "Top1": 1.6,
+      "DINO_C": 0.8773,
+      "LPIPS": 0.2982
+    },
+    "euler16": {
+      "latent_l2_mean": 54.9634,
+      "mean_dT": 0.0472,
+      "Top1": 1.6,
+      "DINO_C": 0.8778,
+      "LPIPS": 0.2948
+    },
+    "euler32": {
+      "latent_l2_mean": 54.6382,
+      "mean_dT": 0.0473,
+      "Top1": 1.6,
+      "DINO_C": 0.8777,
+      "LPIPS": 0.2935
+    }
+  },
+  "per_solver_metrics": {
+    "euler4": {
+      "n": 124,
+      "mean_dT": 0.0486,
+      "mean_dS": -0.0953,
+      "mean_dM": 0.1439,
+      "Target_Top1": 4.0,
+      "Target_Margin": -0.3005,
+      "DINO_C": 0.8717,
+      "DINO_S": 0.3661,
+      "CLIP_S": 0.6493,
+      "LPIPS": 0.3086,
+      "mean_latent_l2": 58.2708,
+      "styles_improved": 5,
+      "ukiyo_dT": 0.0167,
+      "ukiyo_top1": 0.0,
+      "per_target_dT": {
+        "Early_Renaissance": 0.0626,
+        "Impressionism": 0.0602,
+        "Minimalism": 0.0705,
+        "Rococo": 0.0406,
+        "Ukiyo_e": 0.0167
+      },
+      "per_target_top1": {
+        "Early_Renaissance": 7.7,
+        "Impressionism": 4.8,
+        "Minimalism": 4.5,
+        "Rococo": 3.6,
+        "Ukiyo_e": 0.0
+      },
+      "per_target_margin": {
+        "Early_Renaissance": -0.2462,
+        "Impressionism": -0.3506,
+        "Minimalism": -0.2568,
+        "Rococo": -0.3012,
+        "Ukiyo_e": -0.349
+      },
+      "confusion_matrix_pct": [
+        [
+          7.7,
+          34.6,
+          38.5,
+          3.8,
+          15.4
+        ],
+        [
+          33.3,
+          4.8,
+          42.9,
+          0.0,
+          19.0
+        ],
+        [
+          22.7,
+          36.4,
+          4.5,
+          13.6,
+          22.7
+        ],
+        [
+          14.3,
+          32.1,
+          35.7,
+          3.6,
+          14.3
+        ],
+        [
+          25.9,
+          37.0,
+          37.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "gen_wall_sec": 18.5
+    },
+    "euler8": {
+      "n": 124,
+      "mean_dT": 0.0482,
+      "mean_dS": -0.0875,
+      "mean_dM": 0.1357,
+      "Target_Top1": 1.6,
+      "Target_Margin": -0.3068,
+      "DINO_C": 0.8773,
+      "DINO_S": 0.3624,
+      "CLIP_S": 0.6481,
+      "LPIPS": 0.2982,
+      "mean_latent_l2": 55.8359,
+      "styles_improved": 5,
+      "ukiyo_dT": 0.0154,
+      "ukiyo_top1": 0.0,
+      "per_target_dT": {
+        "Early_Renaissance": 0.0581,
+        "Impressionism": 0.0585,
+        "Minimalism": 0.0682,
+        "Rococo": 0.0474,
+        "Ukiyo_e": 0.0154
+      },
+      "per_target_top1": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.0,
+        "Minimalism": 4.5,
+        "Rococo": 3.6,
+        "Ukiyo_e": 0.0
+      },
+      "per_target_margin": {
+        "Early_Renaissance": -0.2594,
+        "Impressionism": -0.3617,
+        "Minimalism": -0.2674,
+        "Rococo": -0.2978,
+        "Ukiyo_e": -0.351
+      },
+      "confusion_matrix_pct": [
+        [
+          0.0,
+          34.6,
+          38.5,
+          11.5,
+          15.4
+        ],
+        [
+          23.8,
+          0.0,
+          42.9,
+          14.3,
+          19.0
+        ],
+        [
+          22.7,
+          36.4,
+          4.5,
+          13.6,
+          22.7
+        ],
+        [
+          14.3,
+          32.1,
+          35.7,
+          3.6,
+          14.3
+        ],
+        [
+          25.9,
+          37.0,
+          37.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "gen_wall_sec": 14.6
+    },
+    "euler16": {
+      "n": 124,
+      "mean_dT": 0.0472,
+      "mean_dS": -0.0841,
+      "mean_dM": 0.1312,
+      "Target_Top1": 1.6,
+      "Target_Margin": -0.3109,
+      "DINO_C": 0.8778,
+      "DINO_S": 0.3601,
+      "CLIP_S": 0.6472,
+      "LPIPS": 0.2948,
+      "mean_latent_l2": 54.9634,
+      "styles_improved": 5,
+      "ukiyo_dT": 0.0137,
+      "ukiyo_top1": 0.0,
+      "per_target_dT": {
+        "Early_Renaissance": 0.0533,
+        "Impressionism": 0.0573,
+        "Minimalism": 0.0673,
+        "Rococo": 0.0503,
+        "Ukiyo_e": 0.0137
+      },
+      "per_target_top1": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.0,
+        "Minimalism": 4.5,
+        "Rococo": 3.6,
+        "Ukiyo_e": 0.0
+      },
+      "per_target_margin": {
+        "Early_Renaissance": -0.2683,
+        "Impressionism": -0.3677,
+        "Minimalism": -0.2717,
+        "Rococo": -0.297,
+        "Ukiyo_e": -0.354
+      },
+      "confusion_matrix_pct": [
+        [
+          0.0,
+          34.6,
+          38.5,
+          11.5,
+          15.4
+        ],
+        [
+          23.8,
+          0.0,
+          42.9,
+          14.3,
+          19.0
+        ],
+        [
+          22.7,
+          36.4,
+          4.5,
+          13.6,
+          22.7
+        ],
+        [
+          14.3,
+          32.1,
+          35.7,
+          3.6,
+          14.3
+        ],
+        [
+          22.2,
+          37.0,
+          37.0,
+          3.7,
+          0.0
+        ]
+      ],
+      "gen_wall_sec": 18.6
+    },
+    "euler32": {
+      "n": 124,
+      "mean_dT": 0.0473,
+      "mean_dS": -0.083,
+      "mean_dM": 0.1303,
+      "Target_Top1": 1.6,
+      "Target_Margin": -0.3118,
+      "DINO_C": 0.8777,
+      "DINO_S": 0.359,
+      "CLIP_S": 0.6468,
+      "LPIPS": 0.2935,
+      "mean_latent_l2": 54.6382,
+      "styles_improved": 5,
+      "ukiyo_dT": 0.0123,
+      "ukiyo_top1": 0.0,
+      "per_target_dT": {
+        "Early_Renaissance": 0.0511,
+        "Impressionism": 0.0587,
+        "Minimalism": 0.0683,
+        "Rococo": 0.0527,
+        "Ukiyo_e": 0.0123
+      },
+      "per_target_top1": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.0,
+        "Minimalism": 4.5,
+        "Rococo": 3.6,
+        "Ukiyo_e": 0.0
+      },
+      "per_target_margin": {
+        "Early_Renaissance": -0.2722,
+        "Impressionism": -0.3677,
+        "Minimalism": -0.2716,
+        "Rococo": -0.2952,
+        "Ukiyo_e": -0.3562
+      },
+      "confusion_matrix_pct": [
+        [
+          0.0,
+          34.6,
+          38.5,
+          11.5,
+          15.4
+        ],
+        [
+          23.8,
+          0.0,
+          42.9,
+          14.3,
+          19.0
+        ],
+        [
+          22.7,
+          36.4,
+          4.5,
+          13.6,
+          22.7
+        ],
+        [
+          14.3,
+          32.1,
+          35.7,
+          3.6,
+          14.3
+        ],
+        [
+          18.5,
+          37.0,
+          37.0,
+          7.4,
+          0.0
+        ]
+      ],
+      "gen_wall_sec": 18.6
+    }
+  }
+}

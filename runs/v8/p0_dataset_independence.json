@@ -1,0 +1,46 @@
+{
+  "vae": "stabilityai/sd-vae-ft-ema",
+  "scaling_factor": 0.18215,
+  "frozen_test_source_stems": 150,
+  "val200_tasks": 124,
+  "val200_unique_sources": 31,
+  "val200_leaked_into_train_cache": {
+    "Early_Renaissance": [],
+    "Impressionism": [],
+    "Minimalism": [],
+    "Rococo": [],
+    "Ukiyo_e": []
+  },
+  "train_cache_sizes": {
+    "Early_Renaissance": {
+      "heldout_100_in_val_cache": 100,
+      "train_cache_total": 1474,
+      "train_used_for_training": 1374,
+      "ids_pool_size": 1421
+    },
+    "Impressionism": {
+      "heldout_100_in_val_cache": 100,
+      "train_cache_total": 8989,
+      "train_used_for_training": 8889,
+      "ids_pool_size": 8933
+    },
+    "Minimalism": {
+      "heldout_100_in_val_cache": 100,
+      "train_cache_total": 1084,
+      "train_used_for_training": 984,
+      "ids_pool_size": 1084
+    },
+    "Rococo": {
+      "heldout_100_in_val_cache": 100,
+      "train_cache_total": 2519,
+      "train_used_for_training": 2419,
+      "ids_pool_size": 2474
+    },
+    "Ukiyo_e": {
+      "heldout_100_in_val_cache": 100,
+      "train_cache_total": 1479,
+      "train_used_for_training": 1379,
+      "ids_pool_size": 1327
+    }
+  }
+}
