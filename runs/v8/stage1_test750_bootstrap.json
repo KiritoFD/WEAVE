@@ -1,0 +1,430 @@
+{
+  "B0_ema": {
+    "euler4": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00278,
+        "ci95": [
+          0.00095,
+          0.00448
+        ],
+        "p_boot": 0.0015,
+        "win_rate": 0.9995,
+        "significant_at_05": true
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.00133,
+        "ci95": [
+          -0.004,
+          0.0
+        ],
+        "p_boot": 0.6485,
+        "win_rate": 0.0,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.02634,
+        "ci95": [
+          -0.03221,
+          -0.02183
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    },
+    "euler8": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00213,
+        "ci95": [
+          0.00037,
+          0.00374
+        ],
+        "p_boot": 0.016,
+        "win_rate": 0.992,
+        "significant_at_05": true
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.0,
+        "ci95": [
+          -0.004,
+          0.004
+        ],
+        "p_boot": 1.0,
+        "win_rate": 0.341,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.02569,
+        "ci95": [
+          -0.03146,
+          -0.02111
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    },
+    "euler16": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00187,
+        "ci95": [
+          0.0001,
+          0.00349
+        ],
+        "p_boot": 0.0325,
+        "win_rate": 0.981,
+        "significant_at_05": true
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.0,
+        "ci95": [
+          -0.004,
+          0.004
+        ],
+        "p_boot": 1.0,
+        "win_rate": 0.341,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.02549,
+        "ci95": [
+          -0.03122,
+          -0.02089
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    }
+  },
+  "B1_ema": {
+    "euler4": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00117,
+        "ci95": [
+          -0.00059,
+          0.00284
+        ],
+        "p_boot": 0.19,
+        "win_rate": 0.896,
+        "significant_at_05": false
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00133,
+        "ci95": [
+          -0.00267,
+          0.00533
+        ],
+        "p_boot": 0.7575,
+        "win_rate": 0.6205,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.02633,
+        "ci95": [
+          -0.03248,
+          -0.02157
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    },
+    "euler8": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.0006,
+        "ci95": [
+          -0.00113,
+          0.00225
+        ],
+        "p_boot": 0.485,
+        "win_rate": 0.745,
+        "significant_at_05": false
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00133,
+        "ci95": [
+          -0.00267,
+          0.00533
+        ],
+        "p_boot": 0.7575,
+        "win_rate": 0.6205,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.02616,
+        "ci95": [
+          -0.03229,
+          -0.02142
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    },
+    "euler16": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00033,
+        "ci95": [
+          -0.00143,
+          0.00197
+        ],
+        "p_boot": 0.696,
+        "win_rate": 0.6555,
+        "significant_at_05": false
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00133,
+        "ci95": [
+          -0.00267,
+          0.00533
+        ],
+        "p_boot": 0.7575,
+        "win_rate": 0.6205,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.0261,
+        "ci95": [
+          -0.03228,
+          -0.02144
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    }
+  },
+  "B2_ema": {
+    "euler4": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00307,
+        "ci95": [
+          0.00153,
+          0.00471
+        ],
+        "p_boot": 0.001,
+        "win_rate": 0.9995,
+        "significant_at_05": true
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_boot": 1.0,
+        "win_rate": 0.0,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.01709,
+        "ci95": [
+          -0.02214,
+          -0.01313
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    },
+    "euler8": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00264,
+        "ci95": [
+          0.00105,
+          0.00428
+        ],
+        "p_boot": 0.0015,
+        "win_rate": 0.999,
+        "significant_at_05": true
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.00133,
+        "ci95": [
+          -0.004,
+          0.0
+        ],
+        "p_boot": 0.631,
+        "win_rate": 0.0,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.0172,
+        "ci95": [
+          -0.02233,
+          -0.01316
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    },
+    "euler16": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00256,
+        "ci95": [
+          0.00101,
+          0.00419
+        ],
+        "p_boot": 0.0025,
+        "win_rate": 0.9985,
+        "significant_at_05": true
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00133,
+        "ci95": [
+          0.0,
+          0.004
+        ],
+        "p_boot": 0.6345,
+        "win_rate": 0.637,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.01723,
+        "ci95": [
+          -0.02236,
+          -0.01318
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    }
+  },
+  "B3_ema": {
+    "euler4": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00127,
+        "ci95": [
+          -0.00033,
+          0.00285
+        ],
+        "p_boot": 0.1165,
+        "win_rate": 0.9425,
+        "significant_at_05": false
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.0,
+        "ci95": [
+          -0.004,
+          0.004
+        ],
+        "p_boot": 1.0,
+        "win_rate": 0.348,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.02,
+        "ci95": [
+          -0.02586,
+          -0.01551
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    },
+    "euler8": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.00107,
+        "ci95": [
+          -0.00053,
+          0.00269
+        ],
+        "p_boot": 0.194,
+        "win_rate": 0.903,
+        "significant_at_05": false
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.0,
+        "ci95": [
+          -0.004,
+          0.004
+        ],
+        "p_boot": 1.0,
+        "win_rate": 0.348,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.02015,
+        "ci95": [
+          -0.02592,
+          -0.01565
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    },
+    "euler16": {
+      "dT_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.001,
+        "ci95": [
+          -0.00064,
+          0.00266
+        ],
+        "p_boot": 0.2355,
+        "win_rate": 0.878,
+        "significant_at_05": false
+      },
+      "Top1_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": 0.0,
+        "ci95": [
+          -0.004,
+          0.004
+        ],
+        "p_boot": 1.0,
+        "win_rate": 0.348,
+        "significant_at_05": false
+      },
+      "DINO_C_vs_VAE_Noop": {
+        "n_common": 750,
+        "mean_diff": -0.02021,
+        "ci95": [
+          -0.02598,
+          -0.01574
+        ],
+        "p_boot": 0.0,
+        "win_rate": 0.0,
+        "significant_at_05": true
+      }
+    }
+  }
+}

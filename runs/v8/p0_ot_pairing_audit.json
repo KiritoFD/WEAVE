@@ -1,0 +1,48 @@
+{
+  "data": {
+    "scaling_factor": 0.18215,
+    "vae": "stabilityai/sd-vae-ft-ema"
+  },
+  "pairs": {
+    "Early_Renaissance->Impressionism": {
+      "coverage_unique": 64,
+      "coverage_ratio": 1.0,
+      "matched_cost": 1.2592765092849731,
+      "random_cost": 1.7498202323913574,
+      "plan_row_max": 1.1557069228729233e-05,
+      "random_cost_exact": 1.7498202323913574
+    },
+    "Impressionism->Minimalism": {
+      "coverage_unique": 64,
+      "coverage_ratio": 1.0,
+      "matched_cost": 1.186153769493103,
+      "random_cost": 1.750227689743042,
+      "plan_row_max": 5.829444489791058e-05,
+      "random_cost_exact": 1.750227689743042
+    },
+    "Minimalism->Rococo": {
+      "coverage_unique": 64,
+      "coverage_ratio": 1.0,
+      "matched_cost": 1.208156943321228,
+      "random_cost": 1.747131109237671,
+      "plan_row_max": 0.00023802122450433671,
+      "random_cost_exact": 1.747131109237671
+    },
+    "Rococo->Ukiyo_e": {
+      "coverage_unique": 64,
+      "coverage_ratio": 1.0,
+      "matched_cost": 1.3159734010696411,
+      "random_cost": 1.7914535999298096,
+      "plan_row_max": 1.7148538972833194e-05,
+      "random_cost_exact": 1.7914535999298096
+    },
+    "Ukiyo_e->Early_Renaissance": {
+      "coverage_unique": 64,
+      "coverage_ratio": 1.0,
+      "matched_cost": 1.2145686149597168,
+      "random_cost": 1.7709932327270508,
+      "plan_row_max": 1.469733160774922e-05,
+      "random_cost_exact": 1.7709932327270508
+    }
+  }
+}

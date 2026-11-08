@@ -35,6 +35,7 @@ runs/*
 !runs/v5/
 !runs/v6/
 !runs/v7/
+!runs/v8/
 data/
 datasets/
 results/

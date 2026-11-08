@@ -1,0 +1,83 @@
+{
+  "pairing": "random",
+  "updates": 100,
+  "microbatch": 15,
+  "accum": 8,
+  "effective_batch": 120,
+  "wall_sec": 29.4,
+  "sec_per_update": 0.2942,
+  "peak_vram_mib": 1416.5,
+  "data_meta": {
+    "root": "/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16",
+    "heldout": 100,
+    "files": {
+      "Early_Renaissance": {
+        "path": "/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16/00_Early_Renaissance.pt",
+        "sha256": "00bae416e67c5d3ba33655eba93623d1cfec390098c25f7c05a344f51471148d",
+        "count": 1474,
+        "shape": [
+          1474,
+          4,
+          64,
+          64
+        ],
+        "scaling_factor": 0.18215,
+        "vae": "stabilityai/sd-vae-ft-ema"
+      },
+      "Impressionism": {
+        "path": "/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16/01_Impressionism.pt",
+        "sha256": "b299b0706ab29f6259d33c5e9d1efae4bfaa19359eb768f2631508b222ff6e19",
+        "count": 8989,
+        "shape": [
+          8989,
+          4,
+          64,
+          64
+        ],
+        "scaling_factor": 0.18215,
+        "vae": "stabilityai/sd-vae-ft-ema"
+      },
+      "Minimalism": {
+        "path": "/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16/02_Minimalism.pt",
+        "sha256": "13db259b32afeaff058a71e7399c62a412bf3fd051f7e33684cd6cae0c13aea6",
+        "count": 1084,
+        "shape": [
+          1084,
+          4,
+          64,
+          64
+        ],
+        "scaling_factor": 0.18215,
+        "vae": "stabilityai/sd-vae-ft-ema"
+      },
+      "Rococo": {
+        "path": "/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16/03_Rococo.pt",
+        "sha256": "d4d1d3a28eb991c22e4bb6511d1c04814ffb516c0771c362acc750e198fb3659",
+        "count": 2519,
+        "shape": [
+          2519,
+          4,
+          64,
+          64
+        ],
+        "scaling_factor": 0.18215,
+        "vae": "stabilityai/sd-vae-ft-ema"
+      },
+      "Ukiyo_e": {
+        "path": "/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16/04_Ukiyo_e.pt",
+        "sha256": "a56a249978bbbf6543cd146cc9f73001faf4bd185acd0fbdc0553d86f2abc24a",
+        "count": 1479,
+        "shape": [
+          1479,
+          4,
+          64,
+          64
+        ],
+        "scaling_factor": 0.18215,
+        "vae": "stabilityai/sd-vae-ft-ema"
+      }
+    },
+    "scaling_factor": 0.18215,
+    "vae": "stabilityai/sd-vae-ft-ema"
+  }
+}
