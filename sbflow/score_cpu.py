@@ -56,18 +56,32 @@ class CpuFeatures:
 
         t0 = time.perf_counter()
         self.csd, _, _ = csd_model.load_csd("cpu")
-        self.csd.eval()
+        # The released CSD checkpoint stores fp16 weights; CPU conv2d needs fp32.
+        self.csd = self.csd.float().eval()
         for p in self.csd.parameters():
             p.requires_grad_(False)
         self.preprocess = csd_model.PREPROCESS
 
-        from transformers import AutoImageProcessor, AutoModel, CLIPModel, CLIPProcessor
+        from transformers import AutoModel, CLIPModel, CLIPProcessor
+        from utils.compute_dino_metrics import DINO_TRANSFORM
 
         hf = str(paths.eval_cache_root("hf") / "hub")
-        self.dino_proc = AutoImageProcessor.from_pretrained(
-            "facebook/dinov2-small", local_files_only=True, cache_dir=hf)
-        self.dino = AutoModel.from_pretrained(
-            "facebook/dinov2-small", local_files_only=True, cache_dir=hf).eval()
+        # The local DINOv2 snapshot ships config.json + weights only (no processor),
+        # so reuse WEAVE's fixed DINO_TRANSFORM instead of AutoImageProcessor.
+        self.dino_transform = DINO_TRANSFORM
+        dino_dir = None
+        for cand in (repo / ".." / "eval_cache" / "hf" / "hub", Path(hf)):
+            if not cand.exists():
+                continue
+            for snap in cand.glob("models--facebook--dinov2-small/snapshots/*"):
+                if (snap / "config.json").exists() and any(snap.glob("*.safetensors")):
+                    dino_dir = str(snap)
+                    break
+            if dino_dir:
+                break
+        if dino_dir is None:
+            raise FileNotFoundError("no local DINOv2 snapshot found")
+        self.dino = AutoModel.from_pretrained(dino_dir, local_files_only=True).eval()
         self.clip_proc = CLIPProcessor.from_pretrained(
             "openai/clip-vit-base-patch32", local_files_only=True, cache_dir=hf)
         self.clip = CLIPModel.from_pretrained(
@@ -93,9 +107,9 @@ class CpuFeatures:
 
     @torch.inference_mode()
     def _dino(self, pils: Sequence[Image.Image]) -> np.ndarray:
-        inp = self.dino_proc(images=list(pils), return_tensors="pt")
-        out = self.dino(**inp).last_hidden_state[:, 0]
-        return F.normalize(out.float(), dim=-1).numpy()
+        x = torch.stack([self.dino_transform(im.convert("RGB")) for im in pils]).float()
+        hidden = self.dino(pixel_values=x).last_hidden_state
+        return F.normalize(hidden[:, 0].float(), dim=-1).numpy()
 
     @torch.inference_mode()
     def _lpips(self, a: torch.Tensor, b: torch.Tensor) -> float:
@@ -202,7 +216,6 @@ def main() -> None:
         tasks = tasks[: args.limit]
 
     sys.path.insert(0, str(repo))
-    from tools.evaluation_v2.features import build_reference_features_cache
 
     feat = CpuFeatures(repo, args.threads)
     # Reference features only need CSD; reuse the CPU extractor rather than loading GPU models.
@@ -280,11 +293,23 @@ def _reference_csd(repo: Path, feat: CpuFeatures, cache: Path) -> dict:
         styles[s] = {"csd": torch.from_numpy(feat._csd(pils)).float()}
         for im in pils:
             im.close()
-    refs = {"styles": styles,
-            "rbf_gamma": float(raw.get("rbf_gamma", 1.0 / 768.0))}
+    refs = {"styles": styles, "rbf_gamma": _gamma(repo)}
     cache.parent.mkdir(parents=True, exist_ok=True)
     torch.save(refs, cache)
     return refs
+
+
+def _gamma(repo: Path) -> float:
+    """Reuse the exact RBF gamma the GPU evaluator used, so MMD stays comparable."""
+    src = repo / "eval_protocol" / "cache" / "references_v1_features.pt"
+    if src.exists():
+        try:
+            d = torch.load(src, map_location="cpu", weights_only=False)
+            if "rbf_gamma" in d:
+                return float(d["rbf_gamma"])
+        except Exception:  # noqa: BLE001
+            pass
+    return 1.0 / 768.0
 
 
 if __name__ == "__main__":

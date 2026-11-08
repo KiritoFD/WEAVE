@@ -35,6 +35,8 @@ class StyleData:
     thumb: List[torch.Tensor]      # each (n_i, 3, 32, 32) float32 in 0..1
     stats: StyleStats
     counts: List[int]
+    ae: str = ""
+    scaling_factor: float = 0.18215
 
     @property
     def num_styles(self) -> int:
@@ -44,15 +46,36 @@ class StyleData:
         return list(combinations(range(self.num_styles), 2))
 
 
-def load_caches(paths: Sequence[Path], device: str, style_order: Optional[Sequence[str]] = None) -> StyleData:
-    """Load per-style DCAE caches, apply ONE shared global standardization."""
-    caches = []
-    for p in paths:
-        d = torch.load(p, map_location="cpu", weights_only=False)
-        for k in ("latent", "thumb", "ae", "scaling_factor"):
-            if k not in d:
-                raise KeyError(f"{p} missing '{k}'")
-        caches.append(d)
+def _read_cache(path: Path) -> dict:
+    """Normalize either cache family into {latent, thumb, ae, scaling_factor, style, ids}.
+
+    * `sbflow.cache` DCAE format: `latent`, `thumb`, `ae`, `scaling_factor`
+    * SD-VAE pseudo-GT format:   `latents`, `files`, `vae`, `scaling_factor`
+      (no thumbnails; those are built on demand for the OT arms only)
+    """
+    d = torch.load(path, map_location="cpu", weights_only=False)
+    out = dict(d)
+    if "latent" not in out and "latents" in out:
+        out["latent"] = out["latents"]
+    if "ae" not in out and "vae" in out:
+        out["ae"] = out["vae"]
+    if "ids" not in out and "files" in out:
+        out["ids"] = out["files"]
+    if "style" not in out:
+        stem = path.stem
+        out["style"] = stem.split("_", 1)[1] if "_" in stem else stem
+    if "latent" not in out:
+        raise KeyError(f"{path} has neither 'latent' nor 'latents'")
+    return out
+
+
+def load_caches(paths: Sequence[Path], device: str, style_order: Optional[Sequence[str]] = None,
+                build_thumbs: bool = False, thumb_batch: int = 64) -> StyleData:
+    """Load per-style latent caches, apply ONE shared global standardization."""
+    caches = [_read_cache(Path(p)) for p in paths]
+    for k in ("scaling_factor",):
+        if k not in caches[0]:
+            raise KeyError(f"{paths[0]} missing '{k}'")
 
     a0 = caches[0]
     for d, p in zip(caches[1:], paths[1:]):
@@ -64,10 +87,13 @@ def load_caches(paths: Sequence[Path], device: str, style_order: Optional[Sequen
             raise ValueError(f"latent shape mismatch in {p}")
 
     if style_order is None:
-        styles = [d.get("style") or Path(p).stem for d, p in zip(caches, paths)]
+        styles = [d["style"] for d in caches]
     else:
         styles = list(style_order)
-        by_name = {(d.get("style") or Path(p).stem): d for d, p in zip(caches, paths)}
+        by_name = {d["style"]: d for d in caches}
+        missing = [s for s in styles if s not in by_name]
+        if missing:
+            raise KeyError(f"missing caches for styles {missing}; have {sorted(by_name)}")
         caches = [by_name[s] for s in styles]
 
     raw = [d["latent"].float() for d in caches]
@@ -77,7 +103,12 @@ def load_caches(paths: Sequence[Path], device: str, style_order: Optional[Sequen
     del both
 
     z = [((r - gmean[None, :, None, None]) / gstd[None, :, None, None]).to(device) for r in raw]
-    thumb = [(d["thumb"].float().to(device) / 255.0) for d in caches]
+    if build_thumbs and all("thumb" in d for d in caches):
+        thumb = [(d["thumb"].float().to(device) / 255.0) for d in caches]
+    elif build_thumbs:
+        thumb = _thumbs_from_files(caches, device, thumb_batch)
+    else:
+        thumb = [torch.zeros(1) for _ in caches]
     del raw
 
     stats = StyleStats.from_state_dict({
@@ -87,7 +118,28 @@ def load_caches(paths: Sequence[Path], device: str, style_order: Optional[Sequen
         "style_var": torch.stack([zi.var((0, 2, 3), unbiased=False).clamp_min(1e-10).cpu() for zi in z]),
     })
     return StyleData(styles=styles, z=z, thumb=thumb, stats=stats,
-                     counts=[int(t.shape[0]) for t in z])
+                     counts=[int(t.shape[0]) for t in z],
+                     ae=str(a0["ae"]), scaling_factor=float(a0["scaling_factor"]))
+
+
+def _thumbs_from_files(caches: Sequence[dict], device: str, batch: int) -> List[torch.Tensor]:
+    """Build 32x32 RGB thumbnails for the OT arms when the cache has none."""
+    import numpy as np
+    from PIL import Image
+
+    out = []
+    for d in caches:
+        files = d["ids"]
+        rows = []
+        for s in range(0, len(files), batch):
+            chunk = []
+            for p in files[s:s + batch]:
+                with Image.open(p) as im:
+                    im = im.convert("RGB").resize((32, 32), Image.Resampling.BICUBIC)
+                    chunk.append(torch.from_numpy(np.asarray(im, dtype=np.uint8).copy()))
+            rows.append(torch.stack(chunk).permute(0, 3, 1, 2).float() / 255.0)
+        out.append(torch.cat(rows, 0).to(device))
+    return out
 
 
 # --------------------------------------------------------------------------- #

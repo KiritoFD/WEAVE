@@ -27,16 +27,18 @@ from typing import Dict, List, Optional
 from .arms import select
 
 REPO = Path(__file__).resolve().parents[1]
-CACHE_DIR = "runs/blog_sbflow/cache5"
+# Canonical SD-VAE pseudo-GT caches (4x64x64, sf=0.18215), 15,545 rows across five styles.
+CACHE_ROOT = "/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+CACHE_FILES = ["00_Early_Renaissance.pt", "01_Impressionism.pt", "02_Minimalism.pt",
+               "03_Rococo.pt", "04_Ukiyo_e.pt"]
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 
 
 def caches() -> List[str]:
-    out = [f"{CACHE_DIR}/{s}.pt" for s in STYLES]
-    missing = [p for p in out if not (REPO / p).exists()]
+    out = [f"{CACHE_ROOT}/{f}" for f in CACHE_FILES]
+    missing = [p for p in out if not Path(p).exists()]
     if missing:
-        raise SystemExit(f"missing five-style caches: {missing}\n"
-                         f"run: bash sbflow/scripts/cache_5styles.sh")
+        raise SystemExit(f"missing SD-VAE caches: {missing}")
     return out
 
 
@@ -50,6 +52,15 @@ def run(cmd: List[str], log: Path) -> float:
     if r.returncode != 0:
         raise RuntimeError(f"command failed ({r.returncode}); see {log}")
     return time.perf_counter() - t0
+
+
+def spawn(cmd: List[str], log: Path) -> subprocess.Popen:
+    """Start a process without waiting; used for CPU scoring so the GPU is never idle."""
+    log.parent.mkdir(parents=True, exist_ok=True)
+    f = log.open("a", encoding="utf-8")
+    f.write("\n>>> " + " ".join(cmd) + "\n")
+    f.flush()
+    return subprocess.Popen(cmd, cwd=str(REPO), stdout=f, stderr=subprocess.STDOUT)
 
 
 def arm_flags(cfg: dict) -> List[str]:
@@ -81,6 +92,10 @@ def main() -> None:
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--only-train", action="store_true")
     ap.add_argument("--python", default=sys.executable)
+    ap.add_argument("--async-score", action="store_true", default=True,
+                    help="run CPU scoring in the background so the GPU never idles")
+    ap.add_argument("--sync-score", dest="async_score", action="store_false")
+    ap.add_argument("--score-threads", type=int, default=6)
     args = ap.parse_args()
 
     root = REPO / args.root
@@ -96,6 +111,7 @@ def main() -> None:
 
     arms = select(args.arms)
     cache_list = caches()
+    pending: List[tuple] = []
     print(f"[suite] {len(arms)} arm(s): {[a['experiment_id'] for a in arms]}", flush=True)
     print(f"[suite] caches={len(cache_list)} eval_subset={subset} root={root}", flush=True)
 
@@ -144,11 +160,19 @@ def main() -> None:
                            "--batch", "16"]
                     run(cmd, logs / f"{aid}_gen.log")
                 score_dir = root / f"score_{aid}_{subset}"
+                score_cmd = [args.python, "-m", "sbflow.score_cpu", "--repo-root", ".",
+                             "--gen", str(gen_dir), "--out", str(score_dir),
+                             "--batch", "8", "--threads", str(args.score_threads)]
                 if not (score_dir / "style_scores.json").exists():
-                    cmd = [args.python, "-m", "sbflow.score_cpu", "--repo-root", ".",
-                           "--gen", str(gen_dir), "--out", str(score_dir),
-                           "--batch", "8", "--threads", "8"]
-                    run(cmd, logs / f"{aid}_score.log")
+                    if args.async_score:
+                        # CPU scoring runs in the background so the GPU starts the next
+                        # arm immediately; the driver waits for these at the very end.
+                        p = spawn(score_cmd, logs / f"{aid}_score.log")
+                        pending.append((aid, p, score_dir))
+                        rec["eval"] = {"subset": subset, "status": "scoring_async",
+                                       "pid": p.pid}
+                        raise _Deferred()
+                    run(score_cmd, logs / f"{aid}_score.log")
                 sc = json.loads((score_dir / "style_scores.json").read_text())
                 o = sc["aggregate"]["overall"]
                 rec["eval"] = {"subset": subset, **{k: o[k] for k in
@@ -157,6 +181,8 @@ def main() -> None:
                                                     "dino_c", "n")}}
             rec["status"] = "done"
             rec["finished"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+        except _Deferred:
+            rec["status"] = "trained_awaiting_score"
         except Exception as e:  # noqa: BLE001
             rec["status"] = "failed"
             rec["error"] = f"{type(e).__name__}: {e}"
@@ -175,6 +201,36 @@ def main() -> None:
 
     done = [k for k, v in state.items() if v.get("status") == "done"]
     print(f"[suite] finished. done={len(done)}/{len(state)} state={state_file}", flush=True)
+
+    # Collect deferred CPU scoring, then fold the metrics back into the state.
+    if pending:
+        print(f"[suite] waiting for {len(pending)} background scorer(s) ...", flush=True)
+        for aid, p, score_dir in pending:
+            rc = p.wait()
+            rec = state.get(aid, {})
+            f = score_dir / "style_scores.json"
+            if rc == 0 and f.exists():
+                sc = json.loads(f.read_text())
+                o = sc["aggregate"]["overall"]
+                rec["eval"] = {"subset": sc["protocol"].get("subset"),
+                               **{k: o[k] for k in ("target_top1", "target_margin", "csd_dT",
+                                                    "csd_dS", "csd_mmd2_unbiased", "csd_swd",
+                                                    "dino_c", "n")}}
+                rec["status"] = "done"
+                rec["finished"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+                e = rec["eval"]
+                print(f"[suite] {aid} scored top1={e['target_top1']:.4f} "
+                      f"margin={e['target_margin']:+.4f} dT={e['csd_dT']:+.4f}", flush=True)
+            else:
+                rec["status"] = "failed"
+                rec["error"] = f"scorer rc={rc}"
+                print(f"[suite] {aid} scoring FAILED rc={rc}", flush=True)
+            state[aid] = rec
+        state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+class _Deferred(Exception):
+    """Internal: this arm was trained and its CPU scoring continues in the background."""
 
 
 def git_commit() -> str:

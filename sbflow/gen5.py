@@ -20,8 +20,8 @@ import numpy as np
 import torch
 from PIL import Image
 
-from .cache import load_dcae
 from .infer5 import load_model5, solve_transfer
+from .vae import decode_latents, encode_images, load_sdvae
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 
@@ -91,7 +91,7 @@ def main() -> None:
 
     t0 = time.perf_counter()
     ck, model, stats = load_model5(args.ckpt, device, args.weights)
-    ae = load_dcae(ck["ae"], device)
+    vae, trt = load_sdvae(device)
     sf = float(ck["ae_scaling_factor"])
     gmean = stats.global_mean
     gstd = stats.global_std
@@ -116,7 +116,7 @@ def main() -> None:
                                             dtype=np.uint8).copy()).permute(2, 0, 1).float() / 255.0
                 for p in chunk]).to(device) * 2 - 1
             with torch.autocast("cuda", dtype=torch.bfloat16, enabled=device == "cuda"):
-                z = ae.encode(x).latent.float() * sf
+                z = encode_images(vae, x, sf)
             z = (z - gmean[None, :, None, None]) / gstd[None, :, None, None]
             for i, p in enumerate(chunk):
                 zsrc[p] = z[i:i + 1]
@@ -143,9 +143,9 @@ def main() -> None:
             phase["ode"] += time.perf_counter() - t1
 
             t1 = time.perf_counter()
-            with torch.autocast("cuda", dtype=torch.bfloat16, enabled=device == "cuda"):
-                dec = ae.decode((zout * gstd[None, :, None, None]
-                                 + gmean[None, :, None, None]) / sf).sample.float()
+            dec = decode_latents(vae, trt,
+                                 (zout * gstd[None, :, None, None]
+                                  + gmean[None, :, None, None]) / sf, batch=args.batch)
             u8 = to_u8(dec)
             phase["decode"] += time.perf_counter() - t1
 

@@ -376,6 +376,7 @@ def main():
                                  local_conv=args.local_conv, pair_rank=args.pair_rank),
             "objective": args.objective, "config": vars(args),
             "score_scale": s_scale.cpu(),
+            "ae": data.ae, "ae_scaling_factor": data.scaling_factor,
         }, out / f"model_step{step}.pt")
 
     def sample_pair_batch(a, b, k):

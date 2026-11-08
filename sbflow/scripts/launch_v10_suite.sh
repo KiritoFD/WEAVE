@@ -1,69 +1,36 @@
 #!/usr/bin/env bash
-# Serial V10 suite launcher.
+# Serial V10 suite launcher (SD-VAE latent space, canonical 15,545-image dataset).
 #
-# 1. waits for the five style caches
-# 2. stage-1 gate: arm 04 trained from scratch, full 600 cross-style generation
-# 3. remaining implemented arms on the Quick200 subset, strictly serial
-#
-# Progress is appended to runs/blog_sbflow/v10/suite_state.json after every arm.
+# Stage 1 gate: arm 04 trained from scratch, full 600 cross-style generation.
+# Then the remaining implemented arms on Quick200, strictly serial.
+# CPU scoring runs in the background so the GPU never waits for metrics.
 set -uo pipefail
 cd /mnt/i/Latent_Style/WEAVE
 export PYTHONPATH=/mnt/i/Latent_Style/WEAVE:${PYTHONPATH:-}
 export HF_HUB_OFFLINE=1
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 ROOT=runs/blog_sbflow/v10
-STYLES="Early_Renaissance Impressionism Minimalism Rococo Ukiyo_e"
 mkdir -p "$ROOT/logs"
 
-echo "[launch] waiting for five style caches ..."
-while true; do
-  n=0
-  for S in $STYLES; do [ -f "runs/blog_sbflow/cache5/$S.pt" ] && n=$((n+1)); done
-  [ "$n" -eq 5 ] && break
-  echo "[launch] caches ready: $n/5 ($(date +%H:%M:%S))"
-  sleep 120
-done
-echo "[launch] all five caches present"
-
-echo "[launch] === stage-1 gate: arm 04, full600 ==="
+echo "[launch] $(date +%H:%M:%S) === stage-1 gate: arm 04, full600 ==="
 python3 -u -m sbflow.run_suite --root "$ROOT" --arms 04 --eval-subset full600 --resume \
   2>&1 | tee -a "$ROOT/logs/gate.log"
 GATE_RC=${PIPESTATUS[0]}
-echo "[launch] gate exit=$GATE_RC"
-
+echo "[launch] $(date +%H:%M:%S) gate exit=$GATE_RC"
 if [ "$GATE_RC" -ne 0 ]; then
-  echo "[launch] gate failed; stopping before mechanism arms"
+  echo "[launch] gate failed; not starting mechanism arms"
   exit 1
 fi
 
-echo "[launch] === arms A (batch/sampling) ==="
-python3 -u -m sbflow.run_suite --root "$ROOT" --arms 01-03 --eval-subset quick200 --resume \
-  2>&1 | tee -a "$ROOT/logs/groupA.log"
+for GROUP in "01-03:groupA" "05-10:groupB" "11,12,14,15:groupC" "37,38,39,40:groupGH" \
+             "16-23:groupD" "24-31:groupE" "32-35:groupF"; do
+  ARMS=${GROUP%%:*}; NAME=${GROUP##*:}
+  echo "[launch] $(date +%H:%M:%S) === $NAME (arms $ARMS) ==="
+  python3 -u -m sbflow.run_suite --root "$ROOT" --arms "$ARMS" --eval-subset quick200 --resume \
+    2>&1 | tee -a "$ROOT/logs/$NAME.log"
+done
 
-echo "[launch] === arms B (parameterisation) ==="
-python3 -u -m sbflow.run_suite --root "$ROOT" --arms 05-10 --eval-subset quick200 --resume \
-  2>&1 | tee -a "$ROOT/logs/groupB.log"
-
-echo "[launch] === arms C (bridge/EDM) ==="
-python3 -u -m sbflow.run_suite --root "$ROOT" --arms 11,12,14,15 --eval-subset quick200 --resume \
-  2>&1 | tee -a "$ROOT/logs/groupC.log"
-
-echo "[launch] === arms G,H ==="
-python3 -u -m sbflow.run_suite --root "$ROOT" --arms 37,38,39,40 --eval-subset quick200 --resume \
-  2>&1 | tee -a "$ROOT/logs/groupGH.log"
-
-echo "[launch] === arms D (distribution supervision) ==="
-python3 -u -m sbflow.run_suite --root "$ROOT" --arms 16-23 --eval-subset quick200 --resume \
-  2>&1 | tee -a "$ROOT/logs/groupD.log"
-
-echo "[launch] === arms E (online alpha-DSBM) ==="
-python3 -u -m sbflow.run_suite --root "$ROOT" --arms 24-31 --eval-subset quick200 --resume \
-  2>&1 | tee -a "$ROOT/logs/groupE.log"
-
-echo "[launch] === arms F (Gaussian pivot) ==="
-python3 -u -m sbflow.run_suite --root "$ROOT" --arms 32-35 --eval-subset quick200 --resume \
-  2>&1 | tee -a "$ROOT/logs/groupF.log"
-
-echo "[launch] === ALL GROUPS DONE ==="
+echo "[launch] $(date +%H:%M:%S) === ALL GROUPS DONE ==="
 python3 - <<'PY'
 import json
 from pathlib import Path
@@ -73,8 +40,7 @@ done = {k: v for k, v in s.items() if v.get("status") == "done"}
 print(f"[launch] completed {len(done)}/{len(s)} arms")
 for k in sorted(done):
     e = done[k].get("eval") or {}
-    if e:
-        print(f"  {k}: top1={e.get('target_top1', float('nan')):.4f} "
-              f"margin={e.get('target_margin', float('nan')):+.4f} "
-              f"dT={e.get('csd_dT', float('nan')):+.4f} swd={e.get('csd_swd', float('nan')):.4f}")
+    if "target_top1" in e:
+        print(f"  {k}: top1={e['target_top1']:.4f} margin={e['target_margin']:+.4f} "
+              f"dT={e['csd_dT']:+.4f} dS={e['csd_dS']:+.4f} swd={e['csd_swd']:.4f}")
 PY

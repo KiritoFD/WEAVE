@@ -19,7 +19,16 @@ from __future__ import annotations
 BASE = dict(
     objective="bidir", edm=1, heads_out=1, style_cond="decomposed", target="drift",
     time_sampling="uniform", sampler="perm", ot_ratio=0.0, ot_cost="rgb",
-    eps=0.04, batch=1024, steps=800, width=256, depth=6, heads=4, patch=2,
+    eps=0.04, batch=512, steps=500, width=256, depth=6, heads=4,
+    # SD-VAE latent is 4x64x64. Measured on the 3060 at the real 15,545-image caches:
+    #   patch 8 (64 tokens)  b1024 -> 0.33 s/upd, ~4 GB
+    #   patch 8 (64 tokens)  b512  -> 0.375 s/upd, 3.9 GB
+    #   patch 4 (256 tokens) b512  -> 0.732 s/upd, 11.2 GB   (too close to the 12 GB wall)
+    #   patch 4 (256 tokens) b256  -> 0.442 s/upd, 6.2 GB
+    #   patch 4 (256 tokens) b1024 -> OOM / 30 s per update
+    # patch 8 at batch 512 keeps the doc's 64-token budget and leaves VRAM headroom,
+    # so it is the default; `--patch 4 --batch 256` is the higher-resolution variant.
+    patch=8,
     warmup=100, lr=2e-4, ema_decay=0.999,
 )
 
@@ -36,6 +45,7 @@ def _arm(aid: int, group: str, note: str, implemented: bool = True, **over):
 
 ARMS = [
     # ---------------- A: batch / sampling ----------------
+    # Same nominal endpoint exposures (819,200) across the four arms.
     _arm(1, "A", "B256 3200upd small-batch reference", batch=256, steps=3200),
     _arm(2, "A", "B512 1600upd throughput vs gradient variance", batch=512, steps=1600),
     _arm(3, "A", "B1024 800upd with-replacement sampling", batch=1024, steps=800,
