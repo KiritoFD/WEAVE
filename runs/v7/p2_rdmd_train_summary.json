@@ -1,0 +1,14 @@
+{
+  "transport_params": 1848724,
+  "steps": 1200,
+  "batch": 40,
+  "train_wall_sec": 488.3,
+  "peak_vram_mib": 5792.8,
+  "final_losses": {
+    "fake": 0.52241,
+    "dmd": 0.00053,
+    "content": 2e-05,
+    "total": 0.00057
+  },
+  "checkpoint": "runs/v7/rdmd_single_step.pt"
+}

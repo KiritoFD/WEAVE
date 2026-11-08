@@ -1,0 +1,12 @@
+{
+  "steps": 1200,
+  "train_wall_sec": 327.6,
+  "peak_vram_mib": 5091.8,
+  "final_losses": {
+    "style": 1.83967,
+    "content": 0.08154,
+    "rec": 0.0,
+    "total": 1.12418
+  },
+  "checkpoint": "runs/v7/v7_stable_1nfe_transport.pt"
+}

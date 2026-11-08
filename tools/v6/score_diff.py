@@ -70,6 +70,7 @@ def train_score_model(
     accum: int = 2,
     lr: float = 3e-4,
     seed: int = 42,
+    margin_weight: float = 0.5,
     device: str = "cuda",
 ) -> Tuple[ConditionalScoreNet, dict]:
     torch.manual_seed(seed)
@@ -122,14 +123,16 @@ def train_score_model(
             with torch.autocast(device_type="cuda", dtype=torch.float16):
                 eps_pred = model(z_sigma, sigma, y_batch)
                 l_denoise = F.mse_loss(eps_pred.float(), eps)
-                if step % 2 == 0:
+                # Optional wrong-class margin. S1 / RDMD control sets margin_weight=0
+                # so the optimum remains the exact conditional denoising MSE estimator.
+                if margin_weight > 0.0 and step % 2 == 0:
                     y_wrong = (y_batch + torch.randint(1, len(STYLES), (B,), device=device)) % len(STYLES)
                     eps_wrong = model(z_sigma, sigma, y_wrong)
                     err_c = (eps_pred.float() - eps).pow(2).mean(dim=(1, 2, 3))
                     err_w = (eps_wrong.float() - eps).pow(2).mean(dim=(1, 2, 3))
                     # Encourage err_c < err_w by margin 0.04
                     l_margin = F.relu(0.04 + err_c - err_w).mean()
-                    loss = (l_denoise + 0.5 * l_margin) / accum
+                    loss = (l_denoise + margin_weight * l_margin) / accum
                 else:
                     loss = l_denoise / accum
 

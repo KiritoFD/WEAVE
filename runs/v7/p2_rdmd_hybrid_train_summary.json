@@ -1,0 +1,15 @@
+{
+  "steps": 1200,
+  "batch": 40,
+  "train_wall_sec": 674.9,
+  "peak_vram_mib": 5804.5,
+  "final_losses": {
+    "fake": 0.27544,
+    "dmd": 0.00012,
+    "style": 1.51076,
+    "content": 0.16545,
+    "rec": 0.0,
+    "total": 1.54397
+  },
+  "checkpoint": "runs/v7/rdmd_single_step_hybrid.pt"
+}

@@ -1,0 +1,78 @@
+{
+  "protocol": {
+    "S1": "pure denoising MSE, margin_weight=0",
+    "V6": "original denoising MSE + 0.5 * wrong-class margin on even steps",
+    "data": "identical pseudo_gt_24h/orig_mean_fp16 train split, 1000 steps, base_dim=64"
+  },
+  "S1_train_stats": {
+    "n_params": 3274180,
+    "steps": 1000,
+    "train_wall_sec": 208.3,
+    "peak_vram_mib": 4743.3,
+    "final_loss": 0.5855541729927063
+  },
+  "S1_quality": {
+    "per_style_denoise_mse": {
+      "Early_Renaissance": 0.34757,
+      "Impressionism": 0.32126,
+      "Minimalism": 0.24839,
+      "Rococo": 0.30024,
+      "Ukiyo_e": 0.33018
+    },
+    "per_style_wrong_minus_correct": {
+      "Early_Renaissance": 0.00265,
+      "Impressionism": 0.0017,
+      "Minimalism": 0.00919,
+      "Rococo": 0.00263,
+      "Ukiyo_e": -0.00174
+    },
+    "per_style_frac_correct_smaller": {
+      "Early_Renaissance": 0.95,
+      "Impressionism": 0.9,
+      "Minimalism": 0.875,
+      "Rococo": 1.0,
+      "Ukiyo_e": 0.275
+    },
+    "sigma_mse": {
+      "0.15": 0.86738,
+      "0.30": 0.66827,
+      "0.50": 0.47456,
+      "0.80": 0.30953
+    },
+    "ukiyo_direction_mean_cos_vs_other_targets": 0.3059,
+    "ukiyo_denoise_mse": 0.33018,
+    "ukiyo_wrong_minus_correct": -0.00174
+  },
+  "V6_original_quality": {
+    "per_style_denoise_mse": {
+      "Early_Renaissance": 0.36885,
+      "Impressionism": 0.34548,
+      "Minimalism": 0.26733,
+      "Rococo": 0.32368,
+      "Ukiyo_e": 0.35354
+    },
+    "per_style_wrong_minus_correct": {
+      "Early_Renaissance": -0.00173,
+      "Impressionism": -0.00183,
+      "Minimalism": 0.01854,
+      "Rococo": 0.00299,
+      "Ukiyo_e": -0.00442
+    },
+    "per_style_frac_correct_smaller": {
+      "Early_Renaissance": 0.175,
+      "Impressionism": 0.075,
+      "Minimalism": 0.975,
+      "Rococo": 1.0,
+      "Ukiyo_e": 0.05
+    },
+    "sigma_mse": {
+      "0.15": 0.87237,
+      "0.30": 0.67676,
+      "0.50": 0.48923,
+      "0.80": 0.33177
+    },
+    "ukiyo_direction_mean_cos_vs_other_targets": 0.3766,
+    "ukiyo_denoise_mse": 0.35354,
+    "ukiyo_wrong_minus_correct": -0.00442
+  }
+}

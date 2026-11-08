@@ -34,6 +34,7 @@ desktop.ini
 runs/*
 !runs/v5/
 !runs/v6/
+!runs/v7/
 data/
 datasets/
 results/

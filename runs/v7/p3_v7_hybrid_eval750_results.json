@@ -1,0 +1,962 @@
+{
+  "protocol": {
+    "tasks": "eval_protocol/tasks_750.json (600 cross + 150 same)",
+    "rgb_reference": "paper_rgb_v1",
+    "reference_pool": "eval_protocol/references_v1.json",
+    "v7_inference": "SingleStepTransportNet residual scaling; s==t exact identity by construction"
+  },
+  "methods": {
+    "V7_Hybrid_alpha1.0": {
+      "cross600": {
+        "n": 600,
+        "mean_dT": 0.0114,
+        "mean_dS": -0.4555,
+        "mean_dM": 0.4669,
+        "Target_Top1": 21.3,
+        "Target_Margin": -0.0863,
+        "DINO_C": 0.1113,
+        "DINO_S": 0.1919,
+        "CLIP_S": 0.6085,
+        "LPIPS": 0.9049,
+        "mean_latent_l2": 6437.2699,
+        "styles_improved": 2,
+        "ukiyo_dT": -0.0564,
+        "ukiyo_top1": 0.0,
+        "per_target_dT": {
+          "Early_Renaissance": -0.0432,
+          "Impressionism": 0.0384,
+          "Minimalism": 0.1379,
+          "Rococo": -0.0199,
+          "Ukiyo_e": -0.0564
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 4.2,
+          "Impressionism": 0.8,
+          "Minimalism": 100.0,
+          "Rococo": 1.7,
+          "Ukiyo_e": 0.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.111,
+          "Impressionism": -0.0966,
+          "Minimalism": 0.0834,
+          "Rococo": -0.1134,
+          "Ukiyo_e": -0.1938
+        },
+        "confusion_matrix_pct": [
+          [
+            4.2,
+            3.3,
+            90.8,
+            1.7,
+            0.0
+          ],
+          [
+            0.8,
+            0.8,
+            97.5,
+            0.8,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            100.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.7,
+            0.0,
+            96.7,
+            1.7,
+            0.0
+          ],
+          [
+            0.8,
+            2.5,
+            96.7,
+            0.0,
+            0.0
+          ]
+        ],
+        "NFE": 1,
+        "gen_wall_sec": 87.2,
+        "note": "single-step hybrid distribution transport"
+      },
+      "same150": {
+        "n": 150,
+        "mean_dT": 0.0262,
+        "mean_dS": 0.0262,
+        "mean_dM": 0.0,
+        "Target_Top1": 96.7,
+        "Target_Margin": 0.3675,
+        "DINO_C": 0.9803,
+        "DINO_S": 0.603,
+        "CLIP_S": 0.8255,
+        "LPIPS": 0.0745,
+        "mean_latent_l2": 0.0,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.0381,
+        "ukiyo_top1": 100.0,
+        "per_target_dT": {
+          "Early_Renaissance": 0.0147,
+          "Impressionism": 0.0161,
+          "Minimalism": 0.022,
+          "Rococo": 0.0402,
+          "Ukiyo_e": 0.0381
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 100.0,
+          "Impressionism": 96.7,
+          "Minimalism": 100.0,
+          "Rococo": 86.7,
+          "Ukiyo_e": 100.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": 0.336,
+          "Impressionism": 0.2893,
+          "Minimalism": 0.4042,
+          "Rococo": 0.3001,
+          "Ukiyo_e": 0.508
+        },
+        "confusion_matrix_pct": [
+          [
+            100.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            3.3,
+            96.7,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            100.0,
+            0.0,
+            0.0
+          ],
+          [
+            6.7,
+            6.7,
+            0.0,
+            86.7,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            100.0
+          ]
+        ],
+        "NFE": 1,
+        "gen_wall_sec": 87.2,
+        "note": "single-step hybrid distribution transport"
+      },
+      "all750": {
+        "n": 750,
+        "mean_dT": 0.0143,
+        "mean_dS": -0.3592,
+        "mean_dM": 0.3735,
+        "Target_Top1": 36.4,
+        "Target_Margin": 0.0045,
+        "DINO_C": 0.2851,
+        "DINO_S": 0.2741,
+        "CLIP_S": 0.6519,
+        "LPIPS": 0.7388,
+        "mean_latent_l2": 5149.8159,
+        "styles_improved": 2,
+        "ukiyo_dT": -0.0375,
+        "ukiyo_top1": 20.0,
+        "per_target_dT": {
+          "Early_Renaissance": -0.0316,
+          "Impressionism": 0.034,
+          "Minimalism": 0.1147,
+          "Rococo": -0.0079,
+          "Ukiyo_e": -0.0375
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 23.3,
+          "Impressionism": 20.0,
+          "Minimalism": 100.0,
+          "Rococo": 18.7,
+          "Ukiyo_e": 20.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.0216,
+          "Impressionism": -0.0194,
+          "Minimalism": 0.1475,
+          "Rococo": -0.0307,
+          "Ukiyo_e": -0.0535
+        },
+        "confusion_matrix_pct": [
+          [
+            23.3,
+            2.7,
+            72.7,
+            1.3,
+            0.0
+          ],
+          [
+            1.3,
+            20.0,
+            78.0,
+            0.7,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            100.0,
+            0.0,
+            0.0
+          ],
+          [
+            2.7,
+            1.3,
+            77.3,
+            18.7,
+            0.0
+          ],
+          [
+            0.7,
+            2.0,
+            77.3,
+            0.0,
+            20.0
+          ]
+        ],
+        "NFE": 1,
+        "gen_wall_sec": 87.2,
+        "note": "single-step hybrid distribution transport"
+      }
+    },
+    "V7_Hybrid_alpha1.4": {
+      "cross600": {
+        "n": 600,
+        "mean_dT": 0.0095,
+        "mean_dS": -0.4576,
+        "mean_dM": 0.4671,
+        "Target_Top1": 20.8,
+        "Target_Margin": -0.0847,
+        "DINO_C": 0.1089,
+        "DINO_S": 0.1904,
+        "CLIP_S": 0.6045,
+        "LPIPS": 0.9086,
+        "mean_latent_l2": 9012.1777,
+        "styles_improved": 2,
+        "ukiyo_dT": -0.0587,
+        "ukiyo_top1": 0.0,
+        "per_target_dT": {
+          "Early_Renaissance": -0.0482,
+          "Impressionism": 0.037,
+          "Minimalism": 0.1368,
+          "Rococo": -0.0193,
+          "Ukiyo_e": -0.0587
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 1.7,
+          "Impressionism": 0.8,
+          "Minimalism": 100.0,
+          "Rococo": 1.7,
+          "Ukiyo_e": 0.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.1125,
+          "Impressionism": -0.0934,
+          "Minimalism": 0.085,
+          "Rococo": -0.1108,
+          "Ukiyo_e": -0.1918
+        },
+        "confusion_matrix_pct": [
+          [
+            1.7,
+            2.5,
+            93.3,
+            2.5,
+            0.0
+          ],
+          [
+            0.0,
+            0.8,
+            98.3,
+            0.8,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            100.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.8,
+            0.0,
+            97.5,
+            1.7,
+            0.0
+          ],
+          [
+            0.8,
+            2.5,
+            96.7,
+            0.0,
+            0.0
+          ]
+        ],
+        "NFE": 1,
+        "gen_wall_sec": 80.1,
+        "note": "single-step hybrid distribution transport"
+      },
+      "same150": {
+        "n": 150,
+        "mean_dT": 0.0262,
+        "mean_dS": 0.0262,
+        "mean_dM": 0.0,
+        "Target_Top1": 96.7,
+        "Target_Margin": 0.3675,
+        "DINO_C": 0.9803,
+        "DINO_S": 0.603,
+        "CLIP_S": 0.8255,
+        "LPIPS": 0.0745,
+        "mean_latent_l2": 0.0,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.0381,
+        "ukiyo_top1": 100.0,
+        "per_target_dT": {
+          "Early_Renaissance": 0.0147,
+          "Impressionism": 0.0161,
+          "Minimalism": 0.022,
+          "Rococo": 0.0402,
+          "Ukiyo_e": 0.0381
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 100.0,
+          "Impressionism": 96.7,
+          "Minimalism": 100.0,
+          "Rococo": 86.7,
+          "Ukiyo_e": 100.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": 0.336,
+          "Impressionism": 0.2893,
+          "Minimalism": 0.4042,
+          "Rococo": 0.3001,
+          "Ukiyo_e": 0.508
+        },
+        "confusion_matrix_pct": [
+          [
+            100.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            3.3,
+            96.7,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            100.0,
+            0.0,
+            0.0
+          ],
+          [
+            6.7,
+            6.7,
+            0.0,
+            86.7,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            100.0
+          ]
+        ],
+        "NFE": 1,
+        "gen_wall_sec": 80.1,
+        "note": "single-step hybrid distribution transport"
+      },
+      "all750": {
+        "n": 750,
+        "mean_dT": 0.0129,
+        "mean_dS": -0.3608,
+        "mean_dM": 0.3737,
+        "Target_Top1": 36.0,
+        "Target_Margin": 0.0057,
+        "DINO_C": 0.2832,
+        "DINO_S": 0.2729,
+        "CLIP_S": 0.6487,
+        "LPIPS": 0.7417,
+        "mean_latent_l2": 7209.7422,
+        "styles_improved": 2,
+        "ukiyo_dT": -0.0393,
+        "ukiyo_top1": 20.0,
+        "per_target_dT": {
+          "Early_Renaissance": -0.0356,
+          "Impressionism": 0.0328,
+          "Minimalism": 0.1139,
+          "Rococo": -0.0074,
+          "Ukiyo_e": -0.0393
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 21.3,
+          "Impressionism": 20.0,
+          "Minimalism": 100.0,
+          "Rococo": 18.7,
+          "Ukiyo_e": 20.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.0228,
+          "Impressionism": -0.0168,
+          "Minimalism": 0.1489,
+          "Rococo": -0.0286,
+          "Ukiyo_e": -0.0519
+        },
+        "confusion_matrix_pct": [
+          [
+            21.3,
+            2.0,
+            74.7,
+            2.0,
+            0.0
+          ],
+          [
+            0.7,
+            20.0,
+            78.7,
+            0.7,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            100.0,
+            0.0,
+            0.0
+          ],
+          [
+            2.0,
+            1.3,
+            78.0,
+            18.7,
+            0.0
+          ],
+          [
+            0.7,
+            2.0,
+            77.3,
+            0.0,
+            20.0
+          ]
+        ],
+        "NFE": 1,
+        "gen_wall_sec": 80.1,
+        "note": "single-step hybrid distribution transport"
+      }
+    },
+    "V7_Hybrid_alpha1.8": {
+      "cross600": {
+        "n": 600,
+        "mean_dT": 0.0017,
+        "mean_dS": -0.4653,
+        "mean_dM": 0.467,
+        "Target_Top1": 20.5,
+        "Target_Margin": -0.0856,
+        "DINO_C": 0.1036,
+        "DINO_S": 0.1886,
+        "CLIP_S": 0.6008,
+        "LPIPS": 0.9186,
+        "mean_latent_l2": 11587.0855,
+        "styles_improved": 2,
+        "ukiyo_dT": -0.0665,
+        "ukiyo_top1": 0.0,
+        "per_target_dT": {
+          "Early_Renaissance": -0.0586,
+          "Impressionism": 0.021,
+          "Minimalism": 0.1333,
+          "Rococo": -0.0208,
+          "Ukiyo_e": -0.0665
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 0.0,
+          "Impressionism": 0.8,
+          "Minimalism": 100.0,
+          "Rococo": 1.7,
+          "Ukiyo_e": 0.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.1137,
+          "Impressionism": -0.1003,
+          "Minimalism": 0.0866,
+          "Rococo": -0.1101,
+          "Ukiyo_e": -0.1904
+        },
+        "confusion_matrix_pct": [
+          [
+            0.0,
+            3.3,
+            94.2,
+            2.5,
+            0.0
+          ],
+          [
+            0.0,
+            0.8,
+            99.2,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            100.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.8,
+            0.0,
+            97.5,
+            1.7,
+            0.0
+          ],
+          [
+            0.0,
+            2.5,
+            97.5,
+            0.0,
+            0.0
+          ]
+        ],
+        "NFE": 1,
+        "gen_wall_sec": 80.3,
+        "note": "single-step hybrid distribution transport"
+      },
+      "same150": {
+        "n": 150,
+        "mean_dT": 0.0262,
+        "mean_dS": 0.0262,
+        "mean_dM": 0.0,
+        "Target_Top1": 96.7,
+        "Target_Margin": 0.3675,
+        "DINO_C": 0.9803,
+        "DINO_S": 0.603,
+        "CLIP_S": 0.8255,
+        "LPIPS": 0.0745,
+        "mean_latent_l2": 0.0,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.0381,
+        "ukiyo_top1": 100.0,
+        "per_target_dT": {
+          "Early_Renaissance": 0.0147,
+          "Impressionism": 0.0161,
+          "Minimalism": 0.022,
+          "Rococo": 0.0402,
+          "Ukiyo_e": 0.0381
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 100.0,
+          "Impressionism": 96.7,
+          "Minimalism": 100.0,
+          "Rococo": 86.7,
+          "Ukiyo_e": 100.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": 0.336,
+          "Impressionism": 0.2893,
+          "Minimalism": 0.4042,
+          "Rococo": 0.3001,
+          "Ukiyo_e": 0.508
+        },
+        "confusion_matrix_pct": [
+          [
+            100.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            3.3,
+            96.7,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            100.0,
+            0.0,
+            0.0
+          ],
+          [
+            6.7,
+            6.7,
+            0.0,
+            86.7,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            100.0
+          ]
+        ],
+        "NFE": 1,
+        "gen_wall_sec": 80.3,
+        "note": "single-step hybrid distribution transport"
+      },
+      "all750": {
+        "n": 750,
+        "mean_dT": 0.0066,
+        "mean_dS": -0.367,
+        "mean_dM": 0.3736,
+        "Target_Top1": 35.7,
+        "Target_Margin": 0.005,
+        "DINO_C": 0.2789,
+        "DINO_S": 0.2714,
+        "CLIP_S": 0.6457,
+        "LPIPS": 0.7498,
+        "mean_latent_l2": 9269.6684,
+        "styles_improved": 2,
+        "ukiyo_dT": -0.0455,
+        "ukiyo_top1": 20.0,
+        "per_target_dT": {
+          "Early_Renaissance": -0.044,
+          "Impressionism": 0.02,
+          "Minimalism": 0.111,
+          "Rococo": -0.0086,
+          "Ukiyo_e": -0.0455
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 20.0,
+          "Impressionism": 20.0,
+          "Minimalism": 100.0,
+          "Rococo": 18.7,
+          "Ukiyo_e": 20.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.0238,
+          "Impressionism": -0.0224,
+          "Minimalism": 0.1502,
+          "Rococo": -0.028,
+          "Ukiyo_e": -0.0507
+        },
+        "confusion_matrix_pct": [
+          [
+            20.0,
+            2.7,
+            75.3,
+            2.0,
+            0.0
+          ],
+          [
+            0.7,
+            20.0,
+            79.3,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            100.0,
+            0.0,
+            0.0
+          ],
+          [
+            2.0,
+            1.3,
+            78.0,
+            18.7,
+            0.0
+          ],
+          [
+            0.0,
+            2.0,
+            78.0,
+            0.0,
+            20.0
+          ]
+        ],
+        "NFE": 1,
+        "gen_wall_sec": 80.3,
+        "note": "single-step hybrid distribution transport"
+      }
+    },
+    "Calib_Balanced_s16_ref": {
+      "cross600": {
+        "n": 600,
+        "mean_dT": 0.0773,
+        "mean_dS": -0.3287,
+        "mean_dM": 0.406,
+        "Target_Top1": 27.7,
+        "Target_Margin": -0.0792,
+        "DINO_C": 0.6803,
+        "DINO_S": 0.4005,
+        "CLIP_S": 0.6574,
+        "LPIPS": 0.5498,
+        "mean_latent_l2": 58.0344,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.0261,
+        "ukiyo_top1": 6.7,
+        "per_target_dT": {
+          "Early_Renaissance": 0.0118,
+          "Impressionism": 0.1597,
+          "Minimalism": 0.1556,
+          "Rococo": 0.0334,
+          "Ukiyo_e": 0.0261
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 12.5,
+          "Impressionism": 43.3,
+          "Minimalism": 50.8,
+          "Rococo": 25.0,
+          "Ukiyo_e": 6.7
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.1449,
+          "Impressionism": -0.0212,
+          "Minimalism": -0.0147,
+          "Rococo": -0.1036,
+          "Ukiyo_e": -0.1115
+        },
+        "confusion_matrix_pct": [
+          [
+            12.5,
+            37.5,
+            25.8,
+            6.7,
+            17.5
+          ],
+          [
+            24.2,
+            43.3,
+            25.0,
+            6.7,
+            0.8
+          ],
+          [
+            4.2,
+            5.8,
+            50.8,
+            38.3,
+            0.8
+          ],
+          [
+            7.5,
+            25.0,
+            42.5,
+            25.0,
+            0.0
+          ],
+          [
+            29.2,
+            35.0,
+            25.8,
+            3.3,
+            6.7
+          ]
+        ],
+        "NFE": 96,
+        "gen_wall_sec": 175.7,
+        "note": "V6.1 ScoreDiff calibrated baseline"
+      },
+      "same150": {
+        "n": 150,
+        "mean_dT": 0.0262,
+        "mean_dS": 0.0262,
+        "mean_dM": 0.0,
+        "Target_Top1": 96.7,
+        "Target_Margin": 0.3675,
+        "DINO_C": 0.9803,
+        "DINO_S": 0.603,
+        "CLIP_S": 0.8255,
+        "LPIPS": 0.0745,
+        "mean_latent_l2": 0.0,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.0381,
+        "ukiyo_top1": 100.0,
+        "per_target_dT": {
+          "Early_Renaissance": 0.0147,
+          "Impressionism": 0.0161,
+          "Minimalism": 0.022,
+          "Rococo": 0.0402,
+          "Ukiyo_e": 0.0381
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 100.0,
+          "Impressionism": 96.7,
+          "Minimalism": 100.0,
+          "Rococo": 86.7,
+          "Ukiyo_e": 100.0
+        },
+        "per_target_margin": {
+          "Early_Renaissance": 0.336,
+          "Impressionism": 0.2893,
+          "Minimalism": 0.4042,
+          "Rococo": 0.3001,
+          "Ukiyo_e": 0.508
+        },
+        "confusion_matrix_pct": [
+          [
+            100.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            3.3,
+            96.7,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            100.0,
+            0.0,
+            0.0
+          ],
+          [
+            6.7,
+            6.7,
+            0.0,
+            86.7,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            100.0
+          ]
+        ],
+        "NFE": 96,
+        "gen_wall_sec": 175.7,
+        "note": "V6.1 ScoreDiff calibrated baseline"
+      },
+      "all750": {
+        "n": 750,
+        "mean_dT": 0.0671,
+        "mean_dS": -0.2577,
+        "mean_dM": 0.3248,
+        "Target_Top1": 41.5,
+        "Target_Margin": 0.0102,
+        "DINO_C": 0.7403,
+        "DINO_S": 0.441,
+        "CLIP_S": 0.691,
+        "LPIPS": 0.4548,
+        "mean_latent_l2": 46.4275,
+        "styles_improved": 5,
+        "ukiyo_dT": 0.0285,
+        "ukiyo_top1": 25.3,
+        "per_target_dT": {
+          "Early_Renaissance": 0.0124,
+          "Impressionism": 0.131,
+          "Minimalism": 0.1289,
+          "Rococo": 0.0347,
+          "Ukiyo_e": 0.0285
+        },
+        "per_target_top1": {
+          "Early_Renaissance": 30.0,
+          "Impressionism": 54.0,
+          "Minimalism": 60.7,
+          "Rococo": 37.3,
+          "Ukiyo_e": 25.3
+        },
+        "per_target_margin": {
+          "Early_Renaissance": -0.0487,
+          "Impressionism": 0.0409,
+          "Minimalism": 0.0691,
+          "Rococo": -0.0229,
+          "Ukiyo_e": 0.0124
+        },
+        "confusion_matrix_pct": [
+          [
+            30.0,
+            30.0,
+            20.7,
+            5.3,
+            14.0
+          ],
+          [
+            20.0,
+            54.0,
+            20.0,
+            5.3,
+            0.7
+          ],
+          [
+            3.3,
+            4.7,
+            60.7,
+            30.7,
+            0.7
+          ],
+          [
+            7.3,
+            21.3,
+            34.0,
+            37.3,
+            0.0
+          ],
+          [
+            23.3,
+            28.0,
+            20.7,
+            2.7,
+            25.3
+          ]
+        ],
+        "NFE": 96,
+        "gen_wall_sec": 175.7,
+        "note": "V6.1 ScoreDiff calibrated baseline"
+      }
+    }
+  },
+  "acceptance": {
+    "best_v7": "V7_Hybrid_alpha1.0",
+    "criteria": {
+      "NFE_eq_1": true,
+      "Top1_ge_27.7": false,
+      "dT_ge_0.08": false,
+      "DINO_C_ge_0.68": false,
+      "Ukiyo_Top1_ge_15": false,
+      "Ukiyo_dT_gt_VAE_Noop": false,
+      "Top1_ge_Calib_Balanced_on_same_tasks": false
+    },
+    "comparison": {
+      "V7_Top1": 21.3,
+      "Calib_Balanced_Top1": 27.7,
+      "V7_dT": 0.0114,
+      "Calib_Balanced_dT": 0.0773,
+      "V7_DINO_C": 0.1113,
+      "Calib_Balanced_DINO_C": 0.6803
+    }
+  }
+}
