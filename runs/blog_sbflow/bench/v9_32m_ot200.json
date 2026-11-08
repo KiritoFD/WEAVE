@@ -1,0 +1,35 @@
+{
+  "tag": "v9_32m_ot200",
+  "model": {
+    "channels": 32,
+    "image_size": 16,
+    "patch": 2,
+    "width": 384,
+    "depth": 12,
+    "heads": 6
+  },
+  "n_params": 32635136,
+  "microbatch": 16,
+  "accum": 4,
+  "effective_batch": 64,
+  "updates": 100,
+  "wall_sec": 44.202,
+  "sec_per_update": 0.442,
+  "peak_vram_mib": 1064.4,
+  "component_ms_per_update": {
+    "ot": 374.86,
+    "prep": 3.76,
+    "fwd": 18.66,
+    "bwd": 29.24,
+    "opt": 13.66,
+    "total": 440.18
+  },
+  "component_share": {
+    "ot": 0.8516,
+    "prep": 0.0085,
+    "fwd": 0.0424,
+    "bwd": 0.0664,
+    "opt": 0.031
+  },
+  "ot_ratio": 0.5
+}

@@ -1,0 +1,35 @@
+{
+  "tag": "v9lite_noOT_mb256",
+  "model": {
+    "channels": 32,
+    "image_size": 16,
+    "patch": 2,
+    "width": 128,
+    "depth": 6,
+    "heads": 4
+  },
+  "n_params": 1888512,
+  "microbatch": 256,
+  "accum": 1,
+  "effective_batch": 256,
+  "updates": 100,
+  "wall_sec": 4.885,
+  "sec_per_update": 0.0488,
+  "peak_vram_mib": 856.7,
+  "component_ms_per_update": {
+    "ot": 0.74,
+    "prep": 4.97,
+    "fwd": 12.81,
+    "bwd": 24.94,
+    "opt": 4.42,
+    "total": 47.88
+  },
+  "component_share": {
+    "ot": 0.0154,
+    "prep": 0.1038,
+    "fwd": 0.2675,
+    "bwd": 0.5209,
+    "opt": 0.0924
+  },
+  "ot_ratio": 0.0
+}

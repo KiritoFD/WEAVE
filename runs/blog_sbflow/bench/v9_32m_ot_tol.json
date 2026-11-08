@@ -1,0 +1,35 @@
+{
+  "tag": "v9_32m_ot_tol",
+  "model": {
+    "channels": 32,
+    "image_size": 16,
+    "patch": 2,
+    "width": 384,
+    "depth": 12,
+    "heads": 6
+  },
+  "n_params": 32635136,
+  "microbatch": 16,
+  "accum": 4,
+  "effective_batch": 64,
+  "updates": 100,
+  "wall_sec": 24.439,
+  "sec_per_update": 0.2444,
+  "peak_vram_mib": 1064.4,
+  "component_ms_per_update": {
+    "ot": 176.3,
+    "prep": 3.89,
+    "fwd": 18.36,
+    "bwd": 30.66,
+    "opt": 13.35,
+    "total": 242.56
+  },
+  "component_share": {
+    "ot": 0.7268,
+    "prep": 0.016,
+    "fwd": 0.0757,
+    "bwd": 0.1264,
+    "opt": 0.055
+  },
+  "ot_ratio": 0.5
+}

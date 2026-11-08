@@ -1,0 +1,35 @@
+{
+  "tag": "v9lite_2m_mb16",
+  "model": {
+    "channels": 32,
+    "image_size": 16,
+    "patch": 2,
+    "width": 128,
+    "depth": 6,
+    "heads": 4
+  },
+  "n_params": 1888512,
+  "microbatch": 16,
+  "accum": 4,
+  "effective_batch": 64,
+  "updates": 100,
+  "wall_sec": 36.584,
+  "sec_per_update": 0.3658,
+  "peak_vram_mib": 190.4,
+  "component_ms_per_update": {
+    "ot": 327.36,
+    "prep": 4.05,
+    "fwd": 10.81,
+    "bwd": 17.3,
+    "opt": 5.34,
+    "total": 364.85
+  },
+  "component_share": {
+    "ot": 0.8972,
+    "prep": 0.0111,
+    "fwd": 0.0296,
+    "bwd": 0.0474,
+    "opt": 0.0146
+  },
+  "ot_ratio": 0.5
+}

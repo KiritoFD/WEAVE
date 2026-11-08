@@ -49,12 +49,18 @@ def generate(args):
     size=int(ck.get('image_size',ck['config'].get('image_size',512)))
     sf=float(ck['ae_scaling_factor'])
     manifest=[]
+    import time as _time
+    _ph={'io':0.0,'encode':0.0,'ode':0.0,'decode':0.0,'save':0.0}
+    _t0=_time.perf_counter()
     with torch.inference_mode():
         for i in range(0,len(tasks),args.batch):
             group=tasks[i:i+args.batch]
+            _a=_time.perf_counter()
             x=torch.stack([image_tensor(repo/t['source_rel_path'],size)*2-1 for t in group]).to(device)
+            torch.cuda.synchronize();_b=_time.perf_counter();_ph['io']+=_b-_a
             with (torch.autocast('cuda',dtype=torch.bfloat16) if device=='cuda' else __import__('contextlib').nullcontext()):
                 zae=ae.encode(x).latent.float()*sf
+                torch.cuda.synchronize();_c=_time.perf_counter();_ph['encode']+=_c-_b
                 z=(zae-mean[None,:,None,None])/std[None,:,None,None]
                 # A->B and B->A have different physical drifts; group by direction.
                 zout=torch.empty_like(z)
@@ -63,17 +69,25 @@ def generate(args):
                     if pos:
                         zout[pos]=solve_pfode(model,z[pos].clone(),float(ck['config']['eps']),
                                               mom,args.steps,dir_name,args.t_floor,args.method)
+                torch.cuda.synchronize();_d=_time.perf_counter();_ph['ode']+=_d-_c
                 pred=ae.decode((zout*std[None,:,None,None]+mean[None,:,None,None])/sf).sample
                 noop=ae.decode(zae/sf).sample
+                torch.cuda.synchronize();_e=_time.perf_counter();_ph['decode']+=_e-_d
             for j,t in enumerate(group):
                 key=hashlib.sha256(t['task_id'].encode('utf-8')).hexdigest()[:20]
                 pgen=out/'generated'/f'{key}.png';pnoop=out/'dcae_noop'/f'{key}.png'
                 _save_image(pred[j:j+1],pgen);_save_image(noop[j:j+1],pnoop)
                 manifest.append({**t,'generated':str(pgen),'dcae_noop':str(pnoop)})
+            torch.cuda.synchronize();_ph['save']+=_time.perf_counter()-_e
             if i%max(args.batch*10,1)==0:
                 print(f'generated {i+len(group)}/{len(tasks)}',flush=True)
+    _wall=_time.perf_counter()-_t0
+    print('[eval-timing] generate total=%.1fs  io=%.1f encode=%.1f ode=%.1f decode=%.1f save=%.1f'
+          % (_wall,_ph['io'],_ph['encode'],_ph['ode'],_ph['decode'],_ph['save']),flush=True)
     nfe=args.steps*(2 if args.method=='euler' else 4)
-    m={'model':args.ckpt,'weight':args.weights,'source_style':args.style_a,
+    m={'timing_generate_sec':{k:round(v,2) for k,v in _ph.items()},
+       'timing_generate_total_sec':round(_wall,2),
+       'model':args.ckpt,'weight':args.weights,'source_style':args.style_a,
        'target_style':args.style_b,'tasks':manifest,'solver':args.method,
        'solver_steps':args.steps,'network_nfe':nfe,
        'note':'Two-domain Test600 subset, real DCAE no-op baseline; no generated images in training.'}
@@ -112,15 +126,22 @@ def score(args):
     # Repo protocol/style order is fixed; the score component does not infer it.
     gamma=float(refs['rbf_gamma'])
     scores=[]
+    import time as _time
+    _ph={'io':0.0,'feat':0.0,'src_feat':0.0,'lpips':0.0}
+    _t0=_time.perf_counter()
     for start in range(0,len(tasks),args.batch):
         batch=tasks[start:start+args.batch]
+        _a=_time.perf_counter()
         imgs={tag:[Image.open(t[tag]).convert('RGB') for t in batch]
               for tag in ('generated','dcae_noop')}
         src=[Image.open(repo/t['source_rel_path']).convert('RGB').resize(imgs['generated'][0].size,Image.Resampling.BICUBIC)
              for t in batch]
+        torch.cuda.synchronize();_b=_time.perf_counter();_ph['io']+=_b-_a
         feat={tag:evaluator.extract_image_features(pils) for tag,pils in imgs.items()}
+        torch.cuda.synchronize();_c=_time.perf_counter();_ph['feat']+=_c-_b
         with torch.inference_mode():
             from_src=evaluator.extract_image_features(src)
+            torch.cuda.synchronize();_ph['src_feat']+=_time.perf_counter()-_c
             for tag in ('generated','dcae_noop'):
                 csd=feat[tag]['csd'].numpy()
                 src_csd=from_src['csd'].numpy()
@@ -134,7 +155,9 @@ def score(args):
                     # LPIPS only as a severe-destruction diagnostic.
                     a=torch.from_numpy(np.asarray(imgs[tag][j],dtype=np.float32).copy()).permute(2,0,1).to(device)/127.5-1
                     b=torch.from_numpy(np.asarray(src[j],dtype=np.float32).copy()).permute(2,0,1).to(device)/127.5-1
+                    _l0=_time.perf_counter()
                     lps=float(evaluator.lpips(a[None],b[None]).mean().item())
+                    _ph['lpips']+=_time.perf_counter()-_l0
                     scores.append({'task_id':t['task_id'],'source':t['source_style'],
                        'target':t['target_style'],'variant':tag,
                        'csd_dT':float(values[j,tid]-src_values[j,tid]),
@@ -146,6 +169,9 @@ def score(args):
             for im in pils:im.close()
         for im in src:im.close()
         print(f'scored {start+len(batch)}/{len(tasks)}',flush=True)
+    _wall=_time.perf_counter()-_t0
+    print('[eval-timing] score loop=%.1fs  io=%.1f feat=%.1f src_feat=%.1f lpips=%.1f'
+          % (_wall,_ph['io'],_ph['feat'],_ph['src_feat'],_ph['lpips']),flush=True)
     agg={}
     for tag in ('generated','dcae_noop'):
         one=[x for x in scores if x['variant']==tag]
@@ -163,7 +189,10 @@ def score(args):
     output.write_text(json.dumps({'protocol':{'source':'WEAVE frozen Test600 (pair subset)',
           'n_tasks':len(tasks),'source_style':manifest['source_style'],
           'target_style':manifest['target_style'],'network_nfe':manifest['network_nfe'],
-          'mmd_gamma':gamma},'aggregate':agg,'rows':scores},ensure_ascii=False,indent=2),encoding='utf-8')
+          'mmd_gamma':gamma,
+          'timing_score_sec':{k:round(v,2) for k,v in _ph.items()},
+          'timing_score_total_sec':round(_wall,2)},
+          'aggregate':agg,'rows':scores},ensure_ascii=False,indent=2),encoding='utf-8')
     print('saved',output)
     print(json.dumps(agg,indent=2))
 

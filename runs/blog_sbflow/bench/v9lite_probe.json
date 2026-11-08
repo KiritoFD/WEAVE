@@ -1,0 +1,50 @@
+{
+  "tag": "v9lite_probe",
+  "model": {
+    "channels": 32,
+    "image_size": 16,
+    "patch": 2,
+    "width": 128,
+    "depth": 6,
+    "heads": 4
+  },
+  "n_params": 1888512,
+  "rows": [
+    {
+      "microbatch": 32,
+      "sec_per_microbatch": 0.0347,
+      "ms_per_sample": 1.083,
+      "peak_vram_mib": 199.4
+    },
+    {
+      "microbatch": 64,
+      "sec_per_microbatch": 0.035,
+      "ms_per_sample": 0.546,
+      "peak_vram_mib": 292.5
+    },
+    {
+      "microbatch": 128,
+      "sec_per_microbatch": 0.0349,
+      "ms_per_sample": 0.273,
+      "peak_vram_mib": 462.0
+    },
+    {
+      "microbatch": 256,
+      "sec_per_microbatch": 0.0411,
+      "ms_per_sample": 0.161,
+      "peak_vram_mib": 817.5
+    },
+    {
+      "microbatch": 384,
+      "sec_per_microbatch": 0.056,
+      "ms_per_sample": 0.146,
+      "peak_vram_mib": 1171.5
+    },
+    {
+      "microbatch": 512,
+      "sec_per_microbatch": 0.0709,
+      "ms_per_sample": 0.138,
+      "peak_vram_mib": 1520.9
+    }
+  ]
+}
