@@ -200,10 +200,14 @@ def main() -> None:
             summary = root / f"exp{aid}" / "train_summary.json"
             if summary.exists():
                 s = json.loads(summary.read_text())
+                h = s.get("loss_history", [])
+                first50 = [x["elapsed"] for x in h if x.get("step", 0) <= 50]
                 rec.update({"train_seconds": s.get("train_seconds", rec.get("train_seconds")),
                             "peak_vram_mib": s.get("peak_vram_mib"),
                             "exposures": s.get("endpoint_exposures"),
-                            "sec_per_update": s.get("sec_per_update")})
+                            "sec_per_update": s.get("sec_per_update"),
+                            "first50_elapsed_sec": first50,
+                            "first50_sec_per_update": (first50[-1] / 50) if first50 else None})
             rec["checkpoint"] = str(final)
             rec["status"] = "trained"
             if not args.only_train:
