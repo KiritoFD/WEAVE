@@ -60,6 +60,16 @@ ARMS = [
          args={"no_inject_32": True}),
     dict(id="S3_no_inject_16", group="S", note="disable 16x16 content injection",
          args={"no_inject_16": True}),
+    # S6 passed its shape/grad/memory/selectivity gate (7/7) in ~15 min, so it runs.
+    # It uses base_dim=32 because N3_dim32 is the dim32 reference arm, which makes the
+    # comparison single-factor (mechanism only) instead of mechanism+width.
+    dict(id="S6_style_keys", group="S",
+         note="plan S6: per-style prototype keys (K=8, rank 32) with low-rank residual "
+              "attention at the 16x16 bottleneck; zero-initialised",
+         args={"base_dim": 32, "style_keys": True}),
+    dict(id="S6b_style_keys48", group="S",
+         note="S6 at base_dim=48, comparable to A0 rather than N3",
+         args={"base_dim": 48, "style_keys": True}),
     # S5 (HF_structure_loss) was CANCELLED by its own pre-experiment before spending any
     # training budget: the directional HF statistics correlate 0.921 with the DWT moments
     # V6 already uses, separate styles LESS well (LOO 0.503 vs 0.555), and pull the three
@@ -71,7 +81,7 @@ ARMS = [
 PRIORITY = ["N1_no_style", "N2_no_canon", "N3_dim32", "N5_inv_off", "N4_steps400",
             "L1_lowC", "L2_highS", "L5_same_off", "L3_core_off",
             "L4_ref_full", "S1_no_inject_64", "S2_no_inject_32", "S3_no_inject_16",
-            "N7_dim24", "N7_dim40"]
+            "S6_style_keys", "S6b_style_keys48", "N7_dim24", "N7_dim40"]
 
 
 def merged(arm: dict) -> dict:

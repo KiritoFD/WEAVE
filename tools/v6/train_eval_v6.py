@@ -851,7 +851,10 @@ def train_and_evaluate(args) -> dict:
                    content_mode=args.content_mode,
                    inject_64=not args.no_inject_64,
                    inject_32=not args.no_inject_32,
-                   inject_16=not args.no_inject_16).to(device)
+                   inject_16=not args.no_inject_16,
+                   style_keys=args.style_keys,
+                   style_keys_n=args.style_keys_n,
+                   style_keys_rank=args.style_keys_rank).to(device)
     n_params = sum(p.numel() for p in model.parameters())
     # Plan section 5: decoupled absolute coefficients.
     lam_s = args.lambda_cross if args.lambda_cross >= 0 else args.w_cross
@@ -1053,6 +1056,7 @@ def train_and_evaluate(args) -> dict:
         "inject_64": model.inject_64,
         "inject_32": model.inject_32,
         "inject_16": model.inject_16,
+        "style_keys": model.style_keys,
         "grad_diag": diag,
         "ode_steps": args.ode_steps,
         "sigma0": args.sigma0,
@@ -1122,6 +1126,11 @@ def main() -> None:
     ap.add_argument("--no-inject-64", action="store_true", help="plan S1")
     ap.add_argument("--no-inject-32", action="store_true", help="plan S2")
     ap.add_argument("--no-inject-16", action="store_true", help="plan S3")
+    ap.add_argument("--style-keys", action="store_true",
+                    help="plan S6: per-style prototype keys with low-rank residual "
+                         "attention at the 16x16 bottleneck (zero-initialised)")
+    ap.add_argument("--style-keys-n", type=int, default=8)
+    ap.add_argument("--style-keys-rank", type=int, default=32)
     ap.add_argument("--ode-steps", type=int, default=8)
     ap.add_argument("--sigma0", type=float, default=0.10)
     ap.add_argument("--seed", type=int, default=42)

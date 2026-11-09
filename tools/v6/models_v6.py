@@ -114,6 +114,39 @@ class StyleChannelPaletteHead(nn.Module):
         return idwt2_haar(ll_delta, d_lh, d_hl, d_hh).to(dtype=z_base.dtype)
 
 
+class StyleKeyResidual(nn.Module):
+    """Plan S6: per-style learnable prototype keys with low-rank residual attention.
+
+    Category-conditioned PROTOTYPES, not attention over arbitrary style-reference images.
+    Each style owns K learnable keys of rank r; the spatial features at the 16x16
+    bottleneck query them, so the model can select a target-style prototype BY CONTENT
+    POSITION instead of receiving one global Style-ID vector.
+
+    The output projection is zero-initialised, so adding this module does not change the
+    initial function at all -- the mechanism has to earn its effect during training.
+    """
+
+    def __init__(self, channels: int, num_styles: int = 5, n_keys: int = 8,
+                 rank: int = 32):
+        super().__init__()
+        self.n_keys = n_keys
+        self.rank = rank
+        self.keys = nn.Parameter(torch.randn(num_styles, n_keys, rank) * 0.02)
+        self.q = nn.Conv2d(channels, rank, 1)
+        self.out = nn.Conv2d(rank, channels, 1)
+        nn.init.zeros_(self.out.weight)
+        nn.init.zeros_(self.out.bias)
+        self.scale = float(rank) ** -0.5
+
+    def forward(self, h: torch.Tensor, style_id: torch.Tensor) -> torch.Tensor:
+        B, C, H, W = h.shape
+        q = self.q(h).flatten(2).transpose(1, 2)                  # (B, HW, r)
+        k = self.keys[style_id.long()]                            # (B, K, r)
+        att = torch.softmax(q @ k.transpose(1, 2) * self.scale, dim=-1)   # (B, HW, K)
+        o = (att @ k).transpose(1, 2).reshape(B, self.rank, H, W)
+        return h + self.out(o)
+
+
 class C3UNet(nn.Module):
     """Multi-scale Conv U-Net (~2.9M params) for D1 (Direct) and F1 (C³-Flow).
 
@@ -135,6 +168,9 @@ class C3UNet(nn.Module):
         inject_32: bool = True,
         inject_16: bool = True,
         folded: bool = False,
+        style_keys: bool = False,
+        style_keys_n: int = 8,
+        style_keys_rank: int = 32,
     ):
         super().__init__()
         self.base_dim = base_dim
@@ -167,6 +203,8 @@ class C3UNet(nn.Module):
         self.folded = bool(folded)
         if self.folded and mode != "direct":
             raise ValueError("folded=True is only valid for mode='direct'")
+        # plan S6: per-style prototype keys at the 16x16 bottleneck
+        self.style_keys = bool(style_keys)
 
         c1, c2, c3 = base_dim, base_dim * 2, base_dim * 2
         cond_dim = base_dim * 2
@@ -199,6 +237,8 @@ class C3UNet(nn.Module):
         # Bottleneck at 16x16 with pooled 16-ch DWT content features
         self.mid16_1 = StyleAdaLNBlock(c3, cond_dim, content_channels=16)
         self.mid16_2 = StyleAdaLNBlock(c3, cond_dim, content_channels=16)
+        self.skr = (StyleKeyResidual(c3, num_styles=num_styles, n_keys=style_keys_n,
+                                     rank=style_keys_rank) if self.style_keys else None)
 
         # Decoder 32x32
         self.up32 = nn.Conv2d(c3, c2, 3, padding=1)
@@ -288,6 +328,8 @@ class C3UNet(nn.Module):
         h16 = self.down16(h32)
         h16 = self.mid16_1(h16, cond, i16)
         h16 = self.mid16_2(h16, cond, i16)
+        if self.skr is not None:
+            h16 = self.skr(h16, style_id)
 
         u32 = F.interpolate(h16, scale_factor=2.0, mode="nearest")
         u32 = self.up32(u32)
