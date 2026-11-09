@@ -22,6 +22,7 @@ import argparse
 import contextlib
 import json
 import math
+import sys
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -40,8 +41,9 @@ from .preconditioning import (StyleStats, direct_velocity_coefficients,
                               moment_coefficients, moment_coefficients_batch,
                               normalized_endpoint_target, normalized_target,
                               normalized_target_batch, normalized_velocity_target,
-                              precondition_input, precondition_input_batch,
-                              reconstruct_drift_batch, reconstruct_velocity)
+                              pair_stats_per_sample, precondition_input,
+                              precondition_input_batch, reconstruct_drift_batch,
+                              reconstruct_velocity)
 from .time_sampling import sample_time
 
 
@@ -51,10 +53,10 @@ def build_model(args, channels, image_size, num_styles) -> BidirDiT:
         channels=channels, image_size=image_size, patch=args.patch,
         width=args.width, depth=args.depth, heads=args.heads,
         num_styles=num_styles, style_cond=args.style_cond,
-        heads_out=(2 if (args.objective in ("bidir", "bidir_joint") and args.heads_out == 2)
-                   else (2 if args.objective == "score_current" else 1)),
+        heads_out=(2 if args.objective == "score_current" else args.heads_out),
         two_head=("score_current" if args.objective == "score_current" else "drift"),
         local_conv=args.local_conv, pair_rank=args.pair_rank,
+        style_film=args.style_film,
     )
 
 
@@ -165,20 +167,8 @@ def objective_bidir_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, a
 
 
 def _mixed_stats(stats, pa, pb, dirs, dtype):
-    """Per-sample (mu0, mu1, var0, var1, cov) for the mixed batch, honouring direction."""
-    sm = stats.style_mean.to(device=pa.device, dtype=dtype)
-    sv = stats.style_var.to(device=pa.device, dtype=dtype)
-    C = sm.shape[1]
-    idx_a = pa.view(-1, 1).expand(-1, C)
-    idx_b = pb.view(-1, 1).expand(-1, C)
-    mu_a, mu_b = sm.gather(0, idx_a), sm.gather(0, idx_b)
-    v_a, v_b = sv.gather(0, idx_a), sv.gather(0, idx_b)
-    fwd_c = (dirs == 1).view(-1, 1)
-    mu0 = torch.where(fwd_c, mu_a, mu_b)
-    mu1 = torch.where(fwd_c, mu_b, mu_a)
-    v0 = torch.where(fwd_c, v_a, v_b)
-    v1 = torch.where(fwd_c, v_b, v_a)
-    return mu0, mu1, v0, v1, torch.zeros_like(mu0)
+    """Per-sample endpoint statistics; delegates to the shared helper."""
+    return pair_stats_per_sample(stats, pa, pb, dirs, dtype)
 
 
 def objective_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, args, s_scale=None):
@@ -189,6 +179,17 @@ def objective_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, args, s
     and `endpoint`. This removes the training-schedule confound where non-bidir arms
     silently fell back to one pair per update.
     """
+    if args.objective in ("monge", "pivot_cfm"):
+        # One-step map T(z,i,j) = z + Delta(z,i,j): no ODE and no bridge time.
+        tau = torch.full((z0.shape[0],), 0.5, device=z0.device, dtype=z0.dtype)
+        delta = model(z0, tau, dirs.long(), pa.long(), pb.long()).float()
+        z_out = z0 + delta
+        base = torch.nn.functional.mse_loss(z_out, z1.float())
+        if getattr(args, "cycle_weight", 0) > 0:
+            # weak cycle/move regulariser: penalise excessive displacement only
+            base = base + args.cycle_weight * delta.square().mean()
+        return base, {"f_mse": float(base), "b_mse": 0.0}
+
     B = z0.shape[0]
     t, tw = sample_time(args.time_sampling, B, min_t, gen, z0.device, args.strata, z0.dtype)
     xi = torch.randn(z0.shape, device=z0.device, generator=gen, dtype=z0.dtype)
@@ -204,8 +205,12 @@ def objective_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, args, s
              if eps > 0 else 0.0)
         vstar = (z1 - z0) + c * xi
         if args.edm:
+            # A single velocity field is defined on the canonical orientation only, so the
+            # endpoint statistics must NOT be swapped by the direction flag here.
+            mu0f, mu1f, v0f, v1f, covf = pair_stats_per_sample(
+                stats, pa, pb, torch.ones_like(dirs), z0.dtype)
             mx, my, ci, cs, co = direct_velocity_coefficients_batch(t, max(eps, 1e-8),
-                                                                    mu0, mu1, v0, v1, cov)
+                                                                    mu0f, mu1f, v0f, v1f, covf)
             xin = (xt - mx) * ci
             y = (vstar - my - cs * (xt - mx)) / co
         else:
@@ -266,24 +271,52 @@ def objective_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, args, s
                                "b_mse": float(per[~fwd].mean()) if (~fwd).any() else 0.0}
 
 
-def mixed_velocity(model, z, t, pa, pb, stats, eps):
-    """Per-sample probability-flow velocity (b+ - b-)/2 for a mixed pair batch.
+def mixed_velocity(model, z, t, pa, pb, stats, eps, objective: str = "bidir"):
+    """Per-sample probability-flow velocity for a mixed pair batch, honouring `objective`.
 
-    Differentiable; used to produce free-ODE endpoints for the distribution loss so the
-    mixed-batch path does not silently skip L_dist.
+    The distribution loss must differentiate the SAME velocity form the model was trained
+    with; hard-coding the dual-drift reconstruction would silently supervise the wrong
+    trajectory for single-velocity / score-current / endpoint runs.
     """
     B = z.shape[0]
     t = t.clamp(2e-3, 1 - 2e-3)
-    dirs_f = torch.ones(B, device=z.device, dtype=torch.long)
-    mu0, mu1, v0, v1, cov = _mixed_stats(stats, pa, pb, dirs_f, z.dtype)
-    cf = precondition_input_batch(z, t, eps, mu0, mu1, v0, v1, cov)
-    xf_in, cf = cf[0], cf[1]
-    bplus = reconstruct_drift_batch(z, model(xf_in, t, dirs_f, pa.long(), pb.long()).float(), cf)
-    dirs_b = torch.zeros(B, device=z.device, dtype=torch.long)
-    mu0r, mu1r, v0r, v1r, covr = _mixed_stats(stats, pa, pb, dirs_b, z.dtype)
-    cb = precondition_input_batch(z, 1 - t, eps, mu0r, mu1r, v0r, v1r, covr)
-    xb_in, cb = cb[0], cb[1]
-    bminus = reconstruct_drift_batch(z, model(xb_in, 1 - t, dirs_b, pa.long(), pb.long()).float(), cb)
+    fwd = torch.ones(B, device=z.device, dtype=torch.long)
+    rev = torch.zeros(B, device=z.device, dtype=torch.long)
+
+    if objective == "single_velocity":
+        mu0, mu1, v0, v1, cov = pair_stats_per_sample(stats, pa, pb, fwd, z.dtype)
+        mx, my, ci, cs, co = direct_velocity_coefficients_batch(t, max(eps, 1e-8),
+                                                                mu0, mu1, v0, v1, cov)
+        return reconstruct_velocity(z, model((z - mx) * ci, t, fwd, pa.long(), pb.long()).float(),
+                                    (mx, my, ci, cs, co))
+
+    if objective == "score_current":
+        mu0, mu1, v0, v1, cov = pair_stats_per_sample(stats, pa, pb, fwd, z.dtype)
+        mx, my, ci, cs, co = direct_velocity_coefficients_batch(t, max(eps, 1e-8),
+                                                                mu0, mu1, v0, v1, cov)
+        pv, _ = model((z - mx) * ci, t, fwd, pa.long(), pb.long(), return_both=True)
+        return reconstruct_velocity(z, pv.float(), (mx, my, ci, cs, co))
+
+    if objective == "endpoint":
+        mu0, mu1, v0, v1, cov = pair_stats_per_sample(stats, pa, pb, fwd, z.dtype)
+        ef = endpoint_coefficients_batch(t, eps, mu0, mu1, v0, v1, cov)
+        xin = (z - ef[0]) * ef[2]
+        z1_hat = reconstruct_drift_batch(z, model(xin, t, fwd, pa.long(), pb.long()).float(), ef)
+        mu0r, mu1r, v0r, v1r, covr = pair_stats_per_sample(stats, pa, pb, rev, z.dtype)
+        er = endpoint_coefficients_batch(1 - t, eps, mu0r, mu1r, v0r, v1r, covr)
+        xinb = (z - er[0]) * er[2]
+        z0_hat = reconstruct_drift_batch(z, model(xinb, 1 - t, rev, pa.long(), pb.long()).float(), er)
+        bplus = (z1_hat - z) / (1 - t).clamp_min(2e-3).view(-1, 1, 1, 1)
+        bminus = (z0_hat - z) / t.clamp_min(2e-3).view(-1, 1, 1, 1)
+        return 0.5 * (bplus - bminus)
+
+    # bidir / bidir_joint: dual-drift reconstruction with per-sample statistics
+    mu0, mu1, v0, v1, cov = pair_stats_per_sample(stats, pa, pb, fwd, z.dtype)
+    xin, cf = precondition_input_batch(z, t, eps, mu0, mu1, v0, v1, cov)
+    bplus = reconstruct_drift_batch(z, model(xin, t, fwd, pa.long(), pb.long()).float(), cf)
+    mu0r, mu1r, v0r, v1r, covr = pair_stats_per_sample(stats, pa, pb, rev, z.dtype)
+    xinb, cb = precondition_input_batch(z, 1 - t, eps, mu0r, mu1r, v0r, v1r, covr)
+    bminus = reconstruct_drift_batch(z, model(xinb, 1 - t, rev, pa.long(), pb.long()).float(), cb)
     return 0.5 * (bplus - bminus)
 
 
@@ -384,12 +417,59 @@ def objective_score_current(model, z0, z1, a, b, stats, eps, min_t, gen, args,
     return lv + args.score_weight * ls, {"f_mse": float(lv), "b_mse": float(ls)}
 
 
+def _apply_config(p, argv):
+    """Load a flat JSON config and feed it to argparse as explicit CLI overrides.
+
+    Keys are argparse *dest* names (underscores). Unknown / bookkeeping keys are
+    ignored rather than rejected, so the suite driver can keep its metadata in the
+    same file. Explicit command-line arguments take precedence (appended last).
+    """
+    import json as _json
+
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument("--config", default="")
+    known, rest = pre.parse_known_args(argv)
+    if not known.config:
+        return p.parse_args(argv)
+    cfg = _json.loads(Path(known.config).read_text(encoding="utf-8"))
+
+    dests = {a.dest: a for a in p._actions if a.dest != "help"}
+    bool_true = {d for d, a in dests.items() if isinstance(a, argparse._StoreTrueAction)}
+    skip = {"id", "group", "note", "fork_from", "priority", "quick200", "full750",
+            "config"}
+    # store_false flags share a dest with a store_true option; map a false value back
+    # to the negative CLI flag. (single_pair / frequency_stats in JSON are redundant
+    # aliases and are simply ignored because they are not real dests.)
+    neg_alias = {"mixed_batch": "--single-pair",
+                 "equal_weight_stats": "--frequency-stats"}
+    pos_alias = {"mixed_batch": "--mixed-batch",
+                 "equal_weight_stats": "--equal-weight-stats"}
+    extra = []
+    for k, v in cfg.items():
+        k = str(k).replace("-", "_")
+        if k in skip or v is None or k not in dests:
+            continue
+        key = "--" + k.replace("_", "-")
+        if isinstance(v, bool):
+            if k in neg_alias:
+                extra.append(neg_alias[k] if not v else pos_alias[k])
+            elif k in bool_true and v:
+                extra.append(key)
+            # store_true dest with false value: keep the parser default
+        elif isinstance(v, list):
+            extra.extend([key] + [str(x) for x in v])
+        else:
+            extra.extend([key, str(v)])
+    return p.parse_args(extra + rest)
+
+
 # --------------------------------------------------------------------------- #
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--experiment-id", required=True)
-    p.add_argument("--caches", nargs="+", required=True, help="one DCAE cache per style")
+    p.add_argument("--caches", nargs="+", required=True, help="one latent cache per style")
     p.add_argument("--output", required=True)
+    p.add_argument("--config", default="", help="flat JSON config; explicit CLI args win")
     p.add_argument("--steps", type=int, default=800)
     p.add_argument("--batch", type=int, default=1024)
     p.add_argument("--microbatch", type=int, default=0,
@@ -402,7 +482,8 @@ def main():
     p.add_argument("--ema-decay", type=float, default=0.999)
     p.add_argument("--seed", type=int, default=42)
 
-    p.add_argument("--objective", choices=["bidir", "bidir_joint", "single_velocity", "score_current"],
+    p.add_argument("--objective", choices=["bidir", "bidir_joint", "single_velocity",
+                                           "score_current", "monge", "pivot_cfm"],
                    default="bidir")
     p.add_argument("--edm", type=int, default=1, help="0 disables EDM for single_velocity (exp 06)")
     p.add_argument("--heads-out", type=int, choices=[1, 2], default=1)
@@ -424,16 +505,29 @@ def main():
     p.add_argument("--patch", type=int, default=2)
     p.add_argument("--local-conv", action="store_true")
     p.add_argument("--pair-rank", type=int, default=0)
+    p.add_argument("--style-film", action="store_true",
+                   help="per-layer Style-FiLM modulation (exp 16 / 18)")
+    p.add_argument("--cycle-weight", type=float, default=0.0,
+                   help="weak move regulariser for the one-step Monge arm (exp 38)")
 
     p.add_argument("--log-interval", type=int, default=20)
     p.add_argument("--save-interval", type=int, default=200)
     p.add_argument("--resume", default="")
+    p.add_argument("--lr-cycle-steps", type=int, default=0,
+                   help="length of the LR cosine cycle. Defaults to --steps. Set this to the "
+                        "TOTAL budget (e.g. 4000) when resuming a shared prefix so the fork "
+                        "does not restart warmup or rescale the schedule.")
+    p.add_argument("--save-every", type=int, default=0,
+                   help="alias for --save-interval in equivalent steps")
 
     # --- group D: direct target-distribution supervision ---
     p.add_argument("--dist-loss", choices=["none", "global", "local", "both"], default="none")
     p.add_argument("--style-enc", choices=["learned", "fixed"], default="learned")
     p.add_argument("--lambda-dist", type=float, default=0.1)
     p.add_argument("--style-enc-epochs", type=int, default=60)
+    p.add_argument("--style-enc-ckpt", default="",
+                   help="shared frozen style-encoder checkpoint; trained once, reused by "
+                        "every learned-SWD arm")
     p.add_argument("--ode-steps-train", type=int, default=2,
                    help="short differentiable ODE used to produce endpoints for L_dist")
     p.add_argument("--dist-nproj", type=int, default=64)
@@ -448,6 +542,11 @@ def main():
     p.add_argument("--online-dynamic-cov", action="store_true")
     p.add_argument("--online-warmup", type=int, default=0,
                    help="steps of plain bridge training before online updates start")
+    p.add_argument("--online-refresh-interval", type=int, default=0,
+                   help="exp 33: refresh cached online endpoints every N steps; "
+                        "0 means fully online per-step SDE")
+    p.add_argument("--triangle-weight", type=float, default=0.0,
+                   help="exp 39: weight of T_jk(T_ij(z)) ~= T_ik(z) consistency")
 
     # --- group F: shared Gaussian pivot ---
     p.add_argument("--mixed-batch", action="store_true", default=True,
@@ -459,7 +558,13 @@ def main():
     p.add_argument("--frequency-stats", dest="equal_weight_stats", action="store_false")
     p.add_argument("--pivot", action="store_true",
                    help="train N(0,I)->style flows and compose T_ij = F_j o F_i^-1")
-    args = p.parse_args()
+
+    # --- suite40 bookkeeping (accepted so configs can be passed verbatim) ---
+    p.add_argument("--equiv-steps", type=int, default=0)
+    p.add_argument("--equiv-batch", type=int, default=512)
+    p.add_argument("--save-equiv", default="")
+    p.add_argument("--full-equiv", type=int, default=0)
+    args = _apply_config(p, sys.argv[1:])
 
     if args.batch % 2:
         raise ValueError("even batch required")
@@ -497,10 +602,12 @@ def main():
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
 
     warm = max(1, args.warmup)
+    cycle = args.lr_cycle_steps or args.steps
+
     def lr_ratio(s):
         if s < warm:
             return max(0.02, (s + 1) / warm)
-        v = (s - warm) / max(1, args.steps - warm)
+        v = (s - warm) / max(1, cycle - warm)
         return 0.05 + 0.95 * 0.5 * (1 + math.cos(math.pi * min(1, v)))
     sched_lr = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lr_ratio)
 
@@ -509,17 +616,80 @@ def main():
     out = Path(args.output)
     out.mkdir(parents=True, exist_ok=True)
 
+    # ---- real resume: model, EMA, optimizer, scheduler, step and every RNG stream ----
+    start_step = 0
+    if args.resume:
+        ckpt = torch.load(args.resume, map_location="cpu", weights_only=False)
+        model.load_state_dict(ckpt["model"])
+        ema.load_state_dict(ckpt["ema"])
+        if "optimizer" in ckpt:
+            opt.load_state_dict(ckpt["optimizer"])
+        if "scheduler" in ckpt:
+            sched_lr.load_state_dict(ckpt["scheduler"])
+        start_step = int(ckpt.get("step", 0))
+        if "score_scale" in ckpt:
+            s_scale = ckpt["score_scale"].to(device)
+        # The resumed run must reuse the SAME global statistics; otherwise the shared
+        # prefix comparison is invalid.
+        prev = ckpt.get("style_stats")
+        if prev is not None:
+            cur = data.stats.state_dict()
+            for k in cur:
+                if k in prev and not torch.allclose(prev[k].float(), cur[k].float(), atol=1e-4):
+                    raise ValueError(f"resume statistics mismatch on '{k}': the shared prefix "
+                                     f"was trained with different global mean/std")
+        rng = ckpt.get("rng", {})
+        if rng:
+            g_data.set_state(rng["g_data"])
+            g_noise.set_state(rng["g_noise"])
+            g_time.set_state(rng["g_time"])
+            g_ot.set_state(rng["g_ot"])
+            g_sched.set_state(rng["g_sched"])
+            g_mix.set_state(rng["g_mix"])
+            if "torch" in rng:
+                torch.set_rng_state(rng["torch"])
+            if "cuda" in rng and device == "cuda" and rng["cuda"] is not None:
+                torch.cuda.set_rng_state_all(rng["cuda"])
+        print(f"[train5] resumed from {args.resume} at step {start_step} "
+              f"(lr cycle = {cycle} steps)", flush=True)
+        # Restore the exact pair schedule and sampler positions so the fork continues the
+        # same data stream instead of re-drawing a different one.
+        if "pair_sched" in ckpt:
+            saved = [tuple(x) for x in ckpt["pair_sched"]]
+            end = start_step + args.steps
+            # Keep the prefix's schedule intact and only generate the missing tail.
+            if len(saved) < end:
+                saved = saved + pair_schedule(pairs, end - len(saved), g_sched)
+            sched = saved
+        for s, st in zip(samplers, ckpt.get("samplers", [])):
+            if st.get("perm") is not None and hasattr(s, "perm"):
+                s.perm = st["perm"]
+                s.pos = int(st.get("pos") or 0)
+
     # ---- optional group D distribution loss ----
     dist_loss = None
     if args.dist_loss != "none":
         from .style_loss import DistributionLoss, StyleEncoder, train_style_encoder
         enc = None
         if args.style_enc == "learned":
-            enc = train_style_encoder(data.z, epochs=args.style_enc_epochs, device=device,
-                                      seed=args.seed,
-                                      log=lambda m: print(m, flush=True))
-            torch.save({"state": enc.state_dict(), "channels": channels},
-                       out_style_enc := (out / "style_encoder.pt"))
+            # Train ONCE and reuse: every learned-SWD arm must load the same frozen encoder,
+            # otherwise exp 22-26 differ in the representation as well as the supervision.
+            enc_path = args.style_enc_ckpt or str(out / "style_encoder.pt")
+            if Path(enc_path).exists():
+                blob = torch.load(enc_path, map_location=device, weights_only=False)
+                enc = StyleEncoder(channels=channels).to(device)
+                enc.load_state_dict(blob["state"])
+                enc.eval()
+                for q in enc.parameters():
+                    q.requires_grad_(False)
+                print(f"[train5] loaded frozen style encoder from {enc_path}", flush=True)
+            else:
+                enc = train_style_encoder(data.z, epochs=args.style_enc_epochs, device=device,
+                                          seed=args.seed,
+                                          log=lambda m: print(m, flush=True))
+                Path(enc_path).parent.mkdir(parents=True, exist_ok=True)
+                torch.save({"state": enc.state_dict(), "channels": channels}, enc_path)
+                print(f"[train5] trained and saved style encoder -> {enc_path}", flush=True)
         dist_loss = DistributionLoss(args.dist_loss, args.style_enc, enc, args.dist_nproj)
         print(f"[train5] dist_loss={args.dist_loss} style_enc={args.style_enc} "
               f"lambda={args.lambda_dist}", flush=True)
@@ -535,11 +705,13 @@ def main():
         online_teacher = copy.deepcopy(model).eval()
         for q in online_teacher.parameters():
             q.requires_grad_(False)
-        replay = EndpointReplayBuffer(seed=args.seed) if args.online_replay else None
+        replay = (EndpointReplayBuffer(seed=args.seed)
+                  if (args.online_replay or args.online_refresh_interval > 0) else None)
         online_cfg = {"online_steps": args.online_steps, "online_mode": args.online,
                       "online_direction": args.online_direction, "online_mix": args.online_mix,
-                      "online_replay": args.online_replay, "t_floor": args.t_floor
-                      if hasattr(args, "t_floor") else 0.002}
+                      "online_replay": args.online_replay or args.online_refresh_interval > 0,
+                      "online_refresh_interval": args.online_refresh_interval,
+                      "t_floor": 0.002, "global_step": 0}
         print(f"[train5] online={args.online} steps={args.online_steps} "
               f"dir={args.online_direction} mix={args.online_mix} "
               f"warmup={args.online_warmup}", flush=True)
@@ -570,10 +742,24 @@ def main():
           f"pairs={len(pairs)} counts={data.counts} objective={args.objective} "
           f"batch={args.batch} accum={args.accum} eps={args.eps} device={device}", flush=True)
 
-    def save(step):
-        torch.save({
+    def _equiv(step: int) -> int:
+        """Equivalent exposure in patch8 / B512 update units."""
+        return round(step * args.batch / max(1, args.equiv_batch))
+
+    save_equiv = sorted({int(x) for x in args.save_equiv.split(",") if x.strip()}) \
+        if args.save_equiv else []
+    full_equiv = int(args.full_equiv or 0)
+    saved_equiv: set = set()
+
+    def save(step, tag: str = ""):
+        samp = []
+        for s in samplers:
+            samp.append({"perm": s.perm.clone() if hasattr(s, "perm") else None,
+                         "pos": getattr(s, "pos", None)})
+        payload = {
             "model": model.state_dict(), "ema": ema.state_dict(),
             "optimizer": opt.state_dict(), "scheduler": sched_lr.state_dict(), "step": step,
+            "equiv_step": _equiv(step),
             "style_stats": data.stats.state_dict(), "styles": data.styles,
             "model_kwargs": dict(channels=channels, image_size=H, patch=args.patch,
                                  width=args.width, depth=args.depth, heads=args.heads,
@@ -581,11 +767,29 @@ def main():
                                  heads_out=(2 if args.objective == "score_current" else args.heads_out),
                                  two_head=("score_current" if args.objective == "score_current"
                                            else "drift"),
-                                 local_conv=args.local_conv, pair_rank=args.pair_rank),
+                                 local_conv=args.local_conv, pair_rank=args.pair_rank,
+                                 style_film=args.style_film),
             "objective": args.objective, "config": vars(args),
             "score_scale": s_scale.cpu(),
             "ae": data.ae, "ae_scaling_factor": data.scaling_factor,
-        }, out / f"model_step{step}.pt")
+            "rng": {"g_data": g_data.get_state(), "g_noise": g_noise.get_state(),
+                    "g_time": g_time.get_state(), "g_ot": g_ot.get_state(),
+                    "g_sched": g_sched.get_state(), "g_mix": g_mix.get_state(),
+                    "torch": torch.get_rng_state(),
+                    "cuda": (torch.cuda.get_rng_state_all() if device == "cuda" else None)},
+            "samplers": samp,
+            "pair_sched": [list(x) for x in sched],
+        }
+        name = (f"model_{tag}.pt" if tag else f"model_step{step}.pt")
+        torch.save(payload, out / name)
+        # Also expose a stable equivalent-step alias for fork resolution.
+        eq = f"equiv{_equiv(step)}"
+        alias = out / f"model_{eq}.pt"
+        if tag != eq and not alias.exists():
+            try:
+                torch.save(payload, alias)
+            except Exception:
+                pass
 
     def sample_pair_batch(a, b, k):
         ia = samplers[a].draw(k)
@@ -602,24 +806,43 @@ def main():
     t_start = time.perf_counter()
     hist = []
     dist_seen = {}
-    for step in range(1, args.steps + 1):
+    # For a fresh run `steps` is the absolute end step. For a resumed fork it is the
+    # number of ADDITIONAL updates, so the shared prefix keeps its global step index.
+    end_step = start_step + args.steps
+    for step in range(start_step + 1, end_step + 1):
         model.train()
         opt.zero_grad(set_to_none=True)
-        a, b = sched[step - 1]
+        a, b = sched[step - 1] if step - 1 < len(sched) else sched[-1]
         mb = args.microbatch or args.batch
         total, rec = 0.0, {}
         for _ in range(args.batch // mb):
             ctx = (torch.autocast("cuda", dtype=torch.bfloat16) if device == "cuda"
                    else contextlib.nullcontext())
             use_online = (online_teacher is not None and step > args.online_warmup)
-            mixed = args.mixed_batch and not use_online
+            mixed = args.mixed_batch
             with ctx:
                 if mixed:
                     mpa, mpb, mdirs = _mixed_pair_ids(pairs, mb, device, g_mix)
                     mz0, mz1 = _mixed_batch(data, mpa, mpb, samplers, device, g_data)
-                    loss, r = objective_mixed(model, mz0, mz1, mpa, mpb, mdirs, data.stats,
-                                              args.eps, args.min_t, g_noise, args, s_scale)
                     pair_tag = "mixed"
+                    if use_online:
+                        from .online_bridge import online_loss_mixed
+                        online_cfg["global_step"] = step
+                        if not args.online_raw_teacher:
+                            with torch.no_grad():
+                                for pt, ps in zip(online_teacher.parameters(), ema.parameters()):
+                                    pt.copy_(ps)
+                        else:
+                            with torch.no_grad():
+                                for pt, ps in zip(online_teacher.parameters(), model.parameters()):
+                                    pt.copy_(ps)
+                        loss, r = online_loss_mixed(model, online_teacher, mz0, mz1,
+                                                    mpa, mpb, mdirs, data.stats, args.eps,
+                                                    args.min_t, g_noise, online_cfg, replay)
+                        r = {k: v for k, v in r.items() if not k.startswith("_")}
+                    else:
+                        loss, r = objective_mixed(model, mz0, mz1, mpa, mpb, mdirs, data.stats,
+                                                  args.eps, args.min_t, g_noise, args, s_scale)
                 else:
                     z0, z1 = sample_pair_batch(a, b, mb)
                     pair_tag = f"({a},{b})"
@@ -656,6 +879,34 @@ def main():
 
                 # Distribution supervision is applied uniformly to BOTH sampling paths,
                 # so `bidir + mixed + dist_loss` can no longer silently skip L_dist.
+                if args.triangle_weight > 0 and mixed:
+                    # exp 39: T_jk(T_ij(z)) ~= T_ik(z). Small-batch differentiable
+                    # two-step rollout on the SAME real source endpoints.
+                    i = torch.randint(0, data.num_styles, (len(mz0),), device=device,
+                                      generator=g_noise)
+                    j = (i + 1 + torch.randint(0, data.num_styles - 1, (len(mz0),),
+                                              device=device, generator=g_noise)) % data.num_styles
+                    k = (j + 1 + torch.randint(0, data.num_styles - 1, (len(mz0),),
+                                              device=device, generator=g_noise)) % data.num_styles
+                    pa2, pb2 = torch.minimum(i, j), torch.maximum(i, j)
+                    pa3, pb3 = torch.minimum(j, k), torch.maximum(j, k)
+                    pad, pbd = torch.minimum(i, k), torch.maximum(i, k)
+                    hstep2 = 0.5
+                    with torch.autocast("cuda", enabled=False):
+                        def _one(model_, z_, t_, a_, b_):
+                            return mixed_velocity(model_, z_, t_, a_, b_, data.stats,
+                                                  args.eps, args.objective)
+                        t0 = torch.full((len(mz0),), 0.25, device=device, dtype=mz0.dtype)
+                        t1 = torch.full((len(mz0),), 0.75, device=device, dtype=mz0.dtype)
+                        zj = mz0 + hstep2 * _one(model, mz0, t0, pa2, pb2)
+                        zjk = zj + hstep2 * _one(model, zj, t1, pa3, pb3)
+                        zik = mz0 + hstep2 * _one(model, mz0, t0, pad, pbd) \
+                            + hstep2 * _one(model, mz0 + hstep2 * _one(model, mz0, t0, pad, pbd),
+                                            t1, pad, pbd)
+                        ltri = torch.nn.functional.mse_loss(zjk, zik.detach())
+                    loss = loss + args.triangle_weight * ltri
+                    r = {**r, "triangle": float(ltri)}
+
                 if dist_loss is not None:
                     hstep = 1.0 / max(1, args.ode_steps_train)
                     with torch.autocast("cuda", enabled=False):
@@ -665,8 +916,11 @@ def main():
                                 tk = torch.full((len(zs),), k * hstep, device=zs.device,
                                                 dtype=zs.dtype)
                                 zs = zs + hstep * mixed_velocity(model, zs, tk, mpa, mpb,
-                                                                 data.stats, args.eps)
-                            ld = dist_loss(zs.float(), mz1.float(), seed=step)
+                                                                 data.stats, args.eps,
+                                                                 args.objective)
+                            # group by TARGET style: each target domain must be matched
+                            # separately, never merged into one overall SWD
+                            ld = dist_loss(zs.float(), mz1.float(), seed=step, groups=mpb)
                         else:
                             from .online_bridge import both_drifts
                             zs = z0.detach()
@@ -676,7 +930,9 @@ def main():
                                 bp_, bm_ = both_drifts(model, zs, tk, a, b, data.stats,
                                                        args.eps, 0.002)
                                 zs = zs + hstep * 0.5 * (bp_ - bm_)
-                            ld = dist_loss(zs.float(), z1.float(), seed=step)
+                            ld = dist_loss(zs.float(), z1.float(), seed=step,
+                                           groups=torch.full((len(zs),), b, device=zs.device,
+                                                             dtype=torch.long))
                     loss = loss + args.lambda_dist * ld
                     r = {**r, "dist": float(ld)}
                     dist_seen["grad_nonzero"] = float(ld) != 0.0
@@ -695,7 +951,7 @@ def main():
             for pe, pv in zip(ema.parameters(), model.parameters()):
                 pe.lerp_(pv, 1 - decay)
 
-        if step % args.log_interval == 0 or step == 1:
+        if step % args.log_interval == 0 or step == start_step + 1:
             dt = time.perf_counter() - t_start
             print(f"step={step}/{args.steps} {pair_tag} loss={total:.4f} "
                   f"f={rec.get('f_mse', -1):.3f} b={rec.get('b_mse', -1):.3f} "
@@ -703,8 +959,14 @@ def main():
                   f"elapsed={dt:.0f}s", flush=True)
             hist.append({"step": step, "loss": total, **rec,
                          "grad": float(grad), "elapsed": round(dt, 1)})
-        if step % args.save_interval == 0 or step == args.steps:
+        if step % args.save_interval == 0 or step == end_step:
             save(step)
+        # Equivalent-exposure checkpoints: the equiv3000 file is a FULL resumable
+        # payload so every fork shares model/EMA/optimizer/scheduler/RNG state.
+        eq = _equiv(step)
+        if eq in save_equiv and eq not in saved_equiv:
+            save(step, tag=f"equiv{eq}")
+            saved_equiv.add(eq)
 
     wall = time.perf_counter() - t_start
     summary = record_experiment(args.experiment_id, vars(args), {

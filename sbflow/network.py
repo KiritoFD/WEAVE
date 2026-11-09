@@ -39,7 +39,7 @@ def modulate(x, shift, scale):
 
 
 class AdaBlock(nn.Module):
-    def __init__(self, width, heads, local_conv=False):
+    def __init__(self, width, heads, local_conv=False, style_film=False):
         super().__init__()
         self.norm1 = nn.LayerNorm(width, elementwise_affine=False, eps=1e-6)
         self.norm2 = nn.LayerNorm(width, elementwise_affine=False, eps=1e-6)
@@ -48,7 +48,14 @@ class AdaBlock(nn.Module):
         self.ada = nn.Sequential(nn.SiLU(), nn.Linear(width, 6 * width))
         nn.init.zeros_(self.ada[1].weight)
         nn.init.zeros_(self.ada[1].bias)
-        # exp 38: cheap local detail injection on the 8x8 token grid (no token growth).
+        # exp 16/18: per-layer Style-FiLM. A separate modulation from the style-pair
+        # condition, rather than reusing the additive time/direction conditioning.
+        self.style_film = style_film
+        if style_film:
+            self.film = nn.Sequential(nn.SiLU(), nn.Linear(width, 2 * width))
+            nn.init.zeros_(self.film[1].weight)
+            nn.init.zeros_(self.film[1].bias)
+        # exp 17: cheap local detail injection on the token grid (no token growth).
         self.local_conv = local_conv
         if local_conv:
             self.dw = nn.Conv2d(width, width, 3, padding=1, groups=width)
@@ -56,11 +63,14 @@ class AdaBlock(nn.Module):
             nn.init.zeros_(self.dw.bias)
             self.side = nn.Parameter(torch.zeros(1))
 
-    def forward(self, x, c, side=None):
+    def forward(self, x, c, style_c=None):
         sa, sca, ga, sm, scm, gm = self.ada(c).chunk(6, dim=-1)
         z = modulate(self.norm1(x), sa, sca)
         z = self.attn(z, z, z, need_weights=False)[0]
         x = x + ga.unsqueeze(1) * z
+        if self.style_film and style_c is not None:
+            fs, fsc = self.film(style_c).chunk(2, dim=-1)
+            x = modulate(x, fs, fsc)
         if self.local_conv:
             B, N, C = x.shape
             g = int(round(N ** 0.5))
@@ -74,7 +84,7 @@ class AdaBlock(nn.Module):
 class BidirDiT(nn.Module):
     def __init__(self, channels=32, image_size=16, patch=2, width=256, depth=6, heads=4,
                  num_styles=5, style_cond="none", heads_out=1, two_head="drift",
-                 local_conv=False, pair_rank=0):
+                 local_conv=False, pair_rank=0, style_film=False):
         super().__init__()
         if image_size % patch != 0:
             raise ValueError("image size must divide patch")
@@ -84,6 +94,8 @@ class BidirDiT(nn.Module):
             raise ValueError("heads_out must be 1 or 2")
         if two_head not in ("drift", "score_current"):
             raise ValueError(two_head)
+        if style_film and style_cond == "none":
+            raise ValueError("style_film requires a style-conditioned model")
 
         self.channels, self.image_size, self.patch = channels, image_size, patch
         self.num_styles, self.style_cond = num_styles, style_cond
@@ -109,7 +121,9 @@ class BidirDiT(nn.Module):
             self.pair_emb = nn.Embedding(n_pairs, width)
             nn.init.zeros_(self.pair_emb.weight)
 
-        self.blocks = nn.ModuleList([AdaBlock(width, heads, local_conv) for _ in range(depth)])
+        self.style_film = style_film
+        self.blocks = nn.ModuleList([AdaBlock(width, heads, local_conv, style_film)
+                                     for _ in range(depth)])
         self.fin_norm = nn.LayerNorm(width, elementwise_affine=False, eps=1e-6)
         self.fin_ada = nn.Sequential(nn.SiLU(), nn.Linear(width, 2 * width))
         self.fin_out = nn.ModuleList(
@@ -137,14 +151,20 @@ class BidirDiT(nn.Module):
         base = lo * (2 * n - lo - 1) // 2
         return base + (hi - lo - 1)
 
+    def _style_cond(self, style_a, style_b):
+        """The style-pair embedding alone, used as a separate per-layer FiLM input."""
+        if self.style_cond == "decomposed":
+            return self.style_mix(torch.cat([self.style_emb(style_a),
+                                             self.style_emb(style_b)], dim=-1))
+        if self.style_cond == "pair":
+            return self.pair_emb(self._pair_id(style_a, style_b))
+        return None
+
     def _cond(self, tau, direction, style_a, style_b):
         c = self.time(time_embed(tau, self.width)) + self.dir(direction)
-        if self.style_cond == "decomposed":
-            ea = self.style_emb(style_a)
-            eb = self.style_emb(style_b)
-            c = c + self.style_mix(torch.cat([ea, eb], dim=-1))
-        elif self.style_cond == "pair":
-            c = c + self.pair_emb(self._pair_id(style_a, style_b))
+        sc = self._style_cond(style_a, style_b)
+        if sc is not None:
+            c = c + sc
         return c
 
     # ---- forward ----------------------------------------------------------- #
@@ -155,19 +175,23 @@ class BidirDiT(nn.Module):
         tau = tau.flatten()
         direction = direction.flatten().long()
 
+        style_c = None
         if self.style_cond == "none":
             c = self.time(time_embed(tau, self.width)) + self.dir(direction)
         else:
             if style_a is None or style_b is None:
                 raise ValueError("style_a / style_b are required for a style-conditioned model")
-            c = self._cond(tau, direction, style_a.flatten().long(), style_b.flatten().long())
+            sa, sb = style_a.flatten().long(), style_b.flatten().long()
+            c = self._cond(tau, direction, sa, sb)
+            if self.style_film:
+                style_c = self._style_cond(sa, sb)
 
         h = self.proj(x).flatten(2).transpose(1, 2) + self.pos
         if self.pair_rank > 0 and self.style_cond != "none":
             pid = self._pair_id(style_a.flatten().long(), style_b.flatten().long())
             h = h + self.lora_up(self.lora_down(pid)).unsqueeze(1)
         for block in self.blocks:
-            h = block(h, c)
+            h = block(h, c, style_c)
 
         shift, scale = self.fin_ada(c).chunk(2, dim=-1)
         h = modulate(self.fin_norm(h), shift, scale)

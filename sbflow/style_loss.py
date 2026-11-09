@@ -210,13 +210,31 @@ class DistributionLoss:
             return g, patches
         return self.enc(z)
 
-    def __call__(self, z_gen: torch.Tensor, z_real: torch.Tensor, seed: int = 0) -> torch.Tensor:
-        g_gen, p_gen = self._features(z_gen)
-        with torch.no_grad():
-            g_real, p_real = self._features(z_real)
-        loss = z_gen.new_zeros(())
-        if self.mode in ("global", "both"):
-            loss = loss + swd2(g_gen, g_real, self.n_proj, seed)
-        if self.mode in ("local", "both"):
-            loss = loss + swd2_local(p_gen, p_real, max(16, self.n_proj // 2), seed)
-        return loss
+    def __call__(self, z_gen: torch.Tensor, z_real: torch.Tensor, seed: int = 0,
+                 groups: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Distribution distance between free-ODE endpoints and real target latents.
+
+        `groups` (optional) holds a target-style id per sample. When given, the distance is
+        computed SEPARATELY for each target style and then averaged with equal weight, as
+        the experiment book requires: merging a mixed batch into one SWD would only match
+        the overall mixture and could not demand that each target domain be correct.
+        """
+        if groups is None:
+            g_gen, p_gen = self._features(z_gen)
+            with torch.no_grad():
+                g_real, p_real = self._features(z_real)
+            loss = z_gen.new_zeros(())
+            if self.mode in ("global", "both"):
+                loss = loss + swd2(g_gen, g_real, self.n_proj, seed)
+            if self.mode in ("local", "both"):
+                loss = loss + swd2_local(p_gen, p_real, max(16, self.n_proj // 2), seed)
+            return loss
+
+        total, count = z_gen.new_zeros(()), 0
+        for gi in torch.unique(groups):
+            m = (groups == gi)
+            if int(m.sum()) < 2:
+                continue
+            total = total + self(z_gen[m], z_real[m], seed + int(gi), groups=None)
+            count += 1
+        return total / max(count, 1)

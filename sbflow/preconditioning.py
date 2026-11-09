@@ -276,6 +276,27 @@ def normalized_velocity_target(x, y, coeffs):
 # --------------------------------------------------------------------------- #
 # score / current decomposition (experiment 10)
 # --------------------------------------------------------------------------- #
+def pair_stats_per_sample(stats: "StyleStats", pa, pb, dirs, dtype):
+    """Per-sample (mu0, mu1, var0, var1, cov) for a batch mixing many style pairs.
+
+    `dirs==1` selects the forward orientation (a -> b) and `dirs==0` the reverse one,
+    so the canonical bridge direction and the EDM statistics always agree.
+    """
+    sm = stats.style_mean.to(device=pa.device, dtype=dtype)
+    sv = stats.style_var.to(device=pa.device, dtype=dtype)
+    C = sm.shape[1]
+    idx_a = pa.view(-1, 1).expand(-1, C)
+    idx_b = pb.view(-1, 1).expand(-1, C)
+    mu_a, mu_b = sm.gather(0, idx_a), sm.gather(0, idx_b)
+    v_a, v_b = sv.gather(0, idx_a), sv.gather(0, idx_b)
+    fwd_c = (dirs == 1).view(-1, 1)
+    mu0 = torch.where(fwd_c, mu_a, mu_b)
+    mu1 = torch.where(fwd_c, mu_b, mu_a)
+    v0 = torch.where(fwd_c, v_a, v_b)
+    v1 = torch.where(fwd_c, v_b, v_a)
+    return mu0, mu1, v0, v1, torch.zeros_like(mu0)
+
+
 def moment_coefficients_batch(t, epsilon, mu0, mu1, var0, var1, cov01, tiny=1e-8):
     """Per-sample version of `moment_coefficients`.
 

@@ -28,7 +28,84 @@ import torch
 
 from .bridge import bridge_sample
 from .preconditioning import (PairMoments, StyleStats, moment_coefficients,
-                              normalized_target, precondition_input)
+                              moment_coefficients_batch, normalized_target,
+                              normalized_target_batch, pair_stats_per_sample,
+                              precondition_input, precondition_input_batch,
+                              reconstruct_drift, reconstruct_drift_batch)
+
+
+# --------------------------------------------------------------------------- #
+# mixed-pair drifts (all ten style pairs in one batch)
+# --------------------------------------------------------------------------- #
+def mixed_drifts(model, z, t, pa, pb, stats: StyleStats, eps: float, t_floor: float):
+    """(b+, b-) for a batch whose samples carry their own canonical pair."""
+    tt = t.clamp(t_floor, 1 - t_floor)
+    B = z.shape[0]
+    fwd = torch.ones(B, device=z.device, dtype=torch.long)
+    rev = torch.zeros(B, device=z.device, dtype=torch.long)
+    mu0, mu1, v0, v1, cov = pair_stats_per_sample(stats, pa, pb, fwd, z.dtype)
+    xin, cf = precondition_input_batch(z, tt, eps, mu0, mu1, v0, v1, cov)
+    bplus = reconstruct_drift_batch(z, model(xin, tt, fwd, pa.long(), pb.long()).float(), cf)
+    mu0r, mu1r, v0r, v1r, covr = pair_stats_per_sample(stats, pa, pb, rev, z.dtype)
+    xinb, cb = precondition_input_batch(z, 1 - tt, eps, mu0r, mu1r, v0r, v1r, covr)
+    bminus = reconstruct_drift_batch(z, model(xinb, 1 - tt, rev, pa.long(), pb.long()).float(), cb)
+    return bplus, bminus
+
+
+@torch.no_grad()
+def mixed_sde_forward(model, z, pa, pb, stats, eps, steps: int, t_floor: float,
+                      gen: torch.Generator) -> torch.Tensor:
+    h = 1.0 / steps
+    out = z.clone()
+    for i in range(steps):
+        t = torch.full((len(out),), i * h, device=out.device)
+        bp, _ = mixed_drifts(model, out, t, pa, pb, stats, eps, t_floor)
+        noise = torch.randn(out.shape, device=out.device, generator=gen, dtype=out.dtype)
+        out = out + h * bp + (eps * h) ** 0.5 * noise
+    return out
+
+
+@torch.no_grad()
+def mixed_sde_reverse(model, z, pa, pb, stats, eps, steps: int, t_floor: float,
+                      gen: torch.Generator) -> torch.Tensor:
+    h = 1.0 / steps
+    out = z.clone()
+    for i in range(steps):
+        t = torch.full((len(out),), 1.0 - i * h, device=out.device)
+        _, bm = mixed_drifts(model, out, t, pa, pb, stats, eps, t_floor)
+        noise = torch.randn(out.shape, device=out.device, generator=gen, dtype=out.dtype)
+        out = out - h * bm + (eps * h) ** 0.5 * noise
+    return out
+
+
+@torch.no_grad()
+def mixed_ode_forward(model, z, pa, pb, stats, eps, steps: int, t_floor: float,
+                      gen: Optional[torch.Generator] = None) -> torch.Tensor:
+    """Deterministic mixed-pair ODE endpoints (the reflow control, exp 32).
+
+    Deterministic for BOTH directions: no noise term is ever added here, so the ODE
+    control can never silently fall back to a stochastic sampler.
+    """
+    h = 1.0 / steps
+    out = z.clone()
+    for i in range(steps):
+        t = torch.full((len(out),), i * h, device=out.device)
+        bp, bm = mixed_drifts(model, out, t, pa, pb, stats, eps, t_floor)
+        out = out + h * 0.5 * (bp - bm)
+    return out
+
+
+@torch.no_grad()
+def mixed_ode_reverse(model, z, pa, pb, stats, eps, steps: int, t_floor: float,
+                      gen: Optional[torch.Generator] = None) -> torch.Tensor:
+    """Deterministic reverse-time mixed ODE, t: 1 -> 0."""
+    h = 1.0 / steps
+    out = z.clone()
+    for i in range(steps):
+        t = torch.full((len(out),), 1.0 - i * h, device=out.device)
+        bp, bm = mixed_drifts(model, out, t, pa, pb, stats, eps, t_floor)
+        out = out - h * 0.5 * (bp - bm)
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -123,6 +200,93 @@ def bridge_loss(model, z0, z1, a, b, stats, eps, min_t, gen, t_floor=0.002) -> t
     sb = torch.full((B,), b, device=z0.device, dtype=torch.long)
     pred = model(torch.cat([xf, xb], 0), tau, d, sa, sb).float()
     return torch.nn.functional.mse_loss(pred, torch.cat([yf, yb], 0).float())
+
+
+def mixed_bridge_loss(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen,
+                      t_floor=0.002) -> torch.Tensor:
+    """Bridge MSE for a batch mixing many style pairs (per-sample statistics)."""
+    B = z0.shape[0]
+    t = torch.rand(B, device=z0.device, generator=gen, dtype=z0.dtype) * (1 - 2 * min_t) + min_t
+    xi = torch.randn(z0.shape, device=z0.device, generator=gen, dtype=z0.dtype)
+    xt, bplus, bminus = bridge_sample(z0, z1, t, eps, xi)
+    fwd = (dirs == 1)
+    fwd_c = fwd.view(-1, 1, 1, 1)
+    mu0, mu1, v0, v1, cov = pair_stats_per_sample(stats, pa, pb, dirs, z0.dtype)
+    tau = torch.where(fwd, t, 1 - t)
+    xin, cf = precondition_input_batch(xt, tau, eps, mu0, mu1, v0, v1, cov)
+    y = normalized_target_batch(xt, torch.where(fwd_c, bplus, bminus), cf)
+    pred = model(xin, tau, dirs.long(), pa.long(), pb.long()).float()
+    return torch.nn.functional.mse_loss(pred, y.float())
+
+
+def online_loss_mixed(model, teacher, z0, z1, pa, pb, dirs, stats: StyleStats, eps: float,
+                      min_t: float, gen: torch.Generator, cfg: dict,
+                      replay: Optional[EndpointReplayBuffer] = None) -> Tuple[torch.Tensor, dict]:
+    """Online alpha-DSBM with all ten style pairs inside one batch.
+
+    Same construction as `online_loss` but every sample keeps its own canonical pair, so
+    the online update no longer has to fall back to a single-pair batch.
+    """
+    steps = cfg.get("online_steps", 4)
+    t_floor = cfg.get("t_floor", 0.002)
+    mode = cfg.get("online_mode", "sde")
+    direction = cfg.get("online_direction", "both")
+    mix = float(cfg.get("online_mix", 0.0))
+    refresh = int(cfg.get("online_refresh_interval", 0))
+    step = int(cfg.get("global_step", 0))
+    refresh_due = (refresh <= 0) or (step % refresh == 0)
+
+    if refresh > 0 and replay is None:
+        raise ValueError("online_refresh_interval requires an endpoint replay buffer")
+
+    if refresh > 0 and replay is None:
+        raise ValueError("online_refresh_interval requires an endpoint replay buffer")
+
+    if refresh > 0 and replay is not None:
+        # exp 33: use cached endpoints between refresh steps; only regenerate when due.
+        x1_hat = replay.sample(pa, pb, "fwd", len(z0), z0.device, gen)
+        x0_hat = replay.sample(pa, pb, "rev", len(z1), z1.device, gen)
+        if x1_hat is None or refresh_due:
+            x1_hat = (mixed_sde_forward(teacher, z0, pa, pb, stats, eps, steps, t_floor, gen)
+                      if mode == "sde" else
+                      mixed_ode_forward(teacher, z0, pa, pb, stats, eps, steps, t_floor))
+            replay.push(pa, pb, "fwd", x1_hat)
+        if x0_hat is None or refresh_due:
+            x0_hat = (mixed_sde_reverse(teacher, z1, pa, pb, stats, eps, steps, t_floor, gen)
+                      if mode == "sde" else
+                      mixed_ode_reverse(teacher, z1, pa, pb, stats, eps, steps, t_floor))
+            replay.push(pa, pb, "rev", x0_hat)
+    elif mode == "sde":
+        x1_hat = mixed_sde_forward(teacher, z0, pa, pb, stats, eps, steps, t_floor, gen)
+        x0_hat = mixed_sde_reverse(teacher, z1, pa, pb, stats, eps, steps, t_floor, gen)
+    else:
+        # deterministic for BOTH directions (exp 32 control)
+        x1_hat = mixed_ode_forward(teacher, z0, pa, pb, stats, eps, steps, t_floor)
+        x0_hat = mixed_ode_reverse(teacher, z1, pa, pb, stats, eps, steps, t_floor)
+
+    if mix > 0:
+        k = int(round(len(z0) * mix))
+        if k > 0:
+            x1_hat = x1_hat.clone()
+            x0_hat = x0_hat.clone()
+            x1_hat[:k] = z1[:k]
+            x0_hat[:k] = z0[:k]
+
+    l_fwd = mixed_bridge_loss(model, x0_hat.detach(), z1, pa, pb, dirs, stats, eps, min_t,
+                              gen, t_floor)
+    l_rev = mixed_bridge_loss(model, z0, x1_hat.detach(), pa, pb, dirs, stats, eps, min_t,
+                              gen, t_floor)
+    if direction == "forward":
+        loss = l_fwd
+    elif direction == "reverse":
+        loss = l_rev
+    else:
+        loss = 0.5 * (l_fwd + l_rev)
+    info = {"online_fwd": float(l_fwd), "online_rev": float(l_rev),
+            "endpoint_shift_fwd": float((x1_hat - z1).flatten(1).norm(dim=1).mean()),
+            "endpoint_shift_rev": float((x0_hat - z0).flatten(1).norm(dim=1).mean()),
+            "_x1_hat": x1_hat, "_x0_hat": x0_hat}
+    return loss, info
 
 
 # --------------------------------------------------------------------------- #

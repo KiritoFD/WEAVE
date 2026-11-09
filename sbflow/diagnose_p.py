@@ -103,8 +103,12 @@ class Scorer:
         return out
 
     def summarise(self, rows: List[dict]) -> dict:
-        a = self.aggregate(rows, self.refs, self.gamma)
-        return a
+        # `aggregate` groups by variant name "generated"; the diagnostic tag is kept
+        # separately by the caller, so relabel here instead of teaching aggregate about
+        # diagnostic-only variant names.
+        for r in rows:
+            r["variant"] = "generated"
+        return self.aggregate(rows, self.refs, self.gamma)
 
 
 # --------------------------------------------------------------------------- #

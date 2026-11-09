@@ -97,8 +97,14 @@ def main() -> None:
     gstd = stats.global_std
     objective = ck.get("objective", "bidir")
     eps = float(ck["config"]["eps"])
+    is_pivot = bool(ck["config"].get("pivot", False))
+    n_real = int(stats.style_mean.shape[0] - 1) if is_pivot else len(STYLES)
+    pivot_id = n_real if is_pivot else -1
+    if is_pivot:
+        from .pivot import pivot_transfer
     print(f"[gen5] ckpt={args.ckpt} objective={objective} eps={eps} tasks={len(tasks)} "
-          f"subset={args.subset} steps={args.steps} {args.method} device={device}", flush=True)
+          f"subset={args.subset} steps={args.steps} {args.method} device={device} "
+          f"pivot={is_pivot}", flush=True)
 
     # Cache the source encoding per unique source path.
     uniq = sorted({t["source_rel_path"] for t in tasks})
@@ -138,8 +144,14 @@ def main() -> None:
                     idx = torch.tensor(pos, device=device)
                     si, ti = STYLES.index(src_name), STYLES.index(tgt_name)
                     with torch.autocast("cuda", dtype=torch.bfloat16, enabled=device == "cuda"):
-                        zout[idx] = solve_transfer(model, z[idx].clone(), si, ti, stats, eps,
-                                                   args.steps, args.method, args.t_floor, objective)
+                        if is_pivot:
+                            zout[idx] = pivot_transfer(
+                                model, z[idx].clone(), si, ti, pivot_id, stats, eps,
+                                args.steps, args.method, args.t_floor, objective)
+                        else:
+                            zout[idx] = solve_transfer(
+                                model, z[idx].clone(), si, ti, stats, eps,
+                                args.steps, args.method, args.t_floor, objective)
             phase["ode"] += time.perf_counter() - t1
 
             t1 = time.perf_counter()
