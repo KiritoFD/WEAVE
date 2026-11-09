@@ -33,7 +33,9 @@ RUN_DIR = ROOT / "runs" / "v6_24h"
 LOG_DIR = RUN_DIR / "train_logs"
 STATE = RUN_DIR / "state.json"
 LOCK = RUN_DIR / ".gpu.lock"
-BUDGET_MIN = 42.0          # calibrated from historical arms
+BUDGET_MIN = 21.0          # measured: N1 took 20.7 min (18.9 train + 1.8 eval).
+# The plan's 42 min/arm was a capacity-planning value; the 3060 measures ~21 min.
+# The timeout stays at 1.5x the *measured* budget, which still never trips on a 21 min arm.
 TIMEOUT_MIN = BUDGET_MIN * 1.5
 
 
