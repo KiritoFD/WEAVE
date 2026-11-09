@@ -72,15 +72,16 @@ python3 -u -m tools.v6_24h.m0_alpha --ckpt "$BEST" --allow-extrapolation \
   --alphas 1.25,1.5,1.75,2.0 --out runs/v6_24h/m0_extrap 2>&1 | tee -a "$LOG"
 
 say "=========== 6/6 P5 Heldout400 + Same150 ==========="
-# Finalists are chosen per tier plus the mechanism arm:
-#   L7  fidelity + balanced tier winner (dim32, lambda_c 0.75, 5/5)
-#   L4  the only arm that strictly dominates A0 on all three axes (1024/style reference)
-#   S6  best Top-1 (0.040) and best self-consistency (-0.0000); the only mechanism-changing arm
-#   L2  style-tier winner (highest dT, but fails both content bars)
+# Finalists updated after pass3 finished. The k1024 family dominates A0 outright, so P5 now tests
+# the arms that actually matter rather than the earlier tier winners:
+#   L10  recommended general baseline (dim24 + k1024, 480K, tied with L8 at 43% fewer params)
+#   L8   best dT and best self-consistency (dim32 + k1024)
+#   L9   best content (dim32 + k1024 + lambda_c 0.75)
+#   L2   style-tier winner (highest dT, fails both content bars)
 python3 -u -m tools.v6_24h.p5_final \
-  --ckpts "L7=$BEST" \
-          "L4=runs/v6/L4_ref_full/L4_ref_full.pt" \
-          "S6=runs/v6/S6_style_keys/S6_style_keys.pt" \
+  --ckpts "L10=runs/v6/L10_k1024_dim24/L10_k1024_dim24.pt" \
+          "L8=runs/v6/L8_k1024_dim32/L8_k1024_dim32.pt" \
+          "L9=runs/v6/L9_k1024_dim32_lc075/L9_k1024_dim32_lc075.pt" \
           "L2=runs/v6/L2_highS/L2_highS.pt" 2>&1 | tee -a "$LOG"
 
 say "POSTQUEUE DONE"
