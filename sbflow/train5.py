@@ -530,6 +530,11 @@ def main():
                         "every learned-SWD arm")
     p.add_argument("--ode-steps-train", type=int, default=2,
                    help="short differentiable ODE used to produce endpoints for L_dist")
+    p.add_argument("--ode-microbatch", type=int, default=64,
+                   help="cap the differentiable ODE graph for L_dist (32-128 per book)")
+    p.add_argument("--grad-microbatch", type=int, default=0,
+                   help="when >0, split an update's forward+backward into chunks of this "
+                        "size; used by heavy differentiable-SWD / online arms")
     p.add_argument("--dist-nproj", type=int, default=64)
 
     # --- group E: online alpha-DSBM ---
@@ -813,7 +818,12 @@ def main():
         model.train()
         opt.zero_grad(set_to_none=True)
         a, b = sched[step - 1] if step - 1 < len(sched) else sched[-1]
-        mb = args.microbatch or args.batch
+        base_mb = args.microbatch or args.batch
+        # Heavy arms accumulate several smaller forward/backward chunks per update so a
+        # differentiable ODE or online teacher never holds a full-batch graph.
+        mb = min(base_mb, args.grad_microbatch) if args.grad_microbatch > 0 else base_mb
+        if args.batch % mb:
+            raise ValueError(f"grad microbatch {mb} must divide batch {args.batch}")
         total, rec = 0.0, {}
         for _ in range(args.batch // mb):
             ctx = (torch.autocast("cuda", dtype=torch.bfloat16) if device == "cuda"
@@ -840,6 +850,8 @@ def main():
                                                     mpa, mpb, mdirs, data.stats, args.eps,
                                                     args.min_t, g_noise, online_cfg, replay)
                         r = {k: v for k, v in r.items() if not k.startswith("_")}
+                        r.setdefault("f_mse", r.get("online_fwd", 0.0))
+                        r.setdefault("b_mse", r.get("online_rev", 0.0))
                     else:
                         loss, r = objective_mixed(model, mz0, mz1, mpa, mpb, mdirs, data.stats,
                                                   args.eps, args.min_t, g_noise, args, s_scale)
@@ -912,15 +924,26 @@ def main():
                     with torch.autocast("cuda", enabled=False):
                         if mixed:
                             zs = mz0.detach()
-                            for k in range(args.ode_steps_train):
-                                tk = torch.full((len(zs),), k * hstep, device=zs.device,
-                                                dtype=zs.dtype)
-                                zs = zs + hstep * mixed_velocity(model, zs, tk, mpa, mpb,
-                                                                 data.stats, args.eps,
-                                                                 args.objective)
+                            # Chunked differentiable ODE: keep the full batch for the
+                            # bridge loss but cap the graph held by L_dist at 64 samples.
+                            # Each chunk is an independent, complete ODE rollout, then the
+                            # SWD is accumulated so the total gradient equals the sum.
+                            dist_chunk = min(64, args.ode_microbatch or 64)
+                            zs_out = []
+                            for cs in range(0, len(zs), dist_chunk):
+                                zc = zs[cs:cs + dist_chunk]
+                                for k in range(args.ode_steps_train):
+                                    tk = torch.full((len(zc),), k * hstep, device=zc.device,
+                                                    dtype=zc.dtype)
+                                    zc = zc + hstep * mixed_velocity(
+                                        model, zc, tk, mpa[cs:cs + dist_chunk],
+                                        mpb[cs:cs + dist_chunk], data.stats, args.eps,
+                                        args.objective)
+                                zs_out.append(zc)
+                            zs_end = torch.cat(zs_out, 0)
                             # group by TARGET style: each target domain must be matched
                             # separately, never merged into one overall SWD
-                            ld = dist_loss(zs.float(), mz1.float(), seed=step, groups=mpb)
+                            ld = dist_loss(zs_end.float(), mz1.float(), seed=step, groups=mpb)
                         else:
                             from .online_bridge import both_drifts
                             zs = z0.detach()

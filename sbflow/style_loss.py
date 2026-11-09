@@ -51,14 +51,48 @@ def swd2(x: torch.Tensor, y: torch.Tensor, n_proj: int = 64, seed: int = 0,
     return (xq - yq).square().mean()
 
 
+def swd2_chunked(x: torch.Tensor, y: torch.Tensor, n_proj: int = 64, seed: int = 0,
+                 chunk: int = 64, subsample: int = 256) -> torch.Tensor:
+    """Memory-bounded SWD on large latent feature clouds.
+
+    Under no_grad, draw a FIXED random subset of the real cloud and compute its sorted
+    projected quantiles. For the generated cloud, process samples in chunks so that no
+    single autograd graph holds the whole batch. The chunk endpoint statistics are
+    compared to the same fixed real quantiles; this is the two-pass approximation the
+    execution book allows for large target batches.
+
+    `subsample` caps both clouds so 4x64x64 flattened latents (16384-D) cannot create a
+    (512, 16384, 64) projection tensor.
+    """
+    with torch.no_grad():
+        n, m = x.shape[0], y.shape[0]
+        k = min(subsample, n, m)
+        xg = x[torch.randperm(n, device=x.device)[:k]]
+        yg = y[torch.randperm(m, device=y.device)[:k]]
+        proj = _projections(x.shape[1], n_proj, x.device, x.dtype, seed)
+        yq = torch.quantile((yg @ proj).transpose(0, 1),
+                            torch.linspace(0, 1, n_proj, device=x.device, dtype=x.dtype),
+                            dim=1).transpose(0, 1).detach()
+    total, count = x.new_zeros(()), 0
+    for s in range(0, k, chunk):
+        xs = xg[s:s + chunk]
+        px = xs @ proj
+        # compare the chunk's sorted projections with the matching quantiles of real
+        q = torch.linspace(0, 1, n_proj, device=x.device, dtype=x.dtype)
+        xq = torch.quantile(px.transpose(0, 1), q, dim=1).transpose(0, 1)
+        total = total + (xq - yq).square().mean() * len(px)
+        count += len(px)
+    return total / max(count, 1)
+
+
 def swd2_local(x_patch: torch.Tensor, y_patch: torch.Tensor, n_proj: int = 32,
-               seed: int = 0) -> torch.Tensor:
-    """Local (patch) SWD: x_patch/y_patch are (B, P, D); compares the pooled patch clouds."""
+               seed: int = 0, chunk: int = 64, subsample: int = 256) -> torch.Tensor:
+    """Local (patch) SWD: x_patch/y_patch are (B, P, D); compares pooled patch clouds."""
     if x_patch.ndim != 3 or y_patch.ndim != 3:
         raise ValueError("swd2_local expects (B, P, D)")
     xf = x_patch.reshape(-1, x_patch.shape[-1])
     yf = y_patch.reshape(-1, y_patch.shape[-1])
-    return swd2(xf, yf, n_proj, seed)
+    return swd2_chunked(xf, yf, n_proj, seed, chunk, subsample)
 
 
 def chunked_swd2(feature_fn, x: torch.Tensor, y: torch.Tensor, chunk: int = 128,
@@ -225,9 +259,11 @@ class DistributionLoss:
                 g_real, p_real = self._features(z_real)
             loss = z_gen.new_zeros(())
             if self.mode in ("global", "both"):
-                loss = loss + swd2(g_gen, g_real, self.n_proj, seed)
+                loss = loss + swd2_chunked(g_gen, g_real, self.n_proj, seed,
+                                           self.chunk, min(256, g_gen.shape[0]))
             if self.mode in ("local", "both"):
-                loss = loss + swd2_local(p_gen, p_real, max(16, self.n_proj // 2), seed)
+                loss = loss + swd2_local(p_gen, p_real, max(16, self.n_proj // 2),
+                                         seed, self.chunk)
             return loss
 
         total, count = z_gen.new_zeros(()), 0

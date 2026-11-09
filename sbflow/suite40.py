@@ -191,6 +191,12 @@ def main() -> None:
                              "--gen", str(gen_dir), "--out", str(score_dir),
                              "--batch", "8", "--threads", str(args.score_threads)]
                 if not (score_dir / "style_scores.json").exists():
+                    # At most two CPU scorers may overlap with GPU training, so their
+                    # bounded threads cannot starve the next training process.
+                    while len(pending) >= 2:
+                        old_aid, old_p, old_dir = pending.pop(0)
+                        old_p.wait()
+                        _fold_score(state, old_aid, old_p.returncode, old_dir)
                     p = spawn(score_cmd, root / "logs" / f"{aid}_score.log")
                     pending.append((aid, p, score_dir))
                     rec["status"] = "awaiting_score"
@@ -216,22 +222,26 @@ def main() -> None:
         print(f"[suite40] waiting for {len(pending)} CPU scorer(s)", flush=True)
         for aid, p, score_dir in pending:
             rc = p.wait()
-            rec = state[aid]
-            f = score_dir / "style_scores.json"
-            if rc == 0 and f.exists():
-                o = json.loads(f.read_text())["aggregate"]["overall"]
-                rec["eval"] = {k: o[k] for k in
-                               ("target_top1", "target_margin", "csd_dT", "csd_dS",
-                                "csd_swd", "csd_mmd2_unbiased", "dino_c", "n")}
-                rec["status"] = "done"
-            else:
-                rec["status"] = "failed"
-                rec["error"] = f"scorer rc={rc}"
-            state[aid] = rec
+            _fold_score(state, aid, rc, score_dir)
             state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2),
                                   encoding="utf-8")
     write_results(state, root)
     status(state, root)
+
+
+def _fold_score(state: dict, aid: str, rc: int, score_dir: Path) -> None:
+    rec = state[aid]
+    f = score_dir / "style_scores.json"
+    if rc == 0 and f.exists():
+        o = json.loads(f.read_text())["aggregate"]["overall"]
+        rec["eval"] = {k: o[k] for k in
+                       ("target_top1", "target_margin", "csd_dT", "csd_dS",
+                        "csd_swd", "csd_mmd2_unbiased", "dino_c", "n")}
+        rec["status"] = "done"
+    else:
+        rec["status"] = "failed"
+        rec["error"] = f"scorer rc={rc}"
+    state[aid] = rec
 
 
 class _Deferred(Exception):

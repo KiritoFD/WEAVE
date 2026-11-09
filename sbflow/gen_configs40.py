@@ -18,6 +18,7 @@ COMMON = dict(
     local_conv=False, pair_rank=0, style_film=False, cycle_weight=0.0,
     dist_loss="none", style_enc="learned", lambda_dist=0.1,
     style_enc_epochs=60, style_enc_ckpt="", ode_steps_train=2, dist_nproj=64,
+    ode_microbatch=64, grad_microbatch=0,
     online="none", online_steps=4, online_direction="both", online_mix=0.0,
     online_replay=False, online_raw_teacher=False, online_dynamic_cov=False,
     online_warmup=0, online_refresh_interval=0, triangle_weight=0.0,
@@ -31,6 +32,8 @@ COMMON = dict(
 CORE = {"01", "04", "08", "10", "24", "27", "32", "35", "37"}
 STYLE_ENC = "runs/blog_sbflow/suite40/shared_style_encoder.pt"
 LEARNED = {"22", "23", "24", "25", "26", "37"}
+HEAVY = {"19", "20", "21", "22", "23", "24", "25", "26", "37",
+         "27", "28", "29", "30", "31", "32", "33", "36", "39"}
 
 
 def arm(i, group, note, **kw):
@@ -38,6 +41,8 @@ def arm(i, group, note, **kw):
     cfg.update(kw)
     cfg.update(id=f"{i:02d}", group=group, note=note,
                experiment_id=f"exp{i:02d}", priority=(f"{i:02d}" in CORE))
+    if f"{i:02d}" in HEAVY:
+        cfg["grad_microbatch"] = 64
     return cfg
 
 
