@@ -8,7 +8,8 @@ echo "=== gpu ==="
 nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader
 echo "=== processes ==="
 ps -eo pid,etime,args --no-headers | grep -E "sbflow\.(suite40|train5|gen5|score_cpu|pretrain)" | grep -v grep | cut -c1-110
-echo "=== suite state ==="
+echo "=== suite state (after folding completed scores) ==="
+python3 -u sbflow/fold_scores40.py >/dev/null 2>&1 || true
 python3 - <<'PY'
 import json
 from pathlib import Path
