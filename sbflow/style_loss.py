@@ -173,31 +173,29 @@ def supervised_contrastive(emb: torch.Tensor, labels: torch.Tensor, temperature:
 
 def train_style_encoder(latents: Sequence[torch.Tensor], epochs: int = 60, batch: int = 256,
                         lr: float = 2e-3, device: str = "cuda", seed: int = 0,
-                        log=None) -> StyleEncoder:
-    """Fit the contrastive style encoder on real latents; returns a frozen encoder."""
+                        log=None, steps_per_epoch: int = 20) -> StyleEncoder:
+    """Fit the contrastive style encoder on real latents; returns a frozen encoder.
+
+    `steps_per_epoch` bounds the cost on the 15,545-image pool; a full permutation of
+    every latent per epoch is unnecessary just to learn a five-way style embedding.
+    """
     torch.manual_seed(seed)
     channels = latents[0].shape[1]
     enc = StyleEncoder(channels=channels).to(device)
     opt = torch.optim.AdamW(enc.parameters(), lr=lr, weight_decay=1e-4)
     pools = [z.to(device) for z in latents]
-    labels_all = torch.cat([torch.full((len(p),), i, device=device, dtype=torch.long)
-                            for i, p in enumerate(pools)])
     gen = torch.Generator().manual_seed(seed)
     for ep in range(epochs):
-        idx = torch.randperm(len(labels_all), generator=gen)
         tot, nb = 0.0, 0
-        for s in range(0, len(idx), batch):
-            sel = idx[s:s + batch]
-            if len(sel) < 8:
-                continue
-            # gather samples from the right style pools
+        for _ in range(steps_per_epoch):
+            sel_style = torch.randint(0, len(pools), (batch,), generator=gen, device=device)
             zs = []
-            for i in sel.tolist():
-                zs.append(pools[int(labels_all[i])][torch.randint(len(pools[int(labels_all[i])]),
-                                                                 (1,), generator=gen).item()])
+            for si in sel_style.tolist():
+                pool = pools[si]
+                zs.append(pool[torch.randint(len(pool), (1,), generator=gen).item()])
             z = torch.stack(zs, 0)
             emb, _ = enc(z)
-            loss = supervised_contrastive(emb, labels_all[sel])
+            loss = supervised_contrastive(emb, sel_style)
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
