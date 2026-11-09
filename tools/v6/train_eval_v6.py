@@ -63,6 +63,19 @@ def boot_ci(x: np.ndarray, n_boot: int = 2000, seed: int = 0) -> List[float]:
     return [float(np.percentile(means, 2.5)), float(np.percentile(means, 97.5))]
 
 
+def _cluster_ci_safe(values, clusters, n_boot: int = 2000, seed: int = 0):
+    """Source-clustered CI; returns None instead of failing if the helper is unavailable.
+
+    Tasks sharing a source image are correlated, so resampling tasks independently
+    understates the interval. The plan requires the clustered form.
+    """
+    try:
+        from tools.v6_24h.stats import cluster_ci
+        return cluster_ci(values, clusters, n_boot=n_boot, seed=seed)
+    except Exception:
+        return None
+
+
 def matrix_sqrt_invsqrt(cov: torch.Tensor, eps: float = 1e-4) -> Tuple[torch.Tensor, torch.Tensor]:
     """Symmetric positive-definite 4x4 matrix square root and inverse square root."""
     eye = torch.eye(cov.shape[-1], device=cov.device, dtype=torch.float32)
@@ -659,6 +672,11 @@ def evaluate_200_v6(
         "per_target_margin": per_style_margin,
         "confusion_target_vs_pred": conf.tolist(),
         "confusion_styles": STYLES,
+        # Per-task rows are required for the source-clustered PAIRED bootstrap the plan
+        # asks for (tasks sharing a source image are not independent evidence).
+        "rows": rows,
+        "dT_cluster_ci": _cluster_ci_safe([r["dT"] for r in rows],
+                                         [r["src_stem"] for r in rows]),
         "styles_improved": int(sum(1 for v in per_style.values() if v > 0)),
         "ukiyo_dT": per_style["Ukiyo_e"],
         "same50_mean_dS": float(np.mean(same_dS)),
