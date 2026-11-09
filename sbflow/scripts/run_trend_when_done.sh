@@ -7,6 +7,12 @@ ROOT=runs/blog_sbflow/suite40
 mkdir -p "$ROOT/logs"
 echo "[trend-watch] $(date +%H:%M:%S) waiting for 40 arms + Full750"
 while true; do
+  # Trend eval must not race with any active suite40 driver.
+  if pgrep -f "python3 -u -m sbflow.suite40" >/dev/null 2>&1; then
+    echo "  a suite40 driver is still running; deferring trend eval" >&2
+    sleep 900
+    continue
+  fi
   if python3 - <<'PY'
 import json, sys
 from pathlib import Path

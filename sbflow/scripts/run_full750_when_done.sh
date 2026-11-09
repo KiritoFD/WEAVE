@@ -7,6 +7,12 @@ ROOT=runs/blog_sbflow/suite40
 mkdir -p "$ROOT/logs"
 echo "[full750-watch] $(date +%H:%M:%S) waiting for all 40 arms"
 while true; do
+  # Full750 must not race with any active suite40 driver writing suite_state.json.
+  if pgrep -f "python3 -u -m sbflow.suite40" >/dev/null 2>&1; then
+    echo "  a suite40 driver is still running; deferring Full750" >&2
+    sleep 600
+    continue
+  fi
   if python3 - <<'PY'
 import json, sys
 from pathlib import Path

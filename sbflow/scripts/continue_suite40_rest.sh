@@ -9,6 +9,13 @@ mkdir -p "$ROOT/logs"
 CORE="01 04 08 10 24 27 32 35 37"
 echo "[continuation] $(date +%H:%M:%S) waiting for core arms to finish"
 while true; do
+  # Never start a second driver while the core driver (or any other suite40 driver)
+  # is still alive: they would both rewrite suite_state.json and lose results.
+  if pgrep -f "python3 -u -m sbflow.suite40" >/dev/null 2>&1; then
+    echo "  a suite40 driver is still running; deferring rest" >&2
+    sleep 300
+    continue
+  fi
   if python3 - <<'PY'
 import json, sys
 from pathlib import Path
