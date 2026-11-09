@@ -119,8 +119,15 @@ def run_arm(arm: dict, sha: str, timeout_s: int) -> dict:
            "config_path": str(cp.relative_to(ROOT)), "cmd": " ".join(cmd),
            "status": "running", "started": time.strftime("%Y-%m-%dT%H:%M:%S")}
     t0 = time.time()
+    prior = load_state().get(aid, {})
+    attempt = int(prior.get("attempt", 0)) + 1
+    rec["attempt"] = attempt
     with log.open("a", encoding="utf-8") as f:
-        f.write("\n>>> " + " ".join(cmd) + "\n")
+        # A retry appends to the same log, so mark the boundary explicitly instead of
+        # letting the old and new runs interleave indistinguishably.
+        f.write(f"\n{'='*70}\n### attempt {attempt} at "
+                f"{time.strftime('%Y-%m-%dT%H:%M:%S')}\n")
+        f.write(">>> " + " ".join(cmd) + "\n")
         f.flush()
         try:
             r = subprocess.run(cmd, cwd=str(ROOT), stdout=f,

@@ -64,15 +64,18 @@ def boot_ci(x: np.ndarray, n_boot: int = 2000, seed: int = 0) -> List[float]:
 
 
 def _cluster_ci_safe(values, clusters, n_boot: int = 2000, seed: int = 0):
-    """Source-clustered CI; returns None instead of failing if the helper is unavailable.
+    """Source-clustered CI; returns None (with a warning) if the helper is unavailable.
 
     Tasks sharing a source image are correlated, so resampling tasks independently
-    understates the interval. The plan requires the clustered form.
+    understates the interval. The plan requires the clustered form. A silent None would
+    hide a broken CI, so the failure is printed.
     """
     try:
         from tools.v6_24h.stats import cluster_ci
         return cluster_ci(values, clusters, n_boot=n_boot, seed=seed)
-    except Exception:
+    except Exception as e:  # noqa: BLE001
+        print(f"[warn] source-clustered CI unavailable ({type(e).__name__}: {e}); "
+              f"dT_cluster_ci will be null", flush=True)
         return None
 
 
