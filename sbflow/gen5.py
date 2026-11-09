@@ -80,6 +80,10 @@ def main() -> None:
     ap.add_argument("--save-images", action="store_true", default=True)
     ap.add_argument("--no-images", dest="save_images", action="store_false")
     ap.add_argument("--limit", type=int, default=0, help="debug: cap the number of tasks")
+    ap.add_argument("--residual-scale", type=float, default=1.0,
+                    help="multiply the network residual by this factor. 0 = EDM-only "
+                         "(pure analytic statistics transport), 1 = full model. "
+                         "Used by the V11 P2 EDM-contribution control.")
     args = ap.parse_args()
 
     repo = Path(args.repo_root).resolve()
@@ -104,7 +108,7 @@ def main() -> None:
         from .pivot import pivot_transfer
     print(f"[gen5] ckpt={args.ckpt} objective={objective} eps={eps} tasks={len(tasks)} "
           f"subset={args.subset} steps={args.steps} {args.method} device={device} "
-          f"pivot={is_pivot}", flush=True)
+          f"pivot={is_pivot} residual_scale={args.residual_scale}", flush=True)
 
     # Cache the source encoding per unique source path.
     uniq = sorted({t["source_rel_path"] for t in tasks})
@@ -151,7 +155,8 @@ def main() -> None:
                         else:
                             zout[idx] = solve_transfer(
                                 model, z[idx].clone(), si, ti, stats, eps,
-                                args.steps, args.method, args.t_floor, objective)
+                                args.steps, args.method, args.t_floor, objective,
+                                residual_scale=args.residual_scale)
             phase["ode"] += time.perf_counter() - t1
 
             t1 = time.perf_counter()
@@ -183,7 +188,7 @@ def main() -> None:
     info = {"checkpoint": str(args.ckpt), "objective": objective, "eps": eps,
             "subset": args.subset, "n_tasks": len(tasks), "solver": args.method,
             "solver_steps": args.steps, "network_nfe": nfe, "weights": args.weights,
-            "batch": args.batch,
+            "batch": args.batch, "residual_scale": args.residual_scale,
             "timing_sec": {k: round(v, 2) for k, v in phase.items()},
             "total_sec": round(wall, 2), "images_per_sec": round(len(tasks) / max(wall, 1e-9), 2)}
     out.mkdir(parents=True, exist_ok=True)

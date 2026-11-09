@@ -1063,21 +1063,35 @@ def main():
                                 chunk=min(64, args.ode_microbatch or 64))
                             ld = dist_loss(zs_end.float(), z1.float(), seed=step,
                                            groups=pb_f)
+                    loss_before_dist = loss
                     loss = loss + args.lambda_dist * ld
                     r = {**r, "dist": float(ld)}
                     # V11 fix (docs/v11/V11_THEORY.md 7, defect 4): V10 only checked
                     # `float(ld) != 0.0`, which a gradient-free loss passes trivially.
-                    # Measure the real gradient norm into the generator on step 1.
+                    # Measure the real gradient norms on step 1 and report
+                    #   rho = ||lambda_s * grad L_SWD|| / ||grad L_bridge||
+                    # so we know not only that the gradient exists but whether it is
+                    # strong enough to matter next to the bridge term.
                     if step == start_step + 1 and "grad_norm" not in dist_seen:
                         gp = [q for q in model.parameters() if q.requires_grad]
-                        gs = torch.autograd.grad(ld, gp, retain_graph=True,
-                                                 allow_unused=True)
-                        sq = torch.zeros((), device=device)
-                        for gg in gs:
-                            if gg is not None:
-                                sq = sq + gg.detach().float().square().sum()
-                        dist_seen["grad_norm"] = float(sq.sqrt())
-                        r["dist_grad_norm"] = dist_seen["grad_norm"]
+
+                        def _gnorm(loss_term):
+                            gs = torch.autograd.grad(loss_term, gp, retain_graph=True,
+                                                     allow_unused=True)
+                            sq = torch.zeros((), device=device)
+                            for gg in gs:
+                                if gg is not None:
+                                    sq = sq + gg.detach().float().square().sum()
+                            return float(sq.sqrt())
+
+                        g_dist = _gnorm(args.lambda_dist * ld)
+                        g_bridge = _gnorm(loss_before_dist)
+                        dist_seen["grad_norm"] = g_dist
+                        dist_seen["bridge_grad_norm"] = g_bridge
+                        dist_seen["rho"] = g_dist / max(g_bridge, 1e-12)
+                        r["dist_grad_norm"] = g_dist
+                        r["bridge_grad_norm"] = g_bridge
+                        r["rho_swd_over_bridge"] = dist_seen["rho"]
             (loss * (mb / args.batch)).backward()
             total += float(loss) * (mb / args.batch)
             rec = r
