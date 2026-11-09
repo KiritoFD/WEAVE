@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -uo pipefail
 cd /mnt/i/Latent_Style/WEAVE
+export PYTHONPATH=/mnt/i/Latent_Style/WEAVE:${PYTHONPATH:-}
 ROOT=runs/blog_sbflow/suite40
 echo "=== tmux ==="
 tmux list-panes -t suite40 -F '  #{pane_id} #{pane_pid} #{pane_current_command}' 2>/dev/null || echo "  no session"
@@ -8,8 +9,9 @@ echo "=== gpu ==="
 nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader
 echo "=== processes ==="
 ps -eo pid,etime,args --no-headers | grep -E "sbflow\.(suite40|train5|gen5|score_cpu|pretrain)" | grep -v grep | cut -c1-110
-echo "=== suite state (after folding completed scores) ==="
+echo "=== suite state (after folding scores + backfilling timing) ==="
 python3 -u sbflow/fold_scores40.py >/dev/null 2>&1 || true
+python3 -u sbflow/backfill_timing40.py >/dev/null 2>&1 || true
 python3 - <<'PY'
 import json
 from pathlib import Path
