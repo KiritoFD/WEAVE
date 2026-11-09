@@ -30,6 +30,17 @@ ROOT = Path(__file__).resolve().parents[1]
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 
 
+def _spread(cloud: np.ndarray) -> float:
+    """Mean pairwise cosine distance inside a cloud (1 - cos). Higher = more diverse."""
+    x = cloud / np.clip(np.linalg.norm(cloud, axis=1, keepdims=True), 1e-12, None)
+    sim = x @ x.T
+    n = len(x)
+    if n < 2:
+        return 0.0
+    iu = np.triu_indices(n, k=1)
+    return float(1.0 - sim[iu].mean())
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo-root", default=".")
@@ -82,7 +93,16 @@ def main() -> None:
             "own_score": float(np.mean([r["own_score"] for r in rows])),
             "csd_swd": swd(cloud, ref),
             "csd_mmd2": mmd2(cloud, ref, gamma),
+            # Diversity guard: a model that emits one good Rococo 100 times would pass
+            # style_top1 while collapsing the distribution. Compare the mean pairwise
+            # cosine distance inside the generated cloud against the same statistic for
+            # the real reference cloud.
+            "spread_gen": _spread(cloud),
+            "spread_real": _spread(np.asarray(ref, dtype=np.float32)),
         }
+        r = report[s]
+        r["spread_ratio"] = (r["spread_gen"] / r["spread_real"]
+                             if r["spread_real"] > 0 else float("nan"))
 
     overall = {
         "n": sum(v["n"] for v in report.values()),
@@ -102,16 +122,20 @@ def main() -> None:
 
     lines = ["# V11 P3：无条件五风格生成能力", "",
              f"生成目录：`{gen_root}`", "",
-             "| 风格 | n | style Top-1 | style Margin | own score | CSD-SWD | CSD-MMD |",
-             "|---|---:|---:|---:|---:|---:|---:|"]
+             "| 风格 | n | style Top-1 | style Margin | own score | CSD-SWD | CSD-MMD | 多样性比 |",
+             "|---|---:|---:|---:|---:|---:|---:|---:|"]
     for s in STYLES:
         if s in report:
             r = report[s]
             lines.append(f"| {s} | {r['n']} | {r['style_top1']:.4f} | "
                          f"{r['style_margin']:+.4f} | {r['own_score']:.4f} | "
-                         f"{r['csd_swd']:.5f} | {r['csd_mmd2']:.5f} |")
+                         f"{r['csd_swd']:.5f} | {r['csd_mmd2']:.5f} | "
+                         f"{r['spread_ratio']:.3f} |")
     lines += ["", f"**overall style Top-1 = {overall['style_top1']:.4f}，"
-                  f"mean SWD = {overall['csd_swd']:.5f}**", ""]
+                  f"mean SWD = {overall['csd_swd']:.5f}**", "",
+              "多样性比 = 生成云内平均成对余弦距离 / 真实参考云内同一统计量。",
+              "接近 1 表示多样性正常；明显 < 1 说明模式塌缩（即使 style Top-1 很高）。",
+              "SWD 地板参考 0.0111（真实 vs 参考集）。", ""]
     (out / "uncond_summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
 
