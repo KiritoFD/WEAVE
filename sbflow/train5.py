@@ -171,6 +171,57 @@ def _mixed_stats(stats, pa, pb, dirs, dtype):
     return pair_stats_per_sample(stats, pa, pb, dirs, dtype)
 
 
+def score_current_targets(z0, z1, t, xi, eps, dirs):
+    """Local-time velocity and score targets for the Current+Score objective.
+
+    V11 (docs/v11/V11_THEORY.md 6.1): in reverse local time tau = 1 - t the transport
+    velocity flips sign, v_rev(z, tau) = -v_fwd(z, t). The score does NOT flip, because
+    grad_z log p_tau(z) is a spatial gradient and the local marginal at tau equals the
+    canonical marginal at t = 1 - tau.
+
+    Returns (xt, v_star, s_star) where v_star is already in the local time frame.
+    """
+    xt, bplus, bminus = bridge_sample(z0, z1, t, eps, xi)
+    fwd = (dirs == 1).view(-1, 1, 1, 1)
+    v_canonical = 0.5 * (bplus - bminus)
+    v_star = torch.where(fwd, v_canonical, -v_canonical)
+    s_star = (bplus + bminus) / eps
+    return xt, v_star, s_star
+
+
+def free_ode_endpoint(model, z_start, pa, pb, dirs, stats, eps, objective, steps, chunk=64):
+    """Integrate the model's OWN probability-flow ODE to the far endpoint.
+
+    V11 fix (docs/v11/V11_THEORY.md 7, defect 2): V10 always started from the canonical
+    `a` sample and integrated `a -> b`, then grouped by `pb`. Consequently only `a -> b`
+    was ever supervised and the lowest-index style (Early Renaissance) could never be a
+    distribution target.
+
+    Here every sample starts from its OWN source style and integrates along its OWN
+    direction:
+
+    * dirs == 1 : start at style a, canonical time t runs 0 -> 1.
+    * dirs == 0 : start at style b, canonical time t runs 1 -> 0, i.e. local time
+      tau = 1 - t runs 0 -> 1 with local velocity -v_canonical (theory 6.1).
+
+    Returns endpoints expressed in each sample's target style frame.
+    """
+    h = 1.0 / max(1, steps)
+    out = []
+    n = len(z_start)
+    for s in range(0, n, chunk):
+        zc = z_start[s:s + chunk]
+        a_c, b_c, d_c = pa[s:s + chunk], pb[s:s + chunk], dirs[s:s + chunk]
+        fwd = (d_c == 1).view(-1, 1, 1, 1)
+        for k in range(steps):
+            tau = torch.full((len(zc),), k * h, device=zc.device, dtype=zc.dtype)
+            t = torch.where(fwd.view(-1), tau, 1 - tau)
+            v = mixed_velocity(model, zc, t, a_c, b_c, stats, eps, objective)
+            zc = zc + h * torch.where(fwd, v, -v)
+        out.append(zc)
+    return torch.cat(out, 0)
+
+
 def objective_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, args, s_scale=None):
     """Dispatch the per-sample mixed-batch objective for ANY supported target.
 
@@ -179,14 +230,36 @@ def objective_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, args, s
     and `endpoint`. This removes the training-schedule confound where non-bidir arms
     silently fell back to one pair per update.
     """
-    if args.objective in ("monge", "pivot_cfm"):
-        # One-step map T(z,i,j) = z + Delta(z,i,j): no ODE and no bridge time.
+    if args.objective == "pivot_cfm":
+        # Conditional flow matching between a style sample and a pivot/other sample.
+        # Unlike the one-step Monge objective below, regressing the VELOCITY (z1 - z0)
+        # conditioned on (z_t, t) has optimum E[z1 - z0 | z_t], which is the correct
+        # marginal velocity; it does NOT collapse to the target mean.
+        B = z0.shape[0]
+        t, tw = sample_time(args.time_sampling, B, min_t, gen, z0.device, args.strata,
+                            z0.dtype)
+        tt = t.view(-1, 1, 1, 1)
+        xt = (1 - tt) * z0 + tt * z1
+        v_target = (z1 - z0)
+        pred = model(xt, t, dirs.long(), pa.long(), pb.long()).float()
+        per = (pred - v_target.float()).square().mean(dim=(1, 2, 3))
+        return (per * tw).mean(), {"f_mse": float(per.mean()), "b_mse": 0.0}
+
+    if args.objective == "monge":
+        # V11 fix (docs/v11/V11_THEORY.md section 6.2): with INDEPENDENT endpoints the
+        # one-step objective E||T(z0) - z1||^2 has optimum T(z0) = mu_j, i.e. target-mean
+        # regression, not a Monge map. Training that objective is mathematically void, so
+        # we refuse it instead of silently producing a collapsed model.
+        if not getattr(args, "monge_ot", False):
+            raise ValueError(
+                "objective=monge requires --monge-ot with ot_ratio > 0. With independent "
+                "endpoints the one-step MSE optimum is T(z0)=mu_j (target mean collapse); "
+                "see docs/v11/V11_THEORY.md 6.2.")
         tau = torch.full((z0.shape[0],), 0.5, device=z0.device, dtype=z0.dtype)
         delta = model(z0, tau, dirs.long(), pa.long(), pb.long()).float()
         z_out = z0 + delta
         base = torch.nn.functional.mse_loss(z_out, z1.float())
         if getattr(args, "cycle_weight", 0) > 0:
-            # weak cycle/move regulariser: penalise excessive displacement only
             base = base + args.cycle_weight * delta.square().mean()
         return base, {"f_mse": float(base), "b_mse": 0.0}
 
@@ -222,8 +295,7 @@ def objective_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, args, s
     if args.objective == "score_current":
         tau = torch.where(fwd, t, 1 - t)
         mx, my, ci, cs, co = direct_velocity_coefficients_batch(tau, eps, mu0, mu1, v0, v1, cov)
-        v_star = 0.5 * (bplus - bminus)
-        s_star = (bplus + bminus) / eps
+        _, v_star, s_star = score_current_targets(z0, z1, t, xi, eps, dirs)
         xin = (xt - mx) * ci
         v_norm = (v_star - my - cs * (xt - mx)) / co
         s_norm = s_star * s_scale.view(1, -1, 1, 1)
@@ -345,18 +417,52 @@ def _mixed_pair_ids(pairs, batch, device, gen_cpu):
             torch.tensor(dirs)[perm].to(device))
 
 
-def _mixed_batch(data, pa, pb, samplers, device, gen):
-    """Draw z0 from style pa[i] and z1 from style pb[i] for every sample."""
+def _mixed_batch(data, pa, pb, samplers, device, gen, ot_ratio=0.0, ot_reg=0.05,
+                 g_ot=None, ot_cost="rgb", ot_tol=1e-6):
+    """Draw z0 from style pa[i] and z1 from style pb[i] for every sample.
+
+    Sample indices are tracked so thumbnails stay aligned with their latents; this is
+    what makes per-pair OT coupling valid. `objective=monge` requires `ot_ratio > 0`
+    because independent endpoints collapse one-step regression to the target mean
+    (docs/v11/V11_THEORY.md section 6.2).
+    """
     B = len(pa)
-    z0 = torch.empty((B,) + tuple(data.z[0].shape[1:]), device=device, dtype=data.z[0].dtype)
+    shape = (B,) + tuple(data.z[0].shape[1:])
+    z0 = torch.empty(shape, device=device, dtype=data.z[0].dtype)
     z1 = torch.empty_like(z0)
+    ia = torch.zeros(B, dtype=torch.long, device=device)
+    ib = torch.zeros(B, dtype=torch.long, device=device)
     for s in range(data.num_styles):
         pos0 = (pa == s).nonzero(as_tuple=True)[0]
         if len(pos0):
-            z0[pos0] = data.z[s][samplers[s].draw(len(pos0)).to(device)]
+            ia[pos0] = samplers[s].draw(len(pos0)).to(device)
+            z0[pos0] = data.z[s][ia[pos0]]
         pos1 = (pb == s).nonzero(as_tuple=True)[0]
         if len(pos1):
-            z1[pos1] = data.z[s][samplers[s].draw(len(pos1)).to(device)]
+            ib[pos1] = samplers[s].draw(len(pos1)).to(device)
+            z1[pos1] = data.z[s][ib[pos1]]
+
+    has_thumb = data.thumb is not None and data.thumb[0].dim() == 4
+    if ot_ratio > 0 and has_thumb:
+        t0 = torch.zeros((B,) + tuple(data.thumb[0].shape[1:]),
+                         dtype=data.thumb[0].dtype, device=device)
+        t1 = torch.zeros_like(t0)
+        for s in range(data.num_styles):
+            pos = (pa == s).nonzero(as_tuple=True)[0]
+            if len(pos):
+                t0[pos] = data.thumb[s][ia[pos]]
+            pos = (pb == s).nonzero(as_tuple=True)[0]
+            if len(pos):
+                t1[pos] = data.thumb[s][ib[pos]]
+        key = pa * data.num_styles + pb
+        for k in torch.unique(key).tolist():
+            pos = (key == k).nonzero(as_tuple=True)[0]
+            if len(pos) < 2:
+                continue
+            sz0, sz1, _ = paired_batch(z0[pos].clone(), z1[pos].clone(),
+                                       t0[pos], t1[pos], ot_ratio, ot_reg,
+                                       g_ot or gen, mode=ot_cost, ot_tol=ot_tol)
+            z0[pos], z1[pos] = sz0, sz1
     return z0, z1
 
 
@@ -553,6 +659,10 @@ def main():
                         "0 means fully online per-step SDE")
     p.add_argument("--triangle-weight", type=float, default=0.0,
                    help="exp 39: weight of T_jk(T_ij(z)) ~= T_ik(z) consistency")
+    p.add_argument("--monge-ot", action="store_true",
+                   help="required for objective=monge: couple endpoints with OT. With "
+                        "independent endpoints the one-step MSE optimum is the target "
+                        "mean (docs/v11/V11_THEORY.md 6.2)")
 
     # --- group F: shared Gaussian pivot ---
     p.add_argument("--mixed-batch", action="store_true", default=True,
@@ -834,7 +944,10 @@ def main():
             with ctx:
                 if mixed:
                     mpa, mpb, mdirs = _mixed_pair_ids(pairs, mb, device, g_mix)
-                    mz0, mz1 = _mixed_batch(data, mpa, mpb, samplers, device, g_data)
+                    mz0, mz1 = _mixed_batch(data, mpa, mpb, samplers, device, g_data,
+                                            ot_ratio=args.ot_ratio, ot_reg=args.ot_reg,
+                                            g_ot=g_ot, ot_cost=args.ot_cost,
+                                            ot_tol=args.ot_tol)
                     pair_tag = "mixed"
                     if use_online:
                         from .online_bridge import online_loss_mixed
@@ -924,49 +1037,56 @@ def main():
                     hstep = 1.0 / max(1, args.ode_steps_train)
                     with torch.autocast("cuda", enabled=False):
                         if mixed:
-                            zs = mz0.detach()
-                            # Chunked differentiable ODE: keep the full batch for the
-                            # bridge loss but cap the graph held by L_dist at 64 samples.
-                            # Each chunk is an independent, complete ODE rollout, then the
-                            # SWD is accumulated so the total gradient equals the sum.
-                            dist_chunk = min(64, args.ode_microbatch or 64)
-                            zs_out = []
-                            for cs in range(0, len(zs), dist_chunk):
-                                zc = zs[cs:cs + dist_chunk]
-                                for k in range(args.ode_steps_train):
-                                    tk = torch.full((len(zc),), k * hstep, device=zc.device,
-                                                    dtype=zc.dtype)
-                                    zc = zc + hstep * mixed_velocity(
-                                        model, zc, tk, mpa[cs:cs + dist_chunk],
-                                        mpb[cs:cs + dist_chunk], data.stats, args.eps,
-                                        args.objective)
-                                zs_out.append(zc)
-                            zs_end = torch.cat(zs_out, 0)
-                            # group by TARGET style: each target domain must be matched
-                            # separately, never merged into one overall SWD
-                            ld = dist_loss(zs_end.float(), mz1.float(), seed=step, groups=mpb)
+                            # Every sample integrates from ITS OWN source style along ITS
+                            # OWN direction, then matches the target-style distribution.
+                            # groups therefore cover both pa and pb, so all five styles
+                            # (including Early Renaissance) can be a target.
+                            fwd_m = (mdirs == 1).view(-1, 1, 1, 1)
+                            z_start = torch.where(fwd_m, mz0, mz1).detach()
+                            z_tgt = torch.where(fwd_m, mz1, mz0)
+                            groups = torch.where(mdirs == 1, mpb, mpa)
+                            zs_end = free_ode_endpoint(
+                                model, z_start, mpa, mpb, mdirs, data.stats, args.eps,
+                                args.objective, args.ode_steps_train,
+                                chunk=min(64, args.ode_microbatch or 64))
+                            ld = dist_loss(zs_end.float(), z_tgt.float(), seed=step,
+                                           groups=groups)
                         else:
-                            from .online_bridge import both_drifts
-                            zs = z0.detach()
-                            for k in range(args.ode_steps_train):
-                                tk = torch.full((len(zs),), k * hstep, device=zs.device,
-                                                dtype=zs.dtype)
-                                bp_, bm_ = both_drifts(model, zs, tk, a, b, data.stats,
-                                                       args.eps, 0.002)
-                                zs = zs + hstep * 0.5 * (bp_ - bm_)
-                            ld = dist_loss(zs.float(), z1.float(), seed=step,
-                                           groups=torch.full((len(zs),), b, device=zs.device,
-                                                             dtype=torch.long))
+                            pa_f = torch.full((len(z0),), a, device=z0.device,
+                                              dtype=torch.long)
+                            pb_f = torch.full((len(z0),), b, device=z0.device,
+                                              dtype=torch.long)
+                            d_f = torch.ones(len(z0), device=z0.device, dtype=torch.long)
+                            zs_end = free_ode_endpoint(
+                                model, z0.detach(), pa_f, pb_f, d_f, data.stats, args.eps,
+                                args.objective, args.ode_steps_train,
+                                chunk=min(64, args.ode_microbatch or 64))
+                            ld = dist_loss(zs_end.float(), z1.float(), seed=step,
+                                           groups=pb_f)
                     loss = loss + args.lambda_dist * ld
                     r = {**r, "dist": float(ld)}
-                    dist_seen["grad_nonzero"] = float(ld) != 0.0
+                    # V11 fix (docs/v11/V11_THEORY.md 7, defect 4): V10 only checked
+                    # `float(ld) != 0.0`, which a gradient-free loss passes trivially.
+                    # Measure the real gradient norm into the generator on step 1.
+                    if step == start_step + 1 and "grad_norm" not in dist_seen:
+                        gp = [q for q in model.parameters() if q.requires_grad]
+                        gs = torch.autograd.grad(ld, gp, retain_graph=True,
+                                                 allow_unused=True)
+                        sq = torch.zeros((), device=device)
+                        for gg in gs:
+                            if gg is not None:
+                                sq = sq + gg.detach().float().square().sum()
+                        dist_seen["grad_norm"] = float(sq.sqrt())
+                        r["dist_grad_norm"] = dist_seen["grad_norm"]
             (loss * (mb / args.batch)).backward()
             total += float(loss) * (mb / args.batch)
             rec = r
-        if dist_loss is not None and step == 1:
-            assert dist_seen.get("grad_nonzero"), (
-                "dist_loss was enabled but contributed an exactly-zero value on step 1; "
-                "the mixed-batch path is not actually adding L_dist")
+        if dist_loss is not None and step == start_step + 1:
+            gn = dist_seen.get("grad_norm", 0.0)
+            assert gn is not None and gn > 1e-12, (
+                f"L_dist has no gradient to the generator (grad_norm={gn}); the "
+                "distribution loss is not actually training the model. This is the exact "
+                "failure mode that invalidated V10 exp19-26 (see docs/v11/V11_THEORY.md 7).")
         grad = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
         sched_lr.step()

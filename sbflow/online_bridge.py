@@ -181,25 +181,44 @@ def ode_forward(model, z, a, b, stats, eps, steps: int, t_floor: float,
 # --------------------------------------------------------------------------- #
 # bridge loss on a given coupling
 # --------------------------------------------------------------------------- #
-def bridge_loss(model, z0, z1, a, b, stats, eps, min_t, gen, t_floor=0.002) -> torch.Tensor:
-    """Standard dual-drift bridge MSE for one coupling (half forward, half reverse)."""
+def bridge_loss(model, z0, z1, a, b, stats, eps, min_t, gen, t_floor=0.002,
+                mode: str = "both") -> torch.Tensor:
+    """Dual-drift bridge MSE for one coupling.
+
+    `mode="both"` splits the batch (half forward, half reverse) as a training objective.
+    `mode="fwd"` / `mode="rev"` supervise ONLY one drift type for every sample, which is
+    what alpha-DSBM Algorithm 1 requires for its two endpoint pairings (V11 fix).
+    """
     B = z0.shape[0]
-    half = B // 2
     t = torch.rand(B, device=z0.device, generator=gen, dtype=z0.dtype) * (1 - 2 * min_t) + min_t
     xi = torch.randn(z0.shape, device=z0.device, generator=gen, dtype=z0.dtype)
     xt, bplus, bminus = bridge_sample(z0, z1, t, eps, xi)
     pm = stats.pair(a, b)
-    xf, cf = precondition_input(xt[:half], t[:half], eps, pm)
-    xb, cb = precondition_input(xt[half:], 1 - t[half:], eps, pm.reversed())
-    yf = normalized_target(xt[:half], bplus[:half], cf)
-    yb = normalized_target(xt[half:], bminus[half:], cb)
-    tau = torch.cat([t[:half], 1 - t[half:]], 0)
-    d = torch.cat([torch.ones(half, device=z0.device, dtype=torch.long),
-                   torch.zeros(B - half, device=z0.device, dtype=torch.long)])
+
+    if mode == "both":
+        half = B // 2
+        xf, cf = precondition_input(xt[:half], t[:half], eps, pm)
+        xb, cb = precondition_input(xt[half:], 1 - t[half:], eps, pm.reversed())
+        yf = normalized_target(xt[:half], bplus[:half], cf)
+        yb = normalized_target(xt[half:], bminus[half:], cb)
+        tau = torch.cat([t[:half], 1 - t[half:]], 0)
+        d = torch.cat([torch.ones(half, device=z0.device, dtype=torch.long),
+                       torch.zeros(B - half, device=z0.device, dtype=torch.long)])
+        sa = torch.full((B,), a, device=z0.device, dtype=torch.long)
+        sb = torch.full((B,), b, device=z0.device, dtype=torch.long)
+        pred = model(torch.cat([xf, xb], 0), tau, d, sa, sb).float()
+        return torch.nn.functional.mse_loss(pred, torch.cat([yf, yb], 0).float())
+
+    fwd = (mode == "fwd")
+    p_use = pm if fwd else pm.reversed()
+    tau = t if fwd else 1 - t
+    xin, cf = precondition_input(xt, tau, eps, p_use)
+    y = normalized_target(xt, bplus if fwd else bminus, cf)
+    d = torch.full((B,), 1 if fwd else 0, device=z0.device, dtype=torch.long)
     sa = torch.full((B,), a, device=z0.device, dtype=torch.long)
     sb = torch.full((B,), b, device=z0.device, dtype=torch.long)
-    pred = model(torch.cat([xf, xb], 0), tau, d, sa, sb).float()
-    return torch.nn.functional.mse_loss(pred, torch.cat([yf, yb], 0).float())
+    pred = model(xin, tau, d, sa, sb).float()
+    return torch.nn.functional.mse_loss(pred, y.float())
 
 
 def mixed_bridge_loss(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen,
@@ -217,6 +236,20 @@ def mixed_bridge_loss(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen,
     y = normalized_target_batch(xt, torch.where(fwd_c, bplus, bminus), cf)
     pred = model(xin, tau, dirs.long(), pa.long(), pb.long()).float()
     return torch.nn.functional.mse_loss(pred, y.float())
+
+
+def mixed_bridge_loss_fwd(model, z0, z1, pa, pb, stats, eps, min_t, gen,
+                          t_floor=0.002) -> torch.Tensor:
+    """Supervise ONLY the forward drift b+ for every sample in the batch."""
+    ones = torch.ones(len(z0), dtype=torch.long, device=z0.device)
+    return mixed_bridge_loss(model, z0, z1, pa, pb, ones, stats, eps, min_t, gen, t_floor)
+
+
+def mixed_bridge_loss_rev(model, z0, z1, pa, pb, stats, eps, min_t, gen,
+                          t_floor=0.002) -> torch.Tensor:
+    """Supervise ONLY the reverse drift b- for every sample in the batch."""
+    zeros = torch.zeros(len(z0), dtype=torch.long, device=z0.device)
+    return mixed_bridge_loss(model, z0, z1, pa, pb, zeros, stats, eps, min_t, gen, t_floor)
 
 
 def online_loss_mixed(model, teacher, z0, z1, pa, pb, dirs, stats: StyleStats, eps: float,
@@ -272,10 +305,21 @@ def online_loss_mixed(model, teacher, z0, z1, pa, pb, dirs, stats: StyleStats, e
             x1_hat[:k] = z1[:k]
             x0_hat[:k] = z0[:k]
 
-    l_fwd = mixed_bridge_loss(model, x0_hat.detach(), z1, pa, pb, dirs, stats, eps, min_t,
-                              gen, t_floor)
-    l_rev = mixed_bridge_loss(model, z0, x1_hat.detach(), pa, pb, dirs, stats, eps, min_t,
-                              gen, t_floor)
+    # alpha-DSBM Algorithm 1 (V11 fix, docs/v11/V11_THEORY.md 7, defect 3).
+    #
+    # V10 called `mixed_bridge_loss` for both pairings. That helper picks b+ or b- per
+    # sample from `dirs`, so the (x0, x1_hat) pairing also supervised b+ for some
+    # samples. That is NOT the paper's update:
+    #
+    #   reverse SDE gives x0_hat  ->  supervise the FORWARD drift on (x0_hat, x1)
+    #   forward SDE gives x1_hat  ->  supervise the REVERSE drift on (x0, x1_hat)
+    #
+    # Each pairing now carries exactly one drift type for every sample, which makes the
+    # loss direction-specific as in the paper.
+    l_fwd = mixed_bridge_loss_fwd(model, x0_hat.detach(), z1, pa, pb, stats, eps, min_t,
+                                  gen, t_floor)
+    l_rev = mixed_bridge_loss_rev(model, z0, x1_hat.detach(), pa, pb, stats, eps, min_t,
+                                  gen, t_floor)
     if direction == "forward":
         loss = l_fwd
     elif direction == "reverse":
@@ -379,8 +423,11 @@ def online_loss(model, teacher, z0, z1, a, b, stats: StyleStats, eps: float, min
             x1_hat[:k] = z1[:k]
             x0_hat[:k] = z0[:k]
 
-    l_fwd = bridge_loss(model, x0_hat.detach(), z1, a, b, st, eps, min_t, gen, t_floor)
-    l_rev = bridge_loss(model, z0, x1_hat.detach(), a, b, st, eps, min_t, gen, t_floor)
+    # alpha-DSBM Algorithm 1: (x0_hat, x1) -> b+ only, (x0, x1_hat) -> b- only.
+    l_fwd = bridge_loss(model, x0_hat.detach(), z1, a, b, st, eps, min_t, gen, t_floor,
+                        mode="fwd")
+    l_rev = bridge_loss(model, z0, x1_hat.detach(), a, b, st, eps, min_t, gen, t_floor,
+                        mode="rev")
 
     if direction == "forward":
         loss = l_fwd

@@ -172,27 +172,57 @@ def u8_tensor(a: np.ndarray) -> torch.Tensor:
 
 # --------------------------------------------------------------------------- #
 def aggregate(rows: List[dict], refs: dict, gamma: float) -> dict:
-    """Per directed pair, per target style, and overall. Grouping by target_style."""
+    """Per directed pair, per target style, and overall.
+
+    V11 fix (docs/v11/V11_THEORY.md section 7, defect 1): the V10 `overall` block took
+    `sub[0]["target"]` and compared ALL 200 generated images -- which belong to five
+    different target styles -- against that ONE style's reference set. The resulting
+    overall CSD-SWD/MMD was therefore not a five-target distribution-matching metric.
+
+    Distribution distances are only meaningful inside a single target style, so the
+    overall value is now the equal-weight average of the five per-target distances.
+    Per-sample scalars (top1 / margin / dT / dS / dino / lpips) are unaffected and stay
+    as plain means over all rows.
+    """
     out: Dict[str, dict] = {}
 
-    def block(sub: List[dict]) -> dict:
-        res = {k: float(np.mean([r[k] for r in sub])) for k in KEYS}
-        tgt = sub[0]["target"]
+    def scalars(sub: List[dict]) -> dict:
+        return {k: float(np.mean([r[k] for r in sub])) for k in KEYS}
+
+    def dist(sub: List[dict]) -> dict:
+        """Distribution distance against the reference set of the SINGLE target here."""
+        targets = {r["target"] for r in sub}
+        if len(targets) != 1:
+            raise ValueError(f"dist() needs one target style, got {sorted(targets)}")
+        tgt = targets.pop()
         feat = np.asarray([r["csd_embedding"] for r in sub], dtype=np.float32)
         real = refs["styles"][tgt]["csd"]
-        res["csd_mmd2_unbiased"] = mmd2(feat, real, gamma)
-        res["csd_swd"] = swd(feat, real)
-        res["n"] = len(sub)
+        return {"csd_mmd2_unbiased": mmd2(feat, real, gamma),
+                "csd_swd": swd(feat, real), "n": len(sub)}
+
+    def block(sub: List[dict]) -> dict:
+        res = scalars(sub)
+        res.update(dist(sub))
         return res
 
     gen = [r for r in rows if r["variant"] == "generated"]
-    out["overall"] = block(gen)
-    out["by_direction"] = {}
-    for d in sorted({r["direction"] for r in gen}):
-        out["by_direction"][d] = block([r for r in gen if r["direction"] == d])
     out["by_target"] = {}
     for s in sorted({r["target"] for r in gen}):
         out["by_target"][s] = block([r for r in gen if r["target"] == s])
+
+    out["by_direction"] = {}
+    for d in sorted({r["direction"] for r in gen}):
+        out["by_direction"][d] = block([r for r in gen if r["direction"] == d])
+
+    # Overall: per-sample scalars over everything, distribution distances averaged with
+    # equal weight over the five target styles (never merged into one cloud).
+    overall = scalars(gen)
+    per_target = list(out["by_target"].values())
+    overall["csd_swd"] = float(np.mean([v["csd_swd"] for v in per_target]))
+    overall["csd_mmd2_unbiased"] = float(np.mean([v["csd_mmd2_unbiased"] for v in per_target]))
+    overall["n"] = len(gen)
+    overall["n_targets"] = len(per_target)
+    out["overall"] = overall
     return out
 
 
