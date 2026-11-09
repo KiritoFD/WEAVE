@@ -93,6 +93,10 @@ class StyleChannelPaletteHead(nn.Module):
 
     def forward(self, z_base: torch.Tensor, style_id: torch.Tensor) -> torch.Tensor:
         ll, lh, hl, hh = dwt2_haar(z_base.float())
+        # match the parameter dtype: dwt2_haar always returns fp32, which breaks
+        # half-precision deployment ("expected scalar type Float but found Half").
+        _dt = self.mix_ll.dtype
+        ll, lh, hl, hh = ll.to(_dt), lh.to(_dt), hl.to(_dt), hh.to(_dt)
         B, C, H, W = ll.shape
         sid = style_id.long()
         w_ll = self.mix_ll[sid]  # (B, 4, 4)
@@ -130,6 +134,7 @@ class C3UNet(nn.Module):
         inject_64: bool = True,
         inject_32: bool = True,
         inject_16: bool = True,
+        folded: bool = False,
     ):
         super().__init__()
         self.base_dim = base_dim
@@ -154,6 +159,14 @@ class C3UNet(nn.Module):
         self.inject_64 = bool(inject_64)
         self.inject_32 = bool(inject_32)
         self.inject_16 = bool(inject_16)
+        # `folded` is the zero-training EXACT deployment compression for direct mode
+        # (plan section 4): the 12-channel stem becomes 4-channel because
+        # [z_in, c, z_in-c] = [c, c, 0] when z_in == c, and the constant tau embedding is
+        # folded into the AdaLN biases. Only valid for mode="direct"; the conversion is
+        # done by tools/v6_24h/fold_direct.py and verified output-for-output.
+        self.folded = bool(folded)
+        if self.folded and mode != "direct":
+            raise ValueError("folded=True is only valid for mode='direct'")
 
         c1, c2, c3 = base_dim, base_dim * 2, base_dim * 2
         cond_dim = base_dim * 2
@@ -171,7 +184,7 @@ class C3UNet(nn.Module):
         )
 
         # Input stem at 64x64: takes [z_tau, c, z_tau - c] (12 channels)
-        self.stem64 = nn.Conv2d(12, c1, 3, padding=1)
+        self.stem64 = nn.Conv2d(4 if self.folded else 12, c1, 3, padding=1)
 
         # Encoder 64x64
         self.enc64_1 = StyleAdaLNBlock(c1, cond_dim, content_channels=4)
@@ -238,8 +251,16 @@ class C3UNet(nn.Module):
             tau_t = tau.float().view(B)
 
         s_emb = self.style_mlp(self.style_emb(style_id.long()))
-        t_emb = self.time_mlp(sinusoidal_embedding(tau_t, self.base_dim))
-        cond = s_emb + t_emb
+        if self.folded:
+            # tau is a constant 0 in direct mode; its contribution was folded into the
+            # AdaLN biases at conversion time, so no time network is needed here.
+            cond = s_emb
+        else:
+            # match the embedding dtype: sinusoidal_embedding always returns fp32, which
+            # breaks half-precision deployment ("mat1 Float vs mat2 Half").
+            t_emb = self.time_mlp(
+                sinusoidal_embedding(tau_t, self.base_dim).to(s_emb.dtype))
+            cond = s_emb + t_emb
 
         # Content multi-scale pyramid: 64x64 raw c, 32x32 Haar DWT(c), 16x16 pooled DWT(c)
         c_ll, c_lh, c_hl, c_hh = dwt2_haar(c.float())
@@ -247,6 +268,10 @@ class C3UNet(nn.Module):
         c16 = F.avg_pool2d(c32, kernel_size=2, stride=2)
 
         x0 = torch.cat([z_in, c, z_in - c], dim=1)
+        if self.folded:
+            # exact: in direct mode z_in == c, so the 12-channel [z_in, c, z_in-c] has
+            # 4 zero channels and 8 duplicated ones -> equivalent to feeding z_in alone.
+            x0 = z_in
         h64 = self.stem64(x0)
         # Per-scale injection gates (plan S1/S2/S3): None disables only that scale's
         # content_proj branch; all other weights are untouched.
