@@ -935,6 +935,11 @@ def main():
         mb = min(base_mb, args.grad_microbatch) if args.grad_microbatch > 0 else base_mb
         if args.batch % mb:
             raise ValueError(f"grad microbatch {mb} must divide batch {args.batch}")
+        if args.mixed_batch and mb < 2 * len(pairs):
+            raise ValueError(
+                f"grad microbatch {mb} is smaller than 2 x {len(pairs)} pairs; the mixed "
+                f"sampler needs at least {2 * len(pairs)} samples per microbatch to cover "
+                "every (pair, direction) cell")
         total, rec = 0.0, {}
         for _ in range(args.batch // mb):
             ctx = (torch.autocast("cuda", dtype=torch.bfloat16) if device == "cuda"
@@ -1111,6 +1116,17 @@ def main():
 
         if step % args.log_interval == 0 or step == start_step + 1:
             dt = time.perf_counter() - t_start
+            # The gradient diagnostic is measured on the FIRST microbatch only, but `rec`
+            # is overwritten by every later microbatch, so merge it back here. Without
+            # this the recorded history silently loses dist_grad_norm / rho whenever
+            # grad_microbatch > 0 (which is the case for every heavy arm).
+            if dist_loss is not None and step == start_step + 1:
+                _alias = {"dist_grad_norm": "grad_norm",
+                          "bridge_grad_norm": "bridge_grad_norm",
+                          "rho_swd_over_bridge": "rho"}
+                for _out, _src in _alias.items():
+                    if _src in dist_seen:
+                        rec[_out] = dist_seen[_src]
             print(f"step={step}/{args.steps} {pair_tag} loss={total:.4f} "
                   f"f={rec.get('f_mse', -1):.3f} b={rec.get('b_mse', -1):.3f} "
                   f"grad={float(grad):.3f} lr={opt.param_groups[0]['lr']:.2e} "
