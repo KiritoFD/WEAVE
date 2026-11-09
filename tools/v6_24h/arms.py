@@ -60,6 +60,11 @@ ARMS = [
          args={"no_inject_32": True}),
     dict(id="S3_no_inject_16", group="S", note="disable 16x16 content injection",
          args={"no_inject_16": True}),
+    # S5 (HF_structure_loss) was CANCELLED by its own pre-experiment before spending any
+    # training budget: the directional HF statistics correlate 0.921 with the DWT moments
+    # V6 already uses, separate styles LESS well (LOO 0.503 vs 0.555), and pull the three
+    # hard targets CLOSER together (mean pairwise 1.22 vs 2.58). See
+    # Negative_Results/L4_ablation/v6_24h_cancelled_additions.md
 ]
 
 # priority within a group: the plan's core questions first
