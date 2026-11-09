@@ -436,7 +436,8 @@ def _apply_config(p, argv):
     dests = {a.dest: a for a in p._actions if a.dest != "help"}
     bool_true = {d for d, a in dests.items() if isinstance(a, argparse._StoreTrueAction)}
     skip = {"id", "group", "note", "fork_from", "priority", "quick200", "full750",
-            "config"}
+            "config", "vae", "scaling_factor", "latent_shape",
+            "dataset_styles", "dataset_images"}
     # store_false flags share a dest with a store_true option; map a false value back
     # to the negative CLI flag. (single_pair / frequency_stats in JSON are redundant
     # aliases and are simply ignored because they are not real dests.)

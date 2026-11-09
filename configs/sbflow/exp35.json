@@ -1,6 +1,8 @@
 {
   "batch": 512,
   "cycle_weight": 0.0,
+  "dataset_images": 15545,
+  "dataset_styles": 5,
   "depth": 6,
   "dist_loss": "none",
   "dist_nproj": 64,
@@ -20,6 +22,11 @@
   "heads_out": 1,
   "id": "35",
   "lambda_dist": 0.1,
+  "latent_shape": [
+    4,
+    64,
+    64
+  ],
   "local_conv": false,
   "log_interval": 50,
   "lr": 0.0002,
@@ -52,6 +59,7 @@
   "sampler": "perm",
   "save_equiv": "1000,2000,3000,4000",
   "save_interval": 100000,
+  "scaling_factor": 0.18215,
   "score_weight": 1.0,
   "seed": 42,
   "steps": 4000,
@@ -64,6 +72,7 @@
   "target": "drift",
   "time_sampling": "uniform",
   "triangle_weight": 0.0,
+  "vae": "stabilityai/sd-vae-ft-ema",
   "warmup": 200,
   "width": 256
 }

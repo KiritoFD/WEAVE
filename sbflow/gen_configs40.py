@@ -27,6 +27,8 @@ COMMON = dict(
     equiv_steps=4000, equiv_batch=512,
     save_equiv="1000,2000,3000,4000", full_equiv=3000,
     lr_cycle_steps=4000,
+    vae="stabilityai/sd-vae-ft-ema", scaling_factor=0.18215,
+    latent_shape=[4, 64, 64], dataset_styles=5, dataset_images=15545,
     quick200=True, full750=False, priority=False, fork_from=None,
 )
 CORE = {"01", "04", "08", "10", "24", "27", "32", "35", "37"}

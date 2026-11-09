@@ -12,6 +12,11 @@ ps -eo pid,etime,args --no-headers | grep -E "sbflow\.(suite40|train5|gen5|score
 echo "=== suite state (after folding scores + backfilling timing) ==="
 python3 -u sbflow/fold_scores40.py >/dev/null 2>&1 || true
 python3 -u sbflow/backfill_timing40.py >/dev/null 2>&1 || true
+# 3060 is not a git repo; the local checkout's SHA is written here by the driver.
+SHA_FILE="$ROOT/LOCAL_GIT_SHA"
+if [ -f "$SHA_FILE" ]; then
+  python3 -u sbflow/stamp_metadata40.py --sha "$(cat "$SHA_FILE")" >/dev/null 2>&1 || true
+fi
 python3 - <<'PY'
 import json
 from pathlib import Path
