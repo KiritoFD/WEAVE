@@ -35,6 +35,12 @@
 - [`L1_task_formulation/unconditional_generation_unavailable.md`](L1_task_formulation/unconditional_generation_unavailable.md)
   —— 共享模型在 4000 等效步下**无法无条件生成** Early Renaissance / Rococo / Ukiyo-e，
   因此"向这三种风格做转换"从一开始就不可能成功。
+- [`L1_task_formulation/delta_t_does_not_imply_recognizability.md`](L1_task_formulation/delta_t_does_not_imply_recognizability.md)
+  —— **ΔT 为正不等于生成图被识别为目标风格。**
+  V6 24h 全部臂的目标风格 Top-1 只有 **2.5%–10%**，而随机水平是 **20%–25%**，
+  即比随机低 4–8 倍；同时 ΔT 全部为正（+0.017 到 +0.044）。
+  ΔT 只衡量"朝目标原型的余弦位移"，不要求最终落在该原型的 Voronoi 区域内。
+  **因此 ΔT 绝不能单独报告，必须同时给 Top-1。**
 
 ### L2 机制
 
