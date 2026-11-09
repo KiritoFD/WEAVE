@@ -62,6 +62,17 @@ ARMS = [
     dict(id="L7_highC_dim32", group="L",
          note="lam_c 0.75 at the selected width dim32, single factor vs N3",
          args={"base_dim": 32, "lambda_cross": 0.35, "lambda_canon": 0.75}),
+    # L3 showed the Core64 SAMPLER is inert while L4 showed the Core64 STATISTICS were
+    # actively harmful (1024/style improves dT, DINO-C and LPIPS together). L7 showed dim32
+    # is free. Both wins were validated independently, so combining them is a sequential
+    # step rather than a confounded one.
+    dict(id="L8_k1024_dim32", group="L",
+         note="combine the two independently validated wins: dim32 + 1024/style reference",
+         args={"base_dim": 32, "ref_full": True}),
+    dict(id="L9_k1024_dim32_lc075", group="L",
+         note="full combination: dim32 + 1024/style reference + lam_c 0.75",
+         args={"base_dim": 32, "ref_full": True, "lambda_cross": 0.35,
+               "lambda_canon": 0.75}),
 
     # ---------------- 加法: spatial gating (plan section 6) ----------------
     dict(id="S1_no_inject_64", group="S", note="disable 64x64 content injection, keep stem",
@@ -90,6 +101,7 @@ ARMS = [
 # priority within a group: the plan's core questions first
 PRIORITY = ["N1_no_style", "N2_no_canon", "N3_dim32", "N5_inv_off", "N4_steps400",
             "L1_lowC", "L2_highS", "L5_same_off", "L6_highC", "L7_highC_dim32",
+            "L8_k1024_dim32", "L9_k1024_dim32_lc075",
             "L3_core_off", "L4_ref_full", "S1_no_inject_64", "S2_no_inject_32",
             "S3_no_inject_16", "S6_style_keys", "S6b_style_keys48",
             "N7_dim24", "N7_dim40"]
