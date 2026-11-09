@@ -85,11 +85,22 @@ def main() -> None:
     lpips_fn = lpips.LPIPS(net="alex", verbose=False).to(device).eval()
 
     # ---- encode every unique source once (posterior mean, frozen protocol) ----
+    # Two task schemas exist in this repo:
+    #   tasks_750.json        source_rel_path / source_style / target_style / source_stem
+    #   v5_eval200_tasks.json src_path       / src_style    / tgt_style    / src_stem
+    # Heldout400/Same150 use the first, Screen50 uses the second, so every field is read
+    # through a tolerant accessor rather than by direct indexing.
     def src_path(t):
         return t.get("source_rel_path") or t.get("src_path")
 
     def src_key(t):
         return t.get("source_stem") or t.get("src_stem") or Path(src_path(t)).stem
+
+    def src_style(t):
+        return t.get("source_style") or t.get("src_style")
+
+    def tgt_style(t):
+        return t.get("target_style") or t.get("tgt_style")
 
     uniq = {}
     for t in tasks:
@@ -125,7 +136,7 @@ def main() -> None:
         for s in range(0, len(tasks), 8):
             grp = tasks[s:s + 8]
             z = torch.cat([z_src[src_key(t)] for t in grp], 0)
-            tg = torch.tensor([STYLES.index(t["target_style"]) for t in grp], device=device)
+            tg = torch.tensor([STYLES.index(tgt_style(t)) for t in grp], device=device)
             c = canon(z, mode=canon_mode, augment=False)
             z_gen = model(c, 0.0, c, tg) if model.mode == "direct" else None
             img = decode_trt(trt, vae, z_gen, batch=8)
@@ -141,13 +152,13 @@ def main() -> None:
                           ).flatten().cpu().numpy()
             for i, t in enumerate(grp):
                 k = src_key(t)
-                tid = STYLES.index(t["target_style"])
-                sid = STYLES.index(t["source_style"])
+                tid = STYLES.index(tgt_style(t))
+                sid = STYLES.index(src_style(t))
                 sc = fg[i] @ proto.T
                 fs = csd_src[k]
                 rows.append({
                     "task_id": t["task_id"], "src_stem": k,
-                    "src_style": t["source_style"], "tgt_style": t["target_style"],
+                    "src_style": src_style(t), "tgt_style": tgt_style(t),
                     "dT": float(sc[tid] - fs @ proto[tid]),
                     "dS": float(sc[sid] - fs @ proto[sid]),
                     "target_margin": float(sc[tid] - np.delete(sc, tid).max()),
