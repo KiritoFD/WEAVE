@@ -790,9 +790,11 @@ def train_and_evaluate(args) -> dict:
     gpu_train_core = {s: style_targets["styles"][s]["core_latents"].float().to(device) for s in STYLES}
 
     torch.manual_seed(args.seed)
-    model = C3UNet(base_dim=args.base_dim, num_styles=len(STYLES), mode=args.mode).to(device)
+    model = C3UNet(base_dim=args.base_dim, num_styles=len(STYLES), mode=args.mode,
+                   no_content=args.no_content, no_style=args.no_style).to(device)
     n_params = sum(p.numel() for p in model.parameters())
     print(f"[{args.name}] mode={args.mode} params={n_params/1e6:.2f}M canon={args.canon_mode} "
+          f"no_content={args.no_content} no_style={args.no_style} "
           f"steps={args.steps} beta={args.coherence_beta} w_cross={args.w_cross}", flush=True)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
@@ -932,6 +934,8 @@ def train_and_evaluate(args) -> dict:
         "steps": args.steps,
         "effective_batch": per_style_mb * len(STYLES) * accum,
         "coherence_beta": args.coherence_beta,
+        "no_content": bool(args.no_content),
+        "no_style": bool(args.no_style),
         "w_style_dist": args.w_style_dist,
         "w_cross": args.w_cross,
         "w_canon_inv": args.w_canon_inv,
@@ -961,7 +965,12 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", required=True)
     ap.add_argument("--mode", choices=["direct", "flow"], required=True)
-    ap.add_argument("--canon-mode", choices=["c1", "c1_gentle", "c1_soft", "c2"], default="c1")
+    ap.add_argument("--canon-mode", choices=["c1", "c1_gentle", "c1_soft", "c2", "none"],
+                    default="c1")
+    ap.add_argument("--no-content", action="store_true",
+                    help="ablation: zero the content condition (same weights/params)")
+    ap.add_argument("--no-style", action="store_true",
+                    help="ablation: pin Style-ID to 0 (same weights/params)")
     ap.add_argument("--base-dim", type=int, default=56)
     ap.add_argument("--steps", type=int, default=1200)
     ap.add_argument("--microbatch", type=int, default=80)

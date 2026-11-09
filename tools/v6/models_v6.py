@@ -124,11 +124,21 @@ class C3UNet(nn.Module):
         base_dim: int = 96,
         num_styles: int = 5,
         mode: str = "flow",
+        no_content: bool = False,
+        no_style: bool = False,
     ):
         super().__init__()
         self.base_dim = base_dim
         self.num_styles = num_styles
         self.mode = mode  # "direct" or "flow"
+        # --- V6 ablation switches (docs/v6/V6_ABLATION_INVENTORY.md) -------------
+        # no_content: zero the content condition everywhere, keeping the exact same
+        #   architecture and parameter count. Tests whether the content path is what
+        #   preserves structure, or whether the model leans on the reconstruction loss.
+        # no_style: pin the Style-ID to 0, again with unchanged weights. Tests whether
+        #   the style condition is what drives the transformation.
+        self.no_content = bool(no_content)
+        self.no_style = bool(no_style)
 
         c1, c2, c3 = base_dim, base_dim * 2, base_dim * 2
         cond_dim = base_dim * 2
@@ -200,6 +210,10 @@ class C3UNet(nn.Module):
         If mode == 'flow':   returns velocity v_theta(z_tau, tau, c, s).
         """
         B = z_in.shape[0]
+        if self.no_content:
+            c = torch.zeros_like(c)
+        if self.no_style:
+            style_id = torch.zeros_like(style_id)
         if not torch.is_tensor(tau):
             tau_t = torch.full((B,), float(tau), device=z_in.device, dtype=torch.float32)
         else:

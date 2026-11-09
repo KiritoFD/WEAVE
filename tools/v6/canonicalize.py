@@ -114,6 +114,11 @@ class ContentCanonicalizer(nn.Module):
         mode: str = "c2",
         augment: bool = False,
     ) -> torch.Tensor:
+        if mode == "none":
+            # V6 ablation: no canonicalization at all. The generator receives the raw
+            # latent as its "content" condition, so any remaining content preservation
+            # cannot be attributed to C.
+            return z.float()
         orig_dtype = z.dtype
         ll, lh, hl, hh = dwt2_haar(z.float())
 
