@@ -39,6 +39,18 @@ def main() -> None:
     styles = list(src["styles"])
     print(f"[floor] gamma={gamma:.6f} pool={csd.shape} styles={sorted(set(styles))}")
 
+    # Calibration for P3: how often does the CSD prototype classifier label a REAL image
+    # of style s as s? That is the ceiling a generated cloud should be compared against,
+    # not 1.0.
+    proto = None
+    try:
+        import sys
+        sys.path.insert(0, str(ROOT))
+        from tools.v5.route_c import csd_prototypes
+        proto = np.asarray(csd_prototypes(), dtype=np.float32)
+    except Exception as e:  # noqa: BLE001
+        print(f"[floor] prototype calibration unavailable: {e}")
+
     out = {"mmd_gamma": gamma, "by_style": {}}
     for s in STYLES:
         idx = [i for i, x in enumerate(styles) if x == s]
@@ -54,11 +66,19 @@ def main() -> None:
         perm = rng.permutation(len(pool))
         h = len(pool) // 2
         half_swd = swd(pool[perm[:h]], pool[perm[h:2 * h]])
-        out["by_style"][s] = {"n_pool": int(len(pool)), "n_ref": int(len(ref)),
-                              "real_vs_ref_swd": d_swd, "real_vs_ref_mmd": d_mmd,
-                              "half_split_swd": half_swd}
+        entry = {"n_pool": int(len(pool)), "n_ref": int(len(ref)),
+                 "real_vs_ref_swd": d_swd, "real_vs_ref_mmd": d_mmd,
+                 "half_split_swd": half_swd}
+        if proto is not None:
+            v = pool @ proto.T
+            entry["real_style_top1"] = float(np.mean(v.argmax(1) == STYLES.index(s)))
+            entry["real_style_margin"] = float(np.mean(
+                v[:, STYLES.index(s)] - np.delete(v, STYLES.index(s), axis=1).max(1)))
+        out["by_style"][s] = entry
+        top1 = entry.get("real_style_top1")
         print(f"  {s:20s} n={len(pool):5d} real-vs-ref SWD={d_swd:.5f} "
-              f"MMD={d_mmd:.5f} | half-split SWD={half_swd:.5f}")
+              f"MMD={d_mmd:.5f} | half-split SWD={half_swd:.5f}"
+              + (f" | real style_top1={top1:.4f}" if top1 is not None else ""))
 
     vals = [v["real_vs_ref_swd"] for v in out["by_style"].values()]
     out["mean_real_vs_ref_swd"] = float(np.mean(vals)) if vals else None
