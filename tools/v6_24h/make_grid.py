@@ -66,15 +66,21 @@ def main() -> None:
                                             map_location="cpu", weights_only=False)).to(dev)
 
     tasks = json.loads((V5_ROOT / "v5_eval200_tasks.json").read_text(encoding="utf-8"))
-    # one task per distinct source, spread across source styles so the grid is not all one look
-    seen, picked = set(), []
+    # One source per distinct SOURCE STYLE. Taking the first N distinct sources gave four
+    # Early_Renaissance images, which made the grid useless for judging whether different sources
+    # behave differently. Spread across styles instead.
+    by_style, seen = {}, set()
     for t in tasks:
         if t["src_stem"] in seen:
             continue
         seen.add(t["src_stem"])
-        picked.append(t)
-        if len(picked) >= args.n_sources:
-            break
+        by_style.setdefault(t["src_style"], []).append(t)
+    picked = []
+    for s in STYLES:
+        if by_style.get(s):
+            picked.append(by_style[s][0])
+    picked = picked[: args.n_sources] if args.n_sources < len(picked) else picked
+    print(f"[grid] sources: {[t['src_style'] for t in picked]}", flush=True)
 
     lat = torch.load(V5_ROOT / "cache" / "eval_src_latents.pt", map_location="cpu")
     vae = load_vae(dev)
