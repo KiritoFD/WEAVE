@@ -135,7 +135,46 @@ def main() -> None:
                   f"mean SWD = {overall['csd_swd']:.5f}**", "",
               "多样性比 = 生成云内平均成对余弦距离 / 真实参考云内同一统计量。",
               "接近 1 表示多样性正常；明显 < 1 说明模式塌缩（即使 style Top-1 很高）。",
-              "SWD 地板参考 0.0111（真实 vs 参考集）。", ""]
+              "SWD 地板参考 0.0111（真实 vs 参考集）。",
+              "**style Top-1 的真实图上界 ≈ 0.98**（ER 1.00 / Imp 0.967 / Min 1.00 /"
+              " Roc 0.933 / Ukiyo 1.00），见 V11_METRICS.md。", ""]
+
+    # ---- verdict against the real-image ceiling ----
+    CEIL = {"Early_Renaissance": 1.0000, "Impressionism": 0.9667,
+            "Minimalism": 1.0000, "Rococo": 0.9333, "Ukiyo_e": 1.0000}
+    gen, weak = [], []
+    for s in STYLES:
+        if s not in report:
+            continue
+        r = report[s]
+        frac = r["style_top1"] / max(CEIL[s], 1e-9)
+        r["ceiling_frac"] = frac
+        (gen if frac >= 0.7 else weak).append((s, r["style_top1"], frac))
+    lines += ["## 判读（对照真实图上界 0.98）", ""]
+    if gen:
+        lines.append("**能生成**（style Top-1 ≥ 上界的 70%）：")
+        for s, t1, f in gen:
+            lines.append(f"- {s}：Top-1 {t1:.3f}，达上界 {f*100:.0f}%")
+    if weak:
+        lines.append("")
+        lines.append("**不能生成**（style Top-1 < 上界的 70%）：")
+        for s, t1, f in weak:
+            lines.append(f"- {s}：Top-1 {t1:.3f}，仅达上界 {f*100:.0f}%")
+    lines.append("")
+    if len(weak) == 0:
+        lines.append("**结论**：共享模型能够生成全部五种风格。"
+                     "因此跨域转换的失败应归因于内容条件与运输约束（P4 方向），"
+                     "而不是目标分布建模能力。")
+    elif len(gen) == 0:
+        lines.append("**结论**：共享模型连无条件生成都失败。"
+                     "跨域运输在此前提下无从谈起，问题在目标分布建模本身"
+                     "（容量 / 数据 / 潜空间表征）。")
+    else:
+        names = "、".join(s for s, _, _ in weak)
+        lines.append(f"**结论**：部分风格可生成，但 {names} 不能。"
+                     "说明问题同时涉及目标分布建模（对失败风格）与内容条件（对成功风格）。"
+                     "应先诊断失败风格的共同特征，再决定是扩容量还是改表征。")
+    lines.append("")
     (out / "uncond_summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
 
