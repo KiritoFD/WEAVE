@@ -56,19 +56,22 @@ if grep -qaE "^Traceback" "$LOG"; then
   exit 3
 fi
 
-say "=========== 2/5 CSD manifold check ==========="
+say "=========== 2/6 CSD manifold check ==========="
 python3 -u -m tools.v6_24h.csd_manifold_check --ckpt "$BEST" \
-  --out runs/v6_24h/csd_manifold_L7.json 2>&1 | tee -a "$LOG"
+  --out runs/v6_24h/csd_manifold_best.json 2>&1 | tee -a "$LOG"
 
-say "=========== 3/5 M0 main line (alpha 0..1) ==========="
+say "=========== 3/6 visual grid for human blind rating ==========="
+python3 -u -m tools.v6_24h.make_grid --ckpt "$BEST" --n-sources 4 2>&1 | tee -a "$LOG"
+
+say "=========== 4/6 M0 main line (alpha 0..1) ==========="
 python3 -u -m tools.v6_24h.m0_alpha --ckpt "$BEST" \
   --alphas 0,0.25,0.5,0.75,1.0 --out runs/v6_24h/m0_main 2>&1 | tee -a "$LOG"
 
-say "=========== 4/5 M0 extrapolation (alpha 1.25..2.0, DIAGNOSTIC) ==========="
+say "=========== 5/6 M0 extrapolation (alpha 1.25..2.0, DIAGNOSTIC) ==========="
 python3 -u -m tools.v6_24h.m0_alpha --ckpt "$BEST" --allow-extrapolation \
   --alphas 1.25,1.5,1.75,2.0 --out runs/v6_24h/m0_extrap 2>&1 | tee -a "$LOG"
 
-say "=========== 5/5 P5 Heldout400 + Same150 ==========="
+say "=========== 6/6 P5 Heldout400 + Same150 ==========="
 # Finalists are chosen per tier plus the mechanism arm:
 #   L7  fidelity + balanced tier winner (dim32, lambda_c 0.75, 5/5)
 #   L4  the only arm that strictly dominates A0 on all three axes (1024/style reference)
