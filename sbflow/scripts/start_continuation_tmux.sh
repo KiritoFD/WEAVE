@@ -9,7 +9,8 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
   tmux list-panes -t "$SESSION" -F '  #{pane_id} #{pane_pid} #{pane_current_command}'
   exit 0
 fi
-tmux new-session -d -s "$SESSION" -n watch "bash $SCRIPT; echo EXIT=\$?; sleep 86400"
+# The session must EXIT when the continuation is done so the Full750 watcher can see it.
+tmux new-session -d -s "$SESSION" -n watch "bash $SCRIPT; echo EXIT=\$?"
 sleep 2
 echo "started tmux '$SESSION'"
 tmux list-panes -t "$SESSION" -F '  #{pane_id} #{pane_pid} #{pane_current_command}'
