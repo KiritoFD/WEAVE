@@ -127,6 +127,9 @@ class C3UNet(nn.Module):
         no_content: bool = False,
         no_style: bool = False,
         content_mode: str = "full",
+        inject_64: bool = True,
+        inject_32: bool = True,
+        inject_16: bool = True,
     ):
         super().__init__()
         self.base_dim = base_dim
@@ -146,6 +149,11 @@ class C3UNet(nn.Module):
             else content_mode
         self.no_content = self.content_mode != "full"
         self.no_style = bool(no_style)
+        # Per-scale content injection switches (plan S1/S2/S3). Passing None to a block
+        # exactly disables its content_proj branch, leaving every other weight untouched.
+        self.inject_64 = bool(inject_64)
+        self.inject_32 = bool(inject_32)
+        self.inject_16 = bool(inject_16)
 
         c1, c2, c3 = base_dim, base_dim * 2, base_dim * 2
         cond_dim = base_dim * 2
@@ -240,28 +248,33 @@ class C3UNet(nn.Module):
 
         x0 = torch.cat([z_in, c, z_in - c], dim=1)
         h64 = self.stem64(x0)
-        h64 = self.enc64_1(h64, cond, c)
-        h64 = self.enc64_2(h64, cond, c)
+        # Per-scale injection gates (plan S1/S2/S3): None disables only that scale's
+        # content_proj branch; all other weights are untouched.
+        i64 = c if self.inject_64 else None
+        i32 = c32 if self.inject_32 else None
+        i16 = c16 if self.inject_16 else None
+        h64 = self.enc64_1(h64, cond, i64)
+        h64 = self.enc64_2(h64, cond, i64)
 
         h32 = self.down32(h64)
-        h32 = self.enc32_1(h32, cond, c32)
-        h32 = self.enc32_2(h32, cond, c32)
+        h32 = self.enc32_1(h32, cond, i32)
+        h32 = self.enc32_2(h32, cond, i32)
 
         h16 = self.down16(h32)
-        h16 = self.mid16_1(h16, cond, c16)
-        h16 = self.mid16_2(h16, cond, c16)
+        h16 = self.mid16_1(h16, cond, i16)
+        h16 = self.mid16_2(h16, cond, i16)
 
         u32 = F.interpolate(h16, scale_factor=2.0, mode="nearest")
         u32 = self.up32(u32)
         u32 = self.dec32_proj(torch.cat([u32, h32], dim=1))
-        u32 = self.dec32_1(u32, cond, c32)
-        u32 = self.dec32_2(u32, cond, c32)
+        u32 = self.dec32_1(u32, cond, i32)
+        u32 = self.dec32_2(u32, cond, i32)
 
         u64 = F.interpolate(u32, scale_factor=2.0, mode="nearest")
         u64 = self.up64(u64)
         u64 = self.dec64_proj(torch.cat([u64, h64], dim=1))
-        u64 = self.dec64_1(u64, cond, c)
-        u64 = self.dec64_2(u64, cond, c)
+        u64 = self.dec64_1(u64, cond, i64)
+        u64 = self.dec64_2(u64, cond, i64)
 
         go, bo = self.out_adaln(cond).chunk(2, dim=-1)
         u_out = F.silu(self.out_norm(u64) * (1.0 + go[:, :, None, None]) + bo[:, :, None, None])

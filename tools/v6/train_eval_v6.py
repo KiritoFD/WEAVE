@@ -771,12 +771,22 @@ def train_and_evaluate(args) -> dict:
 
     global_stats = torch.load(V6_ROOT / "cache" / "canonicalizer_stats.pt", map_location="cpu", weights_only=False)
     canon = ContentCanonicalizer(global_stats).to(device)
-    style_targets = build_indomain_style_targets(train_by_style, asset_root, device=device, top_k=64)
+    # Plan L4: Core64 vs a larger reference pool. "Full" is infeasible in memory
+    # (8,989 Impressionism latents alone is ~590 MB on GPU), so 1024/style is used as
+    # the largest practical pool and the cap is recorded.
+    ref_top_k = args.ref_top_k if args.ref_top_k > 0 else (1024 if args.ref_full else 64)
+    style_targets = build_indomain_style_targets(train_by_style, asset_root, device=device,
+                                                 top_k=ref_top_k)
+    print(f"[{args.name}] reference pool: top_k={ref_top_k}/style "
+          f"(Core64={ref_top_k == 64})", flush=True)
 
     # Load frozen in-domain B1 LatentStyleEncoder (trained only on D5 real latents)
     b1_ckpt_path = V5_ROOT / "b1_style_encoder" / "latent_style_encoder.pt"
     b1_encoder, b1_protos = None, None
-    if b1_ckpt_path.exists() and args.w_style_dist > 0:
+    b1_status = "disabled_by_flag" if args.no_b1 else (
+        "missing_ckpt" if not b1_ckpt_path.exists() else
+        "disabled_by_w_style_dist" if args.w_style_dist <= 0 else "loaded")
+    if b1_status == "loaded":
         from tools.v5.b1_latent_style_encoder import LatentStyleEncoder
         b1_ck = torch.load(b1_ckpt_path, map_location="cpu", weights_only=False)
         b1_encoder = LatentStyleEncoder().to(device).eval()
@@ -784,6 +794,11 @@ def train_and_evaluate(args) -> dict:
         for p in b1_encoder.parameters():
             p.requires_grad_(False)
         b1_protos = torch.stack([b1_ck["prototypes"][s] for s in STYLES]).to(device)
+    # P0 requirement: prove whether the B1 branch is actually active, instead of
+    # assuming it. A missing checkpoint used to be silent.
+    print(f"[{args.name}] B1 branch: {b1_status} "
+          f"(ckpt_exists={b1_ckpt_path.exists()}, w_style_dist={args.w_style_dist})",
+          flush=True)
 
     # Move training tensors per style to GPU (~900 MiB total)
     gpu_train_all = {s: train_by_style[s].to(device) for s in STYLES}
@@ -792,11 +807,21 @@ def train_and_evaluate(args) -> dict:
     torch.manual_seed(args.seed)
     model = C3UNet(base_dim=args.base_dim, num_styles=len(STYLES), mode=args.mode,
                    no_content=args.no_content, no_style=args.no_style,
-                   content_mode=args.content_mode).to(device)
+                   content_mode=args.content_mode,
+                   inject_64=not args.no_inject_64,
+                   inject_32=not args.no_inject_32,
+                   inject_16=not args.no_inject_16).to(device)
     n_params = sum(p.numel() for p in model.parameters())
+    # Plan section 5: decoupled absolute coefficients.
+    lam_s = args.lambda_cross if args.lambda_cross >= 0 else args.w_cross
+    lam_c = (args.lambda_canon if args.lambda_canon >= 0
+             else args.w_cross * args.w_canon_inv)
+    lam_same = 0.0 if args.no_same_style else args.w_style_dist
     print(f"[{args.name}] mode={args.mode} params={n_params/1e6:.2f}M canon={args.canon_mode} "
           f"content_mode={args.content_mode} no_style={args.no_style} "
-          f"steps={args.steps} beta={args.coherence_beta} w_cross={args.w_cross}", flush=True)
+          f"inject=({model.inject_64},{model.inject_32},{model.inject_16}) "
+          f"lam_same={lam_same} lam_s={lam_s} lam_c={lam_c} "
+          f"steps={args.steps} beta={args.coherence_beta}", flush=True)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.steps, eta_min=1e-5)
@@ -804,6 +829,7 @@ def train_and_evaluate(args) -> dict:
     per_style_mb = max(4, args.microbatch // len(STYLES))
     accum = args.accum
     loss_hist = []
+    diag = {}
     t0 = time.time()
 
     for step in range(1, args.steps + 1):
@@ -815,13 +841,24 @@ def train_and_evaluate(args) -> dict:
             # Class-balanced sampling: 50% from full style pool, 50% from core style pool
             z_chunks, y_chunks = [], []
             for sid, s in enumerate(STYLES):
-                n_core = per_style_mb // 2
-                n_all = per_style_mb - n_core
+                if args.core_sampler_off:
+                    # plan L3: 0% from the Core64 pool; reference stats still come from
+                    # Core64, so this isolates the sampling question from the target one.
+                    n_core = 0
+                    n_all = per_style_mb
+                else:
+                    n_core = per_style_mb // 2
+                    n_all = per_style_mb - n_core
                 pool_c = gpu_train_core[s]
                 pool_a = gpu_train_all[s]
-                idx_c = torch.randint(0, pool_c.shape[0], (n_core,), device=device)
-                idx_a = torch.randint(0, pool_a.shape[0], (n_all,), device=device)
-                z_chunks.append(torch.cat([pool_c[idx_c], pool_a[idx_a]], dim=0))
+                parts = []
+                if n_core > 0:
+                    idx_c = torch.randint(0, pool_c.shape[0], (n_core,), device=device)
+                    parts.append(pool_c[idx_c])
+                if n_all > 0:
+                    idx_a = torch.randint(0, pool_a.shape[0], (n_all,), device=device)
+                    parts.append(pool_a[idx_a])
+                z_chunks.append(torch.cat(parts, dim=0))
                 y_chunks.append(torch.full((per_style_mb,), sid, device=device, dtype=torch.long))
 
             z_real = torch.cat(z_chunks, dim=0)
@@ -852,9 +889,34 @@ def train_and_evaluate(args) -> dict:
                 l_style_same = compute_style_distribution_loss(
                     z1_est, y_real, style_targets, b1_encoder=b1_encoder, b1_protos=b1_protos
                 )
-                loss = args.w_rec * l_rec + args.w_style_dist * l_style_same
+                loss = args.w_rec * l_rec + lam_same * l_style_same
 
-                if args.w_cross > 0.0:
+                # P0 requirement: prove the B1/style-distribution branch actually carries
+                # gradient into the generator on a real batch, instead of inferring it
+                # from a non-zero loss value.
+                if step == 1 and "b1_grad" not in diag:
+                    _gp = [p for p in model.parameters() if p.requires_grad]
+
+                    def _gn(t):
+                        gs = torch.autograd.grad(t, _gp, retain_graph=True,
+                                                 allow_unused=True)
+                        s = torch.zeros((), device=device)
+                        for g in gs:
+                            if g is not None:
+                                s = s + g.detach().float().square().sum()
+                        return float(s.sqrt())
+
+                    diag["b1_loss"] = float(l_style_same)
+                    diag["b1_grad"] = _gn(lam_same * l_style_same)
+                    diag["rec_grad"] = _gn(args.w_rec * l_rec)
+                    diag["b1_status"] = b1_status
+                    print(f"[{args.name}] step1 diag: L_style_same={diag['b1_loss']:.6f} "
+                          f"grad(lam_same*L_same)={diag['b1_grad']:.6e} "
+                          f"grad(L_rec)={diag['rec_grad']:.6e} "
+                          f"ratio={diag['b1_grad']/max(diag['rec_grad'],1e-12):.4f} "
+                          f"b1={b1_status}", flush=True)
+
+                if lam_s > 0.0 or lam_c > 0.0:
                     # Cross-style pass on the exact same canonical content c_in with shifted target Style-ID
                     shift = torch.randint(1, len(STYLES), (z_real.shape[0],), device=device)
                     y_cross = (y_real + shift) % len(STYLES)
@@ -876,7 +938,7 @@ def train_and_evaluate(args) -> dict:
                         F.mse_loss(c_ll_gen, c_ll_real)
                         + 0.35 * (F.mse_loss(c_lh_gen, c_lh_real) + F.mse_loss(c_hl_gen, c_hl_real))
                     )
-                    loss = loss + args.w_cross * (l_style_cross + args.w_canon_inv * l_canon_inv)
+                    loss = loss + lam_s * l_style_cross + lam_c * l_canon_inv
 
                 loss_scaled = loss / accum
 
@@ -941,6 +1003,16 @@ def train_and_evaluate(args) -> dict:
         "w_style_dist": args.w_style_dist,
         "w_cross": args.w_cross,
         "w_canon_inv": args.w_canon_inv,
+        "lambda_cross_abs": lam_s,
+        "lambda_canon_abs": lam_c,
+        "lambda_same_abs": lam_same,
+        "b1_status": b1_status,
+        "ref_top_k": ref_top_k,
+        "core_sampler_off": bool(args.core_sampler_off),
+        "inject_64": model.inject_64,
+        "inject_32": model.inject_32,
+        "inject_16": model.inject_16,
+        "grad_diag": diag,
         "ode_steps": args.ode_steps,
         "sigma0": args.sigma0,
         "seed": args.seed,
@@ -988,6 +1060,27 @@ def main() -> None:
     ap.add_argument("--w-style-dist", type=float, default=0.5)
     ap.add_argument("--w-cross", type=float, default=0.5)
     ap.add_argument("--w-canon-inv", type=float, default=1.5)
+    # --- plan section 5: decouple the product form lam_c = w_cross * w_canon_inv ---
+    # Pass absolute coefficients to get L = L_rec + 0.25 L_same + lam_s L_cross + lam_c L_inv.
+    # -1 means "not set" -> fall back to the historical product form.
+    ap.add_argument("--lambda-cross", type=float, default=-1.0,
+                    help="absolute lam_s. Overrides --w-cross when >= 0")
+    ap.add_argument("--lambda-canon", type=float, default=-1.0,
+                    help="absolute lam_c. Overrides --w-cross*--w-canon-inv when >= 0")
+    ap.add_argument("--no-same-style", action="store_true",
+                    help="plan L5: set lam_same=0, keep L_rec")
+    ap.add_argument("--no-b1", action="store_true",
+                    help="plan N6: drop the B1 latent-style-encoder branch only")
+    ap.add_argument("--core-sampler-off", action="store_true",
+                    help="plan L3: sample 0%% from the Core64 pool (reference stats unchanged)")
+    ap.add_argument("--ref-full", action="store_true",
+                    help="plan L4: build style reference stats from a much larger train "
+                         "pool (1024/style) instead of Core64 (sampling unchanged)")
+    ap.add_argument("--ref-top-k", type=int, default=0,
+                    help="explicit reference-pool size per style; overrides --ref-full")
+    ap.add_argument("--no-inject-64", action="store_true", help="plan S1")
+    ap.add_argument("--no-inject-32", action="store_true", help="plan S2")
+    ap.add_argument("--no-inject-16", action="store_true", help="plan S3")
     ap.add_argument("--ode-steps", type=int, default=8)
     ap.add_argument("--sigma0", type=float, default=0.10)
     ap.add_argument("--seed", type=int, default=42)

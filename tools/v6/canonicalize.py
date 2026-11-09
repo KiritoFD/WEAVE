@@ -146,7 +146,11 @@ class ContentCanonicalizer(nn.Module):
         elif mode == "c1_soft":
             ll_full = ll_n * self.ll_std + self.ll_mean
             lh_full = lh_n * self.lh_std + self.lh_mean
-            hl_full = hl_n * self.hl_std + self.lh_mean
+            # FIX (plan section 3): was `hl_n * self.hl_std + self.lh_mean`, i.e. it used
+            # the LH mean for the HL band. c1_gentle and c1 do not touch this line, so A0
+            # is unaffected; historical c1_soft results must be re-read as a different
+            # (buggy) variant rather than a clean canonicalizer ablation.
+            hl_full = hl_n * self.hl_std + self.hl_mean
             hh_full = hh_n * self.hh_std + self.hh_mean
             ll_c = 0.68 * ll + 0.32 * ll_full
             lh_c = 0.76 * lh + 0.24 * lh_full
