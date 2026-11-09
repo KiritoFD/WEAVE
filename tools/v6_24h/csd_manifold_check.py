@@ -68,6 +68,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt", default="")
     ap.add_argument("--out", default="runs/v6_24h/csd_manifold.json")
+    ap.add_argument("--limit", type=int, default=0,
+                    help="smoke-test mode: generate for only the first N tasks")
     ap.add_argument("--device", default="cuda")
     args = ap.parse_args()
 
@@ -109,7 +111,10 @@ def main() -> None:
                        content_mode=a.get("content_mode", "full"),
                        inject_64=not a.get("no_inject_64", False),
                        inject_32=not a.get("no_inject_32", False),
-                       inject_16=not a.get("no_inject_16", False)).to(dev)
+                       inject_16=not a.get("no_inject_16", False),
+                       style_keys=bool(a.get("style_keys", False)),
+                       style_keys_n=int(a.get("style_keys_n", 8) or 8),
+                       style_keys_rank=int(a.get("style_keys_rank", 32) or 32)).to(dev)
         model.load_state_dict(ck["model"])
         model.eval()
         canon_mode = a.get("canon_mode", "c1_gentle")
@@ -118,6 +123,8 @@ def main() -> None:
             weights_only=False)).to(dev)
 
         tasks = json.loads((V5_ROOT / "v5_eval200_tasks.json").read_text(encoding="utf-8"))
+        if args.limit:
+            tasks = tasks[: args.limit]
         lat = torch.load(V5_ROOT / "cache" / "eval_src_latents.pt", map_location="cpu")
         stems = sorted({t["src_stem"] for t in tasks})
         idx = {s: i for i, s in enumerate(stems)}

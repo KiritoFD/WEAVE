@@ -45,6 +45,8 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--canon-mode", default="")
     ap.add_argument("--weights", choices=["raw", "ema"], default="raw")
+    ap.add_argument("--limit", type=int, default=0,
+                    help="smoke-test mode: evaluate only the first N tasks")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = ap.parse_args()
     device = args.device
@@ -57,7 +59,10 @@ def main() -> None:
                    content_mode=a.get("content_mode", "full"),
                    inject_64=not a.get("no_inject_64", False),
                    inject_32=not a.get("no_inject_32", False),
-                   inject_16=not a.get("no_inject_16", False)).to(device)
+                   inject_16=not a.get("no_inject_16", False),
+                   style_keys=bool(a.get("style_keys", False)),
+                   style_keys_n=int(a.get("style_keys_n", 8) or 8),
+                   style_keys_rank=int(a.get("style_keys_rank", 32) or 32)).to(device)
     model.load_state_dict(ck["model"])
     model.eval()
     canon_mode = args.canon_mode or a.get("canon_mode", "c1_gentle")
@@ -66,8 +71,10 @@ def main() -> None:
 
     spec = json.loads((ROOT / args.tasks).read_text(encoding="utf-8"))
     tasks = spec["tasks"]
+    if args.limit:
+        tasks = tasks[: args.limit]
     print(f"[tiers] {spec['protocol']['name']}: {len(tasks)} tasks, ckpt={args.ckpt}, "
-          f"canon={canon_mode}", flush=True)
+          f"canon={canon_mode}" + (" [SMOKE]" if args.limit else ""), flush=True)
 
     proto = csd_prototypes()
     csd, _, _ = csd_model.load_csd(device)
