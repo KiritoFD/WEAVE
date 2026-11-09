@@ -42,10 +42,14 @@ def sha256(o) -> str:
 
 
 def select(spec: str) -> List[str]:
+    """Core-first ordering: the nine required controls always precede the rest."""
+    all_ids = [f"{i:02d}" for i in range(1, 41)]
     if spec == "all":
-        return [f"{i:02d}" for i in range(1, 41)]
+        return list(CORE) + [i for i in all_ids if i not in CORE]
     if spec == "core":
         return list(CORE)
+    if spec == "rest":
+        return [i for i in all_ids if i not in CORE]
     out = []
     for part in spec.split(","):
         part = part.strip()
@@ -126,7 +130,10 @@ def main() -> None:
     ap.add_argument("--eval-subset", default="quick200")
     ap.add_argument("--python", default=sys.executable)
     ap.add_argument("--score-threads", type=int, default=4)
+    ap.add_argument("--max-hours", type=float, default=12.0,
+                    help="hard wall-clock budget; unfinished arms are marked incomplete")
     args = ap.parse_args()
+    deadline = time.monotonic() + args.max_hours * 3600
 
     root = ROOT / args.root if not Path(args.root).is_absolute() else Path(args.root)
     (root / "configs").mkdir(parents=True, exist_ok=True)
@@ -138,6 +145,19 @@ def main() -> None:
         return
 
     ids = select(args.arms)
+    # A running core session can be extended to the full 40 without being restarted:
+    # drop a queue.json file containing {"append": "rest"} (or any arm spec).
+    qf = root / "queue.json"
+    if qf.exists():
+        try:
+            append = json.loads(qf.read_text()).get("append", "")
+            if append:
+                for x in select(append):
+                    if x not in ids:
+                        ids.append(x)
+                print(f"[suite40] queue.json appended {append}; now {len(ids)} arms", flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"[suite40] ignoring malformed queue.json: {e}", flush=True)
     pending = []
     print(f"[suite40] arms={ids} eval={args.eval_subset} git={git_sha()} root={root}", flush=True)
 
@@ -150,6 +170,14 @@ def main() -> None:
              "--epochs", "60"], root / "logs/style_encoder.log")
 
     for aid in ids:
+        if time.monotonic() > deadline:
+            rec = state.get(aid, {"id": aid, "group": "", "note": ""})
+            if rec.get("status") not in ("done", "trained"):
+                rec["status"] = "incomplete"
+                rec["error"] = f"exceeded {args.max_hours}h wall-clock budget"
+                state[aid] = rec
+                print(f"[suite40] {aid} INCOMPLETE: hard time budget reached", flush=True)
+            continue
         cfg = json.loads((CONFIGS / f"exp{aid}.json").read_text(encoding="utf-8"))
         rcfg = resolve(cfg, root)
         cfg_path = root / "configs" / f"exp{aid}.json"
