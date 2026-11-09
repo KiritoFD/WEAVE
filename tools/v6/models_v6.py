@@ -126,18 +126,25 @@ class C3UNet(nn.Module):
         mode: str = "flow",
         no_content: bool = False,
         no_style: bool = False,
+        content_mode: str = "full",
     ):
         super().__init__()
         self.base_dim = base_dim
         self.num_styles = num_styles
         self.mode = mode  # "direct" or "flow"
         # --- V6 ablation switches (docs/v6/V6_ABLATION_INVENTORY.md) -------------
-        # no_content: zero the content condition everywhere, keeping the exact same
-        #   architecture and parameter count. Tests whether the content path is what
-        #   preserves structure, or whether the model leans on the reconstruction loss.
-        # no_style: pin the Style-ID to 0, again with unchanged weights. Tests whether
-        #   the style condition is what drives the transformation.
-        self.no_content = bool(no_content)
+        # content_mode:
+        #   "full"      normal
+        #   "no_inject" zero the per-block content injection, but the stem still sees
+        #               z_in (which equals c in direct mode), so content is NOT removed.
+        #               This isolates the cheap 0.6%-of-params injection path.
+        #   "none"      zero BOTH z_in and c, so the network sees no content at all and
+        #               the direct residual starts from 0. This is the true
+        #               style-only-generation control.
+        # no_style: pin Style-ID to 0 (same weights/params).
+        self.content_mode = "no_inject" if no_content and content_mode == "full" \
+            else content_mode
+        self.no_content = self.content_mode != "full"
         self.no_style = bool(no_style)
 
         c1, c2, c3 = base_dim, base_dim * 2, base_dim * 2
@@ -210,7 +217,10 @@ class C3UNet(nn.Module):
         If mode == 'flow':   returns velocity v_theta(z_tau, tau, c, s).
         """
         B = z_in.shape[0]
-        if self.no_content:
+        if self.content_mode == "none":
+            z_in = torch.zeros_like(z_in)
+            c = torch.zeros_like(c)
+        elif self.content_mode == "no_inject":
             c = torch.zeros_like(c)
         if self.no_style:
             style_id = torch.zeros_like(style_id)

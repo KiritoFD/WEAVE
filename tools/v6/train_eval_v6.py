@@ -791,10 +791,11 @@ def train_and_evaluate(args) -> dict:
 
     torch.manual_seed(args.seed)
     model = C3UNet(base_dim=args.base_dim, num_styles=len(STYLES), mode=args.mode,
-                   no_content=args.no_content, no_style=args.no_style).to(device)
+                   no_content=args.no_content, no_style=args.no_style,
+                   content_mode=args.content_mode).to(device)
     n_params = sum(p.numel() for p in model.parameters())
     print(f"[{args.name}] mode={args.mode} params={n_params/1e6:.2f}M canon={args.canon_mode} "
-          f"no_content={args.no_content} no_style={args.no_style} "
+          f"content_mode={args.content_mode} no_style={args.no_style} "
           f"steps={args.steps} beta={args.coherence_beta} w_cross={args.w_cross}", flush=True)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
@@ -935,6 +936,7 @@ def train_and_evaluate(args) -> dict:
         "effective_batch": per_style_mb * len(STYLES) * accum,
         "coherence_beta": args.coherence_beta,
         "no_content": bool(args.no_content),
+        "content_mode": args.content_mode,
         "no_style": bool(args.no_style),
         "w_style_dist": args.w_style_dist,
         "w_cross": args.w_cross,
@@ -968,7 +970,12 @@ def main() -> None:
     ap.add_argument("--canon-mode", choices=["c1", "c1_gentle", "c1_soft", "c2", "none"],
                     default="c1")
     ap.add_argument("--no-content", action="store_true",
-                    help="ablation: zero the content condition (same weights/params)")
+                    help="ablation: zero the per-block content injection (content is "
+                         "still visible to the stem). Same weights/params.")
+    ap.add_argument("--content-mode", choices=["full", "no_inject", "none"],
+                    default="full",
+                    help="ablation: 'none' also zeros z_in, i.e. a true "
+                         "style-only-generation control")
     ap.add_argument("--no-style", action="store_true",
                     help="ablation: pin Style-ID to 0 (same weights/params)")
     ap.add_argument("--base-dim", type=int, default=56)
