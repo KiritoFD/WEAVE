@@ -318,6 +318,49 @@ def normalized_target_batch(x, y, coeffs):
     return (y - my - cs * (x - mx)) / co
 
 
+def direct_velocity_coefficients_batch(t, epsilon, mu0, mu1, var0, var1, cov01, tiny=1e-8):
+    """Per-sample direct-velocity EDM coefficients (see `direct_velocity_coefficients`)."""
+    if epsilon < 0:
+        raise ValueError("epsilon must be non-negative")
+    if (t <= 0).any() or (t >= 1).any():
+        raise ValueError("t must be in (0,1)")
+    tt = t.view(-1, 1)
+    mu0, mu1 = mu0.to(t.dtype), mu1.to(t.dtype)
+    v0, v1, cov = var0.to(t.dtype), var1.to(t.dtype), cov01.to(t.dtype)
+    mx = (1 - tt) * mu0 + tt * mu1
+    my = mu1 - mu0
+    vd = (v0 + v1 - 2 * cov).clamp_min(0)
+    cvu = cov - v0
+    s2 = epsilon * tt * (1 - tt)
+    c2 = epsilon * (1 - 2 * tt) ** 2 / (4 * tt * (1 - tt)).clamp_min(tiny)
+    s_c = epsilon * (1 - 2 * tt) / 2
+    vx = (v0 + tt * tt * vd + 2 * tt * cvu + s2).clamp_min(tiny)
+    cyx = cvu + tt * vd + s_c
+    vy = (vd + c2).clamp_min(tiny)
+    ci = vx.rsqrt()
+    cs = cyx / vx
+    co = (vy - cyx * cyx / vx).clamp_min(tiny).sqrt()
+    return [v.view(v.shape[0], v.shape[1], 1, 1) for v in (mx, my, ci, cs, co)]
+
+
+def endpoint_coefficients_batch(t, epsilon, mu0, mu1, var0, var1, cov01, tiny=1e-8):
+    """Per-sample endpoint-expectation coefficients (see `endpoint_coefficients`)."""
+    if (t <= 0).any() or (t >= 1).any():
+        raise ValueError("t must be in (0,1)")
+    tt = t.view(-1, 1)
+    mu0, mu1 = mu0.to(t.dtype), mu1.to(t.dtype)
+    v0, v1, cov = var0.to(t.dtype), var1.to(t.dtype), cov01.to(t.dtype)
+    mx = (1 - tt) * mu0 + tt * mu1
+    my = mu1
+    vx = ((1 - tt) ** 2 * v0 + tt * tt * v1 + 2 * tt * (1 - tt) * cov
+          + epsilon * tt * (1 - tt)).clamp_min(tiny)
+    c1z = (1 - tt) * cov + tt * v1
+    ci = vx.rsqrt()
+    cs = c1z / vx
+    co = (v1 - c1z * c1z / vx).clamp_min(tiny).sqrt()
+    return [v.view(v.shape[0], v.shape[1], 1, 1) for v in (mx, my, ci, cs, co)]
+
+
 def endpoint_coefficients(t, epsilon, moments: PairMoments, tiny=1e-8):
     """Coefficients for predicting the forward endpoint expectation E[z1 | z_t] (exp 14).
 

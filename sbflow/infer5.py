@@ -46,33 +46,45 @@ def canonical(i: int, j: int) -> Tuple[int, int, bool]:
 
 @torch.inference_mode()
 def probability_flow_velocity(model, z, t, a, b, stats: StyleStats, eps: float,
-                              t_floor: float, objective: str) -> torch.Tensor:
-    """v(z, t) for the canonical pair (a, b), t in (0, 1)."""
+                              t_floor: float, objective: str,
+                              cond_a: Optional[int] = None,
+                              cond_b: Optional[int] = None,
+                              residual_scale: float = 1.0) -> torch.Tensor:
+    """v(z, t) for the canonical pair (a, b), t in (0, 1).
+
+    `cond_a` / `cond_b` override ONLY the style ids fed to the network while the EDM
+    statistics still come from (a, b). That separates the analytic statistical term from
+    the learned conditional term (diagnostic P0).
+
+    `residual_scale=0` zeroes the network residual, leaving the pure analytic EDM drift.
+    """
     tt = t.clamp(t_floor, 1 - t_floor)
     pm = stats.pair(a, b)
     B = z.shape[0]
-    sa = torch.full((B,), a, device=z.device, dtype=torch.long)
-    sb = torch.full((B,), b, device=z.device, dtype=torch.long)
+    sa = torch.full((B,), a if cond_a is None else cond_a, device=z.device, dtype=torch.long)
+    sb = torch.full((B,), b if cond_b is None else cond_b, device=z.device, dtype=torch.long)
+    rs = float(residual_scale)
 
     if objective == "single_velocity":
         mx, my, ci, cs, co = direct_velocity_coefficients(tt, max(eps, 1e-8), pm)
-        raw = model((z - mx) * ci, tt, torch.ones_like(sa), sa, sb).float()
+        raw = model((z - mx) * ci, tt, torch.ones_like(sa), sa, sb).float() * rs
         return reconstruct_velocity(z, raw, (mx, my, ci, cs, co))
 
     if objective == "score_current":
         mx, my, ci, cs, co = direct_velocity_coefficients(tt, max(eps, 1e-8), pm)
         pv, ps = model((z - mx) * ci, tt, torch.ones_like(sa), sa, sb, return_both=True)
+        pv = pv * rs
         return reconstruct_velocity(z, pv.float(), (mx, my, ci, cs, co))
 
     if objective == "endpoint":
         # b+ = (E[z1|zt] - zt)/(1-t), b- = (E[z0|zt] - zt)/t, v = (b+ - b-)/2
         ef = endpoint_coefficients(tt, eps, pm)
         mx, my, ci, cs, co = ef
-        raw_f = model((z - mx) * ci, tt, torch.ones_like(sa), sa, sb).float()
+        raw_f = model((z - mx) * ci, tt, torch.ones_like(sa), sa, sb).float() * rs
         z1_hat = reconstruct_endpoint(z, raw_f, ef)
         er = endpoint_coefficients(1 - tt, eps, pm.reversed())
         mxr, myr, cir, csr, cor = er
-        raw_b = model((z - mxr) * cir, 1 - tt, torch.zeros_like(sa), sa, sb).float()
+        raw_b = model((z - mxr) * cir, 1 - tt, torch.zeros_like(sa), sa, sb).float() * rs
         z0_hat = reconstruct_endpoint(z, raw_b, er)
         bplus = (z1_hat - z) / (1 - tt).clamp_min(t_floor).view(-1, 1, 1, 1)
         bminus = (z0_hat - z) / tt.clamp_min(t_floor).view(-1, 1, 1, 1)
@@ -81,14 +93,14 @@ def probability_flow_velocity(model, z, t, a, b, stats: StyleStats, eps: float,
     # bidir / bidir_joint: reconstruct both conditional drifts
     cf = moment_coefficients(tt, eps, pm)
     mxf, myf, cif, csf, cof = cf
-    raw_f = model((z - mxf) * cif, tt, torch.ones_like(sa), sa, sb).float()
+    raw_f = model((z - mxf) * cif, tt, torch.ones_like(sa), sa, sb).float() * rs
     bplus = myf + csf * (z - mxf) + cof * raw_f
 
     pmm = pm.reversed()
     cm = moment_coefficients(1 - tt, eps, pmm)
     mxm, mym, cim, csm, com = cm
     xb = (z - mxm) * cim
-    raw_b = model(xb, 1 - tt, torch.zeros_like(sa), sa, sb).float()
+    raw_b = model(xb, 1 - tt, torch.zeros_like(sa), sa, sb).float() * rs
     bminus = mym + csm * (z - mxm) + com * raw_b
     return 0.5 * (bplus - bminus)
 
@@ -97,7 +109,9 @@ def probability_flow_velocity(model, z, t, a, b, stats: StyleStats, eps: float,
 def solve_transfer(model, z, src_style: int, tgt_style: int, stats: StyleStats,
                    eps: float, steps: int = 4, method: str = "heun",
                    t_floor: float = 0.002, objective: str = "bidir",
-                   reverse_override: Optional[bool] = None) -> torch.Tensor:
+                   reverse_override: Optional[bool] = None,
+                   cond_a: Optional[int] = None, cond_b: Optional[int] = None,
+                   residual_scale: float = 1.0) -> torch.Tensor:
     """Transfer latents from src_style to tgt_style. Identity when they are equal."""
     if src_style == tgt_style:
         return z.clone()
@@ -110,7 +124,8 @@ def solve_transfer(model, z, src_style: int, tgt_style: int, stats: StyleStats,
     for i in range(steps):
         s0 = i * h
         t0 = torch.full((len(out),), (1 - s0) if reverse else s0, device=out.device)
-        k0 = probability_flow_velocity(model, out, t0, a, b, stats, eps, t_floor, objective)
+        k0 = probability_flow_velocity(model, out, t0, a, b, stats, eps, t_floor, objective,
+                                      cond_a, cond_b, residual_scale)
         if reverse:
             k0 = -k0
         if method == "euler":
@@ -119,7 +134,8 @@ def solve_transfer(model, z, src_style: int, tgt_style: int, stats: StyleStats,
             s1 = (i + 1) * h
             t1 = torch.full((len(out),), (1 - s1) if reverse else s1, device=out.device)
             k1 = probability_flow_velocity(model, out + h * k0, t1, a, b, stats, eps,
-                                           t_floor, objective)
+                                           t_floor, objective, cond_a, cond_b,
+                                           residual_scale)
             if reverse:
                 k1 = -k1
             out = out + h * 0.5 * (k0 + k1)

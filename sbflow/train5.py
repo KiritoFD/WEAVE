@@ -35,11 +35,13 @@ from .data5 import (STYLE_NAMES, load_caches, make_sampler, pair_schedule,
 from .network import BidirDiT
 from .ot import paired_batch
 from .preconditioning import (StyleStats, direct_velocity_coefficients,
-                              endpoint_coefficients, moment_coefficients,
-                              moment_coefficients_batch, normalized_endpoint_target,
-                              normalized_target, normalized_target_batch,
-                              normalized_velocity_target, precondition_input,
-                              precondition_input_batch, reconstruct_velocity)
+                              direct_velocity_coefficients_batch,
+                              endpoint_coefficients, endpoint_coefficients_batch,
+                              moment_coefficients, moment_coefficients_batch,
+                              normalized_endpoint_target, normalized_target,
+                              normalized_target_batch, normalized_velocity_target,
+                              precondition_input, precondition_input_batch,
+                              reconstruct_drift_batch, reconstruct_velocity)
 from .time_sampling import sample_time
 
 
@@ -149,19 +151,7 @@ def objective_bidir_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, a
 
     fwd = (dirs == 1)
     fwd_c = fwd.view(-1, 1)
-    sm = stats.style_mean.to(z0.device).to(z0.dtype)
-    sv = stats.style_var.to(z0.device).to(z0.dtype)
-    idx_a = pa.view(-1, 1).expand(-1, sm.shape[1])
-    idx_b = pb.view(-1, 1).expand(-1, sm.shape[1])
-    mu_a = sm.gather(0, idx_a)
-    mu_b = sm.gather(0, idx_b)
-    v_a = sv.gather(0, idx_a)
-    v_b = sv.gather(0, idx_b)
-    mu0 = torch.where(fwd_c, mu_a, mu_b)
-    mu1 = torch.where(fwd_c, mu_b, mu_a)
-    v0 = torch.where(fwd_c, v_a, v_b)
-    v1 = torch.where(fwd_c, v_b, v_a)
-    cov = torch.zeros_like(mu0)
+    mu0, mu1, v0, v1, cov = _mixed_stats(stats, pa, pb, dirs, z0.dtype)
     tau = torch.where(fwd, t, 1 - t)
 
     xin, cf = precondition_input_batch(xt, tau, eps, mu0, mu1, v0, v1, cov)
@@ -172,6 +162,129 @@ def objective_bidir_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, a
     f_mse = float(per[fwd].mean()) if fwd.any() else 0.0
     b_mse = float(per[~fwd].mean()) if (~fwd).any() else 0.0
     return loss, {"f_mse": f_mse, "b_mse": b_mse}
+
+
+def _mixed_stats(stats, pa, pb, dirs, dtype):
+    """Per-sample (mu0, mu1, var0, var1, cov) for the mixed batch, honouring direction."""
+    sm = stats.style_mean.to(device=pa.device, dtype=dtype)
+    sv = stats.style_var.to(device=pa.device, dtype=dtype)
+    C = sm.shape[1]
+    idx_a = pa.view(-1, 1).expand(-1, C)
+    idx_b = pb.view(-1, 1).expand(-1, C)
+    mu_a, mu_b = sm.gather(0, idx_a), sm.gather(0, idx_b)
+    v_a, v_b = sv.gather(0, idx_a), sv.gather(0, idx_b)
+    fwd_c = (dirs == 1).view(-1, 1)
+    mu0 = torch.where(fwd_c, mu_a, mu_b)
+    mu1 = torch.where(fwd_c, mu_b, mu_a)
+    v0 = torch.where(fwd_c, v_a, v_b)
+    v1 = torch.where(fwd_c, v_b, v_a)
+    return mu0, mu1, v0, v1, torch.zeros_like(mu0)
+
+
+def objective_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, args, s_scale=None):
+    """Dispatch the per-sample mixed-batch objective for ANY supported target.
+
+    Every sample carries its own canonical pair, direction and EDM statistics, so the
+    same mixed sampler serves `bidir`, `bidir_joint`, `single_velocity`, `score_current`
+    and `endpoint`. This removes the training-schedule confound where non-bidir arms
+    silently fell back to one pair per update.
+    """
+    B = z0.shape[0]
+    t, tw = sample_time(args.time_sampling, B, min_t, gen, z0.device, args.strata, z0.dtype)
+    xi = torch.randn(z0.shape, device=z0.device, generator=gen, dtype=z0.dtype)
+    xt, bplus, bminus = bridge_sample(z0, z1, t, eps, xi)
+    mu0, mu1, v0, v1, cov = _mixed_stats(stats, pa, pb, dirs, z0.dtype)
+    fwd = (dirs == 1)
+    fwd_c = fwd.view(-1, 1, 1, 1)
+
+    if args.objective == "single_velocity":
+        tt = t.view(-1, 1, 1, 1)
+        s = (eps * tt * (1 - tt)).clamp_min(0).sqrt()
+        c = ((eps ** 0.5) * (1 - 2 * tt) / (2 * (tt * (1 - tt)).clamp_min(1e-8).sqrt())
+             if eps > 0 else 0.0)
+        vstar = (z1 - z0) + c * xi
+        if args.edm:
+            mx, my, ci, cs, co = direct_velocity_coefficients_batch(t, max(eps, 1e-8),
+                                                                    mu0, mu1, v0, v1, cov)
+            xin = (xt - mx) * ci
+            y = (vstar - my - cs * (xt - mx)) / co
+        else:
+            xin, y = xt, vstar
+        pred = model(xin, t, torch.ones_like(pa), pa.long(), pb.long()).float()
+        per = (pred - y.float()).square().mean(dim=(1, 2, 3))
+        return (per * tw).mean(), {"f_mse": float(per.mean()), "b_mse": 0.0}
+
+    if args.objective == "score_current":
+        tau = torch.where(fwd, t, 1 - t)
+        mx, my, ci, cs, co = direct_velocity_coefficients_batch(tau, eps, mu0, mu1, v0, v1, cov)
+        v_star = 0.5 * (bplus - bminus)
+        s_star = (bplus + bminus) / eps
+        xin = (xt - mx) * ci
+        v_norm = (v_star - my - cs * (xt - mx)) / co
+        s_norm = s_star * s_scale.view(1, -1, 1, 1)
+        pv, ps = model(xin, tau, dirs.long(), pa.long(), pb.long(), return_both=True)
+        lv = torch.nn.functional.mse_loss(pv.float(), v_norm.float())
+        ls = torch.nn.functional.mse_loss(ps.float(), s_norm.float())
+        return lv + args.score_weight * ls, {"f_mse": float(lv), "b_mse": float(ls)}
+
+    if args.objective == "endpoint":
+        tau = torch.where(fwd, t, 1 - t)
+        mx, my, ci, cs, co = endpoint_coefficients_batch(tau, eps, mu0, mu1, v0, v1, cov)
+        y_end = torch.where(fwd_c, z1, z0)
+        xin = (xt - mx) * ci
+        y = (y_end - my - cs * (xt - mx)) / co
+        pred = model(xin, tau, dirs.long(), pa.long(), pb.long()).float()
+        per = (pred - y.float()).square().mean(dim=(1, 2, 3))
+        return (per * tw).mean(), {"f_mse": float(per[fwd].mean()) if fwd.any() else 0.0,
+                                   "b_mse": float(per[~fwd].mean()) if (~fwd).any() else 0.0}
+
+    if args.objective == "bidir_joint":
+        # both directions on the same bridge sample, per sample pair statistics
+        tau_f = t
+        tau_b = 1 - t
+        cf = precondition_input_batch(xt, tau_f, eps, mu0, mu1, v0, v1, cov)
+        xf_in, cf = cf[0], cf[1]
+        yf = normalized_target_batch(xt, bplus, cf)
+        mub0, mub1, vb0, vb1, covb = _mixed_stats(stats, pa, pb, torch.zeros_like(dirs),
+                                                  z0.dtype)
+        cb = precondition_input_batch(xt, tau_b, eps, mub0, mub1, vb0, vb1, covb)
+        xb_in, cb = cb[0], cb[1]
+        yb = normalized_target_batch(xt, bminus, cb)
+        pf = model(xf_in, tau_f, torch.ones_like(pa), pa.long(), pb.long()).float()
+        pb_ = model(xb_in, tau_b, torch.zeros_like(pa), pa.long(), pb.long()).float()
+        lf = torch.nn.functional.mse_loss(pf, yf.float())
+        lb = torch.nn.functional.mse_loss(pb_, yb.float())
+        return tw.mean() * 0.5 * (lf + lb), {"f_mse": float(lf), "b_mse": float(lb)}
+
+    # default: bidir (half forward, half reverse, per-sample statistics)
+    tau = torch.where(fwd, t, 1 - t)
+    xin, cf = precondition_input_batch(xt, tau, eps, mu0, mu1, v0, v1, cov)
+    y = normalized_target_batch(xt, torch.where(fwd_c, bplus, bminus), cf)
+    pred = model(xin, tau, dirs.long(), pa.long(), pb.long()).float()
+    per = (pred - y.float()).square().mean(dim=(1, 2, 3))
+    return (per * tw).mean(), {"f_mse": float(per[fwd].mean()) if fwd.any() else 0.0,
+                               "b_mse": float(per[~fwd].mean()) if (~fwd).any() else 0.0}
+
+
+def mixed_velocity(model, z, t, pa, pb, stats, eps):
+    """Per-sample probability-flow velocity (b+ - b-)/2 for a mixed pair batch.
+
+    Differentiable; used to produce free-ODE endpoints for the distribution loss so the
+    mixed-batch path does not silently skip L_dist.
+    """
+    B = z.shape[0]
+    t = t.clamp(2e-3, 1 - 2e-3)
+    dirs_f = torch.ones(B, device=z.device, dtype=torch.long)
+    mu0, mu1, v0, v1, cov = _mixed_stats(stats, pa, pb, dirs_f, z.dtype)
+    cf = precondition_input_batch(z, t, eps, mu0, mu1, v0, v1, cov)
+    xf_in, cf = cf[0], cf[1]
+    bplus = reconstruct_drift_batch(z, model(xf_in, t, dirs_f, pa.long(), pb.long()).float(), cf)
+    dirs_b = torch.zeros(B, device=z.device, dtype=torch.long)
+    mu0r, mu1r, v0r, v1r, covr = _mixed_stats(stats, pa, pb, dirs_b, z.dtype)
+    cb = precondition_input_batch(z, 1 - t, eps, mu0r, mu1r, v0r, v1r, covr)
+    xb_in, cb = cb[0], cb[1]
+    bminus = reconstruct_drift_batch(z, model(xb_in, 1 - t, dirs_b, pa.long(), pb.long()).float(), cb)
+    return 0.5 * (bplus - bminus)
 
 
 def _mixed_pair_ids(pairs, batch, device, gen_cpu):
@@ -488,6 +601,7 @@ def main():
 
     t_start = time.perf_counter()
     hist = []
+    dist_seen = {}
     for step in range(1, args.steps + 1):
         model.train()
         opt.zero_grad(set_to_none=True)
@@ -495,72 +609,84 @@ def main():
         mb = args.microbatch or args.batch
         total, rec = 0.0, {}
         for _ in range(args.batch // mb):
-            if args.mixed_batch and args.objective in ("bidir", "bidir_joint"):
-                mpa, mpb, mdirs = _mixed_pair_ids(pairs, mb, device, g_mix)
-                mz0, mz1 = _mixed_batch(data, mpa, mpb, samplers, device, g_data)
-                ctx = (torch.autocast("cuda", dtype=torch.bfloat16) if device == "cuda"
-                       else contextlib.nullcontext())
-                with ctx:
-                    loss, r = objective_bidir_mixed(model, mz0, mz1, mpa, mpb, mdirs,
-                                                    data.stats, args.eps, args.min_t,
-                                                    g_noise, args)
-                (loss * (mb / args.batch)).backward()
-                total += float(loss) * (mb / args.batch)
-                rec = r
-                continue
-            z0, z1 = sample_pair_batch(a, b, mb)
             ctx = (torch.autocast("cuda", dtype=torch.bfloat16) if device == "cuda"
                    else contextlib.nullcontext())
+            use_online = (online_teacher is not None and step > args.online_warmup)
+            mixed = args.mixed_batch and not use_online
             with ctx:
-                use_online = (online_teacher is not None and step > args.online_warmup)
-                if use_online:
-                    from .online_bridge import online_loss
-                    if not args.online_raw_teacher:
-                        # EMA teacher: smoother endpoints, the doc's default (exp 24)
-                        with torch.no_grad():
-                            for pt, ps in zip(online_teacher.parameters(), ema.parameters()):
-                                pt.copy_(ps)
-                    else:
-                        with torch.no_grad():
-                            for pt, ps in zip(online_teacher.parameters(), model.parameters()):
-                                pt.copy_(ps)
-                    loss, r = online_loss(model, online_teacher, z0, z1, a, b, data.stats,
-                                          args.eps, args.min_t, g_noise, online_cfg, replay,
-                                          cross=cross_state.get((a, b)))
-                    if args.online_dynamic_cov and "_x1_hat" in r:
-                        from .online_bridge import estimate_cross_cov
-                        cc = estimate_cross_cov(r["_x0_hat"], z1,
-                                                ema=cross_state.get((a, b)), decay=0.9)
-                        cross_state[(a, b)] = cc
-                        r["cross_cov_mean"] = float(cc.mean())
-                    r = {k: v for k, v in r.items() if not k.startswith("_")}
-                elif args.objective in ("bidir", "bidir_joint"):
-                    loss, r = objective_bidir(model, z0, z1, a, b, data.stats, args.eps,
-                                              args.min_t, g_noise, args)
-                elif args.objective == "single_velocity":
-                    loss, r = objective_single_velocity(model, z0, z1, a, b, data.stats,
-                                                        args.eps, args.min_t, g_noise, args)
+                if mixed:
+                    mpa, mpb, mdirs = _mixed_pair_ids(pairs, mb, device, g_mix)
+                    mz0, mz1 = _mixed_batch(data, mpa, mpb, samplers, device, g_data)
+                    loss, r = objective_mixed(model, mz0, mz1, mpa, mpb, mdirs, data.stats,
+                                              args.eps, args.min_t, g_noise, args, s_scale)
+                    pair_tag = "mixed"
                 else:
-                    loss, r = objective_score_current(model, z0, z1, a, b, data.stats,
-                                                      args.eps, args.min_t, g_noise, args, s_scale)
+                    z0, z1 = sample_pair_batch(a, b, mb)
+                    pair_tag = f"({a},{b})"
+                    if use_online:
+                        from .online_bridge import online_loss
+                        if not args.online_raw_teacher:
+                            with torch.no_grad():
+                                for pt, ps in zip(online_teacher.parameters(), ema.parameters()):
+                                    pt.copy_(ps)
+                        else:
+                            with torch.no_grad():
+                                for pt, ps in zip(online_teacher.parameters(), model.parameters()):
+                                    pt.copy_(ps)
+                        loss, r = online_loss(model, online_teacher, z0, z1, a, b, data.stats,
+                                              args.eps, args.min_t, g_noise, online_cfg, replay,
+                                              cross=cross_state.get((a, b)))
+                        if args.online_dynamic_cov and "_x1_hat" in r:
+                            from .online_bridge import estimate_cross_cov
+                            cc = estimate_cross_cov(r["_x0_hat"], z1,
+                                                    ema=cross_state.get((a, b)), decay=0.9)
+                            cross_state[(a, b)] = cc
+                            r["cross_cov_mean"] = float(cc.mean())
+                        r = {k: v for k, v in r.items() if not k.startswith("_")}
+                    elif args.objective in ("bidir", "bidir_joint"):
+                        loss, r = objective_bidir(model, z0, z1, a, b, data.stats, args.eps,
+                                                  args.min_t, g_noise, args)
+                    elif args.objective == "single_velocity":
+                        loss, r = objective_single_velocity(model, z0, z1, a, b, data.stats,
+                                                            args.eps, args.min_t, g_noise, args)
+                    else:
+                        loss, r = objective_score_current(model, z0, z1, a, b, data.stats,
+                                                          args.eps, args.min_t, g_noise, args,
+                                                          s_scale)
+
+                # Distribution supervision is applied uniformly to BOTH sampling paths,
+                # so `bidir + mixed + dist_loss` can no longer silently skip L_dist.
                 if dist_loss is not None:
-                    from .infer5 import probability_flow_velocity
-                    from .online_bridge import both_drifts
-                    # Differentiable short ODE from the real source endpoints, then SWD.
-                    zs = z0.detach()
                     hstep = 1.0 / max(1, args.ode_steps_train)
                     with torch.autocast("cuda", enabled=False):
-                        for k in range(args.ode_steps_train):
-                            tk = torch.full((len(zs),), k * hstep, device=zs.device, dtype=zs.dtype)
-                            bp_, bm_ = both_drifts(model, zs, tk, a, b, data.stats,
-                                                   args.eps, 0.002)
-                            zs = zs + hstep * 0.5 * (bp_ - bm_)
-                        ld = dist_loss(zs.float(), z1.float(), seed=step)
+                        if mixed:
+                            zs = mz0.detach()
+                            for k in range(args.ode_steps_train):
+                                tk = torch.full((len(zs),), k * hstep, device=zs.device,
+                                                dtype=zs.dtype)
+                                zs = zs + hstep * mixed_velocity(model, zs, tk, mpa, mpb,
+                                                                 data.stats, args.eps)
+                            ld = dist_loss(zs.float(), mz1.float(), seed=step)
+                        else:
+                            from .online_bridge import both_drifts
+                            zs = z0.detach()
+                            for k in range(args.ode_steps_train):
+                                tk = torch.full((len(zs),), k * hstep, device=zs.device,
+                                                dtype=zs.dtype)
+                                bp_, bm_ = both_drifts(model, zs, tk, a, b, data.stats,
+                                                       args.eps, 0.002)
+                                zs = zs + hstep * 0.5 * (bp_ - bm_)
+                            ld = dist_loss(zs.float(), z1.float(), seed=step)
                     loss = loss + args.lambda_dist * ld
                     r = {**r, "dist": float(ld)}
+                    dist_seen["grad_nonzero"] = float(ld) != 0.0
             (loss * (mb / args.batch)).backward()
             total += float(loss) * (mb / args.batch)
             rec = r
+        if dist_loss is not None and step == 1:
+            assert dist_seen.get("grad_nonzero"), (
+                "dist_loss was enabled but contributed an exactly-zero value on step 1; "
+                "the mixed-batch path is not actually adding L_dist")
         grad = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
         sched_lr.step()
@@ -571,7 +697,7 @@ def main():
 
         if step % args.log_interval == 0 or step == 1:
             dt = time.perf_counter() - t_start
-            print(f"step={step}/{args.steps} pair=({a},{b}) loss={total:.4f} "
+            print(f"step={step}/{args.steps} {pair_tag} loss={total:.4f} "
                   f"f={rec.get('f_mse', -1):.3f} b={rec.get('b_mse', -1):.3f} "
                   f"grad={float(grad):.3f} lr={opt.param_groups[0]['lr']:.2e} "
                   f"elapsed={dt:.0f}s", flush=True)
