@@ -15,7 +15,7 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
 fi
 
 tmux new-session -d -s "$SESSION" -n suite \
-  "python3 -u -m sbflow.suite40 --root $ROOT --arms $ARMS --resume-suite 2>&1 | tee -a $ROOT/logs/suite.log; echo EXIT=\$?; sleep 86400"
+  "python3 -u -m sbflow.suite40 --root $ROOT --arms $ARMS --resume-suite 2>&1 | tee -a $ROOT/logs/suite.log; echo EXIT=\$?"
 sleep 3
 echo "started tmux '$SESSION' arms=$ARMS"
 tmux list-panes -t "$SESSION" -F '  #{pane_id} #{pane_pid} #{pane_current_command}'
