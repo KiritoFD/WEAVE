@@ -152,6 +152,8 @@ def main() -> None:
 
             dT, top1, marg = [], [], []
             per_t = {s: [] for s in STYLES}
+            per_t_lp = {s: [] for s in STYLES}
+            per_t_dino = {s: [] for s in STYLES}
             for i, t in enumerate(tasks):
                 fs = csd_src_cache[t["src_stem"]]
                 tg, sid = t["tgt_style_id"], t["src_style_id"]
@@ -159,6 +161,8 @@ def main() -> None:
                 d = float(sc[tg] - fs @ proto[tg])
                 dT.append(d)
                 per_t[t["tgt_style"]].append(d)
+                per_t_lp[t["tgt_style"]].append(float(lps[i]))
+                per_t_dino[t["tgt_style"]].append(float(dg[i] @ dino_src_cache[t["src_stem"]]))
                 top1.append(int(sc.argmax() == tg))
                 marg.append(float(sc[tg] - np.delete(sc, tg).max()))
             results[al] = {
@@ -169,6 +173,8 @@ def main() -> None:
                                               for i, t in enumerate(tasks)])),
                 "mean_lpips": float(np.mean(lps)),
                 "per_target_dT": {s: float(np.mean(v)) for s, v in per_t.items()},
+                "per_target_lpips": {s: float(np.mean(v)) for s, v in per_t_lp.items()},
+                "per_target_dino_c": {s: float(np.mean(v)) for s, v in per_t_dino.items()},
                 "styles_improved": int(sum(1 for v in per_t.values() if np.mean(v) > 0)),
             }
             r = results[al]
@@ -213,6 +219,43 @@ def main() -> None:
     for s in STYLES:
         lines.append(f"| {s} | " + " | ".join(
             f"{results[a]['per_target_dT'][s]:+.4f}" for a in alphas) + " |")
+
+    # ---- plan section 7: per-target strength calibration ----
+    # The plan asks for a per-target style/content curve and a strength calibration r_j. For each
+    # target we pick the alpha that maximises dT subject to that target's own LPIPS staying inside
+    # a fidelity budget, because a single global alpha ignores that some styles need a bigger
+    # push than others.
+    budgets = {"fidelity": 0.37, "balanced": 0.39, "style": 0.41}
+    lines += ["", "### 每目标强度标定（α 在各自 LPIPS 预算内最大化 ΔT）", "",
+              "| 目标 | " + " | ".join(budgets) + " |",
+              "|---|" + "---:|" * len(budgets)]
+    calib = {}
+    for s in STYLES:
+        cells, row = [], {}
+        for tier, bud in budgets.items():
+            ok = [(results[a]["per_target_dT"][s], a) for a in alphas
+                  if results[a]["per_target_lpips"][s] <= bud]
+            if not ok:
+                cells.append("—")
+                row[tier] = None
+                continue
+            best_dt, best_a = max(ok)
+            cells.append(f"α={best_a} ({best_dt:+.4f})")
+            row[tier] = {"alpha": best_a, "dT": best_dt,
+                         "lpips": results[best_a]["per_target_lpips"][s]}
+        calib[s] = row
+        lines.append(f"| {s} | " + " | ".join(cells) + " |")
+    print("\n[m0] per-target strength calibration (alpha maximising dT inside an LPIPS budget):")
+    for s in STYLES:
+        row = calib[s]
+        txt = "  ".join(f"{t}=" + (f"α{row[t]['alpha']}" if row[t] else "none")
+                        for t in budgets)
+        print(f"  {s:20s} {txt}")
+
+    (out / "m0_calibration.json").write_text(json.dumps(
+        {"budgets": budgets, "per_target": calib,
+         "note": "alpha chosen per target to maximise dT subject to that target's LPIPS budget"},
+        ensure_ascii=False, indent=2), encoding="utf-8")
     (out / "m0_alpha.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"[m0] wrote {out}/m0_alpha.{'md,json'}")
 
