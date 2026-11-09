@@ -70,8 +70,13 @@ def _read_cache(path: Path) -> dict:
 
 
 def load_caches(paths: Sequence[Path], device: str, style_order: Optional[Sequence[str]] = None,
-                build_thumbs: bool = False, thumb_batch: int = 64) -> StyleData:
-    """Load per-style latent caches, apply ONE shared global standardization."""
+                build_thumbs: bool = False, thumb_batch: int = 64,
+                equal_weight: bool = True) -> StyleData:
+    """Load per-style latent caches, apply ONE shared global standardization.
+
+    `equal_weight=True` (default) weights every style equally in the shared mean/std so
+    the largest pool cannot pull the common centre toward itself.
+    """
     caches = [_read_cache(Path(p)) for p in paths]
     for k in ("scaling_factor",):
         if k not in caches[0]:
@@ -97,10 +102,16 @@ def load_caches(paths: Sequence[Path], device: str, style_order: Optional[Sequen
         caches = [by_name[s] for s in styles]
 
     raw = [d["latent"].float() for d in caches]
-    both = torch.cat(raw, dim=0)
-    gmean = both.mean((0, 2, 3))
-    gstd = both.var((0, 2, 3), unbiased=False).clamp_min(1e-8).sqrt()
-    del both
+    if equal_weight:
+        means = torch.stack([r.mean((0, 2, 3)) for r in raw])
+        vars_ = torch.stack([r.var((0, 2, 3), unbiased=False) for r in raw])
+        gmean = means.mean(0)
+        gstd = ((vars_ + means.square()).mean(0) - gmean.square()).clamp_min(1e-8).sqrt()
+    else:
+        both = torch.cat(raw, dim=0)
+        gmean = both.mean((0, 2, 3))
+        gstd = both.var((0, 2, 3), unbiased=False).clamp_min(1e-8).sqrt()
+        del both
 
     z = [((r - gmean[None, :, None, None]) / gstd[None, :, None, None]).to(device) for r in raw]
     if build_thumbs and all("thumb" in d for d in caches):

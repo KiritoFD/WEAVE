@@ -36,9 +36,10 @@ from .network import BidirDiT
 from .ot import paired_batch
 from .preconditioning import (StyleStats, direct_velocity_coefficients,
                               endpoint_coefficients, moment_coefficients,
-                              normalized_endpoint_target, normalized_target,
+                              moment_coefficients_batch, normalized_endpoint_target,
+                              normalized_target, normalized_target_batch,
                               normalized_velocity_target, precondition_input,
-                              reconstruct_velocity)
+                              precondition_input_batch, reconstruct_velocity)
 from .time_sampling import sample_time
 
 
@@ -126,6 +127,91 @@ def objective_bidir(model, z0, z1, a, b, stats, eps, min_t, gen, args, t_weight=
 def _ep_input(xt, coeffs):
     mx, my, ci, cs, co = coeffs
     return (xt - mx) * ci, coeffs
+
+
+def objective_bidir_mixed(model, z0, z1, pa, pb, dirs, stats, eps, min_t, gen, args,
+                          t_weight=None):
+    """One batch, many style pairs: every sample carries its own pair and direction.
+
+    Bridge MSE is additive over samples, so a batch does not have to be restricted to a
+    single style pair. Each sample gets:
+      * its own canonical pair (pa, pb) with pa < pb,
+      * its own direction: 1 = forward drift b+ at local time t, 0 = reverse drift b-
+        at local time 1-t with the reversed endpoint moments,
+      * its own per-channel EDM coefficients from that pair's statistics.
+    """
+    B = z0.shape[0]
+    t, tw = sample_time(args.time_sampling, B, min_t, gen, z0.device, args.strata, z0.dtype)
+    if t_weight is not None:
+        tw = tw * t_weight
+    xi = torch.randn(z0.shape, device=z0.device, generator=gen, dtype=z0.dtype)
+    xt, bplus, bminus = bridge_sample(z0, z1, t, eps, xi)
+
+    fwd = (dirs == 1)
+    fwd_c = fwd.view(-1, 1)
+    sm = stats.style_mean.to(z0.device).to(z0.dtype)
+    sv = stats.style_var.to(z0.device).to(z0.dtype)
+    idx_a = pa.view(-1, 1).expand(-1, sm.shape[1])
+    idx_b = pb.view(-1, 1).expand(-1, sm.shape[1])
+    mu_a = sm.gather(0, idx_a)
+    mu_b = sm.gather(0, idx_b)
+    v_a = sv.gather(0, idx_a)
+    v_b = sv.gather(0, idx_b)
+    mu0 = torch.where(fwd_c, mu_a, mu_b)
+    mu1 = torch.where(fwd_c, mu_b, mu_a)
+    v0 = torch.where(fwd_c, v_a, v_b)
+    v1 = torch.where(fwd_c, v_b, v_a)
+    cov = torch.zeros_like(mu0)
+    tau = torch.where(fwd, t, 1 - t)
+
+    xin, cf = precondition_input_batch(xt, tau, eps, mu0, mu1, v0, v1, cov)
+    y = normalized_target_batch(xt, torch.where(fwd_c.view(-1, 1, 1, 1), bplus, bminus), cf)
+    pred = model(xin, tau, dirs.long(), pa.long(), pb.long()).float()
+    per = (pred - y.float()).square().mean(dim=(1, 2, 3))
+    loss = (per * tw).mean()
+    f_mse = float(per[fwd].mean()) if fwd.any() else 0.0
+    b_mse = float(per[~fwd].mean()) if (~fwd).any() else 0.0
+    return loss, {"f_mse": f_mse, "b_mse": b_mse}
+
+
+def _mixed_pair_ids(pairs, batch, device, gen_cpu):
+    """Evenly assign (pair, direction) to a batch: 10 pairs x 2 directions.
+
+    `gen_cpu` must be a CPU generator (torch.randperm defaults to CPU).
+    """
+    n_cell = batch // (len(pairs) * 2)
+    if n_cell < 1:
+        raise ValueError(f"batch {batch} too small for {len(pairs)} pairs x 2 directions")
+    pa, pb, dirs = [], [], []
+    for (a, b) in pairs:
+        pa.extend([a] * n_cell * 2)
+        pb.extend([b] * n_cell * 2)
+        dirs.extend([1] * n_cell + [0] * n_cell)
+    used = len(pa)
+    for i in range(batch - used):                     # leftovers cycle through cells
+        k = i % (len(pairs) * 2)
+        a, b = pairs[k // 2]
+        pa.append(a)
+        pb.append(b)
+        dirs.append(1 if k % 2 == 0 else 0)
+    perm = torch.randperm(batch, generator=gen_cpu)
+    return (torch.tensor(pa)[perm].to(device), torch.tensor(pb)[perm].to(device),
+            torch.tensor(dirs)[perm].to(device))
+
+
+def _mixed_batch(data, pa, pb, samplers, device, gen):
+    """Draw z0 from style pa[i] and z1 from style pb[i] for every sample."""
+    B = len(pa)
+    z0 = torch.empty((B,) + tuple(data.z[0].shape[1:]), device=device, dtype=data.z[0].dtype)
+    z1 = torch.empty_like(z0)
+    for s in range(data.num_styles):
+        pos0 = (pa == s).nonzero(as_tuple=True)[0]
+        if len(pos0):
+            z0[pos0] = data.z[s][samplers[s].draw(len(pos0)).to(device)]
+        pos1 = (pb == s).nonzero(as_tuple=True)[0]
+        if len(pos1):
+            z1[pos1] = data.z[s][samplers[s].draw(len(pos1)).to(device)]
+    return z0, z1
 
 
 def objective_single_velocity(model, z0, z1, a, b, stats, eps, min_t, gen, args, t_weight=None):
@@ -251,6 +337,13 @@ def main():
                    help="steps of plain bridge training before online updates start")
 
     # --- group F: shared Gaussian pivot ---
+    p.add_argument("--mixed-batch", action="store_true", default=True,
+                   help="mix all 10 unordered pairs inside every batch (default)")
+    p.add_argument("--single-pair", dest="mixed_batch", action="store_false",
+                   help="legacy: one style pair per update")
+    p.add_argument("--equal-weight-stats", action="store_true", default=True,
+                   help="equal-weight-per-style global mean/std (default)")
+    p.add_argument("--frequency-stats", dest="equal_weight_stats", action="store_false")
     p.add_argument("--pivot", action="store_true",
                    help="train N(0,I)->style flows and compose T_ij = F_j o F_i^-1")
     args = p.parse_args()
@@ -268,8 +361,10 @@ def main():
     g_time = torch.Generator(device=device).manual_seed(args.seed * 53 + 13)
     g_ot = torch.Generator(device=device).manual_seed(args.seed * 7919 + 131)
     g_sched = torch.Generator().manual_seed(args.seed * 101 + 3)
+    g_mix = torch.Generator().manual_seed(args.seed * 13 + 5)
 
-    data = load_caches([Path(c) for c in args.caches], device, STYLE_NAMES[: len(args.caches)])
+    data = load_caches([Path(c) for c in args.caches], device, STYLE_NAMES[: len(args.caches)],
+                       equal_weight=args.equal_weight_stats)
     channels, H, W = data.z[0].shape[1:]
     if args.pivot:
         from .pivot import add_pivot_style, pivot_pairs
@@ -400,6 +495,19 @@ def main():
         mb = args.microbatch or args.batch
         total, rec = 0.0, {}
         for _ in range(args.batch // mb):
+            if args.mixed_batch and args.objective in ("bidir", "bidir_joint"):
+                mpa, mpb, mdirs = _mixed_pair_ids(pairs, mb, device, g_mix)
+                mz0, mz1 = _mixed_batch(data, mpa, mpb, samplers, device, g_data)
+                ctx = (torch.autocast("cuda", dtype=torch.bfloat16) if device == "cuda"
+                       else contextlib.nullcontext())
+                with ctx:
+                    loss, r = objective_bidir_mixed(model, mz0, mz1, mpa, mpb, mdirs,
+                                                    data.stats, args.eps, args.min_t,
+                                                    g_noise, args)
+                (loss * (mb / args.batch)).backward()
+                total += float(loss) * (mb / args.batch)
+                rec = r
+                continue
             z0, z1 = sample_pair_batch(a, b, mb)
             ctx = (torch.autocast("cuda", dtype=torch.bfloat16) if device == "cuda"
                    else contextlib.nullcontext())

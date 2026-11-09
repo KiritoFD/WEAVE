@@ -127,19 +127,31 @@ class StyleStats:
 
 
 @torch.no_grad()
-def style_stats_from_caches(latents, eps=1e-10) -> StyleStats:
-    """Build StyleStats from a list of per-style latent tensors (already scaled, unnormalized)."""
-    allz = torch.cat([z.float() for z in latents], dim=0)
-    gmean = allz.mean((0, 2, 3))
-    gstd = allz.var((0, 2, 3), unbiased=False).clamp_min(eps).sqrt()
-    means, vars_ = [], []
+def style_stats_from_caches(latents, eps=1e-10, equal_weight: bool = True) -> StyleStats:
+    """Build StyleStats from a list of per-style latent tensors (already scaled, unnormalized).
+
+    `equal_weight=True` gives every style the same weight in the global mean/std,
+    which avoids letting the largest pool pull the shared latent centre toward itself
+    (Impressionism is 57.8% of the 15,545 rows). Per-style statistics still use all of
+    that style's data.
+    """
+    means = torch.stack([z.float().mean((0, 2, 3)) for z in latents])
+    vars_ = torch.stack([z.float().var((0, 2, 3), unbiased=False) for z in latents])
+    if equal_weight:
+        gmean = means.mean(0)
+        # E[var] + Var(E) with equal style weights
+        gvar = (vars_ + means.square()).mean(0) - gmean.square()
+    else:
+        allz = torch.cat([z.float() for z in latents], dim=0)
+        gmean = allz.mean((0, 2, 3))
+        gvar = allz.var((0, 2, 3), unbiased=False)
+    gstd = gvar.clamp_min(eps).sqrt()
+    sm, sv = [], []
     for z in latents:
-        z = z.float()
-        # Statistics are expressed in the SHARED standardized space.
-        zn = (z - gmean[None, :, None, None]) / gstd[None, :, None, None]
-        means.append(zn.mean((0, 2, 3)))
-        vars_.append(zn.var((0, 2, 3), unbiased=False).clamp_min(eps))
-    return StyleStats(gmean, gstd, torch.stack(means), torch.stack(vars_))
+        zn = (z.float() - gmean[None, :, None, None]) / gstd[None, :, None, None]
+        sm.append(zn.mean((0, 2, 3)))
+        sv.append(zn.var((0, 2, 3), unbiased=False).clamp_min(eps))
+    return StyleStats(gmean, gstd, torch.stack(sm), torch.stack(sv))
 
 
 # --------------------------------------------------------------------------- #
@@ -264,6 +276,48 @@ def normalized_velocity_target(x, y, coeffs):
 # --------------------------------------------------------------------------- #
 # score / current decomposition (experiment 10)
 # --------------------------------------------------------------------------- #
+def moment_coefficients_batch(t, epsilon, mu0, mu1, var0, var1, cov01, tiny=1e-8):
+    """Per-sample version of `moment_coefficients`.
+
+    All statistics are (B, C) tensors, so one batch can mix bridge samples from
+    different style pairs (each sample carries its own pair moments).
+    """
+    if epsilon <= 0:
+        raise ValueError("epsilon must be positive")
+    if (t <= 0).any() or (t >= 1).any():
+        raise ValueError("t must be in (0,1)")
+    a = (1 - t).view(-1, 1)
+    b = t.view(-1, 1)
+    mu0, mu1 = mu0.to(t.dtype), mu1.to(t.dtype)
+    v0, v1, cov = var0.to(t.dtype), var1.to(t.dtype), cov01.to(t.dtype)
+    mx = a * mu0 + b * mu1
+    my = mu1 - mu0
+    vx = (a * a * v0 + b * b * v1 + 2 * a * b * cov + epsilon * a * b).clamp_min(tiny)
+    var_d = (v0 + v1 - 2 * cov).clamp_min(0)
+    cyx = a * (cov - v0) + b * (v1 - cov) - epsilon * b
+    vy = var_d + epsilon * b / a
+    ci = vx.rsqrt()
+    cs = cyx / vx
+    co = (vy - cyx * cyx / vx).clamp_min(tiny).sqrt()
+    # broadcast to (B, C, 1, 1)
+    return [v.view(v.shape[0], v.shape[1], 1, 1) for v in (mx, my, ci, cs, co)]
+
+
+def precondition_input_batch(x, t, epsilon, mu0, mu1, var0, var1, cov01):
+    mx, my, ci, cs, co = moment_coefficients_batch(t, epsilon, mu0, mu1, var0, var1, cov01)
+    return (x - mx) * ci, (mx, my, ci, cs, co)
+
+
+def reconstruct_drift_batch(x, raw, coeffs):
+    mx, my, ci, cs, co = coeffs
+    return my + cs * (x - mx) + co * raw
+
+
+def normalized_target_batch(x, y, coeffs):
+    mx, my, ci, cs, co = coeffs
+    return (y - my - cs * (x - mx)) / co
+
+
 def endpoint_coefficients(t, epsilon, moments: PairMoments, tiny=1e-8):
     """Coefficients for predicting the forward endpoint expectation E[z1 | z_t] (exp 14).
 
