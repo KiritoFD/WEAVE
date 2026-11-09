@@ -89,15 +89,16 @@ def main() -> None:
         uniq.setdefault(src_key(t), src_path(t))
     keys = sorted(uniq)
     z_src, csd_src, dino_src, rgb_src = {}, {}, {}, {}
-    sf = None
+    sf = float(vae.config.scaling_factor)
+    # the VAE runs in fp16, so the encoder input must match its dtype
+    vae_dtype = next(vae.parameters()).dtype
+    print(f"[tiers] vae dtype = {vae_dtype}", flush=True)
     with torch.inference_mode():
         for s in range(0, len(keys), 16):
             chunk = keys[s:s + 16]
             x = torch.stack([_load_eval_image_tensor(Path(uniq[k]), size=512) for k in chunk],
                             0).to(device)
-            if sf is None:
-                sf = float(vae.config.scaling_factor)
-            z = vae.encode(x).latent_dist.mean * sf
+            z = vae.encode(x.to(vae_dtype)).latent_dist.mean * sf
             img = decode_trt(trt, vae, z, batch=8)
             u8 = img.mul(255.0).round().clamp(0, 255).to(torch.uint8).cpu()
             arr = u8.permute(0, 2, 3, 1).numpy()
