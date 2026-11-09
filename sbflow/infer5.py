@@ -65,6 +65,11 @@ def probability_flow_velocity(model, z, t, a, b, stats: StyleStats, eps: float,
     sb = torch.full((B,), b if cond_b is None else cond_b, device=z.device, dtype=torch.long)
     rs = float(residual_scale)
 
+    if objective in ("monge", "pivot_cfm"):
+        # One-step map: T(z,a,b) = z + Delta(z,a,b). These arms are handled directly in
+        # solve_transfer (no time integration), so probability_flow_velocity is unused.
+        return torch.zeros_like(z)
+
     if objective == "single_velocity":
         mx, my, ci, cs, co = direct_velocity_coefficients(tt, max(eps, 1e-8), pm)
         raw = model((z - mx) * ci, tt, torch.ones_like(sa), sa, sb).float() * rs
@@ -115,6 +120,14 @@ def solve_transfer(model, z, src_style: int, tgt_style: int, stats: StyleStats,
     """Transfer latents from src_style to tgt_style. Identity when they are equal."""
     if src_style == tgt_style:
         return z.clone()
+    if objective in ("monge", "pivot_cfm"):
+        a, b, reverse = canonical(src_style, tgt_style)
+        tau = torch.full((len(z),), 0.5, device=z.device, dtype=z.dtype)
+        d = torch.ones(len(z), device=z.device, dtype=torch.long)
+        sa = torch.full((len(z),), a, device=z.device, dtype=torch.long)
+        sb = torch.full((len(z),), b, device=z.device, dtype=torch.long)
+        delta = model(z, tau, d, sa, sb).float()
+        return z - delta if reverse else z + delta
     a, b, reverse = canonical(src_style, tgt_style)
     if reverse_override is not None:
         reverse = reverse_override

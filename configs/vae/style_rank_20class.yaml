@@ -1,0 +1,83 @@
+# WEAVE Style-Rank 20-class: main training configuration
+# Frozen coordinate interface P is generated from a fixed seed, NOT from CSD-PLS.
+
+run:
+  name: style_rank_20class
+  out_dir: runs/vae_style_rank20
+  seed: 20260109
+
+data:
+  manifest: /root/Workspace/data/wikiart_512_raw/wikiart_512_raw_manifest.json
+  min_images_per_style: 1000        # -> 20 classes, 78,515 images
+  content_embedding: dinov2-base    # offline triplet matching only, no gradient
+  triplet:
+    anchor_positive_negative: true
+    same_style_diff_artist: true
+    negative_prefer_same_genre: true
+    content_gap_tol: 0.05           # |cos(a,p) - cos(a,n)| ; fallback 0.10, else reject
+    n_triplets: 24000
+  eval_set:
+    source: test_split_excluding_frozen_2048
+    max_per_style: 120
+
+model:
+  init: /root/Workspace/WEAVE_VAE/runs_vae/A0/final_diffusers_vae
+  encoder: unfrozen
+  decoder: unfrozen
+  latent_shape: [4, 64, 64]
+  projection:
+    dim: 16384
+    k: 768
+    init: random_orthonormal          # NO CSD-PLS
+    frozen: true
+  latent_mean: from_A0_train_latents   # frozen
+  prototypes:
+    n_classes: 20
+    geometry: regular_simplex          # a_i . a_j = -1/19
+    frozen: true
+
+loss:
+  rec: A0_reconstruction              # mixed posterior mean/sample decode
+  kl_weight: 1.126e-4                 # beta_A0
+  rank:
+    margin: 0.05
+    temperature: 0.10
+    weight: 0.00550                   # calibrated: 0.5 * g_base / g_rank
+  ce:
+    temperature: 0.15
+    weight: 0.00228                   # calibrated: 0.1 * g_base / g_ce
+    anchors_only: true
+
+optim:
+  microbatch: 6                       # 2 triplets: [a1,p1,n1,a2,p2,n2]
+  accumulation: 8
+  effective_batch: 48
+  triplets_per_update: 16
+  lr_encoder: 3.0e-5
+  lr_decoder: 2.0e-5
+  optimizer: AdamW
+  betas: [0.9, 0.99]
+  weight_decay: 1.0e-4
+  warmup_updates: 50
+  scheduler: cosine
+  min_lr_ratio: 0.2
+  grad_clip: 1.0
+  precision: bf16                     # style similarity + KL in fp32
+  ema_decay: 0.999
+
+schedule:
+  total_hours: 11.0
+  save_every: 500
+  validate_at: [200, 500, 1000, 1500, 2000, 2500]
+  drift_check_every: 250              # log weighted grad ratios + cos(rank, base)
+
+acceptance:
+  primary: content_matched_auroc      # u = normalize(P z), no readout head
+  also_require:
+    - cross_artist_auroc_not_regress
+    - reconstruction_lpips_within_10pct_of_A0
+    - latent_rms_and_kl_stable
+  not_sufficient:
+    - train_rank_loss_decrease
+    - ce_accuracy
+    - csd_score
