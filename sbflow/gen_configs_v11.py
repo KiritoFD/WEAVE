@@ -74,4 +74,24 @@ for aid, spec in ARMS.items():
     (OUT / f"{aid}.json").write_text(
         json.dumps(cfg, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
     print(f"  {aid}: {spec['note'][:64]}")
-print(f"wrote {len(ARMS)} configs to {OUT}")
+
+# ---- P3: five-style conditional generation from a shared Gaussian prior ----
+# Trains F_s: N(0,I) -> p_s for every style, which answers "can the shared model
+# generate genuine Rococo / Ukiyo-e / Early Renaissance at all?" without any transport.
+# Must start from scratch: the pair structure is {(s, pivot)} not the ten style pairs.
+P3 = dict(COMMON)
+P3.update(
+    pivot=True, steps=4000, batch=512, patch=8,
+    dist_loss="none", style_enc="learned", style_enc_ckpt="", online="none",
+    grad_microbatch=0, ode_microbatch=64,
+    save_interval=1000, save_equiv="1000,2000,3000,4000", full_equiv=4000,
+    experiment_id="p3", output="runs/blog_sbflow/v11/p3",
+    note="five-style conditional generation from a shared Gaussian prior "
+         "(F_s: N(0,I) -> p_s); no cross-domain transport",
+    p3=True,
+)
+P3.pop("resume", None)
+(OUT / "p3.json").write_text(json.dumps(P3, ensure_ascii=False, indent=2, sort_keys=True),
+                             encoding="utf-8")
+print("  p3: five-style conditional generation from a shared Gaussian prior")
+print(f"wrote {len(ARMS) + 1} configs to {OUT}")
