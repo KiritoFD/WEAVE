@@ -116,7 +116,10 @@ def main() -> None:
             chunk = keys[s:s + 16]
             x = torch.stack([_load_eval_image_tensor(Path(uniq[k]), size=512) for k in chunk],
                             0).to(device)
-            z = vae.encode(x.to(vae_dtype)).latent_dist.mean * sf
+            # The VAE is fp16, but the canonicalizer statistics and the generator are fp32,
+            # and the cached eval latents (runs/v5/cache/eval_src_latents.pt) are fp32 too.
+            # Casting here keeps this path bit-compatible with the Val200 protocol.
+            z = (vae.encode(x.to(vae_dtype)).latent_dist.mean * sf).float()
             img = decode_trt(trt, vae, z, batch=8)
             u8 = img.mul(255.0).round().clamp(0, 255).to(torch.uint8).cpu()
             arr = u8.permute(0, 2, 3, 1).numpy()

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Post-queue GPU smoke test: exercise all three evaluation entry points on 4 tasks so that
 # plumbing bugs surface in ~1 minute instead of after a long full run.
+#
+# Each step's exit code is checked explicitly. Piping into tail would otherwise mask failures,
+# because the pipeline's status is tail's.
 set -uo pipefail
 cd /mnt/i/Latent_Style/WEAVE
 export PYTHONPATH=/mnt/i/Latent_Style/WEAVE:${PYTHONPATH:-}
@@ -13,23 +16,34 @@ if [ -n "$BUSY" ]; then
   exit 2
 fi
 
-CKPT=runs/v6/N3_dim32/N3_dim32.pt
-echo "########## 1) eval_tiers smoke (Heldout400, 4 tasks) ##########"
-python3 -u -m tools.v6_24h.eval_tiers --ckpt "$CKPT" \
-  --tasks runs/v6_24h/heldout400_tasks.json --out runs/v6_24h/_smoke_heldout \
-  --limit 4 2>&1 | tail -n 12
+CKPT=${1:-runs/v6/N7_dim24/N7_dim24.pt}
+FAILED=0
 
-echo "########## 2) eval_tiers smoke (Same150, 4 tasks) ##########"
-python3 -u -m tools.v6_24h.eval_tiers --ckpt "$CKPT" \
-  --tasks runs/v6_24h/same150_tasks.json --out runs/v6_24h/_smoke_same \
-  --limit 4 2>&1 | tail -n 12
+step() {   # step <label> <cmd...>
+  local label=$1; shift
+  echo "########## $label ##########"
+  if ! "$@" 2>&1 | tail -n 14; then
+    echo "  >>> STEP FAILED: $label"
+    FAILED=1
+  fi
+  # pipefail makes the pipeline status the first non-zero, so `if !` catches real failures
+}
 
-echo "########## 3) m0_alpha smoke (4 tasks, 2 alphas) ##########"
-python3 -u -m tools.v6_24h.m0_alpha --ckpt "$CKPT" --limit 4 --alphas 0.0,1.0 \
-  --out runs/v6_24h/_smoke_m0 2>&1 | tail -n 12
+step "1) eval_tiers smoke (Heldout400, 4 tasks)" \
+  python3 -u -m tools.v6_24h.eval_tiers --ckpt "$CKPT" \
+    --tasks runs/v6_24h/heldout400_tasks.json --out runs/v6_24h/_smoke_heldout --limit 4
 
-echo "########## 4) csd_manifold smoke (4 tasks) ##########"
-python3 -u -m tools.v6_24h.csd_manifold_check --ckpt "$CKPT" --limit 4 \
-  --out runs/v6_24h/_smoke_manifold.json 2>&1 | tail -n 12
+step "2) eval_tiers smoke (Same150, 4 tasks)" \
+  python3 -u -m tools.v6_24h.eval_tiers --ckpt "$CKPT" \
+    --tasks runs/v6_24h/same150_tasks.json --out runs/v6_24h/_smoke_same --limit 4
 
-echo "########## SMOKE DONE ##########"
+step "3) m0_alpha smoke (4 tasks, 2 alphas)" \
+  python3 -u -m tools.v6_24h.m0_alpha --ckpt "$CKPT" --limit 4 --alphas 0.0,1.0 \
+    --out runs/v6_24h/_smoke_m0
+
+step "4) csd_manifold smoke (4 tasks)" \
+  python3 -u -m tools.v6_24h.csd_manifold_check --ckpt "$CKPT" --limit 4 \
+    --out runs/v6_24h/_smoke_manifold.json
+
+echo "########## SMOKE DONE (failed=$FAILED) ##########"
+exit $FAILED

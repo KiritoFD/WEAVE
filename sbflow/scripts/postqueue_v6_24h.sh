@@ -22,7 +22,7 @@ export PYTHONPATH=/mnt/i/Latent_Style/WEAVE:${PYTHONPATH:-}
 export HF_HUB_OFFLINE=1
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
-BEST=${1:-runs/v6/L7_highC_dim32/L7_highC_dim32.pt}
+BEST=${1:-runs/v6/N7_dim24/N7_dim24.pt}
 LOG=runs/v6_24h/postqueue.log
 mkdir -p runs/v6_24h
 
@@ -46,9 +46,13 @@ if nvidia-smi --query-compute-apps=pid --format=csv,noheader | grep -q .; then
 fi
 
 say "=========== 1/5 smoke test ==========="
-bash sbflow/scripts/smoke_v6_postqueue.sh 2>&1 | tee -a "$LOG"
-if grep -qE "Traceback|RuntimeError|KeyError" "$LOG"; then
-  say "smoke test reported an error; stopping before the long runs"
+if ! bash sbflow/scripts/smoke_v6_postqueue.sh "$BEST" 2>&1 | tee -a "$LOG"; then
+  say "smoke test FAILED; stopping before the long runs"
+  exit 3
+fi
+# belt and braces: a captured traceback in the log also aborts
+if grep -qaE "^Traceback" "$LOG"; then
+  say "traceback found in the log; stopping before the long runs"
   exit 3
 fi
 
