@@ -236,20 +236,49 @@ assert dist_seen["grad_norm"] > 1e-12, "L_dist has no gradient to the generator"
 
 **前提**：P0 全部通过。
 
-| 实验 | 配置 | 与 V10 的差别 |
+已执行的四个组（新 ID，不沿用 V10 编号）：
+
+| 组 | 训练内容 | 目的 |
 |---|---|---|
-| D-24′ | 从 `exp01/model_equiv3000.pt` 继续 1000 步，学习表征 Global+Local SWD | 梯度真实；双向五目标 |
-| D-21′ | 同上，固定 latent Global+Local SWD | 梯度真实 |
-| E-27′ | SDE4 + EMA teacher + **方向专属**损失 | 忠实 Algorithm 1 |
-| E-32′ | ODE4 确定性对照 | 同上 |
+| **d1** | 修复后 learned-encoder Global+Local SWD | 直接风格分布监督是否有效 |
+| **d2** | 修复后 fixed-latent Global+Local SWD | 学习到的风格表征是否必要 |
+| **e1** | 修复后方向专属 SDE4 + EMA teacher | 真正的 α-DSBM |
+| **e2** | 双向 ODE4 确定性重配对 | SDE 与 reflow 的区分 |
 
-**记录**：除原有字段外，必须记录 `dist_grad_norm`、每目标 SWD 分组样本数、方向覆盖统计。
+全部从 `exp01/model_equiv3000.pt` 分叉，追加 1000 步，Batch512 五风格混合，
+固定 4000 等效 LR 周期（不重启 warmup）。
+对照为 `exp01/model_equiv4000.pt`（bidir 目标未受任何 V11 修复影响，**不重训**）。
 
-**判定**：
+### 判定时必须区分的三件事
 
-- 若 24′ 的 `csd_swd` 相对基线**下降 > 5%** 且 ΔT 改善 → 分布监督有效，继续
-- 若 SWD 指标下降但 ΔT 不变 → 说明匹配了风格特征分布却没建立风格 → 指向 §2 的不相容性
-- 若仍无变化 → 说明该监督在 1000 步/λ=0.1 下无效，需扫 λ
+**1. 训练/推理轨迹不一致（d1/d2）**
+可微 ODE 用 **2-step Euler** 产生 L_SWD 的终点，而正式评测用 **4-step Heun**。
+若 d1/d2 结果不佳，必须区分：
+- 监督目标本身无效
+- 还是监督指向的终点与推理终点不一致（2-step Euler ≠ 4-step Heun）
+
+区分办法：用同一 checkpoint 分别在 2-step Euler 与 4-step Heun 下评测，
+若两者差异与 d1/d2 的效应同量级，则"轨迹不一致"是主要解释。
+
+**2. ρ 必须用真实 Batch**
+合成数据上的 ρ=0.654 / 1.339 只证明链路接通，不代表实际监督强度。
+必须在真实训练 Batch 上报告 `dist_grad_norm`、`bridge_grad_norm`、`ρ`。
+
+**3. 分布监督的判定标准（按 `V11_METRICS.md`）**
+- 必须 **ΔT 与 Margin 同向改善**，且
+- **SWD 向地板 0.0111 靠近**（0.001 级抖动不算），且
+- Rococo / ER / Ukiyo-e 有真实收益
+- 仅总体 SWD 下降不算有效
+- 同时报告 DINO-C / LPIPS 作为内容破坏约束
+
+### 不允许的推断
+
+- **不得**用一次固定 λ=0.1、1000 步的后训练结果否定整个分布监督路线
+- **不得**把 exp27（错误实现）当作对 α-DSBM 的否证
+- **不得**把 ΔT 描述为概率
+
+**记录**：除原有字段外，必须记录 `dist_grad_norm`、`bridge_grad_norm`、`ρ`、
+每目标 SWD 分组样本数、方向覆盖统计。
 
 ---
 
