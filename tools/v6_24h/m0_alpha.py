@@ -51,12 +51,23 @@ def main() -> None:
     ap.add_argument("--alphas", default=",".join(str(a) for a in ALPHAS))
     ap.add_argument("--limit", type=int, default=0,
                     help="smoke-test mode: evaluate only the first N tasks")
+    ap.add_argument("--allow-extrapolation", action="store_true",
+                    help="DIAGNOSTIC ONLY: permit alpha > 1. The plan keeps alpha > 1 off "
+                         "the main line because history showed it raises Top-1 while "
+                         "lowering dT and exploding LPIPS. It is allowed here only to "
+                         "measure that trade-off explicitly, never to select a model.")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = ap.parse_args()
     device = args.device
     alphas = [float(x) for x in args.alphas.split(",")]
-    if any(a < 0 or a > 1 for a in alphas):
-        raise SystemExit("alpha must be within [0, 1]; the plan forbids alpha > 1")
+    if any(a < 0 for a in alphas):
+        raise SystemExit("alpha must be >= 0")
+    if any(a > 1 for a in alphas) and not args.allow_extrapolation:
+        raise SystemExit("alpha > 1 is off the main line (plan section 7); pass "
+                         "--allow-extrapolation to run it as a diagnostic only")
+    if any(a > 1 for a in alphas):
+        print("[m0] WARNING: alpha > 1 is an EXTRAPOLATION DIAGNOSTIC, not a candidate "
+              "model. Results must be reported as a trade-off curve only.", flush=True)
 
     ck = torch.load(ROOT / args.ckpt, map_location="cpu", weights_only=False)
     a = ck.get("args", {})
