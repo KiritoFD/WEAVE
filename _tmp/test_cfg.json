@@ -1,0 +1,1 @@
+{"experiment_id": "cfgtest", "caches": ["a.pt", "b.pt"], "output": "x", "steps": 7, "batch": 64, "patch": 8, "mixed_batch": true, "equiv_steps": 4000, "equiv_batch": 512, "save_equiv": "1000,2000", "full_equiv": 3000, "priority": true}
