@@ -103,3 +103,6 @@ _ref/
 docs/baseline/images/
 docs/baseline/sheets/
 docs/baseline/*.tar.gz
+
+# ============ Local scratch (commit messages, one-off helpers) ============
+_tmp/
