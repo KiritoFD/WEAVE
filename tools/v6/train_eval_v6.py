@@ -626,7 +626,8 @@ def evaluate_200_v6(
         dS = float(scores[sid] - fs @ proto[sid])
         other = np.delete(scores, tgt)
         rows.append({
-            "task_id": t["task_id"], "src_style": t["src_style"], "tgt_style": t["tgt_style"],
+            "task_id": t["task_id"], "src_stem": t["src_stem"],
+            "src_style": t["src_style"], "tgt_style": t["tgt_style"],
             "dT": dT, "dS": dS, "dM": dT - dS,
             "target_margin": float(scores[tgt] - other.max()),
             "target_top1": int(scores.argmax() == tgt),
