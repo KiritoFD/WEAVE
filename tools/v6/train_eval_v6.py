@@ -608,11 +608,16 @@ def evaluate_200_v6(
     for i, t in enumerate(tasks):
         fs = csd_src_cache[t["src_stem"]]
         tgt, sid = t["tgt_style_id"], t["src_style_id"]
-        dT = float(fg[i] @ proto[tgt] - fs @ proto[tgt])
-        dS = float(fg[i] @ proto[sid] - fs @ proto[sid])
+        scores = fg[i] @ proto.T                      # (5,) cosine to each prototype
+        dT = float(scores[tgt] - fs @ proto[tgt])
+        dS = float(scores[sid] - fs @ proto[sid])
+        other = np.delete(scores, tgt)
         rows.append({
             "task_id": t["task_id"], "src_style": t["src_style"], "tgt_style": t["tgt_style"],
             "dT": dT, "dS": dS, "dM": dT - dS,
+            "target_margin": float(scores[tgt] - other.max()),
+            "target_top1": int(scores.argmax() == tgt),
+            "pred_class": int(scores.argmax()),
             "dino_c": float(dg[i] @ dino_src_cache[t["src_stem"]]),
             "lpips": float(lps[i]),
         })
@@ -621,6 +626,20 @@ def evaluate_200_v6(
     dS_arr = np.array([r["dS"] for r in rows])
     per_style = {
         s: float(np.mean([r["dT"] for r in rows if r["tgt_style"] == s]))
+        for s in STYLES
+    }
+    # 5x5 confusion matrix: rows = target style, cols = predicted (CSD prototype argmax).
+    # The diagonal is the target Top-1 per style; off-diagonal mass shows which style a
+    # failing target collapses into, which a single macro average hides.
+    conf = np.zeros((len(STYLES), len(STYLES)), dtype=int)
+    for r in rows:
+        conf[STYLES.index(r["tgt_style"]), r["pred_class"]] += 1
+    per_style_top1 = {
+        s: float(np.mean([r["target_top1"] for r in rows if r["tgt_style"] == s]))
+        for s in STYLES
+    }
+    per_style_margin = {
+        s: float(np.mean([r["target_margin"] for r in rows if r["tgt_style"] == s]))
         for s in STYLES
     }
     del csd, dino, vae, trt, lpips_fn
@@ -636,6 +655,10 @@ def evaluate_200_v6(
         "mean_lpips": float(np.mean([r["lpips"] for r in rows])),
         "frac_dT_positive": float((dT_arr > 0).mean()),
         "per_target_dT": per_style,
+        "per_target_top1": per_style_top1,
+        "per_target_margin": per_style_margin,
+        "confusion_target_vs_pred": conf.tolist(),
+        "confusion_styles": STYLES,
         "styles_improved": int(sum(1 for v in per_style.values() if v > 0)),
         "ukiyo_dT": per_style["Ukiyo_e"],
         "same50_mean_dS": float(np.mean(same_dS)),
