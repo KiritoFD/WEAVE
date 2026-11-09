@@ -7,6 +7,8 @@ echo "=== tmux ==="
 tmux list-panes -t suite40 -F '  #{pane_id} #{pane_pid} #{pane_current_command}' 2>/dev/null || echo "  no session"
 echo "=== gpu ==="
 nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader
+echo "=== single-GPU constraint ==="
+bash -u sbflow/scripts/check_single_gpu.sh 2>&1 | tail -5 || true
 echo "=== processes ==="
 ps -eo pid,etime,args --no-headers | grep -E "sbflow\.(suite40|train5|gen5|score_cpu|pretrain)" | grep -v grep | cut -c1-110
 echo "=== suite state (after folding scores + backfilling timing) ==="
