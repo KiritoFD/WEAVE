@@ -40,8 +40,12 @@ if nvidia-smi --query-compute-apps=pid --format=csv,noheader | grep -q .; then
   exit 2
 fi
 
-say "=========== pass 3: L8 + L9 ==========="
+say "=========== pass 3: narrow-width combinations ==========="
+# N7_dim24 showed dT IMPROVES as the width shrinks (48 -> 32 -> 24), so the model is
+# over-parameterised and the curve had not turned. These four combine the narrow widths with the
+# 1024/style reference win, ordered narrowest-first because that is where the trend points.
 python3 -u -m tools.v6_24h.queue --run --max-hours 3 \
-  --arms L8_k1024_dim32,L9_k1024_dim32_lc075 2>&1 | tee -a "$LOG"
+  --arms L10_k1024_dim24,L8_k1024_dim32,L9_k1024_dim32_lc075,L11_k1024_dim16 \
+  2>&1 | tee -a "$LOG"
 
 say "PASS3 DONE"

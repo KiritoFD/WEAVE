@@ -73,6 +73,15 @@ ARMS = [
          note="full combination: dim32 + 1024/style reference + lam_c 0.75",
          args={"base_dim": 32, "ref_full": True, "lambda_cross": 0.35,
                "lambda_canon": 0.75}),
+    # N7_dim24 showed dT IMPROVES as the width shrinks (48 -> 32 -> 24 all improve), i.e. the
+    # model is over-parameterised and the curve had not turned. These two test whether the
+    # trend continues and whether it composes with the 1024/style reference win.
+    dict(id="L10_k1024_dim24", group="L",
+         note="dim24 + 1024/style reference: two independently validated wins",
+         args={"base_dim": 24, "ref_full": True}),
+    dict(id="L11_k1024_dim16", group="L",
+         note="dim16 + 1024/style: does the narrower-is-better trend continue?",
+         args={"base_dim": 16, "ref_full": True}),
 
     # ---------------- 加法: spatial gating (plan section 6) ----------------
     dict(id="S1_no_inject_64", group="S", note="disable 64x64 content injection, keep stem",
@@ -101,10 +110,10 @@ ARMS = [
 # priority within a group: the plan's core questions first
 PRIORITY = ["N1_no_style", "N2_no_canon", "N3_dim32", "N5_inv_off", "N4_steps400",
             "L1_lowC", "L2_highS", "L5_same_off", "L6_highC", "L7_highC_dim32",
-            "L8_k1024_dim32", "L9_k1024_dim32_lc075",
-            "L3_core_off", "L4_ref_full", "S1_no_inject_64", "S2_no_inject_32",
-            "S3_no_inject_16", "S6_style_keys", "S6b_style_keys48",
-            "N7_dim24", "N7_dim40"]
+            "L10_k1024_dim24", "L8_k1024_dim32", "L9_k1024_dim32_lc075",
+            "L11_k1024_dim16", "L3_core_off", "L4_ref_full",
+            "S1_no_inject_64", "S2_no_inject_32", "S3_no_inject_16",
+            "S6_style_keys", "S6b_style_keys48", "N7_dim24", "N7_dim40"]
 
 
 def merged(arm: dict) -> dict:
