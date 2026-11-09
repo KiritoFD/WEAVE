@@ -111,28 +111,24 @@ def main() -> None:
             pils = [Image.fromarray(g.permute(1, 2, 0).cpu().numpy()) for g in gen]
             F = csd_model.feats_pils(csd, pils, batch=8, device=dev)
 
-        # assemble: row 0 = source PNG, row 1 = round-trip, rows 2..6 = the five targets
+        # assemble as a single labelled column: row 0 source, row 1 round-trip, rows 2-6 targets.
+        # (An earlier version sized the canvas for 6 columns but pasted every row into column 0,
+        # which produced a mostly-empty canvas with a misleading header row.)
         src_png = _load_eval_image_tensor(Path(t["src_path"]), size=512)
         src_u8 = (src_png.mul(255.0).round().clamp(0, 255)
                   .to(torch.uint8).permute(1, 2, 0).cpu().numpy())
         rt_u8 = u8_rt.permute(1, 2, 0).cpu().numpy()
         H, W = src_u8.shape[:2]
-        pad, label_h = 6, 26
-        cols = 1 + 5
-        canvas = Image.new("RGB", (cols * W + (cols + 1) * pad,
-                                   (2 + 5) * H + (2 + 5 + 1) * pad + label_h), "white")
+        pad, label_w = 8, 96
+        rows = [("SOURCE", src_u8), ("VAE RT", rt_u8)] + \
+               [(SH[s], g.permute(1, 2, 0).cpu().numpy()) for s, g in zip(STYLES, gen)]
+        canvas = Image.new("RGB", (label_w + W + 2 * pad,
+                                   len(rows) * H + (len(rows) + 1) * pad), "white")
         dr = ImageDraw.Draw(canvas)
-        headers = ["SOURCE", "RT"] + [SH[s] for s in STYLES]
-        for c, h in enumerate(headers):
-            dr.text((pad + c * (W + pad) + 4, 6), h, fill="black")
-
-        rows = [src_u8, rt_u8] + [g.permute(1, 2, 0).cpu().numpy() for g in gen]
-        for r, arr in enumerate(rows):
-            y0 = label_h + pad + r * (H + pad)
-            canvas.paste(Image.fromarray(arr), (pad, y0))
-            if r >= 2:
-                # put the column label on the left of each target row as well
-                dr.text((pad + 4, y0 + 4), f"{SH[STYLES[r - 2]]}", fill="yellow")
+        for r, (label, arr) in enumerate(rows):
+            y0 = pad + r * (H + pad)
+            dr.text((6, y0 + H // 2), label, fill="black")
+            canvas.paste(Image.fromarray(arr), (label_w, y0))
         fn = out / f"grid_{ti}_{t['src_style']}.png"
         canvas.save(fn)
 
