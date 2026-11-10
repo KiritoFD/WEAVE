@@ -51,10 +51,22 @@ def rows(name: str) -> list[dict] | None:
 
 
 def offdiag_min(rs: list[dict]) -> tuple[float, int, int]:
-    """Fraction of tasks whose PREDICTED style is Minimalism while the TARGET is not."""
+    """Fraction of tasks whose PREDICTED style is Minimalism while the TARGET is not.
+
+    NOTE: eval_tiers stores pred_class as an INTEGER index into STYLES, not as a name. Comparing it
+    against the string "Minimalism" is always False and silently reports 0.000 -- that bug made an
+    earlier report claim the Minimalism attractor was absent when the true rate was 0.266. Accept
+    either representation here so the mistake cannot recur.
+    """
     non_min = [r for r in rs if r["tgt_style"] != "Minimalism"]
-    hits = [r for r in non_min if r.get("pred_class") == "Minimalism"]
-    return (len(hits) / max(1, len(non_min)), len(hits), len(non_min))
+    hits = 0
+    for r in non_min:
+        pc = r.get("pred_class")
+        if isinstance(pc, str):
+            hits += int(pc == "Minimalism")
+        elif isinstance(pc, (int, float)):
+            hits += int(int(pc) == MIN_IDX)
+    return (hits / max(1, len(non_min)), hits, len(non_min))
 
 
 def main() -> None:

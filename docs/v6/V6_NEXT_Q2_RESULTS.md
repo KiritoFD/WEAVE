@@ -69,6 +69,14 @@
 
 ## 4. Minimalism 吸引子：六个臂全部为 0
 
+> **⚠️ 更正（2026-11-10）**：本节原称"非目标 Minimalism 误判率 0.000，完全没有吸引子"。
+> **那是 `pred_class` 为整数索引、却与字符串 `"Minimalism"` 比较导致的恒零 bug。**
+> 从同一 `eval.json` 的混淆矩阵重算，真实值是 **0.266（Q2a）/ 0.275（G1b）/ 0.263（L11 基线）**，
+> 对照 ScoreDiff **0.360**。**即本路线同样存在约 0.26 的单类吸引子，
+> 只是比 ScoreDiff 轻，不是"没有"。** 详见
+> `Negative_Results/L3_implementation/pred_class_int_vs_str.md`。
+
+
 | 臂 | 非目标被判为 Minimalism |
 |---|---:|
 | 全部六个臂 | **0/160 = 0.000** |

@@ -860,6 +860,36 @@ def train_and_evaluate(args) -> dict:
                    style_keys_n=args.style_keys_n,
                    style_keys_rank=args.style_keys_rank).to(device)
     n_params = sum(p.numel() for p in model.parameters())
+    # P1 teacher: a FROZEN copy of the Q2a operator plus the frozen R1 critic.
+    distill_teacher = None
+    distill_critic = None
+    if args.distill_teacher and args.distill_lambda > 0:
+        from tools.v6_next.probe_style import LatentStyleNet as _LSN
+        _tk = torch.load(REPO_ROOT / args.distill_teacher, map_location="cpu",
+                         weights_only=False)
+        _ta = _tk.get("args", {})
+        distill_teacher = C3UNet(base_dim=_ta.get("base_dim", 16),
+                                 num_styles=len(STYLES),
+                                 mode=_ta.get("mode", "direct"),
+                                 no_style=bool(_ta.get("no_style", False)),
+                                 content_mode=_ta.get("content_mode", "full"),
+                                 inject_64=not _ta.get("no_inject_64", False),
+                                 inject_32=not _ta.get("no_inject_32", False),
+                                 inject_16=not _ta.get("no_inject_16", False),
+                                 style_keys=bool(_ta.get("style_keys", False))).to(device)
+        distill_teacher.load_state_dict(_tk["model"])
+        distill_teacher.eval()
+        for _p in distill_teacher.parameters():
+            _p.requires_grad_(False)
+        _cc = torch.load(REPO_ROOT / args.distill_critic, map_location="cpu",
+                         weights_only=False)
+        distill_critic = _LSN(width=_cc.get("width", 64)).to(device).eval()
+        distill_critic.load_state_dict(_cc["model"])
+        for _p in distill_critic.parameters():
+            _p.requires_grad_(False)
+        print(f"[{args.name}] distill teacher={args.distill_teacher} "
+              f"critic={args.distill_critic} steps={args.distill_steps} "
+              f"rms={args.distill_rms} lam={args.distill_lambda} (both FROZEN)", flush=True)
     # Q2 mechanism (a): real target-style embeddings in the critic's own space, computed once from
     # the training latents. This is deliberately the SAME critic used for ranking, but the loss
     # operates on embeddings rather than logits, so it can be ablated independently.
@@ -1083,6 +1113,33 @@ def train_and_evaluate(args) -> dict:
                         #   i.e. ratio 11.12, and ratio/lambda_r = 111.2
                         # so lambda_r 0.001 and 0.003 target ratios 0.11 and 0.33.
                         loss = loss + args.rank_lambda * l_rank
+
+                    # P1 distillation. The teacher is a deterministic map of (c, t): a frozen
+                    # Direct forward followed by `distill_steps` R1 refine steps at a fixed TOTAL
+                    # RMS budget. No CSD is involved anywhere in building it.
+                    if distill_teacher is not None and args.distill_lambda > 0:
+                        with torch.no_grad():
+                            z_T = distill_teacher(c_in, 0.0, c_in, y_cross)
+                            per = args.distill_rms / max(1, args.distill_steps)
+                            for _ in range(args.distill_steps):
+                                _zr = z_T.detach().clone().requires_grad_(True)
+                                _q = distill_critic(_zr.float()).float()
+                                _oh = F.one_hot(y_cross, len(STYLES)).bool()
+                                _m = (_q.gather(1, y_cross[:, None]).squeeze(1)
+                                      - torch.logsumexp(
+                                          _q.masked_fill(_oh, torch.finfo(_q.dtype).min),
+                                          dim=1))
+                                _g = torch.autograd.grad(_m.sum(), _zr)[0]
+                                _D = _g[0].numel()
+                                _gn = _g.flatten(1).norm(dim=1).view(-1, 1, 1, 1)
+                                z_T = z_T + per * (_g / (_gn / _D ** 0.5 + 1e-12))
+                        l_distill = F.mse_loss(z_cross.float(), z_T.float())
+                        if step == 1:
+                            # pure logging, no autograd probes on the training graph
+                            print(f"[{args.name}] DISTILL step1: L_distill={float(l_distill):.6f} "
+                                  f"|z_T|={float(z_T.float().norm()):.2f} "
+                                  f"|z_cross|={float(z_cross.float().norm()):.2f}", flush=True)
+                        loss = loss + args.distill_lambda * l_distill
                         if step == 1:
                             # Pure logging: no autograd calls, so the training graph is untouched.
                             print(f"[{args.name}] RANKLOG step1: lam_r={args.rank_lambda} "
@@ -1189,6 +1246,10 @@ def train_and_evaluate(args) -> dict:
         "rank_lambda": args.rank_lambda,
         "rank_tau": args.rank_tau,
         "embed_style_lambda": args.embed_style_lambda,
+        "distill_teacher": args.distill_teacher,
+        "distill_steps": args.distill_steps,
+        "distill_rms": args.distill_rms,
+        "distill_lambda": args.distill_lambda,
         "trust_lambda": args.trust_lambda,
         "trust_radius": args.trust_radius,
         "b1_status": b1_status,
@@ -1237,6 +1298,17 @@ def main() -> None:
     ap.add_argument("--no-style", action="store_true",
                     help="ablation: pin Style-ID to 0 (same weights/params)")
     ap.add_argument("--base-dim", type=int, default=56)
+    # P1: teacher-pair distillation. The teacher is the Q2a Direct output refined by R1 gradient
+    # steps, so it is a DETERMINISTIC function of (c, t) and therefore representable by a
+    # single-step Direct in principle. That is the whole point of the amortization test.
+    ap.add_argument("--distill-teacher", type=str, default="",
+                    help="Q2a checkpoint whose Direct output seeds the teacher")
+    ap.add_argument("--distill-critic", type=str, default="",
+                    help="frozen R1 critic used for the teacher's refine steps")
+    ap.add_argument("--distill-steps", type=int, default=1)
+    ap.add_argument("--distill-rms", type=float, default=0.25,
+                    help="TOTAL edit RMS budget of the teacher refine (split across steps)")
+    ap.add_argument("--distill-lambda", type=float, default=0.0)
     ap.add_argument("--amp-dtype", choices=["bf16", "fp16", "none"], default="bf16",
                     help="training autocast dtype. fp16 makes small ranking weights vanish: "
                          "measured, lambda_r<=0.01 then leaves weights bit-identical to no-rank")
