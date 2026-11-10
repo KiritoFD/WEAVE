@@ -1120,8 +1120,12 @@ def train_and_evaluate(args) -> dict:
                     if distill_teacher is not None and args.distill_lambda > 0:
                         with torch.no_grad():
                             z_T = distill_teacher(c_in, 0.0, c_in, y_cross)
-                            per = args.distill_rms / max(1, args.distill_steps)
-                            for _ in range(args.distill_steps):
+                        per = args.distill_rms / max(1, args.distill_steps)
+                        for _ in range(args.distill_steps):
+                            # The refine step needs grad ENABLED to differentiate the critic, but
+                            # the teacher must not accumulate into the training graph, so the step
+                            # is taken in its own enable_grad scope and detached afterwards.
+                            with torch.enable_grad():
                                 _zr = z_T.detach().clone().requires_grad_(True)
                                 _q = distill_critic(_zr.float()).float()
                                 _oh = F.one_hot(y_cross, len(STYLES)).bool()
@@ -1130,9 +1134,9 @@ def train_and_evaluate(args) -> dict:
                                           _q.masked_fill(_oh, torch.finfo(_q.dtype).min),
                                           dim=1))
                                 _g = torch.autograd.grad(_m.sum(), _zr)[0]
-                                _D = _g[0].numel()
-                                _gn = _g.flatten(1).norm(dim=1).view(-1, 1, 1, 1)
-                                z_T = z_T + per * (_g / (_gn / _D ** 0.5 + 1e-12))
+                            _D = _g[0].numel()
+                            _gn = _g.flatten(1).norm(dim=1).view(-1, 1, 1, 1)
+                            z_T = (z_T + per * (_g / (_gn / _D ** 0.5 + 1e-12))).detach()
                         l_distill = F.mse_loss(z_cross.float(), z_T.float())
                         if step == 1:
                             # pure logging, no autograd probes on the training graph
