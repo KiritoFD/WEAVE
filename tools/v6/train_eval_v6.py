@@ -860,6 +860,46 @@ def train_and_evaluate(args) -> dict:
                    style_keys_n=args.style_keys_n,
                    style_keys_rank=args.style_keys_rank).to(device)
     n_params = sum(p.numel() for p in model.parameters())
+    # Q2 mechanism (a): real target-style embeddings in the critic's own space, computed once from
+    # the training latents. This is deliberately the SAME critic used for ranking, but the loss
+    # operates on embeddings rather than logits, so it can be ablated independently.
+    style_emb = None
+    trust_ref = None
+    if args.embed_style_lambda > 0 or args.trust_lambda > 0:
+        _need_critic = args.rank_critic
+        if not _need_critic:
+            raise SystemExit("--embed-style-lambda/--trust-lambda need --rank-critic")
+    if args.embed_style_lambda > 0:
+        _cache = V6_ROOT / "cache" / "r1_style_embeddings.pt"
+        if _cache.exists():
+            style_emb = torch.load(_cache, map_location="cpu", weights_only=False)
+        else:
+            from tools.v6_next.probe_style import LatentStyleNet
+            _ckC = torch.load(REPO_ROOT / args.rank_critic, map_location="cpu", weights_only=False)
+            _crit = LatentStyleNet(width=_ckC.get("width", 64)).to(device).eval()
+            _crit.load_state_dict(_ckC["model"])
+            style_emb = {}
+            _dir = paths.asset_root() / "pseudo_gt_24h" / "orig_mean_fp16"
+            with torch.no_grad():
+                for _sid, _s in enumerate(STYLES):
+                    _d = torch.load(_dir / f"{_sid:02d}_{_s}.pt", map_location="cpu",
+                                    weights_only=False)
+                    _lat = _d["latents"].float()[:1024].to(device)
+                    _e = _crit.embed(_lat)
+                    _e = F.normalize(_e, dim=1).mean(0)
+                    style_emb[_s] = F.normalize(_e, dim=0).cpu()
+            torch.save(style_emb, _cache)
+            del _crit
+        print(f"[{args.name}] embed_style target means cached for {len(style_emb)} styles",
+              flush=True)
+    if args.trust_lambda > 0:
+        _tr = V6_ROOT / "cache" / "trust_region_ref.pt"
+        if _tr.exists():
+            trust_ref = float(torch.load(_tr, map_location="cpu", weights_only=False)["norm"])
+        else:
+            trust_ref = 1.0
+        print(f"[{args.name}] trust region: radius={args.trust_radius} x ref_norm={trust_ref:.4f}",
+              flush=True)
     # P2: all comparison arms must start from the SAME checkpoint so the only difference is the
     # loss. Optimizer state is NOT restored (the original run's state was not saved), so every arm
     # restarts the optimizer and the LR schedule identically from step 0.
@@ -1026,21 +1066,52 @@ def train_and_evaluate(args) -> dict:
                                - torch.logsumexp(q.masked_fill(oh, neg), dim=1))
                         l_rank = F.softplus(-m_t / args.rank_tau).mean()
                         if step == 1:
-                            # plan requirement: measure the gradient ratio before fixing lambda
-                            g_v6 = torch.autograd.grad(loss, model.parameters(),
+                            # plan requirement: measure the gradient ratio before fixing lambda.
+                            # NOTE: model.parameters() is a GENERATOR -- passing it twice consumes
+                            # it on the first call, so the second call silently receives an empty
+                            # sequence and reports norm 0. Materialise it once.
+                            _params = list(model.parameters())
+                            g_v6 = torch.autograd.grad(loss, _params,
                                                        retain_graph=True, allow_unused=True)
-                            g_rk = torch.autograd.grad(args.rank_lambda * l_rank,
-                                                       model.parameters(),
+                            g_rk = torch.autograd.grad(args.rank_lambda * l_rank, _params,
                                                        retain_graph=True, allow_unused=True)
                             n_v6 = float(torch.sqrt(sum((t ** 2).sum() for t in g_v6
                                                         if t is not None)))
                             n_rk = float(torch.sqrt(sum((t ** 2).sum() for t in g_rk
                                                         if t is not None)))
+                            n_none = sum(1 for t in g_rk if t is None)
                             print(f"[{args.name}] G1 diag step1: L_rank={float(l_rank):.6f} "
                                   f"m_t_mean={float(m_t.mean()):+.4f} "
                                   f"|grad(L_V6)|={n_v6:.6e} |grad(lam_r*L_rank)|={n_rk:.6e} "
-                                  f"ratio={n_rk / max(n_v6, 1e-12):.4f}", flush=True)
+                                  f"ratio={n_rk / max(n_v6, 1e-12):.4f} "
+                                  f"(unused_params={n_none}/{len(g_rk)})", flush=True)
                         loss = loss + args.rank_lambda * l_rank
+
+                    # Q2 (a): embedding-space target-style supervision. Separable from ranking:
+                    # it pulls the critic EMBEDDING toward the real target mean instead of pushing
+                    # the LOGIT margin, so ablating one does not silently ablate the other.
+                    if style_emb is not None and args.embed_style_lambda > 0:
+                        emb = F.normalize(rank_critic.embed(z_cross.float()).float(), dim=1)
+                        tgt_e = torch.stack([style_emb[STYLES[int(t)]].to(device)
+                                             for t in y_cross.tolist()], 0)
+                        l_emb = (1.0 - (emb * tgt_e).sum(dim=1)).mean()
+                        if step == 1:
+                            print(f"[{args.name}] Q2a diag step1: L_embed={float(l_emb):.6f} "
+                                  f"mean_cos={float((emb * tgt_e).sum(dim=1).mean()):+.4f}",
+                                  flush=True)
+                        loss = loss + args.embed_style_lambda * l_emb
+
+                    # Q2 (b): content trust region. A hinge on the latent displacement, so it only
+                    # acts when the generator moves further than the radius allows.
+                    if args.trust_lambda > 0:
+                        disp = (z_cross.float() - z_real.float()).flatten(1).norm(dim=1)
+                        radius = args.trust_radius * trust_ref
+                        l_tr = torch.clamp(disp - radius, min=0.0).pow(2).mean()
+                        if step == 1:
+                            print(f"[{args.name}] Q2b diag step1: disp_mean="
+                                  f"{float(disp.mean()):.4f} radius={radius:.4f} "
+                                  f"L_trust={float(l_tr):.6f}", flush=True)
+                        loss = loss + args.trust_lambda * l_tr
 
                 loss_scaled = loss / accum
 
@@ -1108,6 +1179,14 @@ def train_and_evaluate(args) -> dict:
         "lambda_cross_abs": lam_s,
         "lambda_canon_abs": lam_c,
         "lambda_same_abs": lam_same,
+        # P2/Q2 mechanism provenance: without these the arms cannot be compared after the fact
+        "init_from": args.init_from,
+        "rank_critic": args.rank_critic,
+        "rank_lambda": args.rank_lambda,
+        "rank_tau": args.rank_tau,
+        "embed_style_lambda": args.embed_style_lambda,
+        "trust_lambda": args.trust_lambda,
+        "trust_radius": args.trust_radius,
         "b1_status": b1_status,
         "ref_top_k": ref_top_k,
         "core_sampler_off": bool(args.core_sampler_off),
@@ -1161,6 +1240,14 @@ def main() -> None:
                     help="path to a frozen LatentStyleNet checkpoint; enables the G1 ranking loss")
     ap.add_argument("--rank-lambda", type=float, default=0.0)
     ap.add_argument("--rank-tau", type=float, default=0.5)
+    # P2 Q2: two SEPARATE mechanisms, each ablatable on its own so neither can borrow the other's
+    # credit. (a) embedding-space target-style supervision, (b) a content trust region.
+    ap.add_argument("--embed-style-lambda", type=float, default=0.0,
+                    help="cosine pull of the critic embedding toward the real target-style mean")
+    ap.add_argument("--trust-lambda", type=float, default=0.0,
+                    help="hinge penalty on latent displacement beyond --trust-radius")
+    ap.add_argument("--trust-radius", type=float, default=1.0,
+                    help="allowed ||z_cross - z_src|| relative to the frozen V6 reference norm")
     ap.add_argument("--steps", type=int, default=1200)
     ap.add_argument("--microbatch", type=int, default=80)
     ap.add_argument("--accum", type=int, default=3)

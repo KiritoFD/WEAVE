@@ -59,6 +59,13 @@ def main() -> None:
     ap.add_argument("--ckpt", default="runs/v6/L11_k1024_dim16/L11_k1024_dim16.pt")
     ap.add_argument("--n", type=int, default=64)
     ap.add_argument("--eps", default="0.02,0.05,0.10")
+    ap.add_argument("--gen", choices=["direct", "scorediff"], default="direct",
+                    help="scorediff measures the historical editor on the SAME tasks and metric "
+                         "path, which is what the Pareto comparison requires")
+    ap.add_argument("--sd-ckpt", default="runs/v6/score_diff/score_diff_net.pt")
+    ap.add_argument("--sd-steps", type=int, default=24)
+    ap.add_argument("--sd-lr", type=float, default=0.100)
+    ap.add_argument("--sd-anchor", type=float, default=0.08)
     ap.add_argument("--tag", default="r1")
     ap.add_argument("--out", default="")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -114,8 +121,20 @@ def main() -> None:
             return F_, D_.float().cpu().numpy(), u8.float().div(255.0), arr
 
     with torch.inference_mode():
-        c = canon(z_src, mode=cmode, augment=False)
-        z_out = gen(c, 0.0, c, tid)
+        if args.gen == "scorediff":
+            from tools.v6.models_v6 import ConditionalScoreNet
+            from tools.v6.score_diff import edit_with_score_difference
+            sd_ck = torch.load(ROOT / args.sd_ckpt, map_location="cpu", weights_only=False)
+            sd = ConditionalScoreNet(base_dim=64, num_styles=5).to(dev).eval()
+            sd.load_state_dict(sd_ck["model"])
+            z_out = edit_with_score_difference(
+                sd, z_src, sid, tid, num_steps=args.sd_steps, step_size=args.sd_lr,
+                struct_anchor_weight=args.sd_anchor, seed=42)
+            print(f"[gate] generator=scorediff N={args.sd_steps} lr={args.sd_lr} "
+                  f"anchor={args.sd_anchor}", flush=True)
+        else:
+            c = canon(z_src, mode=cmode, augment=False)
+            z_out = gen(c, 0.0, c, tid)
 
     # reference: source-side CSD features for DINO-C / LPIPS
     _, dino_src, rgb_src, _ = embed_z(z_src)
@@ -130,6 +149,29 @@ def main() -> None:
             lg0.masked_fill(F.one_hot(tid, 5).bool(), -1e9), dim=1)
     print(f"\n[gate] baseline Direct output: real CSD m_target = {m_out.mean():+.4f}")
     print(f"       critic margin = {float(m_critic0.mean()):+.4f}")
+    dino_c0 = float(np.mean([float(dino_out[i] @ dino_src[i]) for i in range(len(tasks))]))
+    print(f"       real CSD Top-1 = {float((m_out > 0).mean()):.3f}   DINO-C = {dino_c0:.4f}")
+
+    if args.gen == "scorediff":
+        # No gradient probe for ScoreDiff: it is a fixed multi-step editor, not a step along a
+        # critic gradient. The point of this mode is to put it on the SAME tasks and metric path as
+        # the R1 curve so the Pareto comparison is like-for-like.
+        res = {"gen": "scorediff", "ckpt": args.sd_ckpt, "n": len(tasks),
+               "sd_steps": args.sd_steps, "sd_lr": args.sd_lr, "sd_anchor": args.sd_anchor,
+               "real_m_target": float(m_out.mean()),
+               "real_m_source": float(m_src.mean()),
+               "top1": float((m_out > 0).mean()), "dino_c": dino_c0,
+               "per_target_top1": {
+                   STYLES[t]: float((m_out[np.array([i for i, x in enumerate(tid.tolist())
+                                                    if x == t])] > 0).mean())
+                   for t in range(5)}}
+        p = ROOT / (args.out or f"runs/v6_next/probes/gate_scorediff_n{len(tasks)}.json")
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
+        print("\n  per-target Top-1: " + "  ".join(
+            f"{k[:9]}={v:.3f}" for k, v in res["per_target_top1"].items()))
+        print(f"\nwrote {p}")
+        return
 
     # ---- 1. gradient of the critic margin w.r.t. z_out ----
     z_req = z_out.detach().clone().requires_grad_(True)
@@ -155,8 +197,17 @@ def main() -> None:
 
     # ---- 2. content-limited steps along g_hat, then measure the REAL CSD margin ----
     rows = []
+    # Per-sample normalisation. The previous version divided by the WHOLE-BATCH norm, so with B
+    # samples of similar magnitude the per-image RMS was about eps/sqrt(B) and the knob changed
+    # meaning with batch size. Now eps means "per-image RMS step" and is batch-invariant.
+    D = g[0].numel()
+    gn = g.flatten(1).norm(dim=1).view(-1, 1, 1, 1)
+    g_hat = g / (gn / D ** 0.5 + 1e-12)
+    print(f"  per-sample |g| (RMS per dim) mean={float(gn.mean()) / D**0.5:.4e} "
+          f"min={float(gn.min()) / D**0.5:.4e} max={float(gn.max()) / D**0.5:.4e}")
+
     for eps in eps_list:
-        z_new = z_out + eps * g / (g.flatten().norm() / np.sqrt(g[0].numel()) + 1e-12)
+        z_new = z_out + eps * g_hat
         F_new, dino_new, rgb_new, _ = embed_z(z_new)
         m_new, _ = csd_margin(F_new, proto, tid.cpu().numpy())
         # LPIPS needs decoded RGB, not latents: compare the decoded images on device
