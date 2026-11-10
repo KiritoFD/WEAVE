@@ -47,6 +47,14 @@ def main() -> None:
     ap.add_argument("--weights", choices=["raw", "ema"], default="raw")
     ap.add_argument("--limit", type=int, default=0,
                     help="smoke-test mode: evaluate only the first N tasks")
+    ap.add_argument("--gen", choices=["direct", "scorediff"], default="direct",
+                    help="which generator to score. 'scorediff' reuses the SAME scoring path so "
+                         "the historical ScoreDiff can be compared under an identical protocol.")
+    ap.add_argument("--sd-ckpt", default="runs/v6/score_diff/score_diff_net.pt")
+    ap.add_argument("--sd-steps", type=int, default=12)
+    ap.add_argument("--sd-lr", type=float, default=0.160)
+    ap.add_argument("--sd-anchor", type=float, default=0.08)
+    ap.add_argument("--sd-base-dim", type=int, default=64)
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = ap.parse_args()
     device = args.device
@@ -68,6 +76,31 @@ def main() -> None:
     canon_mode = args.canon_mode or a.get("canon_mode", "c1_gentle")
     canon = ContentCanonicalizer(torch.load(V6_ROOT / "cache" / "canonicalizer_stats.pt",
                                             map_location="cpu", weights_only=False)).to(device)
+
+    sd_model = None
+    if args.gen == "scorediff":
+        from tools.v6.models_v6 import ConditionalScoreNet
+        from tools.v6.score_diff import edit_with_score_difference
+        sd_ck = torch.load(ROOT / args.sd_ckpt, map_location="cpu", weights_only=False)
+        sd_model = ConditionalScoreNet(base_dim=args.sd_base_dim, num_styles=5).to(device).eval()
+        sd_model.load_state_dict(sd_ck["model"])
+        print(f"[tiers] generator=scorediff  N={args.sd_steps} lr={args.sd_lr} "
+              f"anchor={args.sd_anchor}  ckpt={args.sd_ckpt}", flush=True)
+
+    def make_gen(z_batch, sid_batch, tid_batch):
+        """Produce the transformed latent.
+
+        direct    : the C3UNet operator, conditioned only on the target style.
+        scorediff : the historical multi-step editor, which also needs the SOURCE style because
+                    it applies the difference direction g_{s->t}.
+        """
+        if args.gen == "direct":
+            c = canon(z_batch, mode=canon_mode, augment=False)
+            return model(c, 0.0, c, tid_batch)
+        return edit_with_score_difference(
+            sd_model, z_batch, sid_batch, tid_batch,
+            num_steps=args.sd_steps, step_size=args.sd_lr,
+            struct_anchor_weight=args.sd_anchor, seed=42)
 
     spec = json.loads((ROOT / args.tasks).read_text(encoding="utf-8"))
     tasks = spec["tasks"]
@@ -140,8 +173,8 @@ def main() -> None:
             grp = tasks[s:s + 8]
             z = torch.cat([z_src[src_key(t)] for t in grp], 0)
             tg = torch.tensor([STYLES.index(tgt_style(t)) for t in grp], device=device)
-            c = canon(z, mode=canon_mode, augment=False)
-            z_gen = model(c, 0.0, c, tg) if model.mode == "direct" else None
+            sg = torch.tensor([STYLES.index(src_style(t)) for t in grp], device=device)
+            z_gen = make_gen(z, sg, tg)
             img = decode_trt(trt, vae, z_gen, batch=8)
             u8 = img.mul(255.0).round().clamp(0, 255).to(torch.uint8).cpu()
             gen01 = u8.float().div_(255.0)
