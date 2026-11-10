@@ -1,0 +1,87 @@
+{
+ "protocol": "tasks_750",
+ "ckpt": "runs/v6/Q2a_embed_style/Q2a_embed_style.pt",
+ "canon_mode": "c1_gentle",
+ "n": 750,
+ "mean_dT": 0.038991080633054176,
+ "mean_dS": -0.07975033430258432,
+ "mean_dM": 0.1187414149356385,
+ "mean_top1": 0.252,
+ "mean_margin": -0.1277229765454928,
+ "mean_dino_c": 0.875784504532814,
+ "mean_lpips": 0.38707591501871746,
+ "per_target_dT": {
+  "Early_Renaissance": 0.05643231845150391,
+  "Impressionism": 0.10001253778735797,
+  "Minimalism": -0.021624769816795984,
+  "Rococo": 0.058430255353450776,
+  "Ukiyo_e": 0.0017050613897542158
+ },
+ "styles_improved": 4,
+ "dT_cluster_ci": {
+  "mean": 0.038991080633054176,
+  "ci": [
+   0.033424158286993993,
+   0.04441781296198153
+  ],
+  "n": 750,
+  "n_clusters": 150,
+  "boot_mean": 0.03898199499946377,
+  "boot_std": 0.0028249009335609815
+ },
+ "dS_cluster_ci": {
+  "mean": -0.07975033430258432,
+  "ci": [
+   -0.09151737201389736,
+   -0.06738990513659009
+  ],
+  "n": 750,
+  "n_clusters": 150,
+  "boot_mean": -0.07977872142097431,
+  "boot_std": 0.00612205757867289
+ },
+ "confusion_target_vs_pred": [
+  [
+   31,
+   31,
+   30,
+   27,
+   31
+  ],
+  [
+   22,
+   42,
+   35,
+   22,
+   29
+  ],
+  [
+   21,
+   32,
+   41,
+   28,
+   28
+  ],
+  [
+   20,
+   27,
+   30,
+   43,
+   30
+  ],
+  [
+   26,
+   37,
+   32,
+   23,
+   32
+  ]
+ ],
+ "confusion_styles": [
+  "Early_Renaissance",
+  "Impressionism",
+  "Minimalism",
+  "Rococo",
+  "Ukiyo_e"
+ ]
+}

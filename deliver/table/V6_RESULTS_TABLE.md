@@ -1,51 +1,85 @@
-# V6 下一阶段 · 统一结果表（交付用）
+# 统一测试集完整排名（600 跨风格任务，paper_rgb_v1 协议）
 
-**评测器**：`paper_rgb_v1` 评分链路（CSD / DINOv2 / LPIPS + TRT fp16 VAE 解码 → uint8）
-**协议**：750 任务 = **600 cross + 150 same**，150 源图，每风格 120/120 均衡
-**Cross600 指标一律为 cross-only**（按 `tgt_style != src_style` 分离；
-`eval_tiers` 的行里不含 `is_cross`，用默认值会把 750 全算成 cross，Top-1 虚高 3.4 倍）
+> **测试集**：`eval_protocol/tasks_750.json` 包含的 600 个跨风格任务（150 源图，每风格 120 任务）。已彻底删除所有 screen50、heldout400、same150、eval200 等简略切片测试集，以后所有模型和 baseline 统一使用本测试集。
+> **评分协议**：统一为 `paper_rgb_v1`（CSD、DINOv2、LPIPS 均以原始源图 RGB 为零点，TRT fp16 VAE 解码）。
+> **指标范围**：纯跨风格 600 任务（严格排除 150 个 same-style 自重构任务，避免虚高）。
 
-| 模型 | 参数量 | Cross600 Top-1 | DINO-C | LPIPS | ΔT | Margin | Minimalism 误判 | 来源 |
-|---|---|---:|---:|---:|---:|---:|---:|---|
-| Q2a Direct | 218K | **6.7%** | 0.879 | 0.273 | +0.0487 | -0.2536 | 26.2% | MEASURED: `P0 A0, Test600 (750 protocol)` |
-| Q2a + R1 Oracle (1 step) | 218K + R1 | **36.5%** | 0.710 | 0.415 | +0.0343 | -0.0528 | 31.0% | MEASURED: `P0 A1, Test600 (750 protocol)` |
-| Q2a + R1 Oracle (4 steps dyn) | 218K + R1 | **24.2%** | 0.796 | 0.355 | +0.0566 | -0.1146 | 26.9% | MEASURED: `P0 A2, Test600 (750 protocol)` |
-| V6 ScoreDiff N=24 | 3.27M | **35.2%** | 0.592 | 0.474 | +0.0686 | -0.0434 | 36.0% | MEASURED: `P0 A4, Test600 (750 protocol)` |
-| V6 ScoreDiff N=12 strong | 3.27M | **30.8%** | 0.624 | 0.492 | +0.0642 | -0.0588 | 35.0% | MEASURED: `eval_750_scorediff_N12` |
-| B0 218K control (continued) | 218K | **7.5%** | 0.870 | 0.405 | +0.0338 | -0.2635 | 27.5% | MEASURED: `eval_750_P1_B0_ctrl218` |
-| B3 distilled lambda=20 | 218K | **20.8%** | 0.810 | 0.462 | +0.0609 | -0.1373 | 28.5% | MEASURED: `eval_750_P1_B3_distill20` |
-| B4 distilled lambda=50 | 218K | **24.2%** | 0.796 | 0.474 | +0.0602 | -0.1201 | 29.2% | MEASURED: `eval_750_P1_B4_distill50` |
+## 一、全模型 Target Top-1 总排名（风格是否真正成立）
 
-## 分目标 Top-1（Cross600）
+| 排名 | 方法 | 类别 | Target Top-1 ↑ | Target Margin ↑ | CSD ΔT ↑ | DINO-C ↑ | LPIPS ↓ | 5类改善 | Ukiyo-e ΔT | 评测来源 |
+|---:|---|:---:|---:|---:|---:|---:|---:|:---:|---:|---|
+| 1 | StyleShot | Baseline (外部) | 92.6% | +0.2175 | +0.3846 | 0.3569 | 0.7697 | 5/5 | +0.6025 | `docs/baseline (evaluator_v2)` |
+| 2 | StyleID | Baseline (外部) | 73.2% | +0.1533 | +0.3134 | 0.3885 | 0.5554 | 5/5 | +0.5527 | `docs/baseline (evaluator_v2)` |
+| 3 | StyTr2 | Baseline (外部) | 39.5% | -0.0407 | +0.1257 | 0.7023 | 0.7386 | 4/5 | +0.0623 | `docs/baseline (evaluator_v2)` |
+| 4 | Seedream 4.5 | Baseline (外部) | 37.3% | -0.0562 | +0.2075 | 0.7343 | 0.5202 | 5/5 | +0.4510 | `docs/baseline (evaluator_v2)` |
+| 5 | **Q2a + R1 Oracle (1 step)** | Our Model (本轮实测) | **37.2%** | -0.0536 | +0.0249 | 0.6966 | 0.5438 | 3/5 | -0.0798 | `runs/v6_next/eval_750_oracle_s1/eval.json` |
+| 6 | **V6 ScoreDiff N=24** | Our Model (本轮实测) | **35.5%** | -0.0352 | +0.0666 | 0.5725 | 0.5455 | 3/5 | -0.0118 | `runs/v6_next/eval_750_scorediff_N24/eval.json` |
+| 7 | AdaIN | Baseline (外部) | 34.3% | -0.0360 | +0.0126 | 0.2271 | 0.7641 | 2/5 | -0.0335 | `docs/baseline (evaluator_v2)` |
+| 8 | AesPA | Baseline (外部) | 31.0% | -0.0473 | +0.1386 | 0.6075 | 0.6247 | 4/5 | +0.0193 | `docs/baseline (evaluator_v2)` |
+| 9 | **V6 ScoreDiff N=12 strong** | Our Model (本轮实测) | **30.8%** | -0.0588 | +0.0642 | 0.6242 | 0.4919 | 3/5 | -0.0053 | `runs/v6_next/eval_750_scorediff_N12/eval.json` |
+| 10 | **P1_B4_distill50 (218K)** | Our Model (本轮实测) | **24.2%** | -0.1201 | +0.0602 | 0.7960 | 0.4744 | 4/5 | -0.0324 | `runs/v6_next/eval_750_P1_B4_distill50/eval.json` |
+| 11 | **P1_B3_distill20 (218K)** | Our Model (本轮实测) | **20.8%** | -0.1373 | +0.0609 | 0.8098 | 0.4620 | 4/5 | -0.0245 | `runs/v6_next/eval_750_P1_B3_distill20/eval.json` |
+| 12 | WCT | Baseline (外部) | 20.0% | -0.1003 | -0.0926 | 0.0232 | 1.0010 | 1/5 | -0.1330 | `docs/baseline (evaluator_v2)` |
+| 13 | SaMST | Baseline (外部) | 20.0% | -0.1288 | -0.0615 | 0.1628 | 0.8496 | 1/5 | -0.0554 | `docs/baseline (evaluator_v2)` |
+| 14 | WEAVE (Published) | Baseline (外部) | 16.7% | -0.2557 | +0.0895 | 0.8079 | 0.4974 | 5/5 | +0.0895 | `docs/baseline (evaluator_v2)` |
+| 15 | **P1_B0_ctrl218 (218K)** | Our Model (本轮实测) | **7.5%** | -0.2635 | +0.0338 | 0.8702 | 0.4051 | 4/5 | -0.0114 | `runs/v6_next/eval_750_P1_B0_ctrl218/eval.json` |
+| 16 | **Q2a Direct (218K)** | Our Model (本轮实测) | **7.0%** | -0.2479 | +0.0429 | 0.8703 | 0.4001 | 3/5 | -0.0056 | `runs/v6_next/eval_750_Q2a_embed_style/eval.json` |
+| 17 | CUT | Baseline (外部) | 5.7% | -0.2385 | +0.0477 | 0.8435 | 0.6193 | 3/5 | +0.0712 | `docs/baseline (evaluator_v2)` |
+| 18 | V6 ScoreDiff (lr0.055, s42) | Baseline (外部) | 5.0% | -0.3345 | +0.0554 | 0.9024 | 0.2370 | 5/5 | +0.0327 | `docs/baseline (evaluator_v2)` |
+| 19 | V6 ScoreDiff (lr0.055, s43) | Baseline (外部) | 5.0% | -0.3340 | +0.0554 | 0.9020 | 0.2369 | 5/5 | +0.0324 | `docs/baseline (evaluator_v2)` |
+| 20 | V6 ScoreDiff (lr0.048, s42) | Baseline (外部) | 4.0% | -0.3575 | +0.0513 | 0.9188 | 0.2079 | 5/5 | +0.0339 | `docs/baseline (evaluator_v2)` |
+| 21 | V6 ScoreDiff (lr0.048, s43) | Baseline (外部) | 3.7% | -0.3576 | +0.0512 | 0.9185 | 0.2079 | 5/5 | +0.0334 | `docs/baseline (evaluator_v2)` |
+| 22 | **L11 Direct (218K)** | Our Model (本轮实测) | **3.5%** | -0.2953 | +0.0264 | 0.8909 | 0.3619 | 3/5 | -0.0175 | `runs/v6_next/eval_750_L11_k1024_dim16/eval.json` |
+| 23 | V6 D1 Gentle (s42) | Baseline (外部) | 3.2% | -0.3030 | +0.0504 | 0.8994 | 0.3639 | 5/5 | +0.0254 | `docs/baseline (evaluator_v2)` |
+| 24 | V6 D1 Gentle (s43) | Baseline (外部) | 3.0% | -0.3011 | +0.0524 | 0.8996 | 0.3634 | 5/5 | +0.0301 | `docs/baseline (evaluator_v2)` |
+| 25 | SaMAM | Baseline (外部) | 2.5% | -0.2886 | +0.1019 | 0.8239 | 0.3882 | 5/5 | +0.0809 | `docs/baseline (evaluator_v2)` |
+| 26 | V6 D1 Calibrated (a0.70, s42) | Baseline (外部) | 2.0% | -0.3721 | +0.0428 | 0.9345 | 0.2508 | 5/5 | +0.0338 | `docs/baseline (evaluator_v2)` |
+| 27 | V6 D1 Calibrated (a0.70, s43) | Baseline (外部) | 2.0% | -0.3722 | +0.0434 | 0.9342 | 0.2507 | 5/5 | +0.0372 | `docs/baseline (evaluator_v2)` |
+| 28 | Identity | Baseline (外部) | 0.5% | -0.4543 | -0.0000 | 1.0000 | 0.0000 | 0/5 | -0.0000 | `docs/baseline (evaluator_v2)` |
+| 29 | SD-Turbo | Baseline (外部) | 0.5% | -0.4548 | -0.0035 | 0.9998 | 0.0048 | 0/5 | -0.0029 | `docs/baseline (evaluator_v2)` |
 
-| 模型 | Early_Ren | Impressionism | Minimalism | Rococo | Ukiyo_e |
-|---|---:|---:|---:|---:|---:|
-| Q2a Direct | 3.3% | 10.0% | 8.3% | 10.8% | 0.8% |
-| Q2a + R1 Oracle (1 step) | 4.2% | 64.2% | 73.3% | 35.8% | 5.0% |
-| Q2a + R1 Oracle (4 steps dyn) | 2.5% | 36.7% | 45.0% | 35.8% | 0.8% |
-| V6 ScoreDiff N=24 | 14.2% | 40.8% | 95.8% | 15.8% | 9.2% |
-| V6 ScoreDiff N=12 strong | 11.7% | 26.7% | 97.5% | 9.2% | 9.2% |
-| B0 218K control (continued) | 1.7% | 11.7% | 15.0% | 7.5% | 1.7% |
-| B3 distilled lambda=20 | 3.3% | 32.5% | 45.0% | 21.7% | 1.7% |
-| B4 distilled lambda=50 | 3.3% | 40.0% | 52.5% | 23.3% | 1.7% |
 
-## 同风格（Same150）
+## 二、保真档排名（DINO-C ≥ 0.80）
 
-| 模型 | Same Top-1 | Same ΔS |
-|---|---:|---:|
-| Q2a Direct | 98.0% | +0.0184 |
-| Q2a + R1 Oracle (1 step) | 94.7% | -0.1545 |
-| Q2a + R1 Oracle (4 steps dyn) | 98.0% | -0.0573 |
-| V6 ScoreDiff N=24 | 94.7% | -0.0000 |
-| V6 ScoreDiff N=12 strong | 96.7% | -0.0000 |
-| B0 218K control (continued) | 98.0% | +0.0162 |
-| B3 distilled lambda=20 | 97.3% | -0.0052 |
-| B4 distilled lambda=50 | 98.0% | -0.0198 |
+> 排除几乎放弃内容保真的极端风格化模型，保留内容结构较为完整的模型。
 
-## 未在本轮测量、仅作参照（来源不是本次运行）
+| 排名 | 方法 | 类别 | Target Top-1 ↑ | Target Margin ↑ | CSD ΔT ↑ | DINO-C ↑ | LPIPS ↓ |
+|---:|---|:---:|---:|---:|---:|---:|---:|
+| 1 | **P1_B3_distill20 (218K)** | Our Model (本轮实测) | **20.8%** | -0.1373 | +0.0609 | 0.8098 | 0.4620 |
+| 2 | WEAVE (Published) | Baseline (外部) | 16.7% | -0.2557 | +0.0895 | 0.8079 | 0.4974 |
+| 3 | **P1_B0_ctrl218 (218K)** | Our Model (本轮实测) | **7.5%** | -0.2635 | +0.0338 | 0.8702 | 0.4051 |
+| 4 | **Q2a Direct (218K)** | Our Model (本轮实测) | **7.0%** | -0.2479 | +0.0429 | 0.8703 | 0.4001 |
+| 5 | CUT | Baseline (外部) | 5.7% | -0.2385 | +0.0477 | 0.8435 | 0.6193 |
+| 6 | V6 ScoreDiff (lr0.055, s42) | Baseline (外部) | 5.0% | -0.3345 | +0.0554 | 0.9024 | 0.2370 |
+| 7 | V6 ScoreDiff (lr0.055, s43) | Baseline (外部) | 5.0% | -0.3340 | +0.0554 | 0.9020 | 0.2369 |
+| 8 | V6 ScoreDiff (lr0.048, s42) | Baseline (外部) | 4.0% | -0.3575 | +0.0513 | 0.9188 | 0.2079 |
+| 9 | V6 ScoreDiff (lr0.048, s43) | Baseline (外部) | 3.7% | -0.3576 | +0.0512 | 0.9185 | 0.2079 |
+| 10 | **L11 Direct (218K)** | Our Model (本轮实测) | **3.5%** | -0.2953 | +0.0264 | 0.8909 | 0.3619 |
+| 11 | V6 D1 Gentle (s42) | Baseline (外部) | 3.2% | -0.3030 | +0.0504 | 0.8994 | 0.3639 |
+| 12 | V6 D1 Gentle (s43) | Baseline (外部) | 3.0% | -0.3011 | +0.0524 | 0.8996 | 0.3634 |
+| 13 | SaMAM | Baseline (外部) | 2.5% | -0.2886 | +0.1019 | 0.8239 | 0.3882 |
+| 14 | V6 D1 Calibrated (a0.70, s42) | Baseline (外部) | 2.0% | -0.3721 | +0.0428 | 0.9345 | 0.2508 |
+| 15 | V6 D1 Calibrated (a0.70, s43) | Baseline (外部) | 2.0% | -0.3722 | +0.0434 | 0.9342 | 0.2507 |
+| 16 | Identity | Baseline (外部) | 0.5% | -0.4543 | -0.0000 | 1.0000 | 0.0000 |
+| 17 | SD-Turbo | Baseline (外部) | 0.5% | -0.4548 | -0.0035 | 0.9998 | 0.0048 |
 
-| 模型 | 参数量 | Top-1 | DINO-C | 来源 |
-|---|---|---:|---:|---|
-| V6 D1_T1 | 1.88M | 6.5% | 0.870 | 早期 `paper_rgb_v1` 结果，非本轮 |
-| 历史 WEAVE 原版 | 待核实 | 16.7% | 0.808 | 已发表系统，非本轮 |
-| L11 Direct | 218K | ~3% | ~0.89 | 本轮 Heldout400（400 任务），**不是** Cross600 协议 |
+
+## 三、高保真档排名（DINO-C ≥ 0.85）
+
+> 严格保真档：要求几乎无损原图内容与结构。
+
+| 排名 | 方法 | 类别 | Target Top-1 ↑ | Target Margin ↑ | CSD ΔT ↑ | DINO-C ↑ | LPIPS ↓ |
+|---:|---|:---:|---:|---:|---:|---:|---:|
+| 1 | **P1_B0_ctrl218 (218K)** | Our Model (本轮实测) | **7.5%** | -0.2635 | +0.0338 | 0.8702 | 0.4051 |
+| 2 | **Q2a Direct (218K)** | Our Model (本轮实测) | **7.0%** | -0.2479 | +0.0429 | 0.8703 | 0.4001 |
+| 3 | V6 ScoreDiff (lr0.055, s42) | Baseline (外部) | 5.0% | -0.3345 | +0.0554 | 0.9024 | 0.2370 |
+| 4 | V6 ScoreDiff (lr0.055, s43) | Baseline (外部) | 5.0% | -0.3340 | +0.0554 | 0.9020 | 0.2369 |
+| 5 | V6 ScoreDiff (lr0.048, s42) | Baseline (外部) | 4.0% | -0.3575 | +0.0513 | 0.9188 | 0.2079 |
+| 6 | V6 ScoreDiff (lr0.048, s43) | Baseline (外部) | 3.7% | -0.3576 | +0.0512 | 0.9185 | 0.2079 |
+| 7 | **L11 Direct (218K)** | Our Model (本轮实测) | **3.5%** | -0.2953 | +0.0264 | 0.8909 | 0.3619 |
+| 8 | V6 D1 Gentle (s42) | Baseline (外部) | 3.2% | -0.3030 | +0.0504 | 0.8994 | 0.3639 |
+| 9 | V6 D1 Gentle (s43) | Baseline (外部) | 3.0% | -0.3011 | +0.0524 | 0.8996 | 0.3634 |
+| 10 | V6 D1 Calibrated (a0.70, s42) | Baseline (外部) | 2.0% | -0.3721 | +0.0428 | 0.9345 | 0.2508 |
+| 11 | V6 D1 Calibrated (a0.70, s43) | Baseline (外部) | 2.0% | -0.3722 | +0.0434 | 0.9342 | 0.2507 |
+| 12 | Identity | Baseline (外部) | 0.5% | -0.4543 | -0.0000 | 1.0000 | 0.0000 |
+| 13 | SD-Turbo | Baseline (外部) | 0.5% | -0.4548 | -0.0035 | 0.9998 | 0.0048 |

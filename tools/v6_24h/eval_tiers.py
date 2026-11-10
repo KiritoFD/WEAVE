@@ -106,7 +106,8 @@ def main() -> None:
     tasks = spec["tasks"]
     if args.limit:
         tasks = tasks[: args.limit]
-    print(f"[tiers] {spec['protocol']['name']}: {len(tasks)} tasks, ckpt={args.ckpt}, "
+    _proto = (spec.get("protocol") or {}).get("name") or Path(args.tasks).stem
+    print(f"[tiers] {_proto}: {len(tasks)} tasks, ckpt={args.ckpt}, "
           f"canon={canon_mode}" + (" [SMOKE]" if args.limit else ""), flush=True)
 
     proto = csd_prototypes()
@@ -213,7 +214,7 @@ def main() -> None:
     for r in rows:
         conf[STYLES.index(r["tgt_style"]), r["pred_class"]] += 1
     res = {
-        "protocol": spec["protocol"], "ckpt": args.ckpt, "canon_mode": canon_mode,
+        "protocol": _proto, "ckpt": args.ckpt, "canon_mode": canon_mode,
         "n": len(rows),
         "mean_dT": float(dT.mean()), "mean_dS": float(dS.mean()),
         "mean_dM": float((dT - dS).mean()),
@@ -232,7 +233,7 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     (out / "eval.json").write_text(json.dumps(res, ensure_ascii=False, indent=2),
                                    encoding="utf-8")
-    print(f"\n[tiers] {spec['protocol']['name']}  n={res['n']}")
+    print(f"\n[tiers] {_proto}  n={res['n']}")
     print(f"  dT={res['mean_dT']:+.4f} "
           f"cluster CI [{res['dT_cluster_ci']['ci'][0]:+.4f}, "
           f"{res['dT_cluster_ci']['ci'][1]:+.4f}]  "
