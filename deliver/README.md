@@ -11,11 +11,48 @@
 |---|---|---|
 | `table/V6_RESULTS_TABLE.md` | **统一结果表**（每行标注来源） | 3 KB |
 | `table/BOTTLENECK.md` | **瓶颈判定 + Pareto 说明 + 下一步** | 4 KB |
-| `pareto_style_content.png` | **风格—内容 Pareto 图** | 60 KB |
+| `pareto_style_content.png` | **风格–内容 Pareto 图** | 100 KB |
+| **`checkpoints/`** | **14 个 checkpoint（33 MB），SHA256 全部校验，本地加载前向全部通过** | **33 MB** |
+| `verify_checkpoints.py` | 校验脚本：重建模型 + CPU 前向 | 4 KB |
 | `docs/` | 阶段报告 12 篇 + 静默失败记录 4 篇 | 150 KB |
 | `compact/` | 聚合指标（无逐任务行） | 75 KB |
 | `full/` | 原始 JSON（含逐任务行） | 5.4 MB |
-| `make_pareto.py` | 由 `full/` 重绘 Pareto 图 | 4 KB |
+| `make_pareto.py` | 由 `full/` 重绘 Pareto 图 | 5 KB |
+
+---
+
+## Checkpoints（14 个，33 MB，已校验）
+
+`deliver/checkpoints/` 保留原始的 `runs/...` 目录结构。`MANIFEST.json` 记录每个文件的 SHA256 前 16 位与字节数。
+
+| Checkpoint | 参数 | 机制（存在 ckpt 的 `args` 里） | 用途 |
+|---|---:|---|---|
+| `Q2a_embed_style.pt` | 218K | `rank=0.001 embed=0.3` | **Oracle 的 Direct 部分；蒸馏教师** |
+| `r1_r1.pt` | 816K | R1 critic（width 64） | **Oracle 的梯度来源** |
+| `P1_B3_distill20.pt` | 218K | `distill=20` | **推荐工作点**（Cross600 20.8% / DINO-C 0.810） |
+| `P1_B4_distill50.pt` | 218K | `distill=50` | 更强风格（24.2% / 0.796） |
+| `P1_B0_ctrl218.pt` | 218K | 无辅助损失 | B3/B4 的对照 |
+| `P1_B1_distill218.pt` | 218K | `distill=1` | λ 过小的证据 |
+| `P1_B2c_ctrl845.pt` | 845K | 无辅助损失 | 等宽对照（证明容量不是瓶颈） |
+| `P1_B2_distill845.pt` | 845K | `distill=1` | 等宽蒸馏 |
+| `P2_G0_bf16.pt` | 218K | 无辅助损失 | P2 对照 |
+| `P2_G1a_bf16.pt` | 218K | `rank=0.001` | 弱 ranking |
+| `P2_G1b_bf16.pt` | 218K | `rank=0.003` | 强 ranking |
+| `L11_k1024_dim16.pt` | 218K | 无辅助损失 | 原始轻量基线 |
+| `L8_k1024_dim32.pt` | 845K | 无辅助损失 | 宽度对照 |
+| `score_diff_net.pt` | 3.27M | ScoreDiff 24/12 步 | 强风格参照 |
+
+**Oracle 必须同时用 `Q2a_embed_style.pt` + `r1_r1.pt`** —— 它不是独立模型：
+先跑 Q2a 得到 `z_out`，再对冻结 R1 求一次 `∇_z margin_target`，沿该方向走 RMS 0.25。
+
+**校验方式**：
+
+```bash
+python deliver/verify_checkpoints.py
+# 14/14 OK: 每个都从 ckpt 的 args 重建模型结构、加载权重、CPU 前向，
+# 并打印机制参数（rank / embed / distill / trust）
+```
+
 
 ---
 

@@ -1,0 +1,58 @@
+{
+  "runs/v6/L11_k1024_dim16/L11_k1024_dim16.pt": {
+    "sha256_16": "b7a7d1420e2b12f7",
+    "bytes": 907093
+  },
+  "runs/v6/L8_k1024_dim32/L8_k1024_dim32.pt": {
+    "sha256_16": "3648e473dae934ab",
+    "bytes": 3415774
+  },
+  "runs/v6/P1_B0_ctrl218/P1_B0_ctrl218.pt": {
+    "sha256_16": "9190ee3df477d9e6",
+    "bytes": 907303
+  },
+  "runs/v6/P1_B1_distill218/P1_B1_distill218.pt": {
+    "sha256_16": "81a1c0b18a594329",
+    "bytes": 907724
+  },
+  "runs/v6/P1_B2_distill845/P1_B2_distill845.pt": {
+    "sha256_16": "c56a1ddc319b563c",
+    "bytes": 3416524
+  },
+  "runs/v6/P1_B2c_ctrl845/P1_B2c_ctrl845.pt": {
+    "sha256_16": "9f5ae0ab4ba18b74",
+    "bytes": 3416158
+  },
+  "runs/v6/P1_B3_distill20/P1_B3_distill20.pt": {
+    "sha256_16": "d825b016afffe168",
+    "bytes": 907605
+  },
+  "runs/v6/P1_B4_distill50/P1_B4_distill50.pt": {
+    "sha256_16": "2716436fe0ee9993",
+    "bytes": 907605
+  },
+  "runs/v6/P2_G0_bf16/P2_G0_bf16.pt": {
+    "sha256_16": "9b789c8fdf006552",
+    "bytes": 906818
+  },
+  "runs/v6/P2_G1a_bf16/P2_G1a_bf16.pt": {
+    "sha256_16": "87713ae7aa063286",
+    "bytes": 906937
+  },
+  "runs/v6/P2_G1b_bf16/P2_G1b_bf16.pt": {
+    "sha256_16": "1a11f9b431e66f35",
+    "bytes": 906937
+  },
+  "runs/v6/Q2a_embed_style/Q2a_embed_style.pt": {
+    "sha256_16": "e08b3a7f72c6002e",
+    "bytes": 907413
+  },
+  "runs/v6/score_diff/score_diff_net.pt": {
+    "sha256_16": "6ae87438babc4921",
+    "bytes": 13127593
+  },
+  "runs/v6_next/probes/r1_r1.pt": {
+    "sha256_16": "944bf27b90bf4631",
+    "bytes": 3270185
+  }
+}
