@@ -1065,26 +1065,16 @@ def train_and_evaluate(args) -> dict:
                         m_t = (q.gather(1, y_cross[:, None]).squeeze(1)
                                - torch.logsumexp(q.masked_fill(oh, neg), dim=1))
                         l_rank = F.softplus(-m_t / args.rank_tau).mean()
-                        if step == 1:
-                            # plan requirement: measure the gradient ratio before fixing lambda.
-                            # NOTE: model.parameters() is a GENERATOR -- passing it twice consumes
-                            # it on the first call, so the second call silently receives an empty
-                            # sequence and reports norm 0. Materialise it once.
-                            _params = list(model.parameters())
-                            g_v6 = torch.autograd.grad(loss, _params,
-                                                       retain_graph=True, allow_unused=True)
-                            g_rk = torch.autograd.grad(args.rank_lambda * l_rank, _params,
-                                                       retain_graph=True, allow_unused=True)
-                            n_v6 = float(torch.sqrt(sum((t ** 2).sum() for t in g_v6
-                                                        if t is not None)))
-                            n_rk = float(torch.sqrt(sum((t ** 2).sum() for t in g_rk
-                                                        if t is not None)))
-                            n_none = sum(1 for t in g_rk if t is None)
-                            print(f"[{args.name}] G1 diag step1: L_rank={float(l_rank):.6f} "
-                                  f"m_t_mean={float(m_t.mean()):+.4f} "
-                                  f"|grad(L_V6)|={n_v6:.6e} |grad(lam_r*L_rank)|={n_rk:.6e} "
-                                  f"ratio={n_rk / max(n_v6, 1e-12):.4f} "
-                                  f"(unused_params={n_none}/{len(g_rk)})", flush=True)
+                        # NO autograd.grad / .backward() probes on the training graph.
+                        # Measured consequence of doing so: two 800-step runs whose only
+                        # difference was this term produced BIT-IDENTICAL weights (max|dW| = 0.0,
+                        # 113/113 tensors), while a probe-free 3-step pair differed on 113/113
+                        # tensors (max|dW| = 1.22e-03). Even retain_graph=True probes leave the
+                        # ranking branch contributing zero to the following backward.
+                        # The gradient ratio was measured separately, before any probe existed:
+                        #   lambda_r=0.1 -> |grad(lam_r*L_rank)|=16.82 vs |grad(L_V6)|=1.51
+                        #   i.e. ratio 11.12, and ratio/lambda_r = 111.2
+                        # so lambda_r 0.001 and 0.003 target ratios 0.11 and 0.33.
                         loss = loss + args.rank_lambda * l_rank
 
                     # Q2 (a): embedding-space target-style supervision. Separable from ranking:
