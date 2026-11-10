@@ -99,18 +99,27 @@ def main() -> None:
     eff_s = 0.5 * ((cell("T1_strong") - cell("L1_lowC"))
                    + (cell("L2_highS") - cell("A0")))
     eff_c = 0.5 * ((cell("A0") - cell("L1_lowC")) + (cell("L2_highS") - cell("T1_strong")))
-    inter = (cell("L2_highS") - cell("L1_lowC")) - (cell("T1_strong") - cell("A0"))
+    # CORRECT 2x2 interaction: effect of one factor at the two levels of the other.
+    #   (y11 - y10) - (y01 - y00)  with y00=L1, y10=T1, y01=A0, y11=L2
+    # An earlier version computed (y11 - y00) - (y10 - y01), which is a difference of the two
+    # DIAGONALS, not the interaction, and gave +0.0105 instead of the correct -0.0029.
+    inter = (cell("L2_highS") - cell("T1_strong")) - (cell("A0") - cell("L1_lowC"))
+    inter_check = (cell("L2_highS") - cell("A0")) - (cell("T1_strong") - cell("L1_lowC"))
 
     print(f"\n  main effect of lambda_s (0.35 -> 1.20): {eff_s:+.5f}")
     print(f"  main effect of lambda_c (0.240 -> 0.525): {eff_c:+.5f}")
-    print(f"  INTERACTION (non-separability): {inter:+.5f}")
+    print(f"  INTERACTION (y11-y10)-(y01-y00): {inter:+.5f}")
+    print(f"    equivalent form (y11-y01)-(y10-y00): {inter_check:+.5f}  "
+          f"(must match)")
+    if abs(inter - inter_check) > 1e-9:
+        print("    WARNING: the two interaction forms disagree, cells are inconsistent")
     print()
     if abs(inter) > max(abs(eff_s), abs(eff_c)) * 0.5:
         print("  -> interaction is large relative to the main effects: the two factors are")
         print("     NOT separable, so T1's gain cannot be attributed to 'more style' alone.")
     else:
-        print("  -> interaction is small: the two factors are approximately separable,")
-        print("     so the main effects can be read independently.")
+        print("  -> interaction is small relative to the main effects: the two factors are")
+        print("     approximately separable, so the main effects can be read independently.")
 
     print(f"\n{'per-target ' + args.metric:22s}" + "".join(f"{SH[s]:>9s}" for s in STYLES))
     for name in ("L1_lowC", "A0", "T1_strong", "L2_highS"):
