@@ -30,7 +30,7 @@ import numpy as np
 from tools.v6.train_eval_v6 import STYLES
 from tools.v6_24h.stats import paired_cluster_ci, cluster_ci
 
-ARMS = ["G0_ctrl", "G1a_rank_weak", "G1b_rank_strong"]
+ARMS = ["P2_G0_bf16", "P2_G1a_bf16", "P2_G1b_bf16"]
 MIN_IDX = STYLES.index("Minimalism")
 HARD = ["Early_Renaissance", "Rococo", "Ukiyo_e"]
 
@@ -86,7 +86,7 @@ def main() -> None:
     print("\n[2] Val200 headline (model selection uses Val200 only)")
     print(f"  {'arm':18s}{'dT':>9s}{'Top-1':>8s}{'margin':>9s}{'DINO-C':>8s}"
           f"{'LPIPS':>8s}{'sty+':>6s}{'same dS':>9s}")
-    base = load("G0_ctrl")["eval200"]
+    base = load("P2_G0_bf16")["eval200"]
     for a in ARMS:
         e = load(a)["eval200"]
         print(f"  {a:18s}{e['mean_dT']:+9.4f}{_top1(e):8.3f}{e['mean_dM']:+9.4f}"
@@ -95,15 +95,15 @@ def main() -> None:
 
     # ---- 3. paired comparison vs G0 ----
     print("\n[3] paired source-clustered comparison vs G0_ctrl")
-    r0 = rows("G0_ctrl")
+    r0 = rows("P2_G0_bf16")
     t0 = _per_task(r0, "dT")
     for a in ARMS[1:]:
         ra = rows(a)
         ta = _per_task(ra, "dT")
-        ci = paired_cluster_ci(t0, ta, _clusters(r0))
+        ci = paired_cluster_ci(ta, t0, _clusters(r0))          # G1 minus G0
         t1_0 = np.array([int(r["target_top1"]) for r in r0], float)
         t1_a = np.array([int(r["target_top1"]) for r in ra], float)
-        ci_t1 = paired_cluster_ci(t1_0, t1_a, _clusters(r0))
+        ci_t1 = paired_cluster_ci(t1_a, t1_0, _clusters(r0))   # G1 minus G0
         print(f"  {a:18s} d(dT)={ci['diff']:+.4f} CI [{ci['ci'][0]:+.4f}, {ci['ci'][1]:+.4f}] "
               f"excl0={ci['excludes_zero']}")
         print(f"  {'':18s} d(Top-1)={ci_t1['diff']:+.4f} "
@@ -158,14 +158,14 @@ def main() -> None:
 
     # ---- 7. verdict ----
     print("\n[7] verdict against the six acceptance criteria")
-    e0 = load("G0_ctrl")["eval200"]
+    e0 = load("P2_G0_bf16")["eval200"]
     for a in ARMS[1:]:
         e = load(a)["eval200"]
-        ra, r0 = rows(a), rows("G0_ctrl")
+        ra, r0 = rows(a), rows("P2_G0_bf16")
         d_top1 = _top1(e) - _top1(e0)
-        ci = paired_cluster_ci(np.array([int(r["target_top1"]) for r in r0], float),
-                               np.array([int(r["target_top1"]) for r in ra], float),
-                               _clusters(r0))
+        ci = paired_cluster_ci(np.array([int(r["target_top1"]) for r in ra], float),
+                               np.array([int(r["target_top1"]) for r in r0], float),
+                               _clusters(r0))                 # G1 minus G0
         crit1 = d_top1 >= 0.05 and ci["excludes_zero"]
         crit2 = (e["mean_dM"] - e0["mean_dM"]) * d_top1 > 0
         crit3 = e["mean_dino_c"] >= 0.85
