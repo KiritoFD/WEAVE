@@ -797,8 +797,9 @@ def render_and_eval_750_v6(
 
 def train_and_evaluate(args) -> dict:
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    V6_ROOT.mkdir(parents=True, exist_ok=True)
-    out_dir = V6_ROOT / args.name
+    out_base = Path(getattr(args, "out_base", "")) if getattr(args, "out_base", "") else (REPO_ROOT / "runs" / "v6_r2")
+    out_base.mkdir(parents=True, exist_ok=True)
+    out_dir = out_base / args.name
     out_dir.mkdir(parents=True, exist_ok=True)
 
     asset_root = paths.asset_root()
@@ -1121,22 +1122,43 @@ def train_and_evaluate(args) -> dict:
                         with torch.no_grad():
                             z_T = distill_teacher(c_in, 0.0, c_in, y_cross)
                         per = args.distill_rms / max(1, args.distill_steps)
-                        for _ in range(args.distill_steps):
-                            # The refine step needs grad ENABLED to differentiate the critic, but
-                            # the teacher must not accumulate into the training graph, so the step
-                            # is taken in its own enable_grad scope and detached afterwards.
-                            with torch.enable_grad():
-                                _zr = z_T.detach().clone().requires_grad_(True)
-                                _q = distill_critic(_zr.float()).float()
-                                _oh = F.one_hot(y_cross, len(STYLES)).bool()
-                                _m = (_q.gather(1, y_cross[:, None]).squeeze(1)
-                                      - torch.logsumexp(
-                                          _q.masked_fill(_oh, torch.finfo(_q.dtype).min),
-                                          dim=1))
-                                _g = torch.autograd.grad(_m.sum(), _zr)[0]
-                            _D = _g[0].numel()
-                            _gn = _g.flatten(1).norm(dim=1).view(-1, 1, 1, 1)
-                            z_T = (z_T + per * (_g / (_gn / _D ** 0.5 + 1e-12))).detach()
+                        if getattr(args, "distill_mode", "oracle") in ("projected", "projected_ll"):
+                            from tools.v6_next.r2_teacher import (
+                                compute_content_losses, project_tangential,
+                                rms_normalize, filter_haar_subbands,
+                            )
+                            for _ in range(args.distill_steps):
+                                with torch.enable_grad():
+                                    _zr = z_T.detach().clone().requires_grad_(True)
+                                    _q = distill_critic(_zr.float()).float()
+                                    _oh = F.one_hot(y_cross, len(STYLES)).bool()
+                                    _m = (_q.gather(1, y_cross[:, None]).squeeze(1)
+                                          - torch.logsumexp(
+                                              _q.masked_fill(_oh, torch.finfo(_q.dtype).min),
+                                              dim=1))
+                                    _g_s = torch.autograd.grad(_m.sum(), _zr)[0]
+                                    _l_ss, _l_inv = compute_content_losses(_zr, z_real, canon, args.canon_mode)
+                                    _l_c = (_l_ss / 0.05) + (_l_inv / 0.10)
+                                    _g_c = torch.autograd.grad(_l_c.sum(), _zr)[0]
+                                _d = project_tangential(_g_s, _g_c)
+                                _d_norm = rms_normalize(_d)
+                                if args.distill_mode == "projected_ll":
+                                    _d_norm = filter_haar_subbands(_d_norm, band="ll")
+                                z_T = (z_T + per * _d_norm).detach()
+                        else:
+                            for _ in range(args.distill_steps):
+                                with torch.enable_grad():
+                                    _zr = z_T.detach().clone().requires_grad_(True)
+                                    _q = distill_critic(_zr.float()).float()
+                                    _oh = F.one_hot(y_cross, len(STYLES)).bool()
+                                    _m = (_q.gather(1, y_cross[:, None]).squeeze(1)
+                                          - torch.logsumexp(
+                                              _q.masked_fill(_oh, torch.finfo(_q.dtype).min),
+                                              dim=1))
+                                    _g = torch.autograd.grad(_m.sum(), _zr)[0]
+                                _D = _g[0].numel()
+                                _gn = _g.flatten(1).norm(dim=1).view(-1, 1, 1, 1)
+                                z_T = (z_T + per * (_g / (_gn / _D ** 0.5 + 1e-12))).detach()
                         l_distill = F.mse_loss(z_cross.float(), z_T.float())
                         if step == 1:
                             # pure logging, no autograd probes on the training graph
@@ -1217,15 +1239,19 @@ def train_and_evaluate(args) -> dict:
           f"sel_margin={cond_audit['check2_target_style_selectivity']['selectivity_margin']:+.4f} "
           f"content_margin={cond_audit['check3_content_condition_validity']['dino_c_margin']:+.4f}", flush=True)
 
-    print(f"[{args.name}] Running 200-task cross-style + 50 same-style evaluation...", flush=True)
-    eval200 = evaluate_200_v6(
-        model, canon, canon_mode=args.canon_mode, ode_steps=args.ode_steps,
-        sigma0=args.sigma0, seed=args.seed, device=device,
-    )
-    print(f"[{args.name}] Eval200: CSD_dT={eval200['mean_dT']:+.4f} dM={eval200['mean_dM']:+.4f} "
-          f"DINO-C={eval200['mean_dino_c']:.4f} LPIPS={eval200['mean_lpips']:.4f} "
-          f"styles+={eval200['styles_improved']}/5 ukiyo={eval200['ukiyo_dT']:+.4f} "
-          f"same50_dS={eval200['same50_mean_dS']:+.4f}", flush=True)
+    eval200 = {}
+    if (V5_ROOT / "v5_eval200_tasks.json").exists():
+        print(f"[{args.name}] Running 200-task cross-style + 50 same-style evaluation...", flush=True)
+        eval200 = evaluate_200_v6(
+            model, canon, canon_mode=args.canon_mode, ode_steps=args.ode_steps,
+            sigma0=args.sigma0, seed=args.seed, device=device,
+        )
+        print(f"[{args.name}] Eval200: CSD_dT={eval200['mean_dT']:+.4f} dM={eval200['mean_dM']:+.4f} "
+              f"DINO-C={eval200['mean_dino_c']:.4f} LPIPS={eval200['mean_lpips']:.4f} "
+              f"styles+={eval200['styles_improved']}/5 ukiyo={eval200['ukiyo_dT']:+.4f} "
+              f"same50_dS={eval200['same50_mean_dS']:+.4f}", flush=True)
+    else:
+        print(f"[{args.name}] Note: v5_eval200_tasks.json not found; evaluation is handled by r2_eval.py on tasks_750", flush=True)
 
     report = {
         "name": args.name,
@@ -1254,6 +1280,7 @@ def train_and_evaluate(args) -> dict:
         "distill_steps": args.distill_steps,
         "distill_rms": args.distill_rms,
         "distill_lambda": args.distill_lambda,
+        "distill_mode": getattr(args, "distill_mode", "oracle"),
         "trust_lambda": args.trust_lambda,
         "trust_radius": args.trust_radius,
         "b1_status": b1_status,
@@ -1289,6 +1316,7 @@ def train_and_evaluate(args) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", required=True)
+    ap.add_argument("--out-base", type=str, default="")
     ap.add_argument("--mode", choices=["direct", "flow"], required=True)
     ap.add_argument("--canon-mode", choices=["c1", "c1_gentle", "c1_soft", "c2", "none"],
                     default="c1")
@@ -1313,6 +1341,8 @@ def main() -> None:
     ap.add_argument("--distill-rms", type=float, default=0.25,
                     help="TOTAL edit RMS budget of the teacher refine (split across steps)")
     ap.add_argument("--distill-lambda", type=float, default=0.0)
+    ap.add_argument("--distill-mode", choices=["oracle", "projected", "projected_ll"], default="oracle",
+                    help="teacher mode: 'oracle' (unconstrained R1), 'projected' (content tangential), 'projected_ll' (LL-only projected)")
     ap.add_argument("--amp-dtype", choices=["bf16", "fp16", "none"], default="bf16",
                     help="training autocast dtype. fp16 makes small ranking weights vanish: "
                          "measured, lambda_r<=0.01 then leaves weights bit-identical to no-rank")
