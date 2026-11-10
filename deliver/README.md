@@ -12,12 +12,64 @@
 | `table/V6_RESULTS_TABLE.md` | **统一结果表**（每行标注来源） | 3 KB |
 | `table/BOTTLENECK.md` | **瓶颈判定 + Pareto 说明 + 下一步** | 4 KB |
 | `pareto_style_content.png` | **风格–内容 Pareto 图** | 100 KB |
-| **`checkpoints/`** | **14 个 checkpoint（33 MB），SHA256 全部校验，本地加载前向全部通过** | **33 MB** |
-| `verify_checkpoints.py` | 校验脚本：重建模型 + CPU 前向 | 4 KB |
+| **`checkpoints/`** | **14 个 checkpoint（33 MB），SHA256 校验 + 本地前向全部通过** | **33 MB** |
+| **`testset/`** | **150 张测试图（42 MB）+ 评测参照 + 协议清单，SHA256 全部对上** | **48 MB** |
+| `verify_checkpoints.py` | checkpoint 校验：重建模型 + CPU 前向 | 4 KB |
+| `verify_testset.py` | 测试集校验：按内容 SHA256 与协议比对 | 4 KB |
 | `docs/` | 阶段报告 12 篇 + 静默失败记录 4 篇 | 150 KB |
 | `compact/` | 聚合指标（无逐任务行） | 75 KB |
 | `full/` | 原始 JSON（含逐任务行） | 5.4 MB |
 | `make_pareto.py` | 由 `full/` 重绘 Pareto 图 | 5 KB |
+
+---
+
+## 测试集（150 张 / 42 MB，已校验）
+
+`deliver/testset/` 保持 `data/test/<Style>/` 结构。
+
+| 风格 | 图片数 | 大小 |
+|---|---:|---:|
+| Early_Renaissance | 30 | 10.4 MB |
+| Impressionism | 30 | 10.1 MB |
+| Minimalism | 30 | 1.4 MB |
+| Rococo | 30 | 7.0 MB |
+| Ukiyo_e | 30 | 12.6 MB |
+| **合计** | **150** | **42 MB** |
+
+另含：
+- `refs/eval_src_latents.pt`（Val200 的 50 个源图 latent，3.2 MB）
+- `refs/eval_src_csd_feats.pt`、`refs/d5_style_multiscale_descriptors.pt`、`refs/csd_proto.pt`（评测参照）
+- `protocol/tasks_750.json`（750 任务定义）、`heldout400_tasks.json`、`same150_tasks.json`
+
+**校验结果**（`python deliver/verify_testset.py`）：
+
+```
+protocol references 150 unique source images
+  by content hash: matched 150/150, missing 0, extra 0
+  by exact path  : 149/150 (1 path string differs)
+  cross-style pairs: 20/20, tasks per pair min=30 max=30
+  ALL 150 IMAGES PRESENT AND BYTE-IDENTICAL TO THE PROTOCOL
+```
+
+**1 个路径字符串差异**是源数据里就有的 Unicode mojibake：
+
+| | 字节 |
+|---|---|
+| `tasks_750.json` 里 | `...joaqu` + U+82AB U+9845 + `n-sorolla...` |
+| 磁盘上 | `...joaqu` + U+00E3 U+00AD + `n-sorolla...` |
+
+**两者都是 `joaquín` 的错误渲染，但图片本身字节相同（SHA256 一致）。**
+读取该文件时应按哈希查找或规范化 stem，不能直接用协议里的路径字符串。
+
+### 未包含的大文件（已在 `testset/MANIFEST.json` 的 `not_included` 里列出）
+
+| 文件 | 大小 | 说明 |
+|---|---:|---|
+| `runs/v6/cache/indomain_style_targets_v2_k1024.pt` | **160 MB** | 训练用 1024/风格参考统计缓存 |
+| `pseudo_gt_24h/orig_mean_fp16/*.pt` | **492 MB** | 训练池 15,545 张图的 VAE latent |
+
+**这两个是训练产物，不是测试集。** 若要完整复现训练需要它们；
+只做**推理 + 评测**则用交付的 checkpoints + testset 即可。
 
 ---
 
