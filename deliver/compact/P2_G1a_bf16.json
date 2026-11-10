@@ -1,0 +1,206 @@
+{
+ "name": "P2_G1a_bf16",
+ "mode": "direct",
+ "canon_mode": "c1_gentle",
+ "n_params": 217824,
+ "steps": 800,
+ "effective_batch": 240,
+ "coherence_beta": 0.65,
+ "no_content": false,
+ "content_mode": "full",
+ "no_style": false,
+ "w_style_dist": 0.25,
+ "w_cross": 0.5,
+ "w_canon_inv": 1.5,
+ "lambda_cross_abs": 0.35,
+ "lambda_canon_abs": 0.525,
+ "lambda_same_abs": 0.25,
+ "init_from": "runs/v6/L11_k1024_dim16/L11_k1024_dim16.pt",
+ "rank_critic": "runs/v6_next/probes/r1_r1.pt",
+ "rank_lambda": 0.001,
+ "rank_tau": 0.5,
+ "embed_style_lambda": 0.0,
+ "trust_lambda": 0.0,
+ "trust_radius": 1.0,
+ "b1_status": "loaded",
+ "ref_top_k": 1024,
+ "core_sampler_off": false,
+ "inject_64": true,
+ "inject_32": true,
+ "inject_16": true,
+ "style_keys": false,
+ "grad_diag": {
+  "b1_loss": 0.22581224143505096,
+  "b1_grad": 0.7065621018409729,
+  "rec_grad": 0.3092593550682068,
+  "b1_status": "loaded"
+ },
+ "ode_steps": 8,
+ "sigma0": 0.1,
+ "seed": 42,
+ "train_wall_sec": 724.5,
+ "peak_vram_mib": 4829.3,
+ "final_loss": 0.2064344571530819,
+ "conditioning_validity": {
+  "check1_training_condition_validity": {
+   "n_samples": 200,
+   "L_correct_mean": 0.022007938474416733,
+   "L_wrong_mean": 0.13964702188968658,
+   "paired_diff_wrong_minus_correct": 0.11763908714056015,
+   "paired_diff_95ci": [
+    0.11035991460084915,
+    0.12525726854801178
+   ],
+   "frac_L_correct_smaller": 1.0,
+   "passed": true
+  },
+  "check2_target_style_selectivity": {
+   "n_contents": 25,
+   "csd_5x5_matrix": [
+    [
+     0.3564,
+     0.3003,
+     0.1425,
+     0.2146,
+     0.1344
+    ],
+    [
+     0.2948,
+     0.3563,
+     0.1525,
+     0.1522,
+     0.1302
+    ],
+    [
+     0.1739,
+     0.2117,
+     0.1961,
+     0.1457,
+     0.0579
+    ],
+    [
+     0.257,
+     0.2122,
+     0.1136,
+     0.2576,
+     0.0754
+    ],
+    [
+     0.3418,
+     0.3251,
+     0.1492,
+     0.1948,
+     0.174
+    ]
+   ],
+   "diag_mean": 0.2681,
+   "offdiag_mean": 0.189,
+   "selectivity_margin": 0.0791,
+   "column_top1_matches_out_of_5": 5,
+   "mean_cross_style_latent_l2": 0.4485,
+   "passed": true
+  },
+  "check3_content_condition_validity": {
+   "dino_c_own_content": 0.9252,
+   "dino_c_swapped_content": 0.3435,
+   "dino_c_margin": 0.5816,
+   "selfsim_own_content": 0.6496,
+   "selfsim_swapped_content": 0.2569,
+   "passed": true
+  },
+  "all_three_passed": true
+ },
+ "eval200": {
+  "n_cross": 200,
+  "mean_dT": 0.053481853045523164,
+  "dT_ci": [
+   0.044009699603077025,
+   0.06328200169792399
+  ],
+  "mean_dS": -0.10920321106910706,
+  "mean_dM": 0.1626850641146302,
+  "mean_dino_c": 0.9079833874106407,
+  "mean_lpips": 0.36341413244605064,
+  "frac_dT_positive": 0.78,
+  "per_target_dT": {
+   "Early_Renaissance": 0.05348425693809986,
+   "Impressionism": 0.07952222833409905,
+   "Minimalism": 0.04047299707308412,
+   "Rococo": 0.08376029618084431,
+   "Ukiyo_e": 0.010169486701488494
+  },
+  "per_target_top1": {
+   "Early_Renaissance": 0.025,
+   "Impressionism": 0.1,
+   "Minimalism": 0.05,
+   "Rococo": 0.125,
+   "Ukiyo_e": 0.0
+  },
+  "per_target_margin": {
+   "Early_Renaissance": -0.3093019094318151,
+   "Impressionism": -0.3155976660549641,
+   "Minimalism": -0.23463573697954415,
+   "Rococo": -0.2286667102947831,
+   "Ukiyo_e": -0.37164068445563314
+  },
+  "confusion_target_vs_pred": [
+   [
+    1,
+    11,
+    10,
+    8,
+    10
+   ],
+   [
+    10,
+    4,
+    10,
+    6,
+    10
+   ],
+   [
+    8,
+    13,
+    2,
+    9,
+    8
+   ],
+   [
+    6,
+    10,
+    10,
+    5,
+    9
+   ],
+   [
+    11,
+    11,
+    10,
+    8,
+    0
+   ]
+  ],
+  "confusion_styles": [
+   "Early_Renaissance",
+   "Impressionism",
+   "Minimalism",
+   "Rococo",
+   "Ukiyo_e"
+  ],
+  "dT_cluster_ci": {
+   "mean": 0.053481853045523164,
+   "ci": [
+    0.04556243843760613,
+    0.060761174691758825
+   ],
+   "n": 200,
+   "n_clusters": 50,
+   "boot_mean": 0.053450310410823376,
+   "boot_std": 0.0038223581311689573
+  },
+  "styles_improved": 5,
+  "ukiyo_dT": 0.010169486701488494,
+  "same50_mean_dS": 0.006851855516433716,
+  "same50_mean_dino_c": 0.9332306909561158
+ }
+}

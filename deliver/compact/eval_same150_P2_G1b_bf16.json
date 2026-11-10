@@ -1,0 +1,91 @@
+{
+ "protocol": {
+  "name": "Same150",
+  "n_tasks": 150,
+  "note": "must be run through the NETWORK; code-level identity is forbidden as a substitute for measured self-consistency"
+ },
+ "ckpt": "runs/v6/P2_G1b_bf16/P2_G1b_bf16.pt",
+ "canon_mode": "c1_gentle",
+ "n": 150,
+ "mean_dT": 0.023479153017203012,
+ "mean_dS": 0.023479153017203012,
+ "mean_dM": 0.0,
+ "mean_top1": 0.98,
+ "mean_margin": 0.35312668800354,
+ "mean_dino_c": 0.9017968010902405,
+ "mean_lpips": 0.32999144569039346,
+ "per_target_dT": {
+  "Early_Renaissance": 0.05124839544296265,
+  "Impressionism": 0.07630810389916103,
+  "Minimalism": -0.1033152848482132,
+  "Rococo": 0.05154740909735362,
+  "Ukiyo_e": 0.04160714149475098
+ },
+ "styles_improved": 4,
+ "dT_cluster_ci": {
+  "mean": 0.023479153017203012,
+  "ci": [
+   0.010938987902426716,
+   0.03696081182023398
+  ],
+  "n": 150,
+  "n_clusters": 150,
+  "boot_mean": 0.023488101706648154,
+  "boot_std": 0.0066687201271957985
+ },
+ "dS_cluster_ci": {
+  "mean": 0.023479153017203012,
+  "ci": [
+   0.010938987902426716,
+   0.03696081182023398
+  ],
+  "n": 150,
+  "n_clusters": 150,
+  "boot_mean": 0.023488101706648154,
+  "boot_std": 0.0066687201271957985
+ },
+ "confusion_target_vs_pred": [
+  [
+   28,
+   1,
+   0,
+   0,
+   1
+  ],
+  [
+   0,
+   29,
+   1,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   30,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   30,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   30
+  ]
+ ],
+ "confusion_styles": [
+  "Early_Renaissance",
+  "Impressionism",
+  "Minimalism",
+  "Rococo",
+  "Ukiyo_e"
+ ]
+}

@@ -1,0 +1,67 @@
+{
+ "critic": "runs/v6_next/probes/r1_r1.pt",
+ "ckpt": "runs/v6/L11_k1024_dim16/L11_k1024_dim16.pt",
+ "n": 64,
+ "baseline_real_m_target": -0.28349815180990845,
+ "baseline_real_m_source": -0.4356063783634454,
+ "grad_norm": 0.15149259567260742,
+ "cos_grad_v6": 0.0936954990029335,
+ "v6_dir_norm": 499.7648620605469,
+ "steps": [
+  {
+   "eps": 0.2,
+   "real_m_target": -0.26647305372171104,
+   "d_m_target": 0.01702509808819741,
+   "d_m_target_vs_src": 0.16913332464173436,
+   "dino_c": 0.9361129971221089,
+   "lpips_vs_direct": 0.0074898190796375275,
+   "lpips_vs_src": 0.2986907958984375
+  },
+  {
+   "eps": 0.5,
+   "real_m_target": -0.23601884383242577,
+   "d_m_target": 0.047479307977482677,
+   "d_m_target_vs_src": 0.19958753453101963,
+   "dino_c": 0.928463471122086,
+   "lpips_vs_direct": 0.03366854786872864,
+   "lpips_vs_src": 0.3147721290588379
+  },
+  {
+   "eps": 1.0,
+   "real_m_target": -0.17653059249278158,
+   "d_m_target": 0.10696755931712687,
+   "d_m_target_vs_src": 0.2590757858706638,
+   "dino_c": 0.9061440145596862,
+   "lpips_vs_direct": 0.09345145523548126,
+   "lpips_vs_src": 0.3542868494987488
+  },
+  {
+   "eps": 2.0,
+   "real_m_target": -0.08748408651445061,
+   "d_m_target": 0.19601406529545784,
+   "d_m_target_vs_src": 0.3481222918489948,
+   "dino_c": 0.8319845255464315,
+   "lpips_vs_direct": 0.2268921434879303,
+   "lpips_vs_src": 0.45113444328308105
+  },
+  {
+   "eps": 3.5,
+   "real_m_target": -0.034562740358524024,
+   "d_m_target": 0.24893541145138443,
+   "d_m_target_vs_src": 0.4010436380049214,
+   "dino_c": 0.6816317811608315,
+   "lpips_vs_direct": 0.3992680013179779,
+   "lpips_vs_src": 0.5788733959197998
+  }
+ ],
+ "verdict": "critic gradient IMPROVES the real CSD margin",
+ "best": {
+  "eps": 3.5,
+  "real_m_target": -0.034562740358524024,
+  "d_m_target": 0.24893541145138443,
+  "d_m_target_vs_src": 0.4010436380049214,
+  "dino_c": 0.6816317811608315,
+  "lpips_vs_direct": 0.3992680013179779,
+  "lpips_vs_src": 0.5788733959197998
+ }
+}

@@ -1,0 +1,19 @@
+{
+ "gen": "scorediff",
+ "ckpt": "runs/v6/score_diff/score_diff_net.pt",
+ "n": 64,
+ "sd_steps": 24,
+ "sd_lr": 0.1,
+ "sd_anchor": 0.08,
+ "real_m_target": -0.074861268280074,
+ "real_m_source": -0.4356063783634454,
+ "top1": 0.375,
+ "dino_c": 0.7103302237810567,
+ "per_target_top1": {
+  "Early_Renaissance": 0.0,
+  "Impressionism": 0.3,
+  "Minimalism": 1.0,
+  "Rococo": 0.3125,
+  "Ukiyo_e": 0.0
+ }
+}

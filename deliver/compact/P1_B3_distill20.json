@@ -1,0 +1,210 @@
+{
+ "name": "P1_B3_distill20",
+ "mode": "direct",
+ "canon_mode": "c1_gentle",
+ "n_params": 217824,
+ "steps": 800,
+ "effective_batch": 240,
+ "coherence_beta": 0.65,
+ "no_content": false,
+ "content_mode": "full",
+ "no_style": false,
+ "w_style_dist": 0.25,
+ "w_cross": 0.5,
+ "w_canon_inv": 1.5,
+ "lambda_cross_abs": 0.35,
+ "lambda_canon_abs": 0.525,
+ "lambda_same_abs": 0.25,
+ "init_from": "runs/v6/Q2a_embed_style/Q2a_embed_style.pt",
+ "rank_critic": "",
+ "rank_lambda": 0.0,
+ "rank_tau": 0.5,
+ "embed_style_lambda": 0.0,
+ "distill_teacher": "runs/v6/Q2a_embed_style/Q2a_embed_style.pt",
+ "distill_steps": 1,
+ "distill_rms": 0.25,
+ "distill_lambda": 20.0,
+ "trust_lambda": 0.0,
+ "trust_radius": 1.0,
+ "b1_status": "loaded",
+ "ref_top_k": 1024,
+ "core_sampler_off": false,
+ "inject_64": true,
+ "inject_32": true,
+ "inject_16": true,
+ "style_keys": false,
+ "grad_diag": {
+  "b1_loss": 0.1922949105501175,
+  "b1_grad": 0.29801881313323975,
+  "rec_grad": 0.2957960367202759,
+  "b1_status": "loaded"
+ },
+ "ode_steps": 8,
+ "sigma0": 0.1,
+ "seed": 42,
+ "train_wall_sec": 775.2,
+ "peak_vram_mib": 4853.9,
+ "final_loss": 1.0624998265504837,
+ "conditioning_validity": {
+  "check1_training_condition_validity": {
+   "n_samples": 200,
+   "L_correct_mean": 0.05868368595838547,
+   "L_wrong_mean": 0.21182139217853546,
+   "paired_diff_wrong_minus_correct": 0.1531376987695694,
+   "paired_diff_95ci": [
+    0.14439834654331207,
+    0.16261214017868042
+   ],
+   "frac_L_correct_smaller": 1.0,
+   "passed": true
+  },
+  "check2_target_style_selectivity": {
+   "n_contents": 25,
+   "csd_5x5_matrix": [
+    [
+     0.3357,
+     0.3083,
+     0.1208,
+     0.1845,
+     0.1286
+    ],
+    [
+     0.2087,
+     0.4099,
+     0.1299,
+     0.1231,
+     0.0749
+    ],
+    [
+     0.1089,
+     0.181,
+     0.2172,
+     0.0945,
+     0.0267
+    ],
+    [
+     0.2257,
+     0.2212,
+     0.087,
+     0.2875,
+     0.0551
+    ],
+    [
+     0.1997,
+     0.2274,
+     0.1249,
+     0.1109,
+     0.1699
+    ]
+   ],
+   "diag_mean": 0.2841,
+   "offdiag_mean": 0.1471,
+   "selectivity_margin": 0.137,
+   "column_top1_matches_out_of_5": 5,
+   "mean_cross_style_latent_l2": 0.5517,
+   "passed": true
+  },
+  "check3_content_condition_validity": {
+   "dino_c_own_content": 0.8617,
+   "dino_c_swapped_content": 0.347,
+   "dino_c_margin": 0.5147,
+   "selfsim_own_content": 0.6256,
+   "selfsim_swapped_content": 0.2559,
+   "passed": true
+  },
+  "all_three_passed": true
+ },
+ "eval200": {
+  "n_cross": 200,
+  "mean_dT": 0.08852076106704772,
+  "dT_ci": [
+   0.07552477635932155,
+   0.10166359347314573
+  ],
+  "mean_dS": -0.2238869221135974,
+  "mean_dM": 0.3124076831806451,
+  "mean_dino_c": 0.8353771191835403,
+  "mean_lpips": 0.44431609243154524,
+  "frac_dT_positive": 0.805,
+  "per_target_dT": {
+   "Early_Renaissance": 0.06765488693490625,
+   "Impressionism": 0.1706589512526989,
+   "Minimalism": 0.07919351174496114,
+   "Rococo": 0.12036775853484868,
+   "Ukiyo_e": 0.0047286968678236
+  },
+  "per_target_top1": {
+   "Early_Renaissance": 0.05,
+   "Impressionism": 0.35,
+   "Minimalism": 0.3,
+   "Rococo": 0.2,
+   "Ukiyo_e": 0.05
+  },
+  "per_target_margin": {
+   "Early_Renaissance": -0.24117144644260408,
+   "Impressionism": -0.08152927048504352,
+   "Minimalism": -0.08094109511002898,
+   "Rococo": -0.12913687247782946,
+   "Ukiyo_e": -0.2120477832853794
+  },
+  "confusion_target_vs_pred": [
+   [
+    2,
+    12,
+    10,
+    7,
+    9
+   ],
+   [
+    5,
+    14,
+    11,
+    3,
+    7
+   ],
+   [
+    4,
+    14,
+    12,
+    5,
+    5
+   ],
+   [
+    6,
+    10,
+    10,
+    8,
+    6
+   ],
+   [
+    7,
+    16,
+    10,
+    5,
+    2
+   ]
+  ],
+  "confusion_styles": [
+   "Early_Renaissance",
+   "Impressionism",
+   "Minimalism",
+   "Rococo",
+   "Ukiyo_e"
+  ],
+  "dT_cluster_ci": {
+   "mean": 0.08852076106704772,
+   "ci": [
+    0.07739871268671844,
+    0.09865442623539517
+   ],
+   "n": 200,
+   "n_clusters": 50,
+   "boot_mean": 0.08834976315706862,
+   "boot_std": 0.0055972404133163905
+  },
+  "styles_improved": 5,
+  "ukiyo_dT": 0.0047286968678236,
+  "same50_mean_dS": -0.01864587426185608,
+  "same50_mean_dino_c": 0.8975805592536926
+ }
+}

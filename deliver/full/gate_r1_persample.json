@@ -1,0 +1,90 @@
+{
+  "critic": "runs/v6_next/probes/r1_r1.pt",
+  "ckpt": "runs/v6/L11_k1024_dim16/L11_k1024_dim16.pt",
+  "n": 64,
+  "baseline_real_m_target": -0.28349815180990845,
+  "baseline_real_m_source": -0.4356063783634454,
+  "grad_norm": 0.15149259567260742,
+  "cos_grad_v6": 0.0936954990029335,
+  "v6_dir_norm": 499.7648620605469,
+  "steps": [
+    {
+      "eps": 0.1,
+      "real_m_target": -0.20148425770457834,
+      "d_m_target": 0.08201389410533011,
+      "d_m_target_vs_src": 0.23412212065886706,
+      "top1": 0.109375,
+      "top1_direct": 0.015625,
+      "dino_c": 0.9168762248009443,
+      "lpips_vs_direct": 0.07108388841152191,
+      "lpips_vs_src": 0.33720093965530396
+    },
+    {
+      "eps": 0.25,
+      "real_m_target": -0.06824055325705558,
+      "d_m_target": 0.21525759855285287,
+      "d_m_target_vs_src": 0.3673658251063898,
+      "top1": 0.328125,
+      "top1_direct": 0.015625,
+      "dino_c": 0.8180269813165069,
+      "lpips_vs_direct": 0.24626342952251434,
+      "lpips_vs_src": 0.4608117341995239
+    },
+    {
+      "eps": 0.5,
+      "real_m_target": -0.036968348489608616,
+      "d_m_target": 0.24652980332029983,
+      "d_m_target_vs_src": 0.3986380298738368,
+      "top1": 0.34375,
+      "top1_direct": 0.015625,
+      "dino_c": 0.6033144104294479,
+      "lpips_vs_direct": 0.49243053793907166,
+      "lpips_vs_src": 0.6452710032463074
+    },
+    {
+      "eps": 1.0,
+      "real_m_target": -0.06495024787727743,
+      "d_m_target": 0.21854790393263102,
+      "d_m_target_vs_src": 0.37065613048616797,
+      "top1": 0.203125,
+      "top1_direct": 0.015625,
+      "dino_c": 0.35044328693766147,
+      "lpips_vs_direct": 0.6758731603622437,
+      "lpips_vs_src": 0.7817262411117554
+    },
+    {
+      "eps": 2.0,
+      "real_m_target": -0.06511635927017778,
+      "d_m_target": 0.21838179253973067,
+      "d_m_target_vs_src": 0.3704900190932676,
+      "top1": 0.21875,
+      "top1_direct": 0.015625,
+      "dino_c": 0.2611802580067888,
+      "lpips_vs_direct": 0.7733433246612549,
+      "lpips_vs_src": 0.85117107629776
+    },
+    {
+      "eps": 3.5,
+      "real_m_target": -0.07239739049691707,
+      "d_m_target": 0.21110076131299138,
+      "d_m_target_vs_src": 0.36320898786652833,
+      "top1": 0.203125,
+      "top1_direct": 0.015625,
+      "dino_c": 0.25178260391112417,
+      "lpips_vs_direct": 0.8306307792663574,
+      "lpips_vs_src": 0.8956063389778137
+    }
+  ],
+  "verdict": "critic gradient IMPROVES the real CSD margin",
+  "best": {
+    "eps": 0.5,
+    "real_m_target": -0.036968348489608616,
+    "d_m_target": 0.24652980332029983,
+    "d_m_target_vs_src": 0.3986380298738368,
+    "top1": 0.34375,
+    "top1_direct": 0.015625,
+    "dino_c": 0.6033144104294479,
+    "lpips_vs_direct": 0.49243053793907166,
+    "lpips_vs_src": 0.6452710032463074
+  }
+}

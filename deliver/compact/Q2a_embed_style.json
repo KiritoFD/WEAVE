@@ -1,0 +1,206 @@
+{
+ "name": "Q2a_embed_style",
+ "mode": "direct",
+ "canon_mode": "c1_gentle",
+ "n_params": 217824,
+ "steps": 800,
+ "effective_batch": 240,
+ "coherence_beta": 0.65,
+ "no_content": false,
+ "content_mode": "full",
+ "no_style": false,
+ "w_style_dist": 0.25,
+ "w_cross": 0.5,
+ "w_canon_inv": 1.5,
+ "lambda_cross_abs": 0.35,
+ "lambda_canon_abs": 0.525,
+ "lambda_same_abs": 0.25,
+ "init_from": "runs/v6/L11_k1024_dim16/L11_k1024_dim16.pt",
+ "rank_critic": "runs/v6_next/probes/r1_r1.pt",
+ "rank_lambda": 0.001,
+ "rank_tau": 0.5,
+ "embed_style_lambda": 0.3,
+ "trust_lambda": 0.0,
+ "trust_radius": 1.0,
+ "b1_status": "loaded",
+ "ref_top_k": 1024,
+ "core_sampler_off": false,
+ "inject_64": true,
+ "inject_32": true,
+ "inject_16": true,
+ "style_keys": false,
+ "grad_diag": {
+  "b1_loss": 0.22581224143505096,
+  "b1_grad": 0.7065621018409729,
+  "rec_grad": 0.3092593550682068,
+  "b1_status": "loaded"
+ },
+ "ode_steps": 8,
+ "sigma0": 0.1,
+ "seed": 42,
+ "train_wall_sec": 804.8,
+ "peak_vram_mib": 5455.0,
+ "final_loss": 0.23820797666907312,
+ "conditioning_validity": {
+  "check1_training_condition_validity": {
+   "n_samples": 200,
+   "L_correct_mean": 0.026133393868803978,
+   "L_wrong_mean": 0.15107466280460358,
+   "paired_diff_wrong_minus_correct": 0.12494127452373505,
+   "paired_diff_95ci": [
+    0.11742990463972092,
+    0.13294097781181335
+   ],
+   "frac_L_correct_smaller": 1.0,
+   "passed": true
+  },
+  "check2_target_style_selectivity": {
+   "n_contents": 25,
+   "csd_5x5_matrix": [
+    [
+     0.3628,
+     0.3089,
+     0.1355,
+     0.2153,
+     0.1348
+    ],
+    [
+     0.2852,
+     0.3712,
+     0.1466,
+     0.1563,
+     0.1174
+    ],
+    [
+     0.1695,
+     0.2063,
+     0.1965,
+     0.1461,
+     0.0583
+    ],
+    [
+     0.2542,
+     0.2199,
+     0.1069,
+     0.2708,
+     0.0697
+    ],
+    [
+     0.3171,
+     0.3114,
+     0.1453,
+     0.1783,
+     0.1853
+    ]
+   ],
+   "diag_mean": 0.2773,
+   "offdiag_mean": 0.1842,
+   "selectivity_margin": 0.0932,
+   "column_top1_matches_out_of_5": 5,
+   "mean_cross_style_latent_l2": 0.4673,
+   "passed": true
+  },
+  "check3_content_condition_validity": {
+   "dino_c_own_content": 0.9158,
+   "dino_c_swapped_content": 0.346,
+   "dino_c_margin": 0.5698,
+   "selfsim_own_content": 0.6449,
+   "selfsim_swapped_content": 0.2572,
+   "passed": true
+  },
+  "all_three_passed": true
+ },
+ "eval200": {
+  "n_cross": 200,
+  "mean_dT": 0.06253572764806449,
+  "dT_ci": [
+   0.05256680587492883,
+   0.07275071225408464
+  ],
+  "mean_dS": -0.12523896176368,
+  "mean_dM": 0.18777468941174447,
+  "mean_dino_c": 0.8969337230920792,
+  "mean_lpips": 0.37805236145854,
+  "frac_dT_positive": 0.81,
+  "per_target_dT": {
+   "Early_Renaissance": 0.06272371681407093,
+   "Impressionism": 0.09439559411257506,
+   "Minimalism": 0.03949515926651657,
+   "Rococo": 0.09796137120574713,
+   "Ukiyo_e": 0.018102796841412784
+  },
+  "per_target_top1": {
+   "Early_Renaissance": 0.05,
+   "Impressionism": 0.1,
+   "Minimalism": 0.05,
+   "Rococo": 0.125,
+   "Ukiyo_e": 0.0
+  },
+  "per_target_margin": {
+   "Early_Renaissance": -0.294515635818243,
+   "Impressionism": -0.27955430150032046,
+   "Minimalism": -0.22584549840539694,
+   "Rococo": -0.20373250413686037,
+   "Ukiyo_e": -0.33102609068155286
+  },
+  "confusion_target_vs_pred": [
+   [
+    2,
+    11,
+    9,
+    8,
+    10
+   ],
+   [
+    10,
+    4,
+    10,
+    6,
+    10
+   ],
+   [
+    7,
+    14,
+    2,
+    9,
+    8
+   ],
+   [
+    6,
+    10,
+    10,
+    5,
+    9
+   ],
+   [
+    11,
+    13,
+    10,
+    6,
+    0
+   ]
+  ],
+  "confusion_styles": [
+   "Early_Renaissance",
+   "Impressionism",
+   "Minimalism",
+   "Rococo",
+   "Ukiyo_e"
+  ],
+  "dT_cluster_ci": {
+   "mean": 0.06253572764806449,
+   "ci": [
+    0.054104365570747825,
+    0.0706700401145363
+   ],
+   "n": 200,
+   "n_clusters": 50,
+   "boot_mean": 0.0624853905462531,
+   "boot_std": 0.004196193501218498
+  },
+  "styles_improved": 5,
+  "ukiyo_dT": 0.018102796841412784,
+  "same50_mean_dS": 0.01101822853088379,
+  "same50_mean_dino_c": 0.9284959352016449
+ }
+}

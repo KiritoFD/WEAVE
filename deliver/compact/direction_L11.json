@@ -1,0 +1,57 @@
+{
+ "ckpt": "runs/v6/L11_k1024_dim16/L11_k1024_dim16.pt",
+ "tag": "L11",
+ "n": 200,
+ "cos_align_mean": 0.13922865739965345,
+ "cos_align_p10": -0.011110347229987359,
+ "m_target_mean": -0.3204434250295162,
+ "m_source_mean": 0.25201167970895766,
+ "max_cos_mean": 0.514696916937828,
+ "knn_target_mean": 0.7436885902285576,
+ "df_norm_mean": 0.7561047938466072,
+ "tgt_acquired": 0.03,
+ "src_retained": 0.915,
+ "near_not_crossed": 0.07,
+ "per_target": {
+  "Early_Renaissance": {
+   "cos_align": 0.101732832097332,
+   "m_target": -0.315587130561471,
+   "knn_target": 0.7128758311271668,
+   "tgt_acquired": 0.025,
+   "src_retained": 0.925,
+   "near_not_crossed": 0.05
+  },
+  "Impressionism": {
+   "cos_align": 0.15485168050508946,
+   "m_target": -0.35530004650354385,
+   "knn_target": 0.7657796815037727,
+   "tgt_acquired": 0.075,
+   "src_retained": 0.9,
+   "near_not_crossed": 0.025
+  },
+  "Minimalism": {
+   "cos_align": 0.17565923975780606,
+   "m_target": -0.28664563335478305,
+   "knn_target": 0.731312657892704,
+   "tgt_acquired": 0.05,
+   "src_retained": 0.85,
+   "near_not_crossed": 0.075
+  },
+  "Rococo": {
+   "cos_align": 0.22198373260907828,
+   "m_target": -0.2644752450287342,
+   "knn_target": 0.7325628101825714,
+   "tgt_acquired": 0.0,
+   "src_retained": 0.95,
+   "near_not_crossed": 0.15
+  },
+  "Ukiyo_e": {
+   "cos_align": 0.04191580202896148,
+   "m_target": -0.380209069699049,
+   "knn_target": 0.775911970436573,
+   "tgt_acquired": 0.0,
+   "src_retained": 0.95,
+   "near_not_crossed": 0.05
+  }
+ }
+}

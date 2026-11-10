@@ -1,0 +1,94 @@
+{
+ "protocol": {
+  "name": "Heldout400",
+  "n_tasks": 400,
+  "n_sources": 100,
+  "source_disjoint_from_val200": true,
+  "val200_sources": 50,
+  "caveat": "V6.1 saw this set historically; it is source-disjoint from Val200 but not pristine."
+ },
+ "ckpt": "runs/v6/P2_G1b_bf16/P2_G1b_bf16.pt",
+ "canon_mode": "c1_gentle",
+ "n": 400,
+ "mean_dT": 0.03445996447466314,
+ "mean_dS": -0.09747359719127417,
+ "mean_dM": 0.1319335616659373,
+ "mean_top1": 0.055,
+ "mean_margin": -0.2648674378730357,
+ "mean_dino_c": 0.8776588831096888,
+ "mean_lpips": 0.3884155555069447,
+ "per_target_dT": {
+  "Early_Renaissance": 0.050160426646471024,
+  "Impressionism": 0.09775935569778085,
+  "Minimalism": 0.0015281781554222107,
+  "Rococo": 0.03293263511732221,
+  "Ukiyo_e": -0.010080773243680596
+ },
+ "styles_improved": 4,
+ "dT_cluster_ci": {
+  "mean": 0.03445996447466314,
+  "ci": [
+   0.02795097449895721,
+   0.04099060935014061
+  ],
+  "n": 400,
+  "n_clusters": 100,
+  "boot_mean": 0.034528304224794824,
+  "boot_std": 0.0033500091719794005
+ },
+ "dS_cluster_ci": {
+  "mean": -0.09747359719127417,
+  "ci": [
+   -0.11304335063101999,
+   -0.08169430047045283
+  ],
+  "n": 400,
+  "n_clusters": 100,
+  "boot_mean": -0.09745482976494094,
+  "boot_std": 0.007893348587133347
+ },
+ "confusion_target_vs_pred": [
+  [
+   1,
+   19,
+   21,
+   19,
+   20
+  ],
+  [
+   14,
+   6,
+   23,
+   17,
+   20
+  ],
+  [
+   12,
+   19,
+   9,
+   20,
+   20
+  ],
+  [
+   15,
+   17,
+   22,
+   5,
+   21
+  ],
+  [
+   17,
+   21,
+   22,
+   19,
+   1
+  ]
+ ],
+ "confusion_styles": [
+  "Early_Renaissance",
+  "Impressionism",
+  "Minimalism",
+  "Rococo",
+  "Ukiyo_e"
+ ]
+}

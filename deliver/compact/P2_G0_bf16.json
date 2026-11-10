@@ -1,0 +1,206 @@
+{
+ "name": "P2_G0_bf16",
+ "mode": "direct",
+ "canon_mode": "c1_gentle",
+ "n_params": 217824,
+ "steps": 800,
+ "effective_batch": 240,
+ "coherence_beta": 0.65,
+ "no_content": false,
+ "content_mode": "full",
+ "no_style": false,
+ "w_style_dist": 0.25,
+ "w_cross": 0.5,
+ "w_canon_inv": 1.5,
+ "lambda_cross_abs": 0.35,
+ "lambda_canon_abs": 0.525,
+ "lambda_same_abs": 0.25,
+ "init_from": "runs/v6/L11_k1024_dim16/L11_k1024_dim16.pt",
+ "rank_critic": "",
+ "rank_lambda": 0.0,
+ "rank_tau": 0.5,
+ "embed_style_lambda": 0.0,
+ "trust_lambda": 0.0,
+ "trust_radius": 1.0,
+ "b1_status": "loaded",
+ "ref_top_k": 1024,
+ "core_sampler_off": false,
+ "inject_64": true,
+ "inject_32": true,
+ "inject_16": true,
+ "style_keys": false,
+ "grad_diag": {
+  "b1_loss": 0.22581224143505096,
+  "b1_grad": 0.7065621018409729,
+  "rec_grad": 0.3092593550682068,
+  "b1_status": "loaded"
+ },
+ "ode_steps": 8,
+ "sigma0": 0.1,
+ "seed": 42,
+ "train_wall_sec": 662.5,
+ "peak_vram_mib": 4223.7,
+ "final_loss": 0.20186009645462036,
+ "conditioning_validity": {
+  "check1_training_condition_validity": {
+   "n_samples": 200,
+   "L_correct_mean": 0.02198209799826145,
+   "L_wrong_mean": 0.1389019936323166,
+   "paired_diff_wrong_minus_correct": 0.11691989749670029,
+   "paired_diff_95ci": [
+    0.10966559499502182,
+    0.12454059720039368
+   ],
+   "frac_L_correct_smaller": 1.0,
+   "passed": true
+  },
+  "check2_target_style_selectivity": {
+   "n_contents": 25,
+   "csd_5x5_matrix": [
+    [
+     0.357,
+     0.3014,
+     0.1428,
+     0.2147,
+     0.135
+    ],
+    [
+     0.297,
+     0.3549,
+     0.1524,
+     0.1536,
+     0.1318
+    ],
+    [
+     0.1748,
+     0.213,
+     0.1966,
+     0.1467,
+     0.0579
+    ],
+    [
+     0.2563,
+     0.2118,
+     0.1154,
+     0.2544,
+     0.0753
+    ],
+    [
+     0.3422,
+     0.327,
+     0.1494,
+     0.1973,
+     0.1707
+    ]
+   ],
+   "diag_mean": 0.2667,
+   "offdiag_mean": 0.1898,
+   "selectivity_margin": 0.0769,
+   "column_top1_matches_out_of_5": 5,
+   "mean_cross_style_latent_l2": 0.4468,
+   "passed": true
+  },
+  "check3_content_condition_validity": {
+   "dino_c_own_content": 0.9254,
+   "dino_c_swapped_content": 0.3439,
+   "dino_c_margin": 0.5815,
+   "selfsim_own_content": 0.6509,
+   "selfsim_swapped_content": 0.2581,
+   "passed": true
+  },
+  "all_three_passed": true
+ },
+ "eval200": {
+  "n_cross": 200,
+  "mean_dT": 0.052237565433606505,
+  "dT_ci": [
+   0.04284152896795422,
+   0.06185308306198566
+  ],
+  "mean_dS": -0.10799256563186646,
+  "mean_dM": 0.16023013106547296,
+  "mean_dino_c": 0.908336640894413,
+  "mean_lpips": 0.3622931007295847,
+  "frac_dT_positive": 0.775,
+  "per_target_dT": {
+   "Early_Renaissance": 0.0535094253718853,
+   "Impressionism": 0.0779479700140655,
+   "Minimalism": 0.04055042327381671,
+   "Rococo": 0.08171609714627266,
+   "Ukiyo_e": 0.007463911361992359
+  },
+  "per_target_top1": {
+   "Early_Renaissance": 0.025,
+   "Impressionism": 0.1,
+   "Minimalism": 0.05,
+   "Rococo": 0.075,
+   "Ukiyo_e": 0.0
+  },
+  "per_target_margin": {
+   "Early_Renaissance": -0.3098200991749763,
+   "Impressionism": -0.3209072515368462,
+   "Minimalism": -0.23431684542447329,
+   "Rococo": -0.23155348617583513,
+   "Ukiyo_e": -0.3752183597534895
+  },
+  "confusion_target_vs_pred": [
+   [
+    1,
+    11,
+    10,
+    8,
+    10
+   ],
+   [
+    10,
+    4,
+    10,
+    6,
+    10
+   ],
+   [
+    8,
+    13,
+    2,
+    9,
+    8
+   ],
+   [
+    8,
+    10,
+    10,
+    3,
+    9
+   ],
+   [
+    11,
+    11,
+    10,
+    8,
+    0
+   ]
+  ],
+  "confusion_styles": [
+   "Early_Renaissance",
+   "Impressionism",
+   "Minimalism",
+   "Rococo",
+   "Ukiyo_e"
+  ],
+  "dT_cluster_ci": {
+   "mean": 0.052237565433606505,
+   "ci": [
+    0.044406040383546494,
+    0.05929951762223505
+   ],
+   "n": 200,
+   "n_clusters": 50,
+   "boot_mean": 0.05221295270226918,
+   "boot_std": 0.003751199508592041
+  },
+  "styles_improved": 5,
+  "ukiyo_dT": 0.007463911361992359,
+  "same50_mean_dS": 0.00622657835483551,
+  "same50_mean_dino_c": 0.9329452455043793
+ }
+}

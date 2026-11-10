@@ -1,0 +1,72 @@
+{
+  "tag": "r1",
+  "params": 815941,
+  "width": 64,
+  "steps": 3000,
+  "n_train": 10840,
+  "n_val": 4705,
+  "n_groups": 550,
+  "val": {
+    "balanced_top1": 0.8752907492934356,
+    "per_class_recall": [
+      0.8141025641025641,
+      0.900268736936399,
+      0.8910256410256411,
+      0.8344370860927153,
+      0.9366197183098591
+    ],
+    "confusion": [
+      [
+        254,
+        22,
+        1,
+        31,
+        4
+      ],
+      [
+        122,
+        3015,
+        10,
+        164,
+        38
+      ],
+      [
+        4,
+        4,
+        139,
+        7,
+        2
+      ],
+      [
+        41,
+        52,
+        2,
+        504,
+        5
+      ],
+      [
+        8,
+        6,
+        4,
+        0,
+        266
+      ]
+    ],
+    "n": 4705
+  },
+  "train_balanced_top1": 0.9203537607727,
+  "gate_top1": true,
+  "gate_recall": true,
+  "hard_target_recall": {
+    "Early_Renaissance": 0.8141025641025641,
+    "Rococo": 0.8344370860927153,
+    "Ukiyo_e": 0.9366197183098591
+  },
+  "styles": [
+    "Early_Renaissance",
+    "Impressionism",
+    "Minimalism",
+    "Rococo",
+    "Ukiyo_e"
+  ]
+}
