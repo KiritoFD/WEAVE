@@ -15,7 +15,7 @@ INIT=runs/v6/L11_k1024_dim16/L11_k1024_dim16.pt
 CRITIC=runs/v6_next/probes/r1_r1.pt
 BASE="--mode direct --base-dim 16 --steps 800 --microbatch 80 --accum 3 \
 --canon-mode c1_gentle --lambda-cross 0.35 --lambda-canon 0.525 --w-style-dist 0.25 \
---ref-top-k 1024 --init-from $INIT"
+--ref-top-k 1024 --amp-dtype bf16 --init-from $INIT"
 
 train () {  # train <name> <seed> <extra...>
   local name=$1; local seed=$2; shift 2

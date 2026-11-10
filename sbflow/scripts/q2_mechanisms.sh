@@ -18,7 +18,7 @@ INIT=runs/v6/L11_k1024_dim16/L11_k1024_dim16.pt
 CRITIC=runs/v6_next/probes/r1_r1.pt
 BASE="--mode direct --base-dim 16 --steps 800 --microbatch 80 --accum 3 --seed 42 \
 --canon-mode c1_gentle --lambda-cross 0.35 --lambda-canon 0.525 --w-style-dist 0.25 \
---ref-top-k 1024 --init-from $INIT --rank-critic $CRITIC --rank-tau 0.5"
+--ref-top-k 1024 --amp-dtype bf16 --init-from $INIT --rank-critic $CRITIC --rank-tau 0.5"
 
 train () { local name=$1; shift
   python3 -u tools/v6/train_eval_v6.py --name "$name" $BASE "$@"

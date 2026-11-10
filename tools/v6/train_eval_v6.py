@@ -981,7 +981,14 @@ def train_and_evaluate(args) -> dict:
                     z_real, y_real, style_targets, coherence_beta=args.coherence_beta
                 )
 
-            with torch.autocast(device_type="cuda", dtype=torch.float16):
+            # AMP dtype is selectable. fp16 underflows the ranking gradient to EXACTLY zero:
+            # measured, lambda_r<=0.01 leaves the weights bit-identical to the no-rank twin while
+            # lambda_r>=0.02 works. bf16 has fp32's exponent range so no such cliff exists.
+            _amp_dtype = {"bf16": torch.bfloat16, "fp16": torch.float16}.get(args.amp_dtype)
+            _amp_ctx = (torch.autocast(device_type="cuda", dtype=_amp_dtype)
+                        if _amp_dtype is not None
+                        else torch.autocast(device_type="cuda", enabled=False))
+            with _amp_ctx:
                 if args.mode == "direct":
                     z_pred = model(c_in, 0.0, c_in, y_real)
                     l_rec = normalized_band_mse(z_pred, z_target, canon)
@@ -1076,6 +1083,13 @@ def train_and_evaluate(args) -> dict:
                         #   i.e. ratio 11.12, and ratio/lambda_r = 111.2
                         # so lambda_r 0.001 and 0.003 target ratios 0.11 and 0.33.
                         loss = loss + args.rank_lambda * l_rank
+                        if step == 1:
+                            # Pure logging: no autograd calls, so the training graph is untouched.
+                            print(f"[{args.name}] RANKLOG step1: lam_r={args.rank_lambda} "
+                                  f"L_rank={float(l_rank):.6f} "
+                                  f"term={args.rank_lambda * float(l_rank):.6f} "
+                                  f"loss_after={float(loss):.6f} "
+                                  f"rank_critic_is_none={rank_critic is None}", flush=True)
 
                     # Q2 (a): embedding-space target-style supervision. Separable from ranking:
                     # it pulls the critic EMBEDDING toward the real target mean instead of pushing
@@ -1223,6 +1237,9 @@ def main() -> None:
     ap.add_argument("--no-style", action="store_true",
                     help="ablation: pin Style-ID to 0 (same weights/params)")
     ap.add_argument("--base-dim", type=int, default=56)
+    ap.add_argument("--amp-dtype", choices=["bf16", "fp16", "none"], default="bf16",
+                    help="training autocast dtype. fp16 makes small ranking weights vanish: "
+                         "measured, lambda_r<=0.01 then leaves weights bit-identical to no-rank")
     ap.add_argument("--init-from", type=str, default="",
                     help="load model weights from this checkpoint before training (P2 arms)")
     # P2 G1: frozen latent critic margin ranking (cross-style only)
