@@ -860,6 +860,29 @@ def train_and_evaluate(args) -> dict:
                    style_keys_n=args.style_keys_n,
                    style_keys_rank=args.style_keys_rank).to(device)
     n_params = sum(p.numel() for p in model.parameters())
+    # P2: all comparison arms must start from the SAME checkpoint so the only difference is the
+    # loss. Optimizer state is NOT restored (the original run's state was not saved), so every arm
+    # restarts the optimizer and the LR schedule identically from step 0.
+    if args.init_from:
+        _init = torch.load(REPO_ROOT / args.init_from, map_location="cpu", weights_only=False)
+        _missing, _unexpected = model.load_state_dict(_init["model"], strict=False)
+        print(f"[{args.name}] init_from={args.init_from} "
+              f"missing={len(_missing)} unexpected={len(_unexpected)} "
+              f"(optimizer restarted from scratch for every arm)", flush=True)
+        if _missing or _unexpected:
+            print(f"[{args.name}] WARNING partial load: missing={_missing[:5]} "
+                  f"unexpected={_unexpected[:5]}", flush=True)
+    # P2 G1: frozen latent critic used as a margin-ranking signal on cross-style outputs only.
+    rank_critic = None
+    if args.rank_critic:
+        from tools.v6_next.probe_style import LatentStyleNet
+        _ckC = torch.load(REPO_ROOT / args.rank_critic, map_location="cpu", weights_only=False)
+        rank_critic = LatentStyleNet(width=_ckC.get("width", 64)).to(device).eval()
+        rank_critic.load_state_dict(_ckC["model"])
+        for _p in rank_critic.parameters():
+            _p.requires_grad_(False)
+        print(f"[{args.name}] rank_critic={args.rank_critic} "
+              f"lam_r={args.rank_lambda} tau={args.rank_tau} (critic FROZEN)", flush=True)
     # Plan section 5: decoupled absolute coefficients.
     lam_s = args.lambda_cross if args.lambda_cross >= 0 else args.w_cross
     lam_c = (args.lambda_canon if args.lambda_canon >= 0
@@ -988,6 +1011,37 @@ def train_and_evaluate(args) -> dict:
                     )
                     loss = loss + lam_s * l_style_cross + lam_c * l_canon_inv
 
+                    # P2 G1: margin ranking on the cross-style output. The critic is frozen; the
+                    # gradient still flows into the generator through z_cross. Applied ONLY here,
+                    # so self-reconstruction and content invariance keep their original form.
+                    l_rank = z_cross.new_tensor(0.0)
+                    if rank_critic is not None and args.rank_lambda > 0:
+                        # The margin must be computed in fp32: under autocast the critic returns
+                        # fp16, and masking with -1e9 overflows fp16. Casting the logits up fixes
+                        # it without touching the (frozen) critic.
+                        q = rank_critic(z_cross.float()).float()
+                        oh = F.one_hot(y_cross, len(STYLES)).bool()
+                        neg = torch.finfo(q.dtype).min
+                        m_t = (q.gather(1, y_cross[:, None]).squeeze(1)
+                               - torch.logsumexp(q.masked_fill(oh, neg), dim=1))
+                        l_rank = F.softplus(-m_t / args.rank_tau).mean()
+                        if step == 1:
+                            # plan requirement: measure the gradient ratio before fixing lambda
+                            g_v6 = torch.autograd.grad(loss, model.parameters(),
+                                                       retain_graph=True, allow_unused=True)
+                            g_rk = torch.autograd.grad(args.rank_lambda * l_rank,
+                                                       model.parameters(),
+                                                       retain_graph=True, allow_unused=True)
+                            n_v6 = float(torch.sqrt(sum((t ** 2).sum() for t in g_v6
+                                                        if t is not None)))
+                            n_rk = float(torch.sqrt(sum((t ** 2).sum() for t in g_rk
+                                                        if t is not None)))
+                            print(f"[{args.name}] G1 diag step1: L_rank={float(l_rank):.6f} "
+                                  f"m_t_mean={float(m_t.mean()):+.4f} "
+                                  f"|grad(L_V6)|={n_v6:.6e} |grad(lam_r*L_rank)|={n_rk:.6e} "
+                                  f"ratio={n_rk / max(n_v6, 1e-12):.4f}", flush=True)
+                        loss = loss + args.rank_lambda * l_rank
+
                 loss_scaled = loss / accum
 
             loss_scaled.backward()
@@ -1100,6 +1154,13 @@ def main() -> None:
     ap.add_argument("--no-style", action="store_true",
                     help="ablation: pin Style-ID to 0 (same weights/params)")
     ap.add_argument("--base-dim", type=int, default=56)
+    ap.add_argument("--init-from", type=str, default="",
+                    help="load model weights from this checkpoint before training (P2 arms)")
+    # P2 G1: frozen latent critic margin ranking (cross-style only)
+    ap.add_argument("--rank-critic", type=str, default="",
+                    help="path to a frozen LatentStyleNet checkpoint; enables the G1 ranking loss")
+    ap.add_argument("--rank-lambda", type=float, default=0.0)
+    ap.add_argument("--rank-tau", type=float, default=0.5)
     ap.add_argument("--steps", type=int, default=1200)
     ap.add_argument("--microbatch", type=int, default=80)
     ap.add_argument("--accum", type=int, default=3)
