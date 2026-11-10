@@ -12,7 +12,7 @@
 | `table/V6_RESULTS_TABLE.md` | **统一结果表**（每行标注来源） | 3 KB |
 | `table/BOTTLENECK.md` | **瓶颈判定 + Pareto 说明 + 下一步** | 4 KB |
 | `pareto_style_content.png` | **风格–内容 Pareto 图** | 100 KB |
-| **`checkpoints/`** | **14 个 checkpoint（33 MB），SHA256 校验 + 本地前向全部通过** | **33 MB** |
+| **`checkpoints/`** | **14 个 V6 checkpoint（33 MB），SHA256 + 本地前向全部通过。同目录另有 VAE 工作流的 4 个权重（293 MB），见 [INDEX.md](checkpoints/INDEX.md)** | **326 MB** |
 | **`testset/`** | **150 张测试图（42 MB）+ 评测参照 + 协议清单，SHA256 全部对上** | **48 MB** |
 | `verify_checkpoints.py` | checkpoint 校验：重建模型 + CPU 前向 | 4 KB |
 | `verify_testset.py` | 测试集校验：按内容 SHA256 与协议比对 | 4 KB |
@@ -73,7 +73,20 @@ protocol references 150 unique source images
 
 ---
 
-## Checkpoints（14 个，33 MB，已校验）
+## Checkpoints
+
+`deliver/checkpoints/` **同时存放两个工作流的权重**，按子目录分开，互不依赖：
+
+| 子目录 | 工作流 | 文件数 | 大小 |
+|---|---|---:|---:|
+| `runs/v6/`、`runs/v6_next/` | **V6 风格迁移（本轮交付）** | **14** | **33.2 MB** |
+| `runs/vae_style_vae/`、`runs/vae_decoder_prune/` | VAE / Decoder（另一工作流，从 4090 拉回） | 4 | 293.2 MB |
+
+详见 [`checkpoints/INDEX.md`](checkpoints/INDEX.md)。
+
+**`.pt` 被 `.gitignore` 排除，所以权重不在 git 里，只在本地磁盘** —— 交付时要拷目录，不能只 clone。
+
+### V6 风格迁移（14 个，33.2 MB，已校验）
 
 `deliver/checkpoints/` 保留原始的 `runs/...` 目录结构。`MANIFEST.json` 记录每个文件的 SHA256 前 16 位与字节数。
 
