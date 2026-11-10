@@ -58,6 +58,8 @@ wandb/
 *.pth
 *.ckpt
 *.safetensors
+!docs/baseline/ours/**/*.pt
+!docs/baseline/ours/*.pt
 
 # ============ Media (keep repo light) ============
 *.png
