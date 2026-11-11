@@ -1,0 +1,20 @@
+[
+ {
+  "engine": "/mnt/i/Latent_Style/WEAVE/runs/trt/engines/vae_decoder_512_b8_fp16.engine",
+  "batch": 8,
+  "ms_per_batch": 586.681,
+  "ms_per_img": 73.335,
+  "img_per_s": 13.6,
+  "variant": "official_49M"
+ },
+ {
+  "engine": "/mnt/i/Latent_Style/WEAVE/runs/trt/engines_s10new/s10new_c0_decoder_512_b8_fp16.engine",
+  "batch": 8,
+  "ms_per_batch": 216.606,
+  "ms_per_img": 27.076,
+  "img_per_s": 36.9,
+  "variant": "s10_c0_10_66M",
+  "speedup_vs_official": 2.708,
+  "official_ms_per_img": 73.335
+ }
+]

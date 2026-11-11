@@ -1,0 +1,342 @@
+{
+  "official": {
+    "meta": {
+      "params": 49490000
+    },
+    "recon_holdout": {
+      "l1": 0.07152,
+      "psnr": 24.72225,
+      "ssim": 0.7539,
+      "lpips": 0.07836,
+      "csd": 0.96093,
+      "hf_corr_L0": 0.42465,
+      "hf_energy_ratio": 0.98562,
+      "colour": 0.00205
+    },
+    "recon_test256": {
+      "l1": 0.0697,
+      "psnr": 25.02561,
+      "ssim": 0.74166,
+      "lpips": 0.08296,
+      "csd": 0.93251,
+      "hf_corr_L0": 0.39898,
+      "hf_energy_ratio": 0.98572,
+      "colour": 0.00212
+    },
+    "infra": {
+      "forward": {
+        "ms": 57.83,
+        "peak_GB": 2.41
+      },
+      "forward+grad": {
+        "ms": 122.75,
+        "peak_GB": 7.16
+      }
+    }
+  },
+  "old_s10": {
+    "meta": {
+      "params": 10657923,
+      "ckpt": "/root/Workspace/WEAVE_VAE/runs/vae_decoder_prune/s10_p5_lowlr/decoder.pt",
+      "pqc_source": "A0-trained (historical old_s10)",
+      "meta": {
+        "widths_forward": [
+          64,
+          128,
+          192,
+          256
+        ],
+        "params": 10657923,
+        "holdout_l1": 0.06865,
+        "best_sel": 0.08514,
+        "stage": "s10_p5_lowlr",
+        "needs_post_quant_conv": true
+      }
+    },
+    "recon_holdout": {
+      "l1": 0.07162,
+      "psnr": 24.89446,
+      "ssim": 0.75772,
+      "lpips": 0.0934,
+      "csd": 0.87593,
+      "hf_corr_L0": 0.42538,
+      "hf_energy_ratio": 0.69415,
+      "colour": 0.00517
+    },
+    "recon_test256": {
+      "l1": 0.06906,
+      "psnr": 25.24064,
+      "ssim": 0.74556,
+      "lpips": 0.09673,
+      "csd": 0.84951,
+      "hf_corr_L0": 0.40109,
+      "hf_energy_ratio": 0.68345,
+      "colour": 0.00469
+    },
+    "infra": {
+      "forward": {
+        "ms": 18.1,
+        "peak_GB": 1.97
+      },
+      "forward+grad": {
+        "ms": 58.49,
+        "peak_GB": 4.35
+      }
+    },
+    "perturb": {
+      "small": {
+        "cos": 0.6162,
+        "amp_ratio": 0.7001,
+        "hf_corr": 0.1919,
+        "n": 64
+      },
+      "medium": {
+        "cos": 0.7062,
+        "amp_ratio": 0.7686,
+        "hf_corr": 0.2485,
+        "n": 64
+      },
+      "input_grad": {
+        "loss_grad_cos": 0.2061,
+        "loss_grad_norm_ratio": 0.6078,
+        "jtv_cos_mean": 0.9765,
+        "jtv_cos_median": 0.9765,
+        "jtv_cos_all": [
+          0.9767,
+          0.978,
+          0.9762,
+          0.975
+        ]
+      }
+    },
+    "delta_vs_official": {
+      "l1": 0.0001,
+      "psnr": 0.17221,
+      "ssim": 0.00382,
+      "lpips": 0.01504,
+      "csd": -0.085,
+      "hf_corr_L0": 0.00073,
+      "hf_energy_ratio": -0.29147,
+      "colour": 0.00312
+    }
+  },
+  "c0": {
+    "meta": {
+      "params": 10657923,
+      "ckpt": "/root/Workspace/WEAVE_VAE/runs/sd0_s10/c0_best.pt",
+      "pqc_source": "SD0-trained",
+      "meta": {
+        "stage": "c0",
+        "init": "W",
+        "upd": 3000,
+        "lambdas": {
+          "hf": 0.013340977280123931,
+          "hf_grad_ratio": 11.24355411529541,
+          "p": 0.5,
+          "energy": 0.0
+        },
+        "best": {
+          "l1": 0.06691,
+          "psnr": 25.41895,
+          "lpips": 0.08588,
+          "hf_l1": 0.06616,
+          "hf_corr_L0": 0.4781,
+          "hf_energy_ratio": 0.58999,
+          "ssim": 0.77439,
+          "colour": 0.00359,
+          "csd": 0.85313
+        },
+        "widths_forward": [
+          64,
+          128,
+          192,
+          256
+        ],
+        "needs_post_quant_conv": true,
+        "encoder": "/root/Workspace/xy/DiT/data/pretrained/sd-vae-ft-ema",
+        "encoder_hash": {
+          "config.json": "92d3dfb746fca211a2c9e019e285f8597412211728dce3c5bcf4eda0f2d62e7e",
+          "diffusion_pytorch_model.safetensors": "32db726da04f06c1b6b14c0043ce115cc87a501482945c5add89a40d838fcb46"
+        },
+        "latent_convention": "z = encoder(x).latent_dist.mean (no scaling applied)"
+      }
+    },
+    "recon_holdout": {
+      "l1": 0.06691,
+      "psnr": 25.41895,
+      "ssim": 0.77439,
+      "lpips": 0.08588,
+      "csd": 0.85313,
+      "hf_corr_L0": 0.4781,
+      "hf_energy_ratio": 0.58999,
+      "colour": 0.00359
+    },
+    "recon_test256": {
+      "l1": 0.06454,
+      "psnr": 25.77278,
+      "ssim": 0.76226,
+      "lpips": 0.09051,
+      "csd": 0.83581,
+      "hf_corr_L0": 0.45407,
+      "hf_energy_ratio": 0.57382,
+      "colour": 0.00356
+    },
+    "infra": {
+      "forward": {
+        "ms": 18.1,
+        "peak_GB": 1.97
+      },
+      "forward+grad": {
+        "ms": 58.53,
+        "peak_GB": 4.35
+      }
+    },
+    "perturb": {
+      "small": {
+        "cos": 0.6342,
+        "amp_ratio": 0.682,
+        "hf_corr": 0.2284,
+        "n": 64
+      },
+      "medium": {
+        "cos": 0.7252,
+        "amp_ratio": 0.7495,
+        "hf_corr": 0.2938,
+        "n": 64
+      },
+      "input_grad": {
+        "loss_grad_cos": 0.2415,
+        "loss_grad_norm_ratio": 0.5724,
+        "jtv_cos_mean": 0.9794,
+        "jtv_cos_median": 0.9793,
+        "jtv_cos_all": [
+          0.9797,
+          0.9809,
+          0.979,
+          0.978
+        ]
+      }
+    },
+    "delta_vs_official": {
+      "l1": -0.00461,
+      "psnr": 0.6967,
+      "ssim": 0.02049,
+      "lpips": 0.00752,
+      "csd": -0.1078,
+      "hf_corr_L0": 0.05345,
+      "hf_energy_ratio": -0.39563,
+      "colour": 0.00154
+    }
+  },
+  "c1": {
+    "meta": {
+      "params": 10657923,
+      "ckpt": "/root/Workspace/WEAVE_VAE/runs/sd0_s10/c1_best.pt",
+      "pqc_source": "SD0-trained",
+      "meta": {
+        "stage": "c1",
+        "init": "W",
+        "upd": 2500,
+        "lambdas": {
+          "hf": 0.017011721906005407,
+          "hf_grad_ratio": 8.817449569702148,
+          "resp": 0.2247933648066492,
+          "resp_grad_ratio": 0.6672794818878174,
+          "off": 0.075,
+          "p": 0.5,
+          "energy": 0.0
+        },
+        "best": {
+          "l1": 0.06637,
+          "psnr": 25.48565,
+          "lpips": 0.08504,
+          "hf_l1": 0.0655,
+          "hf_corr_L0": 0.48772,
+          "hf_energy_ratio": 0.58794,
+          "ssim": 0.77652,
+          "colour": 0.00347,
+          "csd": 0.84787
+        },
+        "widths_forward": [
+          64,
+          128,
+          192,
+          256
+        ],
+        "needs_post_quant_conv": true,
+        "encoder": "/root/Workspace/xy/DiT/data/pretrained/sd-vae-ft-ema",
+        "encoder_hash": {
+          "config.json": "92d3dfb746fca211a2c9e019e285f8597412211728dce3c5bcf4eda0f2d62e7e",
+          "diffusion_pytorch_model.safetensors": "32db726da04f06c1b6b14c0043ce115cc87a501482945c5add89a40d838fcb46"
+        },
+        "latent_convention": "z = encoder(x).latent_dist.mean (no scaling applied)"
+      }
+    },
+    "recon_holdout": {
+      "l1": 0.06637,
+      "psnr": 25.48565,
+      "ssim": 0.77652,
+      "lpips": 0.08504,
+      "csd": 0.84787,
+      "hf_corr_L0": 0.48772,
+      "hf_energy_ratio": 0.58794,
+      "colour": 0.00347
+    },
+    "recon_test256": {
+      "l1": 0.06404,
+      "psnr": 25.83805,
+      "ssim": 0.76433,
+      "lpips": 0.08968,
+      "csd": 0.83153,
+      "hf_corr_L0": 0.46394,
+      "hf_energy_ratio": 0.57067,
+      "colour": 0.00345
+    },
+    "infra": {
+      "forward": {
+        "ms": 18.09,
+        "peak_GB": 1.97
+      },
+      "forward+grad": {
+        "ms": 58.53,
+        "peak_GB": 4.35
+      }
+    },
+    "perturb": {
+      "small": {
+        "cos": 0.6397,
+        "amp_ratio": 0.683,
+        "hf_corr": 0.2404,
+        "n": 64
+      },
+      "medium": {
+        "cos": 0.7309,
+        "amp_ratio": 0.751,
+        "hf_corr": 0.3082,
+        "n": 64
+      },
+      "input_grad": {
+        "loss_grad_cos": 0.2481,
+        "loss_grad_norm_ratio": 0.5641,
+        "jtv_cos_mean": 0.9804,
+        "jtv_cos_median": 0.9803,
+        "jtv_cos_all": [
+          0.9807,
+          0.9818,
+          0.98,
+          0.9791
+        ]
+      }
+    },
+    "delta_vs_official": {
+      "l1": -0.00515,
+      "psnr": 0.7634,
+      "ssim": 0.02262,
+      "lpips": 0.00668,
+      "csd": -0.11306,
+      "hf_corr_L0": 0.06307,
+      "hf_energy_ratio": -0.39768,
+      "colour": 0.00142
+    }
+  }
+}

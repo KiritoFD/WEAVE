@@ -1,0 +1,80 @@
+{
+  "phase": "P0",
+  "interface_audit": {
+    "pqc_is_1x1_4to4": true,
+    "latent_unscaled": true,
+    "scaling_factor_A0": 0.18215,
+    "scaling_factor_SD0": 0.18215,
+    "student_applies_pqc_once": true,
+    "A_pqc_weight": [
+      [
+        -0.3611699938774109,
+        -0.3033899962902069,
+        0.03807999938726425,
+        0.40720999240875244
+      ],
+      [
+        -0.11079999804496765,
+        -0.020330000668764114,
+        0.10232000052928925,
+        -0.2903299927711487
+      ],
+      [
+        -0.25839999318122864,
+        -0.0514799989759922,
+        -0.46230000257492065,
+        0.29333001375198364
+      ],
+      [
+        0.2386000007390976,
+        -0.24733999371528625,
+        -0.06283999979496002,
+        -0.2204200029373169
+      ]
+    ],
+    "A_pqc_bias": [
+      -0.012790000066161156,
+      -0.07167000323534012,
+      -0.1957699954509735,
+      0.1353600025177002
+    ],
+    "note": "A/B/C all feed UNSCALED posterior-mean latent into exactly one post_quant_conv. D uses vae.decode(z) which applies SD0's PQC once."
+  },
+  "latent_cos_A0_SD0": 0.992142,
+  "latent_rms_ratio_A0_over_SD0": 1.001719,
+  "n": 256,
+  "seed": 31,
+  "variants": {
+    "A": {
+      "l1": 0.06726,
+      "lpips": 0.09263,
+      "psnr": 25.496,
+      "ssim": 0.75648,
+      "csd_keep": 0.85304,
+      "n": 256,
+      "dino_c_vs_D": 0.9695
+    },
+    "B": {
+      "l1": 0.07012,
+      "lpips": 0.09792,
+      "psnr": 25.158,
+      "ssim": 0.744,
+      "csd_keep": 0.85487,
+      "n": 256,
+      "dino_c_vs_D": 0.96783
+    },
+    "D": {
+      "l1": 0.07082,
+      "lpips": 0.08445,
+      "psnr": 24.934,
+      "ssim": 0.73976,
+      "csd_keep": 0.93488,
+      "n": 256
+    }
+  },
+  "definitions": {
+    "A": "A0 latent + A0 PQC + old S10 (target upper bound, A0 Encoder)",
+    "B": "SD0 latent + A0 PQC + old S10 (direct compatibility)",
+    "D": "SD0 latent + SD0 PQC + official D0 (official baseline)"
+  }
+}

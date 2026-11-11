@@ -1,0 +1,91 @@
+{
+  "gate_R": {
+    "conditions": {
+      "auroc_ge_0.55": false,
+      "retr5_gt_flat_latent_0.0708": false,
+      "unseen_ge_0.129": true,
+      "paired_bootstrap_excludes_zero": true,
+      "content_matched_negatives": true
+    },
+    "passed": false
+  },
+  "readers": {
+    "local": {
+      "auroc": 0.4645,
+      "auroc_painter_disjoint": 0.4651,
+      "n_painter_disjoint": 768,
+      "retrieval_5shot": 0.0353,
+      "retrieval_5shot_flat": 0.0912,
+      "retrieval_10shot": 0.0353,
+      "unseen_retrieval": 0.1395,
+      "linear_probe_curve": [
+        0.0569,
+        0.0783,
+        0.0854,
+        0.0872,
+        0.0872
+      ],
+      "linear_probe_final": 0.0872,
+      "param_count": 20848,
+      "mean_gap": -0.00352,
+      "paired_gap_vs_fixed": {
+        "mean": 0.01741798253514659,
+        "ci": [
+          0.015282530919391307,
+          0.019653755412928423
+        ],
+        "excludes_zero": true,
+        "n": 1990
+      },
+      "paired_gap_vs_cnn": {
+        "mean": -0.0007112597101297809,
+        "ci": [
+          -0.0010049104795384048,
+          -0.0004229780949240355
+        ],
+        "excludes_zero": true,
+        "n": 1990
+      }
+    },
+    "cnn": {
+      "auroc": 0.477,
+      "auroc_painter_disjoint": 0.4788,
+      "n_painter_disjoint": 768,
+      "retrieval_5shot": 0.0529,
+      "retrieval_5shot_flat": 0.0912,
+      "retrieval_10shot": 0.0412,
+      "unseen_retrieval": 0.1395,
+      "linear_probe_curve": [
+        0.0801,
+        0.0819,
+        0.0747,
+        0.0676,
+        0.0765
+      ],
+      "linear_probe_final": 0.0765,
+      "param_count": 34624,
+      "mean_gap": -0.00281,
+      "paired_gap_vs_fixed": {
+        "mean": 0.01812924224527637,
+        "ci": [
+          0.015967540569865525,
+          0.020309856322467623
+        ],
+        "excludes_zero": true,
+        "n": 1990
+      }
+    }
+  },
+  "protocol": {
+    "steps": 1500,
+    "lr": 0.0003,
+    "seed": 0,
+    "held_painters": 250,
+    "logical_batch": 64,
+    "fixed_reader_auroc": 0.4535,
+    "fixed_reader_auroc_plan_baseline": 0.4535,
+    "flat_latent_5shot_this_run": 0.0912,
+    "flat_latent_5shot_plan_baseline": 0.0708,
+    "unseen_plan_baseline": 0.129
+  }
+}

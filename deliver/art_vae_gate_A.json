@@ -1,0 +1,9 @@
+{
+  "ref_style_early": 4.23647,
+  "ref_style_late": 4.22624,
+  "ref_style_drop": 0.01022,
+  "auroc_gain_vs_a0": 0.0031,
+  "lpips_delta_vs_s10": -0.0009,
+  "passed": false,
+  "criterion": "ref_style quarter-mean drop>0.01 (noise-free), AUROC gain>0.005, LPIPS regression<0.02"
+}

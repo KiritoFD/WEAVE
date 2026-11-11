@@ -1,0 +1,35 @@
+{
+  "n_train": 78661,
+  "n_holdout": 2048,
+  "n_test256": 256,
+  "dim": 16384,
+  "train_bin": "/root/Workspace/WEAVE_VAE/runs/sd0_s10/full/latent_train_fp16.bin",
+  "holdout_bin": "/root/Workspace/WEAVE_VAE/runs/sd0_s10/full/latent_holdout_fp16.bin",
+  "test256_bin": "/root/Workspace/WEAVE_VAE/runs/sd0_s10/full/latent_test256_fp16.bin",
+  "source": "official sd-vae-ft-ema posterior mean, UNSCALED latent",
+  "encoder": "/root/Workspace/xy/DiT/data/pretrained/sd-vae-ft-ema",
+  "encoder_hash": {
+    "config.json": "92d3dfb746fca211a2c9e019e285f8597412211728dce3c5bcf4eda0f2d62e7e",
+    "diffusion_pytorch_model.safetensors": "32db726da04f06c1b6b14c0043ce115cc87a501482945c5add89a40d838fcb46"
+  },
+  "scaling_factor": 0.18215,
+  "latent_convention": "z = encoder(x).latent_dist.mean (no scaling applied)",
+  "image_id_disjoint": true,
+  "bad_rows": {
+    "train": {
+      "zero": 0,
+      "nonfinite": 0
+    },
+    "holdout": {
+      "zero": 0,
+      "nonfinite": 0
+    },
+    "test256": {
+      "zero": 0,
+      "nonfinite": 0
+    }
+  },
+  "reencode_cos_min": 0.99995,
+  "encoder_determinism_max_abs": 0.0,
+  "split_seed": 17
+}

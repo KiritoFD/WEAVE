@@ -1,0 +1,106 @@
+{
+  "hardware": "NVIDIA GeForce RTX 4070 Laptop GPU",
+  "gpu_mem_GB": 8.0,
+  "torch": "2.13.0+cu132",
+  "batch": 2,
+  "iters": 15,
+  "warmup": 5,
+  "num_steps": 8,
+  "backend": "PyTorch FP32, torch.cuda.Event timing",
+  "weave_ckpt": "exp\\dino_s_break\\brk_a_ll03_10ep\\epoch_0010.pt",
+  "weave_ckpt_note": "paper main-table ckpt is epoch_0004 (NOT present locally); epoch_0010 from the same training source is used. Architecture/8-step compute is identical, so timing is representative; weight values do not affect speed.",
+  "results": {
+    "official": {
+      "encoder_ms_per_batch": 233.953,
+      "weave_ms_per_batch": 124.684,
+      "decoder_ms_per_batch": 528.616,
+      "total_ms_per_batch": 887.253,
+      "ms_per_img": 443.627,
+      "encoder_share": 0.2637,
+      "weave_share": 0.1405,
+      "decoder_share": 0.5958,
+      "speedup_vs_official_decoder": 1.0
+    },
+    "old_s10": {
+      "encoder_ms_per_batch": 233.953,
+      "weave_ms_per_batch": 124.684,
+      "decoder_ms_per_batch": 172.353,
+      "total_ms_per_batch": 530.99,
+      "ms_per_img": 265.495,
+      "encoder_share": 0.4406,
+      "weave_share": 0.2348,
+      "decoder_share": 0.3246,
+      "speedup_vs_official_decoder": 3.067
+    },
+    "c0": {
+      "encoder_ms_per_batch": 233.953,
+      "weave_ms_per_batch": 124.684,
+      "decoder_ms_per_batch": 174.258,
+      "total_ms_per_batch": 532.895,
+      "ms_per_img": 266.448,
+      "encoder_share": 0.439,
+      "weave_share": 0.234,
+      "decoder_share": 0.327,
+      "speedup_vs_official_decoder": 3.034
+    },
+    "c1": {
+      "encoder_ms_per_batch": 233.953,
+      "weave_ms_per_batch": 124.684,
+      "decoder_ms_per_batch": 173.076,
+      "total_ms_per_batch": 531.713,
+      "ms_per_img": 265.857,
+      "encoder_share": 0.44,
+      "weave_share": 0.2345,
+      "decoder_share": 0.3255,
+      "speedup_vs_official_decoder": 3.054
+    }
+  },
+  "paper_ledger_reference_only": {
+    "note": "generation-only timing, RTX 3060 12GB, 750 pairs, K=8, AdaIN beta=1.0, batch=8, ONNX encoder + TRT decoder (ws=2GB), 2026-07-23",
+    "protocol": "docs/exp/onnx_inference/README.md",
+    "pipeline": "VAE encode (ONNX FP16) + WEAVE (PyTorch bf16, 8-step Euler) + VAE decode (TRT FP16)",
+    "selected": {
+      "name": "canonical_oriented_epoch4",
+      "batch_size": 8,
+      "decoder_workspace_gb": 2,
+      "wall_total_s": 73.0,
+      "ms_per_img": 97.3,
+      "pairs_per_s": 10.3,
+      "encoder_plus_weave_s": 14.0,
+      "encoder_plus_weave_ms_per_img": 18.7,
+      "decoder_trt_s": 58.98,
+      "decoder_trt_ms_per_img": 78.6
+    },
+    "ablations": [
+      {
+        "batch": 8,
+        "decoder_ws_gb": 2,
+        "encode_ms": 37.2,
+        "weave_ms": 11.3,
+        "decode_ms": 78.6,
+        "total_ms": 97.3,
+        "pairs_per_s": 10.3
+      },
+      {
+        "batch": 16,
+        "decoder_ws_gb": 4,
+        "encode_ms": 39.2,
+        "weave_ms": 11.0,
+        "decode_ms": 79.1,
+        "total_ms": 98.0,
+        "pairs_per_s": 10.2,
+        "note": "TRT build OOM skips opts; slightly slower"
+      },
+      {
+        "batch": 8,
+        "decoder_ws_gb": 4,
+        "encode_ms": 37.3,
+        "weave_ms": 11.4,
+        "decode_ms": 78.1,
+        "total_ms": 97.0,
+        "pairs_per_s": 10.3
+      }
+    ]
+  },
+  "comparability_note": "Paper: RTX 3060 12GB, ONNX FP16 encoder + TRT FP16 decoder, batch 8, generation-only end-to-end 97.3 ms/img. This profile: local 4070 Laptop 8GB, PyTorch FP32, configurable batch. Absolute ms are NOT comparable; only the stage-share structure and decoder-relative speedups are."
+}

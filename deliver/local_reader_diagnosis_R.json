@@ -1,0 +1,28 @@
+{
+  "fixed": {
+    "hard_neg_AUROC": 0.4535,
+    "easy_neg_AUROC": 0.5375,
+    "same_painter_other_style_AUROC": 0.4735,
+    "pos_mean": 0.79929,
+    "hard_mean": 0.81399,
+    "easy_mean": 0.78035
+  },
+  "local": {
+    "hard_neg_AUROC": 0.4645,
+    "easy_neg_AUROC": 0.5976,
+    "same_painter_other_style_AUROC": 0.4447,
+    "pos_mean": 0.95334,
+    "hard_mean": 0.95533,
+    "easy_mean": 0.93721,
+    "auroc_painter_disjoint": 0.4651
+  },
+  "cnn": {
+    "hard_neg_AUROC": 0.477,
+    "easy_neg_AUROC": 0.6098,
+    "same_painter_other_style_AUROC": 0.4502,
+    "pos_mean": 0.95807,
+    "hard_mean": 0.95899,
+    "easy_mean": 0.93876,
+    "auroc_painter_disjoint": 0.4788
+  }
+}

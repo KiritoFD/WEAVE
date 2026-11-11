@@ -1,0 +1,19 @@
+{
+  "auroc": 0.477,
+  "auroc_painter_disjoint": 0.4788,
+  "n_painter_disjoint": 768,
+  "retrieval_5shot": 0.0529,
+  "retrieval_5shot_flat": 0.0912,
+  "retrieval_10shot": 0.0412,
+  "unseen_retrieval": 0.1395,
+  "linear_probe_curve": [
+    0.0801,
+    0.0819,
+    0.0747,
+    0.0676,
+    0.0765
+  ],
+  "linear_probe_final": 0.0765,
+  "param_count": 34624,
+  "mean_gap": -0.00281
+}

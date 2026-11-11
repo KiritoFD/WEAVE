@@ -1,0 +1,2661 @@
+{
+  "layers": {
+    "eval_p5_final.json": {
+      "official": {
+        "meta": {
+          "params": 49490000
+        },
+        "recon_holdout": {
+          "l1": 0.07152,
+          "psnr": 24.72225,
+          "ssim": 0.7539,
+          "lpips": 0.07836,
+          "csd": 0.96093,
+          "hf_corr_L0": 0.42465,
+          "hf_energy_ratio": 0.98562,
+          "colour": 0.00205
+        },
+        "recon_test256": {
+          "l1": 0.0697,
+          "psnr": 25.02561,
+          "ssim": 0.74166,
+          "lpips": 0.08296,
+          "csd": 0.93251,
+          "hf_corr_L0": 0.39898,
+          "hf_energy_ratio": 0.98572,
+          "colour": 0.00212
+        },
+        "infra": {
+          "forward": {
+            "ms": 57.83,
+            "peak_GB": 2.41
+          },
+          "forward+grad": {
+            "ms": 122.75,
+            "peak_GB": 7.16
+          }
+        }
+      },
+      "old_s10": {
+        "meta": {
+          "params": 10657923,
+          "ckpt": "/root/Workspace/WEAVE_VAE/runs/vae_decoder_prune/s10_p5_lowlr/decoder.pt",
+          "pqc_source": "A0-trained (historical old_s10)",
+          "meta": {
+            "widths_forward": [
+              64,
+              128,
+              192,
+              256
+            ],
+            "params": 10657923,
+            "holdout_l1": 0.06865,
+            "best_sel": 0.08514,
+            "stage": "s10_p5_lowlr",
+            "needs_post_quant_conv": true
+          }
+        },
+        "recon_holdout": {
+          "l1": 0.07162,
+          "psnr": 24.89446,
+          "ssim": 0.75772,
+          "lpips": 0.0934,
+          "csd": 0.87593,
+          "hf_corr_L0": 0.42538,
+          "hf_energy_ratio": 0.69415,
+          "colour": 0.00517
+        },
+        "recon_test256": {
+          "l1": 0.06906,
+          "psnr": 25.24064,
+          "ssim": 0.74556,
+          "lpips": 0.09673,
+          "csd": 0.84951,
+          "hf_corr_L0": 0.40109,
+          "hf_energy_ratio": 0.68345,
+          "colour": 0.00469
+        },
+        "infra": {
+          "forward": {
+            "ms": 18.1,
+            "peak_GB": 1.97
+          },
+          "forward+grad": {
+            "ms": 58.49,
+            "peak_GB": 4.35
+          }
+        },
+        "perturb": {
+          "small": {
+            "cos": 0.6162,
+            "amp_ratio": 0.7001,
+            "hf_corr": 0.1919,
+            "n": 64
+          },
+          "medium": {
+            "cos": 0.7062,
+            "amp_ratio": 0.7686,
+            "hf_corr": 0.2485,
+            "n": 64
+          },
+          "input_grad": {
+            "loss_grad_cos": 0.2061,
+            "loss_grad_norm_ratio": 0.6078,
+            "jtv_cos_mean": 0.9765,
+            "jtv_cos_median": 0.9765,
+            "jtv_cos_all": [
+              0.9767,
+              0.978,
+              0.9762,
+              0.975
+            ]
+          }
+        },
+        "delta_vs_official": {
+          "l1": 0.0001,
+          "psnr": 0.17221,
+          "ssim": 0.00382,
+          "lpips": 0.01504,
+          "csd": -0.085,
+          "hf_corr_L0": 0.00073,
+          "hf_energy_ratio": -0.29147,
+          "colour": 0.00312
+        }
+      },
+      "c0": {
+        "meta": {
+          "params": 10657923,
+          "ckpt": "/root/Workspace/WEAVE_VAE/runs/sd0_s10/c0_best.pt",
+          "pqc_source": "SD0-trained",
+          "meta": {
+            "stage": "c0",
+            "init": "W",
+            "upd": 3000,
+            "lambdas": {
+              "hf": 0.013340977280123931,
+              "hf_grad_ratio": 11.24355411529541,
+              "p": 0.5,
+              "energy": 0.0
+            },
+            "best": {
+              "l1": 0.06691,
+              "psnr": 25.41895,
+              "lpips": 0.08588,
+              "hf_l1": 0.06616,
+              "hf_corr_L0": 0.4781,
+              "hf_energy_ratio": 0.58999,
+              "ssim": 0.77439,
+              "colour": 0.00359,
+              "csd": 0.85313
+            },
+            "widths_forward": [
+              64,
+              128,
+              192,
+              256
+            ],
+            "needs_post_quant_conv": true,
+            "encoder": "/root/Workspace/xy/DiT/data/pretrained/sd-vae-ft-ema",
+            "encoder_hash": {
+              "config.json": "92d3dfb746fca211a2c9e019e285f8597412211728dce3c5bcf4eda0f2d62e7e",
+              "diffusion_pytorch_model.safetensors": "32db726da04f06c1b6b14c0043ce115cc87a501482945c5add89a40d838fcb46"
+            },
+            "latent_convention": "z = encoder(x).latent_dist.mean (no scaling applied)"
+          }
+        },
+        "recon_holdout": {
+          "l1": 0.06691,
+          "psnr": 25.41895,
+          "ssim": 0.77439,
+          "lpips": 0.08588,
+          "csd": 0.85313,
+          "hf_corr_L0": 0.4781,
+          "hf_energy_ratio": 0.58999,
+          "colour": 0.00359
+        },
+        "recon_test256": {
+          "l1": 0.06454,
+          "psnr": 25.77278,
+          "ssim": 0.76226,
+          "lpips": 0.09051,
+          "csd": 0.83581,
+          "hf_corr_L0": 0.45407,
+          "hf_energy_ratio": 0.57382,
+          "colour": 0.00356
+        },
+        "infra": {
+          "forward": {
+            "ms": 18.1,
+            "peak_GB": 1.97
+          },
+          "forward+grad": {
+            "ms": 58.53,
+            "peak_GB": 4.35
+          }
+        },
+        "perturb": {
+          "small": {
+            "cos": 0.6342,
+            "amp_ratio": 0.682,
+            "hf_corr": 0.2284,
+            "n": 64
+          },
+          "medium": {
+            "cos": 0.7252,
+            "amp_ratio": 0.7495,
+            "hf_corr": 0.2938,
+            "n": 64
+          },
+          "input_grad": {
+            "loss_grad_cos": 0.2415,
+            "loss_grad_norm_ratio": 0.5724,
+            "jtv_cos_mean": 0.9794,
+            "jtv_cos_median": 0.9793,
+            "jtv_cos_all": [
+              0.9797,
+              0.9809,
+              0.979,
+              0.978
+            ]
+          }
+        },
+        "delta_vs_official": {
+          "l1": -0.00461,
+          "psnr": 0.6967,
+          "ssim": 0.02049,
+          "lpips": 0.00752,
+          "csd": -0.1078,
+          "hf_corr_L0": 0.05345,
+          "hf_energy_ratio": -0.39563,
+          "colour": 0.00154
+        }
+      },
+      "c1": {
+        "meta": {
+          "params": 10657923,
+          "ckpt": "/root/Workspace/WEAVE_VAE/runs/sd0_s10/c1_best.pt",
+          "pqc_source": "SD0-trained",
+          "meta": {
+            "stage": "c1",
+            "init": "W",
+            "upd": 2500,
+            "lambdas": {
+              "hf": 0.017011721906005407,
+              "hf_grad_ratio": 8.817449569702148,
+              "resp": 0.2247933648066492,
+              "resp_grad_ratio": 0.6672794818878174,
+              "off": 0.075,
+              "p": 0.5,
+              "energy": 0.0
+            },
+            "best": {
+              "l1": 0.06637,
+              "psnr": 25.48565,
+              "lpips": 0.08504,
+              "hf_l1": 0.0655,
+              "hf_corr_L0": 0.48772,
+              "hf_energy_ratio": 0.58794,
+              "ssim": 0.77652,
+              "colour": 0.00347,
+              "csd": 0.84787
+            },
+            "widths_forward": [
+              64,
+              128,
+              192,
+              256
+            ],
+            "needs_post_quant_conv": true,
+            "encoder": "/root/Workspace/xy/DiT/data/pretrained/sd-vae-ft-ema",
+            "encoder_hash": {
+              "config.json": "92d3dfb746fca211a2c9e019e285f8597412211728dce3c5bcf4eda0f2d62e7e",
+              "diffusion_pytorch_model.safetensors": "32db726da04f06c1b6b14c0043ce115cc87a501482945c5add89a40d838fcb46"
+            },
+            "latent_convention": "z = encoder(x).latent_dist.mean (no scaling applied)"
+          }
+        },
+        "recon_holdout": {
+          "l1": 0.06637,
+          "psnr": 25.48565,
+          "ssim": 0.77652,
+          "lpips": 0.08504,
+          "csd": 0.84787,
+          "hf_corr_L0": 0.48772,
+          "hf_energy_ratio": 0.58794,
+          "colour": 0.00347
+        },
+        "recon_test256": {
+          "l1": 0.06404,
+          "psnr": 25.83805,
+          "ssim": 0.76433,
+          "lpips": 0.08968,
+          "csd": 0.83153,
+          "hf_corr_L0": 0.46394,
+          "hf_energy_ratio": 0.57067,
+          "colour": 0.00345
+        },
+        "infra": {
+          "forward": {
+            "ms": 18.09,
+            "peak_GB": 1.97
+          },
+          "forward+grad": {
+            "ms": 58.53,
+            "peak_GB": 4.35
+          }
+        },
+        "perturb": {
+          "small": {
+            "cos": 0.6397,
+            "amp_ratio": 0.683,
+            "hf_corr": 0.2404,
+            "n": 64
+          },
+          "medium": {
+            "cos": 0.7309,
+            "amp_ratio": 0.751,
+            "hf_corr": 0.3082,
+            "n": 64
+          },
+          "input_grad": {
+            "loss_grad_cos": 0.2481,
+            "loss_grad_norm_ratio": 0.5641,
+            "jtv_cos_mean": 0.9804,
+            "jtv_cos_median": 0.9803,
+            "jtv_cos_all": [
+              0.9807,
+              0.9818,
+              0.98,
+              0.9791
+            ]
+          }
+        },
+        "delta_vs_official": {
+          "l1": -0.00515,
+          "psnr": 0.7634,
+          "ssim": 0.02262,
+          "lpips": 0.00668,
+          "csd": -0.11306,
+          "hf_corr_L0": 0.06307,
+          "hf_energy_ratio": -0.39768,
+          "colour": 0.00142
+        }
+      }
+    },
+    "generator_swap_results.json": {
+      "protocol": "frozen 750 tasks, fixed SD0 Encoder, decoder-only swap",
+      "scaling": "generator in scaled space (sf=0.18215), decoder UNSCALED",
+      "rows": [
+        {
+          "variant": "sdvae",
+          "arm": "Oracle1",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.464,
+          "margin": 0.0085,
+          "dino_s": 0.73525,
+          "dino_c": 0.73525,
+          "clip_s": 0.81566,
+          "lpips": 0.49084,
+          "clip_target_selectivity": -0.03012,
+          "dT": 0.00376,
+          "dS": -0.3302,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.18667,
+              "margin": -0.09016,
+              "dino_s": 0.76678,
+              "dino_c": 0.76678,
+              "clip_s": 0.83554,
+              "lpips": 0.47499,
+              "clip_target_selectivity": -0.04903,
+              "dT": -0.04859,
+              "dS": -0.26895
+            },
+            "Impressionism": {
+              "top1": 0.74667,
+              "margin": 0.12241,
+              "dino_s": 0.71956,
+              "dino_c": 0.71956,
+              "clip_s": 0.81725,
+              "lpips": 0.48158,
+              "clip_target_selectivity": -0.02158,
+              "dT": 0.12013,
+              "dS": -0.3334
+            },
+            "Minimalism": {
+              "top1": 0.68,
+              "margin": 0.08554,
+              "dino_s": 0.70913,
+              "dino_c": 0.70913,
+              "clip_s": 0.79042,
+              "lpips": 0.50859,
+              "clip_target_selectivity": 0.04744,
+              "dT": 0.03236,
+              "dS": -0.39622
+            },
+            "Rococo": {
+              "top1": 0.49333,
+              "margin": 0.01196,
+              "dino_s": 0.75629,
+              "dino_c": 0.75629,
+              "clip_s": 0.82766,
+              "lpips": 0.51585,
+              "clip_target_selectivity": -0.07339,
+              "dT": 0.02102,
+              "dS": -0.31965
+            },
+            "Ukiyo_e": {
+              "top1": 0.21333,
+              "margin": -0.08728,
+              "dino_s": 0.72447,
+              "dino_c": 0.72447,
+              "clip_s": 0.80743,
+              "lpips": 0.4732,
+              "clip_target_selectivity": -0.05401,
+              "dT": -0.10613,
+              "dS": -0.33275
+            }
+          }
+        },
+        {
+          "variant": "sdvae",
+          "arm": "B4",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.3613,
+          "margin": -0.03062,
+          "dino_s": 0.82776,
+          "dino_c": 0.82776,
+          "clip_s": 0.8828,
+          "lpips": 0.41274,
+          "clip_target_selectivity": -0.00997,
+          "dT": 0.05648,
+          "dS": -0.21386,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.20667,
+              "margin": -0.13791,
+              "dino_s": 0.87369,
+              "dino_c": 0.87369,
+              "clip_s": 0.91903,
+              "lpips": 0.36491,
+              "clip_target_selectivity": -0.01443,
+              "dT": 0.03324,
+              "dS": -0.10572
+            },
+            "Impressionism": {
+              "top1": 0.56,
+              "margin": 0.05472,
+              "dino_s": 0.82865,
+              "dino_c": 0.82865,
+              "clip_s": 0.89074,
+              "lpips": 0.40097,
+              "clip_target_selectivity": 0.00181,
+              "dT": 0.15592,
+              "dS": -0.21841
+            },
+            "Minimalism": {
+              "top1": 0.45333,
+              "margin": 0.03103,
+              "dino_s": 0.80621,
+              "dino_c": 0.80621,
+              "clip_s": 0.84656,
+              "lpips": 0.44976,
+              "clip_target_selectivity": 0.03588,
+              "dT": 0.04808,
+              "dS": -0.3085
+            },
+            "Rococo": {
+              "top1": 0.38,
+              "margin": -0.01473,
+              "dino_s": 0.82631,
+              "dino_c": 0.82631,
+              "clip_s": 0.88144,
+              "lpips": 0.44083,
+              "clip_target_selectivity": -0.04488,
+              "dT": 0.07825,
+              "dS": -0.20899
+            },
+            "Ukiyo_e": {
+              "top1": 0.20667,
+              "margin": -0.0862,
+              "dino_s": 0.80396,
+              "dino_c": 0.80396,
+              "clip_s": 0.87622,
+              "lpips": 0.40723,
+              "clip_target_selectivity": -0.02823,
+              "dT": -0.03309,
+              "dS": -0.22767
+            }
+          }
+        },
+        {
+          "variant": "sdvae",
+          "arm": "B3",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.336,
+          "margin": -0.04354,
+          "dino_s": 0.84135,
+          "dino_c": 0.84135,
+          "clip_s": 0.89196,
+          "lpips": 0.39857,
+          "clip_target_selectivity": -0.00892,
+          "dT": 0.05918,
+          "dS": -0.19622,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.20667,
+              "margin": -0.14587,
+              "dino_s": 0.88256,
+              "dino_c": 0.88256,
+              "clip_s": 0.92535,
+              "lpips": 0.35107,
+              "clip_target_selectivity": -0.01338,
+              "dT": 0.03609,
+              "dS": -0.09431
+            },
+            "Impressionism": {
+              "top1": 0.49333,
+              "margin": 0.02791,
+              "dino_s": 0.84642,
+              "dino_c": 0.84642,
+              "clip_s": 0.90036,
+              "lpips": 0.38315,
+              "clip_target_selectivity": 0.00215,
+              "dT": 0.15184,
+              "dS": -0.1958
+            },
+            "Minimalism": {
+              "top1": 0.42,
+              "margin": 0.0173,
+              "dino_s": 0.81862,
+              "dino_c": 0.81862,
+              "clip_s": 0.85487,
+              "lpips": 0.44139,
+              "clip_target_selectivity": 0.03222,
+              "dT": 0.0466,
+              "dS": -0.29496
+            },
+            "Rococo": {
+              "top1": 0.34667,
+              "margin": -0.02387,
+              "dino_s": 0.83563,
+              "dino_c": 0.83563,
+              "clip_s": 0.88746,
+              "lpips": 0.42926,
+              "clip_target_selectivity": -0.04165,
+              "dT": 0.08004,
+              "dS": -0.19608
+            },
+            "Ukiyo_e": {
+              "top1": 0.21333,
+              "margin": -0.09316,
+              "dino_s": 0.82351,
+              "dino_c": 0.82351,
+              "clip_s": 0.89177,
+              "lpips": 0.38799,
+              "clip_target_selectivity": -0.02391,
+              "dT": -0.01868,
+              "dS": -0.19993
+            }
+          }
+        },
+        {
+          "variant": "sdvae",
+          "arm": "ScoreDiff_N12",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.3227,
+          "margin": -0.09051,
+          "dino_s": 0.83545,
+          "dino_c": 0.83545,
+          "clip_s": 0.90898,
+          "lpips": 0.29677,
+          "clip_target_selectivity": 0.0071,
+          "dT": 0.04426,
+          "dS": -0.17147,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.24667,
+              "margin": -0.13898,
+              "dino_s": 0.87553,
+              "dino_c": 0.87553,
+              "clip_s": 0.9388,
+              "lpips": 0.24903,
+              "clip_target_selectivity": 0.00296,
+              "dT": 0.00833,
+              "dS": -0.12612
+            },
+            "Impressionism": {
+              "top1": 0.24,
+              "margin": -0.14296,
+              "dino_s": 0.87668,
+              "dino_c": 0.87668,
+              "clip_s": 0.94093,
+              "lpips": 0.22785,
+              "clip_target_selectivity": -0.01183,
+              "dT": 0.06257,
+              "dS": -0.13918
+            },
+            "Minimalism": {
+              "top1": 0.72,
+              "margin": 0.11355,
+              "dino_s": 0.68128,
+              "dino_c": 0.68128,
+              "clip_s": 0.79524,
+              "lpips": 0.47867,
+              "clip_target_selectivity": 0.08541,
+              "dT": 0.12637,
+              "dS": -0.33635
+            },
+            "Rococo": {
+              "top1": 0.19333,
+              "margin": -0.16944,
+              "dino_s": 0.87213,
+              "dino_c": 0.87213,
+              "clip_s": 0.93769,
+              "lpips": 0.2485,
+              "clip_target_selectivity": -0.03208,
+              "dT": 0.02345,
+              "dS": -0.12111
+            },
+            "Ukiyo_e": {
+              "top1": 0.21333,
+              "margin": -0.1147,
+              "dino_s": 0.87164,
+              "dino_c": 0.87164,
+              "clip_s": 0.93223,
+              "lpips": 0.27978,
+              "clip_target_selectivity": -0.00897,
+              "dT": 0.00059,
+              "dS": -0.13457
+            }
+          }
+        },
+        {
+          "variant": "sdvae",
+          "arm": "ScoreDiff_N24",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.4533,
+          "margin": 0.02278,
+          "dino_s": 0.70829,
+          "dino_c": 0.70829,
+          "clip_s": 0.83547,
+          "lpips": 0.45882,
+          "clip_target_selectivity": 0.00289,
+          "dT": 0.05599,
+          "dS": -0.28819,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.30667,
+              "margin": -0.04496,
+              "dino_s": 0.77407,
+              "dino_c": 0.77407,
+              "clip_s": 0.87351,
+              "lpips": 0.41292,
+              "clip_target_selectivity": -0.00489,
+              "dT": -0.00256,
+              "dS": -0.2427
+            },
+            "Impressionism": {
+              "top1": 0.49333,
+              "margin": 0.02657,
+              "dino_s": 0.78449,
+              "dino_c": 0.78449,
+              "clip_s": 0.87267,
+              "lpips": 0.38189,
+              "clip_target_selectivity": -0.01636,
+              "dT": 0.10042,
+              "dS": -0.28154
+            },
+            "Minimalism": {
+              "top1": 0.86667,
+              "margin": 0.18001,
+              "dino_s": 0.47838,
+              "dino_c": 0.47838,
+              "clip_s": 0.71119,
+              "lpips": 0.61512,
+              "clip_target_selectivity": 0.1225,
+              "dT": 0.15573,
+              "dS": -0.38959
+            },
+            "Rococo": {
+              "top1": 0.36667,
+              "margin": -0.0339,
+              "dino_s": 0.74373,
+              "dino_c": 0.74373,
+              "clip_s": 0.85794,
+              "lpips": 0.42611,
+              "clip_target_selectivity": -0.06833,
+              "dT": 0.02465,
+              "dS": -0.28293
+            },
+            "Ukiyo_e": {
+              "top1": 0.23333,
+              "margin": -0.01384,
+              "dino_s": 0.7608,
+              "dino_c": 0.7608,
+              "clip_s": 0.86205,
+              "lpips": 0.45807,
+              "clip_target_selectivity": -0.01847,
+              "dT": 0.00169,
+              "dS": -0.24421
+            }
+          }
+        },
+        {
+          "variant": "old_s10",
+          "arm": "Oracle1",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.5013,
+          "margin": 0.01841,
+          "dino_s": 0.74873,
+          "dino_c": 0.74873,
+          "clip_s": 0.83649,
+          "lpips": 0.46657,
+          "clip_target_selectivity": -0.02637,
+          "dT": 0.00224,
+          "dS": -0.31411,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.26,
+              "margin": -0.06713,
+              "dino_s": 0.7803,
+              "dino_c": 0.7803,
+              "clip_s": 0.85559,
+              "lpips": 0.44424,
+              "clip_target_selectivity": -0.0461,
+              "dT": -0.03827,
+              "dS": -0.25707
+            },
+            "Impressionism": {
+              "top1": 0.78,
+              "margin": 0.10695,
+              "dino_s": 0.73159,
+              "dino_c": 0.73159,
+              "clip_s": 0.83721,
+              "lpips": 0.46259,
+              "clip_target_selectivity": -0.02099,
+              "dT": 0.07576,
+              "dS": -0.32271
+            },
+            "Minimalism": {
+              "top1": 0.74,
+              "margin": 0.0895,
+              "dino_s": 0.72566,
+              "dino_c": 0.72566,
+              "clip_s": 0.80972,
+              "lpips": 0.48821,
+              "clip_target_selectivity": 0.04941,
+              "dT": 0.03059,
+              "dS": -0.37578
+            },
+            "Rococo": {
+              "top1": 0.44,
+              "margin": 0.00798,
+              "dino_s": 0.76877,
+              "dino_c": 0.76877,
+              "clip_s": 0.84129,
+              "lpips": 0.49718,
+              "clip_target_selectivity": -0.06525,
+              "dT": 0.03009,
+              "dS": -0.29967
+            },
+            "Ukiyo_e": {
+              "top1": 0.28667,
+              "margin": -0.04523,
+              "dino_s": 0.73732,
+              "dino_c": 0.73732,
+              "clip_s": 0.83863,
+              "lpips": 0.44063,
+              "clip_target_selectivity": -0.04892,
+              "dT": -0.087,
+              "dS": -0.31534
+            }
+          }
+        },
+        {
+          "variant": "old_s10",
+          "arm": "B4",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.3853,
+          "margin": -0.01245,
+          "dino_s": 0.83781,
+          "dino_c": 0.83781,
+          "clip_s": 0.89366,
+          "lpips": 0.39438,
+          "clip_target_selectivity": -0.0094,
+          "dT": 0.04609,
+          "dS": -0.21994,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.23333,
+              "margin": -0.10735,
+              "dino_s": 0.87985,
+              "dino_c": 0.87985,
+              "clip_s": 0.92452,
+              "lpips": 0.34478,
+              "clip_target_selectivity": -0.01701,
+              "dT": 0.02135,
+              "dS": -0.13123
+            },
+            "Impressionism": {
+              "top1": 0.55333,
+              "margin": 0.04392,
+              "dino_s": 0.84001,
+              "dino_c": 0.84001,
+              "clip_s": 0.89971,
+              "lpips": 0.3823,
+              "clip_target_selectivity": -0.00524,
+              "dT": 0.09515,
+              "dS": -0.22956
+            },
+            "Minimalism": {
+              "top1": 0.56667,
+              "margin": 0.06075,
+              "dino_s": 0.8111,
+              "dino_c": 0.8111,
+              "clip_s": 0.86065,
+              "lpips": 0.43581,
+              "clip_target_selectivity": 0.04299,
+              "dT": 0.0587,
+              "dS": -0.30223
+            },
+            "Rococo": {
+              "top1": 0.30667,
+              "margin": -0.02433,
+              "dino_s": 0.84136,
+              "dino_c": 0.84136,
+              "clip_s": 0.88725,
+              "lpips": 0.42896,
+              "clip_target_selectivity": -0.04115,
+              "dT": 0.07935,
+              "dS": -0.19724
+            },
+            "Ukiyo_e": {
+              "top1": 0.26667,
+              "margin": -0.03526,
+              "dino_s": 0.81672,
+              "dino_c": 0.81672,
+              "clip_s": 0.89618,
+              "lpips": 0.38007,
+              "clip_target_selectivity": -0.02657,
+              "dT": -0.02408,
+              "dS": -0.23943
+            }
+          }
+        },
+        {
+          "variant": "old_s10",
+          "arm": "B3",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.368,
+          "margin": -0.02389,
+          "dino_s": 0.85042,
+          "dino_c": 0.85042,
+          "clip_s": 0.90154,
+          "lpips": 0.38107,
+          "clip_target_selectivity": -0.00834,
+          "dT": 0.04814,
+          "dS": -0.2056,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.22667,
+              "margin": -0.11481,
+              "dino_s": 0.88797,
+              "dino_c": 0.88797,
+              "clip_s": 0.92968,
+              "lpips": 0.33209,
+              "clip_target_selectivity": -0.01593,
+              "dT": 0.02257,
+              "dS": -0.12149
+            },
+            "Impressionism": {
+              "top1": 0.51333,
+              "margin": 0.02258,
+              "dino_s": 0.85633,
+              "dino_c": 0.85633,
+              "clip_s": 0.90874,
+              "lpips": 0.36455,
+              "clip_target_selectivity": -0.00441,
+              "dT": 0.09272,
+              "dS": -0.21158
+            },
+            "Minimalism": {
+              "top1": 0.54,
+              "margin": 0.04931,
+              "dino_s": 0.82306,
+              "dino_c": 0.82306,
+              "clip_s": 0.8689,
+              "lpips": 0.42823,
+              "clip_target_selectivity": 0.03924,
+              "dT": 0.05869,
+              "dS": -0.29055
+            },
+            "Rococo": {
+              "top1": 0.28667,
+              "margin": -0.03439,
+              "dino_s": 0.85011,
+              "dino_c": 0.85011,
+              "clip_s": 0.89318,
+              "lpips": 0.41764,
+              "clip_target_selectivity": -0.03808,
+              "dT": 0.07984,
+              "dS": -0.18614
+            },
+            "Ukiyo_e": {
+              "top1": 0.27333,
+              "margin": -0.04212,
+              "dino_s": 0.83464,
+              "dino_c": 0.83464,
+              "clip_s": 0.90719,
+              "lpips": 0.36284,
+              "clip_target_selectivity": -0.02254,
+              "dT": -0.01314,
+              "dS": -0.21824
+            }
+          }
+        },
+        {
+          "variant": "old_s10",
+          "arm": "ScoreDiff_N12",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.3133,
+          "margin": -0.08593,
+          "dino_s": 0.8419,
+          "dino_c": 0.8419,
+          "clip_s": 0.91902,
+          "lpips": 0.25954,
+          "clip_target_selectivity": 0.0081,
+          "dT": 0.05021,
+          "dS": -0.1504,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.24,
+              "margin": -0.13902,
+              "dino_s": 0.87975,
+              "dino_c": 0.87975,
+              "clip_s": 0.9467,
+              "lpips": 0.20422,
+              "clip_target_selectivity": -0.0021,
+              "dT": 0.00707,
+              "dS": -0.11223
+            },
+            "Impressionism": {
+              "top1": 0.26,
+              "margin": -0.11316,
+              "dino_s": 0.88271,
+              "dino_c": 0.88271,
+              "clip_s": 0.94861,
+              "lpips": 0.18605,
+              "clip_target_selectivity": -0.00532,
+              "dT": 0.04861,
+              "dS": -0.13557
+            },
+            "Minimalism": {
+              "top1": 0.68667,
+              "margin": 0.10812,
+              "dino_s": 0.68822,
+              "dino_c": 0.68822,
+              "clip_s": 0.81084,
+              "lpips": 0.47014,
+              "clip_target_selectivity": 0.08177,
+              "dT": 0.14648,
+              "dS": -0.28468
+            },
+            "Rococo": {
+              "top1": 0.18,
+              "margin": -0.18778,
+              "dino_s": 0.88324,
+              "dino_c": 0.88324,
+              "clip_s": 0.94553,
+              "lpips": 0.21292,
+              "clip_target_selectivity": -0.02707,
+              "dT": 0.03505,
+              "dS": -0.09763
+            },
+            "Ukiyo_e": {
+              "top1": 0.2,
+              "margin": -0.09778,
+              "dino_s": 0.87561,
+              "dino_c": 0.87561,
+              "clip_s": 0.94345,
+              "lpips": 0.22438,
+              "clip_target_selectivity": -0.00677,
+              "dT": 0.01384,
+              "dS": -0.12188
+            }
+          }
+        },
+        {
+          "variant": "old_s10",
+          "arm": "ScoreDiff_N24",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.4227,
+          "margin": 0.00338,
+          "dino_s": 0.72057,
+          "dino_c": 0.72057,
+          "clip_s": 0.8549,
+          "lpips": 0.40614,
+          "clip_target_selectivity": 0.00569,
+          "dT": 0.06281,
+          "dS": -0.23962,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.27333,
+              "margin": -0.06179,
+              "dino_s": 0.78616,
+              "dino_c": 0.78616,
+              "clip_s": 0.88976,
+              "lpips": 0.34871,
+              "clip_target_selectivity": -0.00968,
+              "dT": 0.00024,
+              "dS": -0.20252
+            },
+            "Impressionism": {
+              "top1": 0.44667,
+              "margin": 0.00702,
+              "dino_s": 0.79247,
+              "dino_c": 0.79247,
+              "clip_s": 0.88815,
+              "lpips": 0.31925,
+              "clip_target_selectivity": -0.01022,
+              "dT": 0.06516,
+              "dS": -0.24683
+            },
+            "Minimalism": {
+              "top1": 0.84667,
+              "margin": 0.16957,
+              "dino_s": 0.4671,
+              "dino_c": 0.4671,
+              "clip_s": 0.72868,
+              "lpips": 0.60342,
+              "clip_target_selectivity": 0.12048,
+              "dT": 0.18528,
+              "dS": -0.32477
+            },
+            "Rococo": {
+              "top1": 0.33333,
+              "margin": -0.06209,
+              "dino_s": 0.76755,
+              "dino_c": 0.76755,
+              "clip_s": 0.87701,
+              "lpips": 0.38072,
+              "clip_target_selectivity": -0.0586,
+              "dT": 0.05564,
+              "dS": -0.22514
+            },
+            "Ukiyo_e": {
+              "top1": 0.21333,
+              "margin": -0.03582,
+              "dino_s": 0.78958,
+              "dino_c": 0.78958,
+              "clip_s": 0.8909,
+              "lpips": 0.37858,
+              "clip_target_selectivity": -0.01355,
+              "dT": 0.00773,
+              "dS": -0.19884
+            }
+          }
+        },
+        {
+          "variant": "c0",
+          "arm": "Oracle1",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.4893,
+          "margin": 0.01644,
+          "dino_s": 0.74586,
+          "dino_c": 0.74586,
+          "clip_s": 0.83779,
+          "lpips": 0.46021,
+          "clip_target_selectivity": -0.02617,
+          "dT": -0.00428,
+          "dS": -0.31759,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.26,
+              "margin": -0.06195,
+              "dino_s": 0.77895,
+              "dino_c": 0.77895,
+              "clip_s": 0.85839,
+              "lpips": 0.44317,
+              "clip_target_selectivity": -0.04453,
+              "dT": -0.04347,
+              "dS": -0.26679
+            },
+            "Impressionism": {
+              "top1": 0.66667,
+              "margin": 0.07211,
+              "dino_s": 0.72636,
+              "dino_c": 0.72636,
+              "clip_s": 0.84041,
+              "lpips": 0.45812,
+              "clip_target_selectivity": -0.01932,
+              "dT": 0.07708,
+              "dS": -0.3242
+            },
+            "Minimalism": {
+              "top1": 0.74,
+              "margin": 0.09204,
+              "dino_s": 0.72519,
+              "dino_c": 0.72519,
+              "clip_s": 0.81084,
+              "lpips": 0.47196,
+              "clip_target_selectivity": 0.04788,
+              "dT": 0.01459,
+              "dS": -0.37577
+            },
+            "Rococo": {
+              "top1": 0.48,
+              "margin": 0.01967,
+              "dino_s": 0.76879,
+              "dino_c": 0.76879,
+              "clip_s": 0.84236,
+              "lpips": 0.48883,
+              "clip_target_selectivity": -0.06618,
+              "dT": 0.02977,
+              "dS": -0.29768
+            },
+            "Ukiyo_e": {
+              "top1": 0.3,
+              "margin": -0.03967,
+              "dino_s": 0.72998,
+              "dino_c": 0.72998,
+              "clip_s": 0.83695,
+              "lpips": 0.43896,
+              "clip_target_selectivity": -0.04868,
+              "dT": -0.09936,
+              "dS": -0.32351
+            }
+          }
+        },
+        {
+          "variant": "c0",
+          "arm": "B4",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.376,
+          "margin": -0.01887,
+          "dino_s": 0.83636,
+          "dino_c": 0.83636,
+          "clip_s": 0.8948,
+          "lpips": 0.38654,
+          "clip_target_selectivity": -0.0092,
+          "dT": 0.03782,
+          "dS": -0.22182,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.22667,
+              "margin": -0.11028,
+              "dino_s": 0.87994,
+              "dino_c": 0.87994,
+              "clip_s": 0.92631,
+              "lpips": 0.34084,
+              "clip_target_selectivity": -0.01444,
+              "dT": 0.01302,
+              "dS": -0.13888
+            },
+            "Impressionism": {
+              "top1": 0.46,
+              "margin": 0.00323,
+              "dino_s": 0.83809,
+              "dino_c": 0.83809,
+              "clip_s": 0.90241,
+              "lpips": 0.37483,
+              "clip_target_selectivity": -0.00385,
+              "dT": 0.09613,
+              "dS": -0.22566
+            },
+            "Minimalism": {
+              "top1": 0.56,
+              "margin": 0.05729,
+              "dino_s": 0.81072,
+              "dino_c": 0.81072,
+              "clip_s": 0.86213,
+              "lpips": 0.41808,
+              "clip_target_selectivity": 0.04094,
+              "dT": 0.04072,
+              "dS": -0.29994
+            },
+            "Rococo": {
+              "top1": 0.36,
+              "margin": -0.01469,
+              "dino_s": 0.84083,
+              "dino_c": 0.84083,
+              "clip_s": 0.88747,
+              "lpips": 0.42101,
+              "clip_target_selectivity": -0.043,
+              "dT": 0.07658,
+              "dS": -0.19652
+            },
+            "Ukiyo_e": {
+              "top1": 0.27333,
+              "margin": -0.02988,
+              "dino_s": 0.81221,
+              "dino_c": 0.81221,
+              "clip_s": 0.89568,
+              "lpips": 0.37793,
+              "clip_target_selectivity": -0.02566,
+              "dT": -0.03734,
+              "dS": -0.2481
+            }
+          }
+        },
+        {
+          "variant": "c0",
+          "arm": "B3",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.352,
+          "margin": -0.03001,
+          "dino_s": 0.8496,
+          "dino_c": 0.8496,
+          "clip_s": 0.90248,
+          "lpips": 0.37309,
+          "clip_target_selectivity": -0.00818,
+          "dT": 0.04007,
+          "dS": -0.20724,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.23333,
+              "margin": -0.11804,
+              "dino_s": 0.8884,
+              "dino_c": 0.8884,
+              "clip_s": 0.93147,
+              "lpips": 0.32784,
+              "clip_target_selectivity": -0.0135,
+              "dT": 0.0146,
+              "dS": -0.12822
+            },
+            "Impressionism": {
+              "top1": 0.41333,
+              "margin": -0.0191,
+              "dino_s": 0.85542,
+              "dino_c": 0.85542,
+              "clip_s": 0.9109,
+              "lpips": 0.35695,
+              "clip_target_selectivity": -0.00373,
+              "dT": 0.0926,
+              "dS": -0.20769
+            },
+            "Minimalism": {
+              "top1": 0.50667,
+              "margin": 0.04648,
+              "dino_s": 0.82324,
+              "dino_c": 0.82324,
+              "clip_s": 0.86978,
+              "lpips": 0.41046,
+              "clip_target_selectivity": 0.03784,
+              "dT": 0.04138,
+              "dS": -0.28787
+            },
+            "Rococo": {
+              "top1": 0.34,
+              "margin": -0.02415,
+              "dino_s": 0.84993,
+              "dino_c": 0.84993,
+              "clip_s": 0.89311,
+              "lpips": 0.40992,
+              "clip_target_selectivity": -0.03978,
+              "dT": 0.07689,
+              "dS": -0.18619
+            },
+            "Ukiyo_e": {
+              "top1": 0.26667,
+              "margin": -0.03525,
+              "dino_s": 0.83099,
+              "dino_c": 0.83099,
+              "clip_s": 0.90717,
+              "lpips": 0.3603,
+              "clip_target_selectivity": -0.02173,
+              "dT": -0.02513,
+              "dS": -0.22626
+            }
+          }
+        },
+        {
+          "variant": "c0",
+          "arm": "ScoreDiff_N12",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.3173,
+          "margin": -0.09117,
+          "dino_s": 0.83963,
+          "dino_c": 0.83963,
+          "clip_s": 0.91866,
+          "lpips": 0.26049,
+          "clip_target_selectivity": 0.00839,
+          "dT": 0.04437,
+          "dS": -0.15083,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.24,
+              "margin": -0.1404,
+              "dino_s": 0.87641,
+              "dino_c": 0.87641,
+              "clip_s": 0.94653,
+              "lpips": 0.20951,
+              "clip_target_selectivity": -0.00024,
+              "dT": 0.00553,
+              "dS": -0.11463
+            },
+            "Impressionism": {
+              "top1": 0.25333,
+              "margin": -0.15775,
+              "dino_s": 0.87944,
+              "dino_c": 0.87944,
+              "clip_s": 0.9487,
+              "lpips": 0.19032,
+              "clip_target_selectivity": -0.00581,
+              "dT": 0.04534,
+              "dS": -0.13457
+            },
+            "Minimalism": {
+              "top1": 0.69333,
+              "margin": 0.11227,
+              "dino_s": 0.68863,
+              "dino_c": 0.68863,
+              "clip_s": 0.81014,
+              "lpips": 0.46112,
+              "clip_target_selectivity": 0.08226,
+              "dT": 0.1316,
+              "dS": -0.2852
+            },
+            "Rococo": {
+              "top1": 0.2,
+              "margin": -0.18328,
+              "dino_s": 0.88175,
+              "dino_c": 0.88175,
+              "clip_s": 0.94472,
+              "lpips": 0.21355,
+              "clip_target_selectivity": -0.02819,
+              "dT": 0.03066,
+              "dS": -0.09339
+            },
+            "Ukiyo_e": {
+              "top1": 0.2,
+              "margin": -0.08668,
+              "dino_s": 0.87192,
+              "dino_c": 0.87192,
+              "clip_s": 0.94321,
+              "lpips": 0.22795,
+              "clip_target_selectivity": -0.00606,
+              "dT": 0.00871,
+              "dS": -0.12637
+            }
+          }
+        },
+        {
+          "variant": "c0",
+          "arm": "ScoreDiff_N24",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.4173,
+          "margin": 0.00556,
+          "dino_s": 0.71421,
+          "dino_c": 0.71421,
+          "clip_s": 0.85487,
+          "lpips": 0.40911,
+          "clip_target_selectivity": 0.00643,
+          "dT": 0.05776,
+          "dS": -0.24542,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.28667,
+              "margin": -0.05504,
+              "dino_s": 0.78006,
+              "dino_c": 0.78006,
+              "clip_s": 0.89058,
+              "lpips": 0.35665,
+              "clip_target_selectivity": -0.00664,
+              "dT": -6e-05,
+              "dS": -0.20974
+            },
+            "Impressionism": {
+              "top1": 0.38,
+              "margin": -0.02851,
+              "dino_s": 0.78798,
+              "dino_c": 0.78798,
+              "clip_s": 0.89087,
+              "lpips": 0.32631,
+              "clip_target_selectivity": -0.0083,
+              "dT": 0.06567,
+              "dS": -0.25041
+            },
+            "Minimalism": {
+              "top1": 0.85333,
+              "margin": 0.18326,
+              "dino_s": 0.4547,
+              "dino_c": 0.4547,
+              "clip_s": 0.72529,
+              "lpips": 0.598,
+              "clip_target_selectivity": 0.11999,
+              "dT": 0.17152,
+              "dS": -0.33591
+            },
+            "Rococo": {
+              "top1": 0.32667,
+              "margin": -0.0523,
+              "dino_s": 0.76503,
+              "dino_c": 0.76503,
+              "clip_s": 0.87678,
+              "lpips": 0.38023,
+              "clip_target_selectivity": -0.06048,
+              "dT": 0.04978,
+              "dS": -0.22159
+            },
+            "Ukiyo_e": {
+              "top1": 0.24,
+              "margin": -0.01962,
+              "dino_s": 0.78328,
+              "dino_c": 0.78328,
+              "clip_s": 0.89084,
+              "lpips": 0.38437,
+              "clip_target_selectivity": -0.01241,
+              "dT": 0.00188,
+              "dS": -0.20943
+            }
+          }
+        },
+        {
+          "variant": "c1",
+          "arm": "Oracle1",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.4827,
+          "margin": 0.01501,
+          "dino_s": 0.7458,
+          "dino_c": 0.7458,
+          "clip_s": 0.83793,
+          "lpips": 0.46028,
+          "clip_target_selectivity": -0.02609,
+          "dT": -0.00549,
+          "dS": -0.31705,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.26667,
+              "margin": -0.06007,
+              "dino_s": 0.77866,
+              "dino_c": 0.77866,
+              "clip_s": 0.85877,
+              "lpips": 0.4431,
+              "clip_target_selectivity": -0.0445,
+              "dT": -0.04359,
+              "dS": -0.26804
+            },
+            "Impressionism": {
+              "top1": 0.64667,
+              "margin": 0.06469,
+              "dino_s": 0.72634,
+              "dino_c": 0.72634,
+              "clip_s": 0.84087,
+              "lpips": 0.45834,
+              "clip_target_selectivity": -0.0184,
+              "dT": 0.07542,
+              "dS": -0.32301
+            },
+            "Minimalism": {
+              "top1": 0.72667,
+              "margin": 0.08984,
+              "dino_s": 0.72649,
+              "dino_c": 0.72649,
+              "clip_s": 0.81057,
+              "lpips": 0.4721,
+              "clip_target_selectivity": 0.04714,
+              "dT": 0.01231,
+              "dS": -0.37395
+            },
+            "Rococo": {
+              "top1": 0.47333,
+              "margin": 0.01893,
+              "dino_s": 0.76843,
+              "dino_c": 0.76843,
+              "clip_s": 0.84265,
+              "lpips": 0.48861,
+              "clip_target_selectivity": -0.06618,
+              "dT": 0.0287,
+              "dS": -0.29746
+            },
+            "Ukiyo_e": {
+              "top1": 0.3,
+              "margin": -0.03833,
+              "dino_s": 0.72906,
+              "dino_c": 0.72906,
+              "clip_s": 0.83678,
+              "lpips": 0.43924,
+              "clip_target_selectivity": -0.04851,
+              "dT": -0.10032,
+              "dS": -0.32276
+            }
+          }
+        },
+        {
+          "variant": "c1",
+          "arm": "B4",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.364,
+          "margin": -0.02137,
+          "dino_s": 0.83675,
+          "dino_c": 0.83675,
+          "clip_s": 0.89506,
+          "lpips": 0.38657,
+          "clip_target_selectivity": -0.00912,
+          "dT": 0.03644,
+          "dS": -0.22053,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.22667,
+              "margin": -0.1104,
+              "dino_s": 0.88058,
+              "dino_c": 0.88058,
+              "clip_s": 0.92694,
+              "lpips": 0.34065,
+              "clip_target_selectivity": -0.01383,
+              "dT": 0.01189,
+              "dS": -0.13944
+            },
+            "Impressionism": {
+              "top1": 0.43333,
+              "margin": -0.00483,
+              "dino_s": 0.83869,
+              "dino_c": 0.83869,
+              "clip_s": 0.90324,
+              "lpips": 0.37465,
+              "clip_target_selectivity": -0.00272,
+              "dT": 0.09533,
+              "dS": -0.22356
+            },
+            "Minimalism": {
+              "top1": 0.54,
+              "margin": 0.05124,
+              "dino_s": 0.81205,
+              "dino_c": 0.81205,
+              "clip_s": 0.86166,
+              "lpips": 0.4182,
+              "clip_target_selectivity": 0.0401,
+              "dT": 0.03725,
+              "dS": -0.29617
+            },
+            "Rococo": {
+              "top1": 0.35333,
+              "margin": -0.01542,
+              "dino_s": 0.84057,
+              "dino_c": 0.84057,
+              "clip_s": 0.88727,
+              "lpips": 0.42097,
+              "clip_target_selectivity": -0.04354,
+              "dT": 0.07544,
+              "dS": -0.19627
+            },
+            "Ukiyo_e": {
+              "top1": 0.26667,
+              "margin": -0.02745,
+              "dino_s": 0.81185,
+              "dino_c": 0.81185,
+              "clip_s": 0.89618,
+              "lpips": 0.37839,
+              "clip_target_selectivity": -0.02559,
+              "dT": -0.03771,
+              "dS": -0.24724
+            }
+          }
+        },
+        {
+          "variant": "c1",
+          "arm": "B3",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.344,
+          "margin": -0.03241,
+          "dino_s": 0.85011,
+          "dino_c": 0.85011,
+          "clip_s": 0.90279,
+          "lpips": 0.37312,
+          "clip_target_selectivity": -0.00814,
+          "dT": 0.03889,
+          "dS": -0.20605,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.23333,
+              "margin": -0.1186,
+              "dino_s": 0.88898,
+              "dino_c": 0.88898,
+              "clip_s": 0.93215,
+              "lpips": 0.32765,
+              "clip_target_selectivity": -0.01292,
+              "dT": 0.0132,
+              "dS": -0.12908
+            },
+            "Impressionism": {
+              "top1": 0.4,
+              "margin": -0.02685,
+              "dino_s": 0.85605,
+              "dino_c": 0.85605,
+              "clip_s": 0.91155,
+              "lpips": 0.35674,
+              "clip_target_selectivity": -0.00304,
+              "dT": 0.09253,
+              "dS": -0.20504
+            },
+            "Minimalism": {
+              "top1": 0.47333,
+              "margin": 0.0413,
+              "dino_s": 0.82477,
+              "dino_c": 0.82477,
+              "clip_s": 0.86934,
+              "lpips": 0.41061,
+              "clip_target_selectivity": 0.03711,
+              "dT": 0.03806,
+              "dS": -0.28493
+            },
+            "Rococo": {
+              "top1": 0.34,
+              "margin": -0.02546,
+              "dino_s": 0.8502,
+              "dino_c": 0.8502,
+              "clip_s": 0.89325,
+              "lpips": 0.40992,
+              "clip_target_selectivity": -0.04011,
+              "dT": 0.07582,
+              "dS": -0.18523
+            },
+            "Ukiyo_e": {
+              "top1": 0.27333,
+              "margin": -0.03244,
+              "dino_s": 0.83053,
+              "dino_c": 0.83053,
+              "clip_s": 0.90767,
+              "lpips": 0.36067,
+              "clip_target_selectivity": -0.02174,
+              "dT": -0.02515,
+              "dS": -0.22596
+            }
+          }
+        },
+        {
+          "variant": "c1",
+          "arm": "ScoreDiff_N12",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.312,
+          "margin": -0.09252,
+          "dino_s": 0.83907,
+          "dino_c": 0.83907,
+          "clip_s": 0.91866,
+          "lpips": 0.26194,
+          "clip_target_selectivity": 0.00861,
+          "dT": 0.04289,
+          "dS": -0.15042,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.24,
+              "margin": -0.13929,
+              "dino_s": 0.87562,
+              "dino_c": 0.87562,
+              "clip_s": 0.94669,
+              "lpips": 0.21079,
+              "clip_target_selectivity": -5e-05,
+              "dT": 0.00528,
+              "dS": -0.11526
+            },
+            "Impressionism": {
+              "top1": 0.24,
+              "margin": -0.16656,
+              "dino_s": 0.87857,
+              "dino_c": 0.87857,
+              "clip_s": 0.94898,
+              "lpips": 0.19143,
+              "clip_target_selectivity": -0.0058,
+              "dT": 0.04367,
+              "dS": -0.13293
+            },
+            "Minimalism": {
+              "top1": 0.68,
+              "margin": 0.11217,
+              "dino_s": 0.68872,
+              "dino_c": 0.68872,
+              "clip_s": 0.80934,
+              "lpips": 0.46299,
+              "clip_target_selectivity": 0.08362,
+              "dT": 0.12641,
+              "dS": -0.28712
+            },
+            "Rococo": {
+              "top1": 0.2,
+              "margin": -0.18515,
+              "dino_s": 0.88161,
+              "dino_c": 0.88161,
+              "clip_s": 0.94491,
+              "lpips": 0.21471,
+              "clip_target_selectivity": -0.02871,
+              "dT": 0.03138,
+              "dS": -0.0895
+            },
+            "Ukiyo_e": {
+              "top1": 0.2,
+              "margin": -0.08379,
+              "dino_s": 0.87085,
+              "dino_c": 0.87085,
+              "clip_s": 0.94337,
+              "lpips": 0.22978,
+              "clip_target_selectivity": -0.00601,
+              "dT": 0.00769,
+              "dS": -0.12729
+            }
+          }
+        },
+        {
+          "variant": "c1",
+          "arm": "ScoreDiff_N24",
+          "n": 750,
+          "cross": 600,
+          "top1": 0.4173,
+          "margin": 0.00455,
+          "dino_s": 0.71328,
+          "dino_c": 0.71328,
+          "clip_s": 0.85494,
+          "lpips": 0.41184,
+          "clip_target_selectivity": 0.00648,
+          "dT": 0.05604,
+          "dS": -0.24553,
+          "per_target": {
+            "Early_Renaissance": {
+              "top1": 0.28667,
+              "margin": -0.05338,
+              "dino_s": 0.77899,
+              "dino_c": 0.77899,
+              "clip_s": 0.8906,
+              "lpips": 0.35911,
+              "clip_target_selectivity": -0.00598,
+              "dT": 0.00028,
+              "dS": -0.21021
+            },
+            "Impressionism": {
+              "top1": 0.36667,
+              "margin": -0.03641,
+              "dino_s": 0.78698,
+              "dino_c": 0.78698,
+              "clip_s": 0.89179,
+              "lpips": 0.3284,
+              "clip_target_selectivity": -0.00798,
+              "dT": 0.06444,
+              "dS": -0.24923
+            },
+            "Minimalism": {
+              "top1": 0.85333,
+              "margin": 0.18317,
+              "dino_s": 0.45398,
+              "dino_c": 0.45398,
+              "clip_s": 0.72523,
+              "lpips": 0.601,
+              "clip_target_selectivity": 0.11995,
+              "dT": 0.16661,
+              "dS": -0.33904
+            },
+            "Rococo": {
+              "top1": 0.32667,
+              "margin": -0.05377,
+              "dino_s": 0.7656,
+              "dino_c": 0.7656,
+              "clip_s": 0.87713,
+              "lpips": 0.3829,
+              "clip_target_selectivity": -0.06121,
+              "dT": 0.04855,
+              "dS": -0.21835
+            },
+            "Ukiyo_e": {
+              "top1": 0.25333,
+              "margin": -0.01688,
+              "dino_s": 0.78085,
+              "dino_c": 0.78085,
+              "clip_s": 0.88995,
+              "lpips": 0.38781,
+              "clip_target_selectivity": -0.01239,
+              "dT": 0.00034,
+              "dS": -0.21082
+            }
+          }
+        }
+      ],
+      "paired_bootstrap": {
+        "old_s10|Oracle1|top1": {
+          "mean": 0.037333333333333336,
+          "ci": [
+            0.017333333333333333,
+            0.058666666666666666
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|Oracle1|dino_s": {
+          "mean": 0.013480735659599305,
+          "ci": [
+            0.009083873465657234,
+            0.01823265872100989
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|Oracle1|margin": {
+          "mean": 0.00991815225283305,
+          "ci": [
+            0.005606077694768707,
+            0.013991913596789042
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|Oracle1|dino_c": {
+          "mean": 0.013480735659599305,
+          "ci": [
+            0.008895996834834417,
+            0.018021446870764096
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|Oracle1|lpips": {
+          "mean": -0.024274172166983285,
+          "ci": [
+            -0.026415724038581053,
+            -0.022051278297106427
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|Oracle1|top1": {
+          "mean": 0.025333333333333333,
+          "ci": [
+            0.004,
+            0.048
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|Oracle1|dino_s": {
+          "mean": 0.01060950211683909,
+          "ci": [
+            0.006096830629309018,
+            0.015126033889253931
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|Oracle1|margin": {
+          "mean": 0.007944688568512598,
+          "ci": [
+            0.0036226118332395954,
+            0.012421868733689185
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|Oracle1|dino_c": {
+          "mean": 0.01060950211683909,
+          "ci": [
+            0.006016844320297241,
+            0.014983104456464443
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|Oracle1|lpips": {
+          "mean": -0.030636773308118183,
+          "ci": [
+            -0.032751617272694905,
+            -0.028661729036271573
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|Oracle1|top1": {
+          "mean": 0.018666666666666668,
+          "ci": [
+            -0.0026666666666666666,
+            0.04133333333333333
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c1|Oracle1|dino_s": {
+          "mean": 0.010548726360003154,
+          "ci": [
+            0.006117516288161278,
+            0.015071058548490205
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|Oracle1|margin": {
+          "mean": 0.006518206804990769,
+          "ci": [
+            0.0019350274004042147,
+            0.010975201984246572
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|Oracle1|dino_c": {
+          "mean": 0.010548726360003154,
+          "ci": [
+            0.005970252909262975,
+            0.015029935712615648
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|Oracle1|lpips": {
+          "mean": -0.030564562479654948,
+          "ci": [
+            -0.03252402143726746,
+            -0.028439999215304854
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|B4|top1": {
+          "mean": 0.024,
+          "ci": [
+            0.0013333333333333333,
+            0.04666666666666667
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|B4|dino_s": {
+          "mean": 0.010042520085970561,
+          "ci": [
+            0.006215392661094665,
+            0.014061295339465136
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|B4|margin": {
+          "mean": 0.018164916654427845,
+          "ci": [
+            0.01355578431164225,
+            0.022750333977987366
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|B4|dino_c": {
+          "mean": 0.010042520085970561,
+          "ci": [
+            0.006294293109575907,
+            0.013942021445433299
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|B4|lpips": {
+          "mean": -0.018357718199491502,
+          "ci": [
+            -0.02063916310394804,
+            -0.016194106033196053
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|B4|top1": {
+          "mean": 0.014666666666666666,
+          "ci": [
+            -0.008,
+            0.037333333333333336
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c0|B4|dino_s": {
+          "mean": 0.008593005816141764,
+          "ci": [
+            0.004792635969320933,
+            0.01229701729317506
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|B4|margin": {
+          "mean": 0.011750697880983353,
+          "ci": [
+            0.006406206103414297,
+            0.017057960019508996
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|B4|dino_c": {
+          "mean": 0.008593005816141764,
+          "ci": [
+            0.004924990246693293,
+            0.012407483799258868
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|B4|lpips": {
+          "mean": -0.026206350634495418,
+          "ci": [
+            -0.028042884543786447,
+            -0.024276650282740595
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|B4|top1": {
+          "mean": 0.0026666666666666666,
+          "ci": [
+            -0.02,
+            0.025333333333333333
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c1|B4|dino_s": {
+          "mean": 0.00898254402478536,
+          "ci": [
+            0.005247513278325399,
+            0.012624221389492353
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|B4|margin": {
+          "mean": 0.009244294909139474,
+          "ci": [
+            0.003948452008329332,
+            0.014530016366019843
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|B4|dino_c": {
+          "mean": 0.00898254402478536,
+          "ci": [
+            0.00526384482284387,
+            0.0127280785292387
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|B4|lpips": {
+          "mean": -0.02617147646347682,
+          "ci": [
+            -0.0279854019763569,
+            -0.024336877541492382
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|B3|top1": {
+          "mean": 0.032,
+          "ci": [
+            0.010666666666666666,
+            0.05333333333333334
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|B3|dino_s": {
+          "mean": 0.009072080612182617,
+          "ci": [
+            0.005246770077943802,
+            0.012864369095365206
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|B3|margin": {
+          "mean": 0.019651015251874925,
+          "ci": [
+            0.014961828787376483,
+            0.024117018346240124
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|B3|dino_c": {
+          "mean": 0.009072080612182617,
+          "ci": [
+            0.005352858568231265,
+            0.012893393305937445
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|B3|lpips": {
+          "mean": -0.017502564549446105,
+          "ci": [
+            -0.019704181541999183,
+            -0.01517404923811555
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|B3|top1": {
+          "mean": 0.016,
+          "ci": [
+            -0.0053666666666666646,
+            0.037333333333333336
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c0|B3|dino_s": {
+          "mean": 0.008248924771944681,
+          "ci": [
+            0.004359263154864311,
+            0.012209907869497933
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|B3|margin": {
+          "mean": 0.013525234659512837,
+          "ci": [
+            0.008458493154247602,
+            0.018911915950228772
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|B3|dino_c": {
+          "mean": 0.008248924771944681,
+          "ci": [
+            0.004598676743110021,
+            0.012043951650460558
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|B3|lpips": {
+          "mean": -0.02547993876536687,
+          "ci": [
+            -0.02739013699889183,
+            -0.023718310144543647
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|B3|top1": {
+          "mean": 0.008,
+          "ci": [
+            -0.013333333333333334,
+            0.028033333333333153
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c1|B3|dino_s": {
+          "mean": 0.008757351557413737,
+          "ci": [
+            0.005290645956993103,
+            0.012116745770970975
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|B3|margin": {
+          "mean": 0.011128971199194591,
+          "ci": [
+            0.005666387498130402,
+            0.016485422370582804
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|B3|dino_c": {
+          "mean": 0.008757351557413737,
+          "ci": [
+            0.0051392571717500685,
+            0.012363227140903474
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|B3|lpips": {
+          "mean": -0.025453951160113016,
+          "ci": [
+            -0.027318438444534937,
+            -0.023660213763266803
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|ScoreDiff_N12|top1": {
+          "mean": -0.009333333333333334,
+          "ci": [
+            -0.021333333333333333,
+            0.0013333333333333333
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "old_s10|ScoreDiff_N12|dino_s": {
+          "mean": 0.006453381836414337,
+          "ci": [
+            0.0020528548950950304,
+            0.010911231678724284
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|ScoreDiff_N12|margin": {
+          "mean": 0.0045815722395976385,
+          "ci": [
+            -0.0008425185932467381,
+            0.010293711148326593
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "old_s10|ScoreDiff_N12|dino_c": {
+          "mean": 0.006453381836414337,
+          "ci": [
+            0.001997096913556258,
+            0.011156317846973733
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|ScoreDiff_N12|lpips": {
+          "mean": -0.03722697769163775,
+          "ci": [
+            -0.04132107835600202,
+            -0.03333763654697321
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|ScoreDiff_N12|top1": {
+          "mean": -0.005333333333333333,
+          "ci": [
+            -0.014666666666666666,
+            0.004
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c0|ScoreDiff_N12|dino_s": {
+          "mean": 0.0041772849559783935,
+          "ci": [
+            -7.232674707969029e-05,
+            0.008598632471263405
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c0|ScoreDiff_N12|margin": {
+          "mean": -0.0006624627361694972,
+          "ci": [
+            -0.006559111033007502,
+            0.004884467151885231
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c0|ScoreDiff_N12|dino_c": {
+          "mean": 0.0041772849559783935,
+          "ci": [
+            -0.00033107191721598307,
+            0.00899519125173489
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c0|ScoreDiff_N12|lpips": {
+          "mean": -0.03627611279414208,
+          "ci": [
+            -0.03932432352390669,
+            -0.033575457607244306
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|ScoreDiff_N12|top1": {
+          "mean": -0.010666666666666666,
+          "ci": [
+            -0.02,
+            -0.0013333333333333333
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|ScoreDiff_N12|dino_s": {
+          "mean": 0.0036225830515225726,
+          "ci": [
+            -0.0008211851149797439,
+            0.008157538623611132
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c1|ScoreDiff_N12|margin": {
+          "mean": -0.0020172785073518753,
+          "ci": [
+            -0.007984162688006956,
+            0.0036617305077612373
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c1|ScoreDiff_N12|dino_c": {
+          "mean": 0.0036225830515225726,
+          "ci": [
+            -0.0007346242859959602,
+            0.008211294298370678
+          ],
+          "excludes_zero": false,
+          "n": 750
+        },
+        "c1|ScoreDiff_N12|lpips": {
+          "mean": -0.03482853587051316,
+          "ci": [
+            -0.037637285671624957,
+            -0.0319964293760803
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|ScoreDiff_N24|top1": {
+          "mean": -0.030666666666666665,
+          "ci": [
+            -0.04933333333333333,
+            -0.012
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|ScoreDiff_N24|dino_s": {
+          "mean": 0.01227784553170204,
+          "ci": [
+            0.008111465536803008,
+            0.016483929710090158
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|ScoreDiff_N24|margin": {
+          "mean": -0.019398434944450857,
+          "ci": [
+            -0.024292389284757278,
+            -0.014862774201606713
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|ScoreDiff_N24|dino_c": {
+          "mean": 0.01227784553170204,
+          "ci": [
+            0.008103096173455318,
+            0.01647581302002072
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "old_s10|ScoreDiff_N24|lpips": {
+          "mean": -0.05268638840127714,
+          "ci": [
+            -0.057263991161356234,
+            -0.04801460605184279
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|ScoreDiff_N24|top1": {
+          "mean": -0.036,
+          "ci": [
+            -0.05466666666666667,
+            -0.017333333333333333
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|ScoreDiff_N24|dino_s": {
+          "mean": 0.005919216434160868,
+          "ci": [
+            0.0019036749559144179,
+            0.009799940978735686
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|ScoreDiff_N24|margin": {
+          "mean": -0.017221671176453433,
+          "ci": [
+            -0.022220116531538468,
+            -0.012260247088844578
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|ScoreDiff_N24|dino_c": {
+          "mean": 0.005919216434160868,
+          "ci": [
+            0.0018688706373174986,
+            0.009886389655619856
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c0|ScoreDiff_N24|lpips": {
+          "mean": -0.04971073069101683,
+          "ci": [
+            -0.053417715940095485,
+            -0.046188985360644835
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|ScoreDiff_N24|top1": {
+          "mean": -0.036,
+          "ci": [
+            -0.05603333333333333,
+            -0.017333333333333333
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|ScoreDiff_N24|dino_s": {
+          "mean": 0.004988981261849403,
+          "ci": [
+            0.000986311181386312,
+            0.008987081114947794
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|ScoreDiff_N24|margin": {
+          "mean": -0.01823114144553741,
+          "ci": [
+            -0.023284744027008614,
+            -0.013425126870224876
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|ScoreDiff_N24|dino_c": {
+          "mean": 0.004988981261849403,
+          "ci": [
+            0.0010277206507821877,
+            0.008768181160464883
+          ],
+          "excludes_zero": true,
+          "n": 750
+        },
+        "c1|ScoreDiff_N24|lpips": {
+          "mean": -0.04698044591476603,
+          "ci": [
+            -0.05039621896459031,
+            -0.04369118943585909
+          ],
+          "excludes_zero": true,
+          "n": 750
+        }
+      },
+      "n_tasks": 750,
+      "note": "DINO-S target SELECTIVITY reported separately from global DINO-S; a global similarity rise alone is not a style gain."
+    },
+    "gate_audit.json": {
+      "c0": {
+        "lpips_delta": -0.00476,
+        "hf_corr_delta": 0.01751,
+        "hf_l1_delta": -0.00111,
+        "csd_delta": -0.00118,
+        "colour_delta": -0.00102,
+        "csd_not_worse": true,
+        "colour_not_worse": true,
+        "no_sharpening_artifact": null,
+        "note": "HF energy ratio + visual grid needed to judge sharpening; this script only checks the numeric CSD/colour guards."
+      },
+      "c1": {
+        "resp_delta": -0.00636,
+        "resp_cos_delta": 0.02146,
+        "lpips_delta": -0.00119,
+        "resp_trajectory": [
+          {
+            "upd": 250,
+            "resp": 0.30186,
+            "resp_cos": 0.64953,
+            "lpips": 0.08623
+          },
+          {
+            "upd": 500,
+            "resp": 0.29268,
+            "resp_cos": 0.65537,
+            "lpips": 0.08628
+          },
+          {
+            "upd": 750,
+            "resp": 0.29607,
+            "resp_cos": 0.66671,
+            "lpips": 0.08611
+          },
+          {
+            "upd": 1000,
+            "resp": 0.29605,
+            "resp_cos": 0.67162,
+            "lpips": 0.08581
+          },
+          {
+            "upd": 1250,
+            "resp": 0.2951,
+            "resp_cos": 0.67009,
+            "lpips": 0.08548
+          },
+          {
+            "upd": 1500,
+            "resp": 0.29809,
+            "resp_cos": 0.66888,
+            "lpips": 0.08561
+          },
+          {
+            "upd": 1750,
+            "resp": 0.2962,
+            "resp_cos": 0.66617,
+            "lpips": 0.08533
+          },
+          {
+            "upd": 2000,
+            "resp": 0.29328,
+            "resp_cos": 0.67252,
+            "lpips": 0.08522
+          },
+          {
+            "upd": 2250,
+            "resp": 0.2958,
+            "resp_cos": 0.67076,
+            "lpips": 0.08523
+          },
+          {
+            "upd": 2500,
+            "resp": 0.2955,
+            "resp_cos": 0.67099,
+            "lpips": 0.08504
+          }
+        ],
+        "resp_is_cumulative_mean": true,
+        "gradient_consistency_improved": 0.9803,
+        "large_perturb_no_artifact": null,
+        "note": "`resp` is a CUMULATIVE mean (upd1..VALID), so the Gate is conservative. Read eval_p5_final.json 'perturb' medium band + input_grad.jtv_cos_median for the two qualitative requirements; a Gate failure here is not proof the response got worse.",
+        "medium_band_cos": 0.7309
+      },
+      "p0_official_lpips": 0.07836,
+      "p0_official_csd": 0.96093
+    }
+  },
+  "artifacts": [
+    "runs/sd0_s10/sd0_s10_best_overall.pt",
+    "runs/sd0_s10/sd0_s10_best_recon.pt",
+    "runs/sd0_s10/sd0_s10_best_response.pt"
+  ],
+  "failed_steps": [],
+  "status": "complete_after_layer3_rerun",
+  "chain_status": "2",
+  "note": "Training chain exited at step-9 final eval OOM; guard delivered C0/C1. layer124 and layer3 were re-run manually with fixes and now pass; single-step export/gate_audit/selftests passed on first P5 run.",
+  "p1_gate.json": {
+    "W": {
+      "stage": "p1_warm",
+      "init": "W",
+      "updates": 800,
+      "best": {
+        "l1": 0.06843,
+        "psnr": 25.24609,
+        "lpips": 0.0906,
+        "hf_l1": 0.06784,
+        "hf_corr_L0": 0.45455,
+        "hf_energy_ratio": 0.60264,
+        "ssim": 0.76792,
+        "colour": 0.00393,
+        "csd": 0.85726
+      },
+      "wall_min": 56.4,
+      "img_per_sec": 15.13,
+      "lambdas": {
+        "hf": 0.011352042703538325,
+        "hf_grad_ratio": 13.213480949401855,
+        "p": 0.5,
+        "energy": 0.0
+      }
+    },
+    "C": {
+      "stage": "p1_cold",
+      "init": "C",
+      "updates": 800,
+      "best": {
+        "l1": 0.07728,
+        "psnr": 24.39951,
+        "lpips": 0.12819,
+        "hf_l1": 0.07204,
+        "hf_corr_L0": 0.39597,
+        "hf_energy_ratio": 0.54194,
+        "ssim": 0.73732,
+        "colour": 0.00804,
+        "csd": 0.79743
+      },
+      "wall_min": 56.6,
+      "img_per_sec": 15.08,
+      "lambdas": {
+        "hf": 0.018138823471614322,
+        "hf_grad_ratio": 8.26955509185791,
+        "p": 0.5,
+        "energy": 0.0
+      }
+    },
+    "W_lpips": 0.0906,
+    "C_lpips": 0.12819,
+    "W_img_s": 15.13,
+    "C_img_s": 15.08,
+    "W_trend": 0.001009999999999997,
+    "C_trend": 0.030349999999999988,
+    "chosen": "W",
+    "reason": "Warm chosen (better or equal LPIPS at equal follow-up cost)"
+  },
+  "c0_gate.json": {
+    "first": {
+      "lpips": 0.09064,
+      "hf_corr_L0": 0.46059,
+      "hf_l1": 0.06727,
+      "csd": 0.85431
+    },
+    "last": {
+      "lpips": 0.08588,
+      "hf_corr_L0": 0.4781,
+      "hf_l1": 0.06616,
+      "csd": 0.85313
+    },
+    "passed": true
+  },
+  "c1_gate.json": {
+    "first": {
+      "lpips": 0.08623,
+      "resp": 0.30186,
+      "resp_cos": 0.64953
+    },
+    "last": {
+      "lpips": 0.08504,
+      "resp": 0.2955,
+      "resp_cos": 0.67099
+    },
+    "passed": true
+  },
+  "NEGATIVE_REPORT.json": {
+    "status": "CHAIN_INCOMPLETE_C1_OR_LATER",
+    "note": "training chain exited without COMPLETE; C0 weights preserved; P5 evaluates only existing checkpoints",
+    "c0_best_exists": true,
+    "c1_best_exists": true,
+    "timestamp": "2026-11-11T22:57:06+08:00"
+  },
+  "deliverables_note": "best_recon=c0; best_response=c1; best_overall=c1 (both Gates passed)"
+}

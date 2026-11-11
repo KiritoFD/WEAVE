@@ -1,0 +1,174 @@
+{
+  "a0": {
+    "cosine": {
+      "same_style_diff_artist": {
+        "mean": 0.79929,
+        "std": 0.1217,
+        "n": 211926
+      },
+      "hard_neg_diff_style": {
+        "mean": 0.81399,
+        "std": 0.12627,
+        "n": 31840
+      },
+      "easy_neg_diff_style": {
+        "mean": 0.78035,
+        "std": 0.13447,
+        "n": 31840
+      },
+      "same_artist_diff_style": {
+        "mean": NaN,
+        "std": NaN,
+        "n": 0
+      },
+      "gap_pos_minus_hard": -0.0147,
+      "gap_pos_minus_easy": 0.01894
+    },
+    "cosine_centered": {
+      "same_style_diff_artist": {
+        "mean": 0.0484,
+        "std": 0.3807,
+        "n": 211926
+      },
+      "hard_neg_diff_style": {
+        "mean": 0.14026,
+        "std": 0.37998,
+        "n": 31840
+      },
+      "easy_neg_diff_style": {
+        "mean": 0.00947,
+        "std": 0.36887,
+        "n": 31840
+      },
+      "same_artist_diff_style": {
+        "mean": NaN,
+        "std": NaN,
+        "n": 0
+      },
+      "gap_pos_minus_hard": -0.09186,
+      "gap_pos_minus_easy": 0.03893
+    },
+    "auroc_raw": 0.4535059895100864,
+    "auroc_centered": 0.4315800176552572,
+    "health": {
+      "z_rms": 4.65593,
+      "q_per_dim_std_mean": 0.012315,
+      "q_norm_mean": 1.0
+    }
+  },
+  "s10": {
+    "cosine": {
+      "same_style_diff_artist": {
+        "mean": 0.79929,
+        "std": 0.1217,
+        "n": 211926
+      },
+      "hard_neg_diff_style": {
+        "mean": 0.81399,
+        "std": 0.12627,
+        "n": 31840
+      },
+      "easy_neg_diff_style": {
+        "mean": 0.78035,
+        "std": 0.13447,
+        "n": 31840
+      },
+      "same_artist_diff_style": {
+        "mean": NaN,
+        "std": NaN,
+        "n": 0
+      },
+      "gap_pos_minus_hard": -0.0147,
+      "gap_pos_minus_easy": 0.01894
+    },
+    "cosine_centered": {
+      "same_style_diff_artist": {
+        "mean": 0.0484,
+        "std": 0.3807,
+        "n": 211926
+      },
+      "hard_neg_diff_style": {
+        "mean": 0.14026,
+        "std": 0.37998,
+        "n": 31840
+      },
+      "easy_neg_diff_style": {
+        "mean": 0.00947,
+        "std": 0.36887,
+        "n": 31840
+      },
+      "same_artist_diff_style": {
+        "mean": NaN,
+        "std": NaN,
+        "n": 0
+      },
+      "gap_pos_minus_hard": -0.09186,
+      "gap_pos_minus_easy": 0.03893
+    },
+    "auroc_raw": 0.4535059895100864,
+    "auroc_centered": 0.4315800176552572,
+    "health": {
+      "z_rms": 4.65593,
+      "q_per_dim_std_mean": 0.012315,
+      "q_norm_mean": 1.0
+    }
+  },
+  "A": {
+    "cosine": {
+      "same_style_diff_artist": {
+        "mean": 0.81177,
+        "std": 0.11683,
+        "n": 211926
+      },
+      "hard_neg_diff_style": {
+        "mean": 0.82414,
+        "std": 0.12257,
+        "n": 31840
+      },
+      "easy_neg_diff_style": {
+        "mean": 0.79247,
+        "std": 0.13082,
+        "n": 31840
+      },
+      "same_artist_diff_style": {
+        "mean": NaN,
+        "std": NaN,
+        "n": 0
+      },
+      "gap_pos_minus_hard": -0.01237,
+      "gap_pos_minus_easy": 0.0193
+    },
+    "cosine_centered": {
+      "same_style_diff_artist": {
+        "mean": 0.05029,
+        "std": 0.38255,
+        "n": 211926
+      },
+      "hard_neg_diff_style": {
+        "mean": 0.13961,
+        "std": 0.38099,
+        "n": 31840
+      },
+      "easy_neg_diff_style": {
+        "mean": 0.00993,
+        "std": 0.37072,
+        "n": 31840
+      },
+      "same_artist_diff_style": {
+        "mean": NaN,
+        "std": NaN,
+        "n": 0
+      },
+      "gap_pos_minus_hard": -0.08932,
+      "gap_pos_minus_easy": 0.04036
+    },
+    "auroc_raw": 0.45656000675925706,
+    "auroc_centered": 0.4336102499713444,
+    "health": {
+      "z_rms": 4.66528,
+      "q_per_dim_std_mean": 0.011956,
+      "q_norm_mean": 1.0
+    }
+  },
+  "verdict": "r(z) is CONTENT-dominated: content-matched other-style images are closer than same-style/cross-painter ones. A contrastive objective on this fixed readout optimises a signal that does not separate style. Stage A did NOT measurably change the pos-vs-hard gap."
+}

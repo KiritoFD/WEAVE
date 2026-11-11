@@ -1,0 +1,44 @@
+{
+  "status": "S10B_FINALISED",
+  "answer_is_s10b_same_as_old_s10": "YES - byte-identical state_dict and post_quant_conv from s10_p5_lowlr/decoder.pt. B is merely 'old S10 fed by SD0 Encoder'.",
+  "requirements": {
+    "1_pqc_hash_match": true,
+    "2_pqc_plus_body_exported": "/root/Workspace/WEAVE_VAE/runs/sd0_s10/s10_adapt/s10b_standalone/decoder.pt",
+    "3_independent_load_elementwise": {
+      "max_abs_diff": 0.0,
+      "real_latent_max_abs_diff": 0.0
+    },
+    "4_contract_fixed": "config.json (input scaling / model version / hashes)"
+  },
+  "runtime_a0_dependency_removed": true,
+  "config": {
+    "name": "S10B: old S10 (A0-trained) made SD0-Encoder-compatible",
+    "is_same_as_old_s10": true,
+    "what_changed_vs_old_s10": "NOTHING in the model. Only the feeding Encoder changed from A0 to the official sd-vae-ft-ema (SD0). B directly reuses this checkpoint's post_quant_conv + S10 body; no retraining, no closed-form calibration, no adapter.",
+    "encoder": "/root/Workspace/xy/DiT/data/pretrained/sd-vae-ft-ema",
+    "encoder_hash": {
+      "config.json": "92d3dfb746fca211a2c9e019e285f8597412211728dce3c5bcf4eda0f2d62e7e",
+      "diffusion_pytorch_model.safetensors": "32db726da04f06c1b6b14c0043ce115cc87a501482945c5add89a40d838fcb46"
+    },
+    "origin_checkpoint": "/root/Workspace/WEAVE_VAE/runs/vae_decoder_prune/s10_p5_lowlr/decoder.pt",
+    "origin_checkpoint_sha256": "ac0bf25007d28b2234aa6afcfeab3dd35242f5aef69f9ed49194a9a2ba83a58d",
+    "s10_body_state_dict_sha256": "f8edda08f3b51a9f19ab18ac96b30a00359d5f50077b162294feacce1d03ad5f",
+    "pqc_weight_sha256": "684d5fc23767b72cc54c3d00e5aec65f5b666f06d3b69161c9e7625cc1cc221e",
+    "pqc_bias_sha256": "e82ce4c5192022fa80c40265d8635aa501747e2fe106c6a655598d701a7a5987",
+    "widths_forward": [
+      64,
+      128,
+      192,
+      256
+    ],
+    "params": 10657923,
+    "latent_convention": "UNSCALED posterior mean z = E_SD0(x).latent_dist.mean; NO scaling_factor applied before the decoder",
+    "scaling_factor_reference": 0.18215,
+    "post_quant_conv": "included INSIDE this checkpoint, applied EXACTLY ONCE by the standalone wrapper",
+    "input_range": "latent (B,4,64,64) FP32/BF16, unscaled",
+    "output_range": "RGB (B,3,512,512), approx [-1,1]",
+    "runtime_a0_dependency": "NONE (all weights self-contained)",
+    "diffusers_version": "0.39.0 (verification env) / 0.38.0 (4090)",
+    "torch_version": "2.5.1+cu121"
+  }
+}

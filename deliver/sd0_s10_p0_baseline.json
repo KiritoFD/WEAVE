@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "official": {
+      "l1": 0.07152,
+      "psnr": 24.72225,
+      "ssim": 0.7539,
+      "lpips": 0.07836,
+      "csd": 0.96093,
+      "hf_corr_L0": 0.42465,
+      "hf_energy_ratio": 0.98562,
+      "colour": 0.00205
+    },
+    "W": {
+      "l1": 0.07162,
+      "psnr": 24.89446,
+      "ssim": 0.75772,
+      "lpips": 0.0934,
+      "csd": 0.87593,
+      "hf_corr_L0": 0.42538,
+      "hf_energy_ratio": 0.69415,
+      "colour": 0.00517
+    },
+    "W-PQC": {
+      "l1": 0.07165,
+      "psnr": 24.88924,
+      "ssim": 0.75761,
+      "lpips": 0.09348,
+      "csd": 0.87611,
+      "hf_corr_L0": 0.42519,
+      "hf_energy_ratio": 0.69553,
+      "colour": 0.00515
+    },
+    "C": {
+      "l1": 0.50437,
+      "psnr": 10.75764,
+      "ssim": 0.22665,
+      "lpips": 0.82449,
+      "csd": 0.17905,
+      "hf_corr_L0": -0.01623,
+      "hf_energy_ratio": 0.27688,
+      "colour": 0.29366
+    }
+  },
+  "W_PQC_keep": true,
+  "decision": "W-PQC comparable; keep for reference only",
+  "cold_vs_warm_lpips_delta": 0.73109,
+  "cold_note": "Cold is the UNTRAINED Taylor-pruned official SD0 decoder; its large zero-step LPIPS is the expected post-pruning state (A0's identical untrained prune measures 0.848 on these SD0 latents). P1 exists to recover it.",
+  "encoder_hash": {
+    "config.json": "92d3dfb746fca211a2c9e019e285f8597412211728dce3c5bcf4eda0f2d62e7e",
+    "diffusion_pytorch_model.safetensors": "32db726da04f06c1b6b14c0043ce115cc87a501482945c5add89a40d838fcb46"
+  }
+}

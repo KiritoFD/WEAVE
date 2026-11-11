@@ -1,0 +1,12 @@
+{
+  "stage": "A",
+  "updates": 500,
+  "best": {
+    "l1": 0.0638,
+    "lpips": 0.08383,
+    "style_auroc": 0.5629
+  },
+  "wall_min": 107.1,
+  "img_per_sec": 4.98,
+  "final_lam_s": 0.018815927235281395
+}
