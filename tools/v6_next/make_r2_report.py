@@ -233,9 +233,16 @@ def main() -> None:
                  f"唯一持平/略优的是用历史 Oracle 教师的 845K 学生 S3"
                  f"（Top-1 {f(s3['top1']*100,1)}% ，DINO-S {f(s3['dino_s'])}）。")
     L.append("")
-    L.append("- **结论**：学生能拟合教师（非优化/容量问题），但**新教师（LL 投影）目标本身更弱**，"
-             "学得再好也只是复现一个保守编辑。归因落到『教师目标或泛化』，"
-             "对应决策表『两者拟合好、DINO-S 均无提升 → 教师目标/泛化问题』。")
+    L.append("- **更正（2026-11-11）**：上一版把「两者拟合能力接近」误写成「学生能拟合教师 / 排除容量瓶颈」，"
+             "并据此判定『教师失败』，这是错误的。表 D 铁证是：学生与教师位移 cos 0.638–0.683（偏约 45°）、"
+             "RMS 比 0.52–0.65（步长缩水近半）、相对拟合误差 0.53–0.60、R1 margin gap 1.29–1.77 —— "
+             "学生根本没把教师学进去，且 218K 与 845K 同样没学好。")
+    L.append("- 拟合误差集中在 Haar LL 低频子带（LL MSE 0.065–0.145，LH/HL/HH 仅 0.0005–0.026），"
+             "而 Oracle 编辑能量约 48% 在高频且相位敏感：潜空间逐像素 L2 蒸馏逼平滑小网络硬背单图高频伪影，"
+             "只能对样本取平均，退化为「半步长、偏方向」的模糊位移。")
+    L.append("- **结论（已更正）**：Oracle 教师本身成功（Top-1 34.3%、DINO-S 0.4277），失败的是学生拟合。"
+             "正确归因（计划 P3.4 决策表）= 『两者拟合均差 → 监督优化 / 蒸馏损失设计问题』，"
+             "既非容量瓶颈也非教师目标问题。可通过特征空间蒸馏与损失解耦修复，不能据此判定教师失败。")
     L.append("")
 
     # ---------------- E ----------------
@@ -278,25 +285,26 @@ def main() -> None:
     # ---------------- F ----------------
     L.append("## F. 下一阶段应该做什么？（三选一）")
     L.append("")
-    L.append("**结论：教师失败（Teacher failure）→ 转向更明确的目标分布建模，而非继续蒸馏。**")
+    L.append("> **更正（2026-11-11）**：三选一原判『教师失败 → 转向目标分布建模』。"
+             "基于表 D 更正（教师成功、学生拟合失败），正确判定为『教师成功、学生失败 → 研究蒸馏优化/优化策略』。")
+    L.append("")
+    L.append("**结论（已更正）：教师成功、学生失败（Teacher OK, Student fit failure）→ 继续在蒸馏/优化侧发力，而非转向目标分布建模。**")
     L.append("")
     L.append("依据链：")
     L.append("1. G0 通过：统一协议、12 项单测、DINO-S 判别力校准全部成立。")
-    L.append("2. G1：R1 编辑能提高 DINO-S，但幅度（约 +0.03）远小于 CSD Top-1（约 +28pp），"
-             "且伴随内容下降 → 更接近『分类边界捷径 + 部分真实风格收益』的混合，"
-             "独立风格收益不足以支撑『判别梯度=真实条件风格迁移』。")
-    L.append("3. G2：结构约束教师**未扩展**风格–内容 Pareto 前沿——"
-             "切向投影近乎无效（梯度与内容梯度正交），唯一改进来自 LL 频带筛选（保守编辑）。")
-    L.append("4. G3：学生能拟合教师（218K≈845K），排除容量；但教师目标本身更弱。")
-    L.append("5. G4：无 +0.020 的独立显著 DINO-S 收益。")
+    L.append("2. G1：Oracle 教师提供明确可学习上限（Top-1 34.3%、DINO-S 0.4277），是成功目标。")
+    L.append("3. G2：结构约束教师未扩展前沿，但不否定 Oracle 教师本身有效。")
+    L.append("4. G3（更正关键）：学生没拟合教师（cos 0.64、RMS 0.55、误差 55%、margin gap 1.3+），"
+             "218K 与 845K 同样差 → 归因到蒸馏损失与优化，非容量瓶颈、非教师泛化。")
+    L.append("5. G4：无 +0.020 独立显著 DINO-S 收益，但这是学生拟合失败的后果，不是教师方向无用的证据。")
     L.append("")
-    L.append("后续建议：")
-    L.append("- 不再沿『分类器梯度 + 内容投影 + 蒸馏』这条线加参数或换损失；"
-             "本轮已用受控实验证明其上限。")
-    L.append("- 转向显式目标风格分布建模（例如以真实画作特征为条件的生成目标、"
-             "或基于参考图的分布匹配），因为当前 R1 只提供局部判别方向，"
-             "不提供『什么是该风格的真实画作』的分布信息。")
-    L.append("- Early Renaissance / Ukiyo-e 需要专门的表示或数据，不是通用教师能覆盖。")
+    L.append("后续建议（WEAVE W 阶段，冻结 Encoder）：")
+    L.append("- 把潜空间逐像素 L2 蒸馏升级为 R1 多尺度特征蒸馏 + KL 分类边界对齐，像素 L2 仅保留 Haar LL。")
+    L.append("- 解耦：削弱旧 DWT 跨风格统计损失(w_cross)，C1 内容不变性只在 LL/16×16 约束，不惩罚高频笔触。")
+    L.append("- 困难风格：按目标风格自适应步长 + 反吸引子竞争 Margin，救 ER 与 Ukiyo-e。")
+    L.append("- 代理鸿沟：用 S10 Decoder 的 3× 梯度加速做 100–200 步冻结解码器的图像域 CSD+DINO-C 微调。")
+    L.append("- 容量/条件：强特征监督下重测 845K(dim32) + Style Keys(rank32)。")
+    L.append("- Early Renaissance / Ukiyo-e 需按风格专门处理，不是通用一刀切步长能覆盖。")
     L.append("- 保留 `P1_B3_distill20`（218K）作为高保真档最好单步基线，"
              "以及完整负结果与诊断数据，避免重复探索。")
     L.append("")
@@ -327,11 +335,16 @@ def main() -> None:
     print(f"[P5] wrote {OUT}  ({len(L)} lines)")
     # machine-readable verdict summary too
     verdict = {
-        "route": "teacher_failure",
+        "route": "teacher_ok_student_fit_failure",
+        "route_corrected_20261111": "teacher_ok_student_fit_failure",
+        "route_previous_wrong": "teacher_failure",
+        "correction_note": "表D铁证: 学生与教师位移 cos 0.638-0.683, RMS 0.52-0.65, 相对拟合误差 0.53-0.60, R1 margin gap 1.29-1.77 => 学生未拟合教师。Oracle 教师本身成功。正确归因=蒸馏损失/优化问题。",
         "g4_dino_s_gain_020": False,
+        "g4_is_student_fit_consequence": True,
         "best_fidelity_single_step": "P1_B3_distill20",
         "content_tangential_projection": "no-op (gradient orthogonal to content gradient)",
         "unit_tests": "12/12 passed",
+        "next_phase": "WEAVE W: R1 feature distillation + loss decoupling + anti-attractor + S10 image-domain calibration",
     }
     (R2 / "final_verdict.json").write_text(json.dumps(verdict, indent=2), encoding="utf-8")
     print("[P5] wrote runs/v6_r2/final_verdict.json")

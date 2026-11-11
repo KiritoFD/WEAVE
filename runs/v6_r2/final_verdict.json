@@ -1,0 +1,12 @@
+{
+  "route": "teacher_ok_student_fit_failure",
+  "route_corrected_20261111": "teacher_ok_student_fit_failure",
+  "route_previous_wrong": "teacher_failure",
+  "correction_note": "R2 表 D 铁证: 学生与教师位移 cos 0.638-0.683, RMS 比 0.52-0.65, 相对拟合误差 0.53-0.60, R1 margin gap 1.29-1.77 => 学生未拟合教师。Oracle 教师本身成功 (Top-1 34.3%, DINO-S 0.4277)。正确归因=蒸馏损失/优化问题, 非教师失败, 非容量瓶颈。",
+  "g4_dino_s_gain_020": false,
+  "g4_is_student_fit_consequence": true,
+  "best_fidelity_single_step": "P1_B3_distill20",
+  "content_tangential_projection": "no-op (gradient orthogonal to content gradient)",
+  "unit_tests": "12/12 passed",
+  "next_phase": "WEAVE W: R1 feature-space distillation + loss decoupling + anti-attractor + S10 image-domain calibration"
+}

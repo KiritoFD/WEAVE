@@ -891,6 +891,19 @@ def train_and_evaluate(args) -> dict:
         print(f"[{args.name}] distill teacher={args.distill_teacher} "
               f"critic={args.distill_critic} steps={args.distill_steps} "
               f"rms={args.distill_rms} lam={args.distill_lambda} (both FROZEN)", flush=True)
+    # WEAVE W: composite R1-space distillation loss. Reuses the SAME frozen critic
+    # (hooks only cache forward features; they do not touch the teacher's autograd.grad).
+    w_loss = None
+    if args.w_distill and distill_critic is not None:
+        from tools.v6_next.w_distill import WDistillLoss
+        w_loss = WDistillLoss(
+            distill_critic, w_feat=args.w_feat, w_kl=args.w_kl,
+            w_rep=args.w_rep, w_ll=args.w_ll,
+        ).to(device)
+        print(f"[{args.name}] W-DISTILL ON: feat={args.w_feat} kl={args.w_kl} "
+              f"rep={args.w_rep} ll={args.w_ll} class_rms={args.w_class_rms} "
+              f"anti_attr={args.w_anti_attractor} clean_cross={args.w_clean_cross} "
+              f"ll_canon={args.w_ll_canon}", flush=True)
     # Q2 mechanism (a): real target-style embeddings in the critic's own space, computed once from
     # the training latents. This is deliberately the SAME critic used for ranking, but the loss
     # operates on embeddings rather than logits, so it can be ablated independently.
@@ -958,6 +971,10 @@ def train_and_evaluate(args) -> dict:
     lam_s = args.lambda_cross if args.lambda_cross >= 0 else args.w_cross
     lam_c = (args.lambda_canon if args.lambda_canon >= 0
              else args.w_cross * args.w_canon_inv)
+    # W_LossClean: the old DWT cross-style statistic fights the R1 teacher (its ER/Ukiyo
+    # distance is only 0.60) and drags Ukiyo toward Impressionism. Disable it when asked.
+    if getattr(args, "w_clean_cross", False):
+        lam_s = 0.0
     lam_same = 0.0 if args.no_same_style else args.w_style_dist
     print(f"[{args.name}] mode={args.mode} params={n_params/1e6:.2f}M canon={args.canon_mode} "
           f"content_mode={args.content_mode} no_style={args.no_style} "
@@ -1083,10 +1100,12 @@ def train_and_evaluate(args) -> dict:
                     c_cross = canon(z_cross.float(), mode="c1", augment=False)
                     c_ll_real, c_lh_real, c_hl_real, _ = dwt2_haar(c_clean)
                     c_ll_gen, c_lh_gen, c_hl_gen, _ = dwt2_haar(c_cross)
-                    l_canon_inv = (
-                        F.mse_loss(c_ll_gen, c_ll_real)
-                        + 0.35 * (F.mse_loss(c_lh_gen, c_lh_real) + F.mse_loss(c_hl_gen, c_hl_real))
-                    )
+                    l_canon_inv = F.mse_loss(c_ll_gen, c_ll_real)
+                    # W_LossClean: keep content invariance on LL structure ONLY; do not
+                    # punish the large LH/HL high-frequency brushwork edits the teacher asks for.
+                    if not getattr(args, "w_ll_canon", False):
+                        l_canon_inv = l_canon_inv + 0.35 * (
+                            F.mse_loss(c_lh_gen, c_lh_real) + F.mse_loss(c_hl_gen, c_hl_real))
                     loss = loss + lam_s * l_style_cross + lam_c * l_canon_inv
 
                     # P2 G1: margin ranking on the cross-style output. The critic is frozen; the
@@ -1122,6 +1141,12 @@ def train_and_evaluate(args) -> dict:
                         with torch.no_grad():
                             z_T = distill_teacher(c_in, 0.0, c_in, y_cross)
                         per = args.distill_rms / max(1, args.distill_steps)
+                        # W experiment 3: class-conditional teacher step budget. `per` becomes
+                        # a (B,1,1,1) tensor broadcast over the latent; Min/Imp throttled, hard
+                        # styles boosted. A plain scalar is kept for all non-W arms.
+                        if getattr(args, "w_class_rms", False):
+                            from tools.v6_next.w_distill import class_rms_tensor
+                            per = class_rms_tensor(y_cross, device) / max(1, args.distill_steps)
                         if getattr(args, "distill_mode", "oracle") in ("projected", "projected_ll"):
                             from tools.v6_next.r2_teacher import (
                                 compute_content_losses, project_tangential,
@@ -1150,16 +1175,24 @@ def train_and_evaluate(args) -> dict:
                                 with torch.enable_grad():
                                     _zr = z_T.detach().clone().requires_grad_(True)
                                     _q = distill_critic(_zr.float()).float()
-                                    _oh = F.one_hot(y_cross, len(STYLES)).bool()
-                                    _m = (_q.gather(1, y_cross[:, None]).squeeze(1)
-                                          - torch.logsumexp(
-                                              _q.masked_fill(_oh, torch.finfo(_q.dtype).min),
-                                              dim=1))
+                                    if getattr(args, "w_anti_attractor", False):
+                                        # W experiment 3: repulsion from the Imp/Min attractors.
+                                        from tools.v6_next.w_distill import anti_attractor_margin_per_sample
+                                        _m = anti_attractor_margin_per_sample(_q, y_cross)
+                                    else:
+                                        _oh = F.one_hot(y_cross, len(STYLES)).bool()
+                                        _m = (_q.gather(1, y_cross[:, None]).squeeze(1)
+                                              - torch.logsumexp(
+                                                  _q.masked_fill(_oh, torch.finfo(_q.dtype).min),
+                                                  dim=1))
                                     _g = torch.autograd.grad(_m.sum(), _zr)[0]
                                 _D = _g[0].numel()
                                 _gn = _g.flatten(1).norm(dim=1).view(-1, 1, 1, 1)
                                 z_T = (z_T + per * (_g / (_gn / _D ** 0.5 + 1e-12))).detach()
-                        l_distill = F.mse_loss(z_cross.float(), z_T.float())
+                        if w_loss is not None:
+                            l_distill, _w_parts = w_loss(z_cross, z_T, y_cross)
+                        else:
+                            l_distill = F.mse_loss(z_cross.float(), z_T.float())
                         if step == 1:
                             # pure logging, no autograd probes on the training graph
                             print(f"[{args.name}] DISTILL step1: L_distill={float(l_distill):.6f} "
@@ -1343,6 +1376,21 @@ def main() -> None:
     ap.add_argument("--distill-lambda", type=float, default=0.0)
     ap.add_argument("--distill-mode", choices=["oracle", "projected", "projected_ll"], default="oracle",
                     help="teacher mode: 'oracle' (unconstrained R1), 'projected' (content tangential), 'projected_ll' (LL-only projected)")
+    # ---- WEAVE W-stage (frozen Encoder): replace pixel-MSE distillation with R1-space losses ----
+    ap.add_argument("--w-distill", action="store_true",
+                    help="use WDistillLoss (R1 feature + KL + anti-attractor + LL-only L2) instead of pixel MSE")
+    ap.add_argument("--w-feat", type=float, default=1.0)
+    ap.add_argument("--w-kl", type=float, default=1.0)
+    ap.add_argument("--w-rep", type=float, default=0.5)
+    ap.add_argument("--w-ll", type=float, default=1.0)
+    ap.add_argument("--w-class-rms", action="store_true",
+                    help="per-class teacher RMS (throttle Min/Imp, boost ER/Rococo/Ukiyo)")
+    ap.add_argument("--w-anti-attractor", action="store_true",
+                    help="teacher margin uses Imp/Min repulsion for hard targets")
+    ap.add_argument("--w-clean-cross", action="store_true",
+                    help="W_LossClean: disable old DWT cross-style conflict term (lam_s=0)")
+    ap.add_argument("--w-ll-canon", action="store_true",
+                    help="W_LossClean: content invariance on Haar LL only (do not punish HF brushwork)")
     ap.add_argument("--amp-dtype", choices=["bf16", "fp16", "none"], default="bf16",
                     help="training autocast dtype. fp16 makes small ranking weights vanish: "
                          "measured, lambda_r<=0.01 then leaves weights bit-identical to no-rank")
