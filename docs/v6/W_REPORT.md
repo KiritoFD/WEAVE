@@ -179,6 +179,17 @@ All-pairs overview：CLIP style 0.7216，CLIP style Δ 0.0817，content LPIPS 0.
 - 该评估器输出的是 CLIP/LPIPS 指标，不能与 B3/B4/W 系列的 CSD/DINO 指标直接排名。
 - 从自身指标看，P3 试点已有可辨识的风格迁移能力；下一步可做更长训练，并/或将 P3 模型接入统一 CSD/DINO 评测接口进行同口径比较。
 
+### 2000 步长训练结果
+
+| 模型 | Style-transfer CLIP style | Style-transfer LPIPS | Identity CLIP style | Identity LPIPS |
+|---|---:|---:|---:|---:|
+| P3 pilot（300 步） | 0.6936 | 0.3448 | 0.8337 | 0.2829 |
+| P3 long（2000 步） | 0.7062 | 0.4048 | 0.8387 | 0.3044 |
+
+- 长训练提升了风格相似度（style-transfer CLIP style 0.6936 → 0.7062，identity CLIP style 0.8337 → 0.8387）。
+- 但内容/重建 LPIPS 同步变差（style-transfer LPIPS 0.3448 → 0.4048，identity LPIPS 0.2829 → 0.3044）。
+- 结论：真实画作 Flow Matching 路线可行，但当前 2000 步模型在风格增强与内容保持之间仍偏向风格；后续若继续该路线，应增加内容保持约束或减少步数/增强正则，而不是简单继续加训练步数。
+
 ## P4.3 成功门槛判定（相对 B3 anchor）
 
 - 主门槛 DINO-S ≥ +0.020 且 CI 下界 > 0：**无模型通过**。
