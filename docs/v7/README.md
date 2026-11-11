@@ -27,29 +27,17 @@ V6/W/P0–P3 的结论已经明确：
 
 ## 文档清单
 
-本次按 `E:\writing-block.md` 新增/细化的核心文档：
+本目录只保留本次按 `E:\writing-block.md` 新增/细化的 V7 方案文档：
 
 | 文档 | 作用 |
 |---|---|
+| `README.md` | 导航、定位、预算、与历史资产接口 |
 | `V7_IMPLEMENTATION_PLAN.md` | P0–P5 细化实施步骤、输入/产物、脚本、预算、判定 |
 | `V7_EVAL_PROTOCOL.md` | 评估协议、指标定义、P4.3 门槛、统计与报告要求 |
 | `V7_BOUNDARIES.md` | 冻结项 / 可变项 / 禁止项 / 失败处理 / 研发集限制 |
 | `V7_EXPERIMENT_MATRIX.md` | 实验矩阵、命名规范、Go/No-Go、梯度范数审计、开销记录 |
 
-### 历史存档（不属于本轮 writing-block 方案）
-
-以下文件在本轮之前已存在于 `docs/v7/`，属于早期 V7/ScoreNet/RDMD/DMD 路线记录，**不是本次 16h 方案的执行依据**，也不得与本轮 P0–P5 编号混淆：
-
-- `P0_TWEEDIE_SCAN_REPORT.md`
-- `P1_PURE_MSE_SCORENET_REPORT.md`
-- `V7_DMD_FIX_EVALUATION_REPORT.md`
-- `V7_DMD_FIX_ROUTE_REPORT.md`
-- `V7_HYBRID_EVALUATION_REPORT.md`
-- `V7_RDMD_EVALUATION_REPORT.md`
-- `V7_ROUTE_REPORT.md`
-- `V7_STABLE_EVALUATION_REPORT.md`
-
-本轮只以 `V7_IMPLEMENTATION_PLAN.md`、`V7_EVAL_PROTOCOL.md`、`V7_BOUNDARIES.md`、`V7_EXPERIMENT_MATRIX.md` 四份文档为准。
+V7 只以这五份文档为准；早期 V7/ScoreNet/RDMD/DMD 路线报告已按要求清理，不保留在 `docs/v7/`。
 
 ## 阶段预算
 
