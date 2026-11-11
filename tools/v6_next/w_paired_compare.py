@@ -47,6 +47,7 @@ W_ARMS = [
     ("P2 TopK10", W / "eval_gated_topk10/eval.json"),
     ("P2 TopK50", W / "eval_gated_topk50/eval.json"),
     ("P2 TopK25 S8", W / "eval_gated_topk25_s8/eval.json"),
+    ("P3 RealPair FM", W / "eval_p3_real_pair_2000/eval.json"),
 ]
 
 
