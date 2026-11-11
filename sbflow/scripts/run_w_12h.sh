@@ -137,11 +137,15 @@ run_phase W23 "$W/w_paired_verdict.json" "$W/w_best_arm.json" -- \
 # ---------------- W4: S10 image-domain calibration ----------------
 run_phase W4 "$W/W5_ImgCalib/W5_ImgCalib.pt" -- bash -u sbflow/scripts/run_w_imgcal.sh
 
-# ---------------- W5: eval the calibrated model ----------------
-run_phase W5 "$W/eval_W5_ImgCalib/eval.json" -- \
-  python3 -u -m tools.v6_next.r2_eval \
-    --gen direct --ckpt "$W/W5_ImgCalib/W5_ImgCalib.pt" \
-    --out-dir "$W/eval_W5_ImgCalib"
+# ---------------- W5: eval the calibrated model (requires W4 to have succeeded)
+if [ ! -s "$W/W5_ImgCalib/W5_ImgCalib.pt" ]; then
+  log "===== PHASE W5 : SKIP (W4 did not produce a checkpoint) ====="
+else
+  run_phase W5 "$W/eval_W5_ImgCalib/eval.json" -- \
+    python3 -u -m tools.v6_next.r2_eval \
+      --gen direct --ckpt "$W/W5_ImgCalib/W5_ImgCalib.pt" \
+      --out-dir "$W/eval_W5_ImgCalib"
+fi
 
 # ---------------- W6: final report (always) ----------------
 log "===== PHASE W6 : report ====="

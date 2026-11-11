@@ -116,10 +116,10 @@ def t5():
     hard = torch.tensor([0, 3, 4, 0, 3, 4])  # ER/Rococo/Ukiyo
     easy = torch.tensor([1, 2, 1, 2, 1, 2])  # Imp/Min
     # a hard target should feel a stronger competition term than an easy one
-    l_hard = float(anti_attractor_loss(q[:3], hard[:3], hard_boost=4.0))
-    l_easy = float(anti_attractor_loss(q[:3], easy[:3], hard_boost=4.0))
+    l_hard = float(anti_attractor_loss(q[:3], hard[:3], hard_boost=4.0).detach())
+    l_easy = float(anti_attractor_loss(q[:3], easy[:3], hard_boost=4.0).detach())
     # sanity: configurable, finite, and changing hard_boost changes the hard loss
-    l_hard_b1 = float(anti_attractor_loss(q[:3], hard[:3], hard_boost=1.0))
+    l_hard_b1 = float(anti_attractor_loss(q[:3], hard[:3], hard_boost=1.0).detach())
     ok = torch.isfinite(torch.tensor([l_hard, l_easy])).all() and abs(l_hard - l_hard_b1) > 1e-6
     rec(5, "anti-attractor hard-target boost active", ok,
         f"Δ(hard,boost4-vs1)={l_hard - l_hard_b1:+.4f}")

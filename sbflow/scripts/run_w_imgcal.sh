@@ -20,10 +20,12 @@ OUT="runs/v6_w/W5_ImgCalib/W5_ImgCalib.pt"
 if [ -s "$OUT" ]; then
   qlog "===== W5 S10 ImgCalib ALREADY DONE ====="
 else
+  # microbatch=6 OOMs on the 12GB 3060 (S10 decoder + CSD ViT-L + DINO + grads).
+  # The 2-step smoke used microbatch=2 at 6874MiB peak, so keep <=2 here.
   run_step "W5_imgcalib" "$OUT" \
     python3 -u -m tools.v6_next.w_img_calib \
       --init-ckpt "$BEST" --name W5_ImgCalib --out-base runs/v6_w \
-      --steps 150 --microbatch 6 --lr 5e-5 --lam-csd 1.0 --lam-dino-c 1.0 --seed 42
+      --steps 150 --microbatch 2 --lr 5e-5 --lam-csd 1.0 --lam-dino-c 1.0 --seed 42
 fi
 
 qlog "==================== W S10 IMG-CALIB DONE failures=$QFAIL ===================="

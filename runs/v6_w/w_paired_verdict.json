@@ -1,0 +1,13 @@
+{
+  "gates_vs_B3": {
+    "Q2a Direct (R2)": "NO",
+    "Q2a + R1 Oracle (R2)": "PARTIAL",
+    "B4 \u03bb=50 (R2)": "PARTIAL",
+    "ScoreDiff N24 (R2)": "NO",
+    "W1 FeatDistill 218K": "NO",
+    "W2 LossClean 218K": "NO",
+    "W3 LossClean 218K \u03bb50": "NO",
+    "W5 S10 ImgCalib": "NO"
+  },
+  "p43_primary_gate_any_pass": false
+}
