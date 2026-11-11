@@ -803,7 +803,12 @@ def train_and_evaluate(args) -> dict:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     asset_root = paths.asset_root()
-    orig_dir = asset_root / "pseudo_gt_24h" / "orig_mean_fp16"
+    # --latent-dir switches the frozen training latent pool (e.g. A0 re-encoding).
+    # Default keeps the historical sd-vae-ft-ema pool bit-identical for all R2/W arms.
+    latent_dir = Path(args.latent_dir) if args.latent_dir else (
+        asset_root / "pseudo_gt_24h" / "orig_mean_fp16")
+    print(f"[{args.name}] latent_dir={latent_dir}", flush=True)
+    orig_dir = latent_dir
 
     latents_by_style = {}
     train_by_style = {}
@@ -923,7 +928,7 @@ def train_and_evaluate(args) -> dict:
             _crit = LatentStyleNet(width=_ckC.get("width", 64)).to(device).eval()
             _crit.load_state_dict(_ckC["model"])
             style_emb = {}
-            _dir = paths.asset_root() / "pseudo_gt_24h" / "orig_mean_fp16"
+            _dir = latent_dir
             with torch.no_grad():
                 for _sid, _s in enumerate(STYLES):
                     _d = torch.load(_dir / f"{_sid:02d}_{_s}.pt", map_location="cpu",
@@ -1289,6 +1294,7 @@ def train_and_evaluate(args) -> dict:
     report = {
         "name": args.name,
         "mode": args.mode,
+        "latent_dir": str(latent_dir),
         "canon_mode": args.canon_mode,
         "n_params": int(n_params),
         "steps": args.steps,
@@ -1350,6 +1356,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", required=True)
     ap.add_argument("--out-base", type=str, default="")
+    ap.add_argument("--latent-dir", type=str, default="",
+                    help="override frozen training latent pool (e.g. pseudo_gt_24h/orig_mean_fp16_a0)")
     ap.add_argument("--mode", choices=["direct", "flow"], required=True)
     ap.add_argument("--canon-mode", choices=["c1", "c1_gentle", "c1_soft", "c2", "none"],
                     default="c1")

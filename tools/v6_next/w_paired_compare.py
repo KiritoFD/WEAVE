@@ -34,6 +34,8 @@ W_ARMS = [
     ("W3 LossClean 218K λ50", W / "eval_W3_LossClean_218_l50/eval.json"),
     ("W4 LossClean 845K+SK", W / "eval_W4_LossClean_845_SK/eval.json"),
     ("W5 S10 ImgCalib", W / "eval_W5_ImgCalib/eval.json"),
+    ("V1 A0-pool LossClean", W / "eval_V1_A0_LossClean/eval.json"),
+    ("V2 A0-pool PixelMSE", W / "eval_V2_A0_PixelMSE/eval.json"),
 ]
 
 

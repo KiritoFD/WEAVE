@@ -79,6 +79,8 @@ def main():
         ("W3 LossClean λ50", "W3_LossClean_218_l50", W),
         ("W4 845K+SK", "W4_LossClean_845_SK", W),
         ("W5 S10 ImgCalib", "W5_ImgCalib", W),
+        ("V1 A0-pool LossClean", "V1_A0_LossClean", W),
+        ("V2 A0-pool PixelMSE", "V2_A0_PixelMSE", W),
     ]
     L.append("## 统一协议结果（Cross600）")
     L.append("")
@@ -93,6 +95,20 @@ def main():
         L.append(f"| {label} | {f(s['top1']*100,1)}% | {f(s['margin'])} | {f(s['dT'])} | "
                  f"{f(s['dino_s'])} | {f(s['dino_s_gain'])} | {f(s['dino_c'])} | "
                  f"{f(s['lpips'])} | {f(s['minimalism_offtarget']*100,1)}% |")
+    L.append("")
+
+    # VAE-swap section (independent of whether the paired verdict exists)
+    L.append("## 换 VAE 重编码训练对照（用户追加）")
+    L.append("")
+    L.append("- 用户指出：A0 与 sd-vae 的 latent 差异不应靠『差异小』论证绕过，应直接"
+             "**用 A0 Encoder 重新编码 15,545 张训练池**（`reencode_a0.py`，产出 "
+             "`orig_mean_fp16_a0/`，schema 与原池完全一致，仅 `latents`/`vae` 字段不同），"
+             "再在同一配方下训练对照臂，看换 VAE 是否带来真实差异。")
+    L.append("- 训练侧新增 `--latent-dir` 开关（默认仍为原 sd-vae 池，R2/W 所有既有臂完全不受影响）。")
+    L.append("- 对照臂：`V1_A0_LossClean`（与 W2 完全同配方，只换 latent 池）、"
+             "`V2_A0_PixelMSE`（A0 池 + 原始像素 MSE 蒸馏，隔离 VAE 本身的影响）。")
+    L.append("- 串行入口 `run_w_vaeswap_12h.sh`：A0 重编码 → 两臂训练 → 750 评测 → 配对比较，"
+             "独立脚本以避开正在运行的 W 主流水线（单卡排他）。")
     L.append("")
 
     # paired verdict
