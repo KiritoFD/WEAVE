@@ -155,6 +155,12 @@ def load_generator(args, device: str):
             "fn": apply_gated_edit,
         }
 
+    elif args.gen == "saved_images":
+        return {
+            "kind": "saved_images",
+            "saved_image_dir": Path(args.saved_image_dir),
+        }
+
     elif args.gen == "identity":
         return {"kind": "identity"}
 
@@ -204,8 +210,8 @@ def load_generator(args, device: str):
     raise ValueError(f"Unknown generator mode: {args.gen}")
 
 
-def run_generator(gen_pack, z_batch, sid_batch, tid_batch):
-    """Execute generator to produce target latents."""
+def run_generator(gen_pack, z_batch, sid_batch, tid_batch, task_batch=None):
+    """Execute generator to produce target latents or ready-made images."""
     kind = gen_pack["kind"]
     if kind == "identity":
         return z_batch
@@ -289,6 +295,20 @@ def run_generator(gen_pack, z_batch, sid_batch, tid_batch):
             topk_frac=gen_pack["gating_topk_frac"],
             style_energy_maps=gen_pack["style_energy_maps"],
         )
+
+    if kind == "saved_images":
+        if task_batch is None:
+            raise ValueError("saved_images generator requires task metadata")
+        imgs = []
+        for t in task_batch:
+            path = Path(gen_pack["saved_image_dir"]) / (
+                f"{t['source_style']}_{t['source_stem']}_to_{t['target_style']}.png"
+            )
+            im = Image.open(path).convert("RGB")
+            if im.size != (512, 512):
+                im = im.resize((512, 512), Image.BILINEAR)
+            imgs.append(torch.from_numpy(np.asarray(im, dtype=np.float32) / 255.0).permute(2, 0, 1))
+        return torch.stack(imgs, dim=0).to(z_batch.device)
 
     raise ValueError(f"Unknown generator kind: {kind}")
 
@@ -436,8 +456,11 @@ def evaluate_tasks(
                 [t["target_style_id"] for t in grp], device=device
             )
 
-            z_gen = run_generator(gen_pack, z, sg, tg)
-            img_gen = decode_trt(trt, vae, z_gen, batch=min(8, len(grp)))
+            z_gen = run_generator(gen_pack, z, sg, tg, grp)
+            if gen_pack.get("kind") == "saved_images":
+                img_gen = z_gen.clamp(0.0, 1.0)
+            else:
+                img_gen = decode_trt(trt, vae, z_gen, batch=min(8, len(grp)))
             u8_gen = (
                 img_gen.mul(255.0).round().clamp(0, 255).to(torch.uint8).cpu()
             )
@@ -732,7 +755,7 @@ def main():
     ap.add_argument("--out-dir", required=True)
     ap.add_argument(
         "--gen",
-        choices=["direct", "oracle", "scorediff", "identity", "guided", "gated"],
+        choices=["direct", "oracle", "scorediff", "identity", "guided", "gated", "saved_images"],
         default="direct",
     )
     ap.add_argument("--ckpt", default="")
@@ -766,6 +789,7 @@ def main():
     ap.add_argument("--gating-steps", type=int, default=4)
     ap.add_argument("--gating-rms", type=float, default=0.08)
     ap.add_argument("--gating-topk-frac", type=float, default=0.25)
+    ap.add_argument("--saved-image-dir", default="", help="Directory of pre-generated task images for --gen saved_images")
     ap.add_argument(
         "--sd-ckpt", default="runs/v6/score_diff/score_diff_net.pt"
     )
