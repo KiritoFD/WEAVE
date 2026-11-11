@@ -149,6 +149,36 @@ Score prior 训练：3.27M 参数，1000 步，训练/验证 latent 数 14,545/1
 
 **P2 最终结论**：`TopK50` 与 `TopK25 S8` 首次使 DINO-S 的配对提升达到 +0.020 且 CI 下界大于 0；但两者仍伴随明显的 DINO-C/LPIPS 退化，未通过完整 P4.3 联合门槛。因此 P2 的结论是：空间门控方向有效、已超过 Oracle 教师，但尚未满足预设的联合成功标准。
 
+## P3：真实画作驱动的条件流匹配（试点已完成）
+
+> 目标：避免旧 V8 桥流的失败模式——不使用无配对 latent L2，也不使用伪 GT 合成端点；改为用 **真实画作内容匹配对** 训练条件 Flow Matching。
+
+### 数据与训练
+
+- 使用 DINO 检索表，从 15,545 张真实画作中构建 **20 个 directed style route × 100 对 = 2,000 对**真实内容匹配样本。
+- `z0` 与 `z1` 都是真实画作 latent：`z0` 为源风格原图，`z1` 为目标风格中内容最接近的真实画作。
+- 配对缓存：`pseudo_gt_24h/pairs/real_content_match`，20 个 shard，校验通过。
+- 模型：现有 sbflow 条件 Flow Matching 框架，982,618 参数。
+- 训练：batch 96，300 步试点；loss 从约 2.264 降至 2.182，训练稳定，峰值显存约 2.2GB。
+- checkpoint：`runs/p3/real_pair_pilot/epoch_0015.pt`。
+
+### 750 图评估（root eval 协议：CLIP/LPIPS）
+
+| 指标 | Style transfer | Identity reconstruction |
+|---|---:|---:|
+| CLIP style | 0.6936 | 0.8337 |
+| CLIP style Δ vs old IDT | 0.0537 | 0.1938 |
+| CLIP text-style | 0.2173 | 0.2684 |
+| Content LPIPS | 0.3448 | 0.2829 |
+
+All-pairs overview：CLIP style 0.7216，CLIP style Δ 0.0817，content LPIPS 0.3324。
+
+### 结论
+
+- P3 试点证明了真实画作内容匹配对可以稳定训练条件 Flow Matching，且不会出现旧 V8 桥流的崩坏。
+- 该评估器输出的是 CLIP/LPIPS 指标，不能与 B3/B4/W 系列的 CSD/DINO 指标直接排名。
+- 从自身指标看，P3 试点已有可辨识的风格迁移能力；下一步可做更长训练，并/或将 P3 模型接入统一 CSD/DINO 评测接口进行同口径比较。
+
 ## P4.3 成功门槛判定（相对 B3 anchor）
 
 - 主门槛 DINO-S ≥ +0.020 且 CI 下界 > 0：**无模型通过**。

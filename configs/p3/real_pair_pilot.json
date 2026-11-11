@@ -1,0 +1,44 @@
+{
+  "_comment": "WEAVE P3 pilot: conditional flow matching on REAL content-matched painting pairs. z0 and z1 are both real A0-encoded paintings; no pseudo-GT compositing and no unpaired latent L2. 300-step pilot to verify stability before a longer run.",
+  "_base": "../../config.json",
+  "model": {
+    "target_latent_hf_subband_fusion_enabled": true,
+    "target_latent_hf_head_fusion_gate_init": 0.05
+  },
+  "bridge": {
+    "paired_latent_passthrough": true
+  },
+  "data": {
+    "train_sample_limit": 0,
+    "paired_latent_cache_dir": "pseudo_gt_24h/pairs/real_content_match",
+    "content_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0],
+    "target_style_sampling_weights": [1.0, 1.0, 1.0, 1.0, 1.0]
+  },
+  "training": {
+    "batch_size": 96,
+    "accumulation_steps": 1,
+    "num_epochs": 20,
+    "save_interval": 1,
+    "stop_after_global_steps": 300,
+    "full_eval_each_epoch": false,
+    "full_eval_clip_hf_cache_dir": "/mnt/i/Latent_Style/eval_cache/hf",
+    "internal_probe_enabled": true,
+    "internal_probe_every": 1,
+    "internal_probe_batch_size": 4,
+    "internal_probe_fixed_t": 0.5,
+    "internal_early_stop_enabled": false,
+    "internal_early_stop_record_only": true,
+    "internal_early_stop_min_epoch": 3,
+    "internal_early_stop_gate_delta_threshold": 0.0,
+    "internal_early_stop_shared_ratio_drop_threshold": 0.65
+  },
+  "checkpoint": {
+    "save_dir": "runs/p3/real_pair_pilot"
+  },
+  "ablation": {
+    "name": "P3_real_pair_pilot",
+    "axis": "real_pair_fm",
+    "stage": "p3_pilot",
+    "notes": "2000 real content-matched cross-style painting pairs; both z0 and z1 are real latents; flow matching with paired passthrough; 300-step stability pilot."
+  }
+}
