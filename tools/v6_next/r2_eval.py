@@ -111,6 +111,50 @@ def load_generator(args, device: str):
             "fn": edit_with_score_difference,
         }
 
+    elif args.gen == "gated":
+        from tools.v6_next.w_gating import apply_gated_edit, compute_style_energy_maps
+        from tools.v6_next.w_vae import build_a0_encoder
+
+        ck = torch.load(ROOT / args.ckpt, map_location="cpu", weights_only=False)
+        a = ck.get("args", {})
+        start_model = C3UNet(
+            base_dim=a.get("base_dim", 16), num_styles=5, mode="direct"
+        ).to(device).eval()
+        start_model.load_state_dict(ck["model"])
+        canon = ContentCanonicalizer(
+            torch.load(CANON_STATS, map_location="cpu", weights_only=False)
+        ).to(device).eval()
+        critic = LatentStyleNet(width=64).to(device).eval()
+        critic.load_state_dict(torch.load(
+            ROOT / args.gated_critic, map_location="cpu", weights_only=False)["model"])
+        for p in critic.parameters():
+            p.requires_grad_(False)
+        vae_a0 = build_a0_encoder(device)
+        style_energy_maps = None
+        if args.gating_mode == "style_energy":
+            refs = json.loads((ROOT / "eval_protocol/references_v1.json").read_text(encoding="utf-8"))
+            style_paths = {
+                s: [
+                    x.get("file") or x.get("rel_path") or x.get("filename")
+                    for x in refs["references"].get(s, [])
+                ]
+                for s in STYLES
+            }
+            style_energy_maps = compute_style_energy_maps(vae_a0, style_paths, device)
+        return {
+            "kind": "gated",
+            "start_model": start_model,
+            "canon": canon,
+            "canon_mode": args.canon_mode or a.get("canon_mode", "c1_gentle"),
+            "critic": critic,
+            "gating_mode": args.gating_mode,
+            "gating_steps": args.gating_steps,
+            "gating_rms": args.gating_rms,
+            "gating_topk_frac": args.gating_topk_frac,
+            "style_energy_maps": style_energy_maps,
+            "fn": apply_gated_edit,
+        }
+
     elif args.gen == "identity":
         return {"kind": "identity"}
 
@@ -227,6 +271,23 @@ def run_generator(gen_pack, z_batch, sid_batch, tid_batch):
             sigma=gen_pack["guided_sigma"],
             r1_weight=gen_pack["r1_weight"],
             score_weight=gen_pack["score_weight"],
+        )
+
+    if kind == "gated":
+        c = gen_pack["canon"](z_batch, mode=gen_pack["canon_mode"], augment=False)
+        z0 = gen_pack["start_model"](c, 0.0, c, tid_batch)
+        return gen_pack["fn"](
+            z0,
+            z_batch,
+            tid_batch,
+            critic=gen_pack["critic"],
+            canon=gen_pack["canon"],
+            canon_mode=gen_pack["canon_mode"],
+            mode=gen_pack["gating_mode"],
+            steps=gen_pack["gating_steps"],
+            per_step_rms=gen_pack["gating_rms"],
+            topk_frac=gen_pack["gating_topk_frac"],
+            style_energy_maps=gen_pack["style_energy_maps"],
         )
 
     raise ValueError(f"Unknown generator kind: {kind}")
@@ -671,7 +732,7 @@ def main():
     ap.add_argument("--out-dir", required=True)
     ap.add_argument(
         "--gen",
-        choices=["direct", "oracle", "scorediff", "identity", "guided"],
+        choices=["direct", "oracle", "scorediff", "identity", "guided", "gated"],
         default="direct",
     )
     ap.add_argument("--ckpt", default="")
@@ -693,6 +754,18 @@ def main():
     ap.add_argument("--guided-r1-weight", type=float, default=1.0)
     ap.add_argument("--guided-score-weight", type=float, default=1.0)
     ap.add_argument("--guided-base-dim", type=int, default=64)
+    # W P2: spatially adaptive gated R1 editing
+    ap.add_argument(
+        "--gated-critic", default="runs/v6_next/probes/r1_r1.pt"
+    )
+    ap.add_argument(
+        "--gating-mode",
+        choices=["full", "hf", "topk", "content", "style_energy"],
+        default="full",
+    )
+    ap.add_argument("--gating-steps", type=int, default=4)
+    ap.add_argument("--gating-rms", type=float, default=0.08)
+    ap.add_argument("--gating-topk-frac", type=float, default=0.25)
     ap.add_argument(
         "--sd-ckpt", default="runs/v6/score_diff/score_diff_net.pt"
     )

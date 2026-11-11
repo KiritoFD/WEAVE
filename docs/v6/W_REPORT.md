@@ -36,8 +36,8 @@ R2 表 D 铁证：学生与 Oracle 教师位移 cos 0.638–0.683、RMS 比 0.52
 | W3 LossClean λ50 | 13.5% | -0.1620 | 0.0829 | 0.4205 | 0.0572 | 0.8149 | 0.4445 | 27.3% |
 | W4 845K+SK | — | — | — | — | — | — | — | — |
 | W5 S10 ImgCalib | 9.2% | -0.2088 | 0.1089 | 0.4154 | 0.0521 | 0.8804 | 0.3957 | 24.4% |
-| V1 A0-pool LossClean | — | — | — | — | — | — | — | — |
-| V2 A0-pool PixelMSE | — | — | — | — | — | — | — | — |
+| V1 A0-pool LossClean | 10.3% | -0.1839 | 0.0782 | 0.4145 | 0.0512 | 0.8332 | 0.4277 | 27.3% |
+| V2 A0-pool PixelMSE | 18.2% | -0.1461 | 0.1026 | 0.4184 | 0.0552 | 0.8325 | 0.4413 | 26.7% |
 
 ## 换 VAE 重编码训练对照（用户追加）
 
@@ -45,22 +45,7 @@ R2 表 D 铁证：学生与 Oracle 教师位移 cos 0.638–0.683、RMS 比 0.52
 - 训练侧新增 `--latent-dir` 开关（默认仍为原 sd-vae 池，R2/W 所有既有臂完全不受影响）。
 - 对照臂：`V1_A0_LossClean`（与 W2 完全同配方，只换 latent 池）、`V2_A0_PixelMSE`（A0 池 + 原始像素 MSE 蒸馏，隔离 VAE 本身的影响）。
 - 串行入口 `run_w_vaeswap_12h.sh`：A0 重编码 → 两臂训练 → 750 评测 → 配对比较，独立脚本以避开正在运行的 W 主流水线（单卡排他）。
-
-## P1：真实 latent 密度先验 + 引导编辑（已完成）
-
-> 动机：R2 表 D 表明学生没有拟合 Oracle 教师，因此进一步测试“真实数据 score 先验 + R1 引导”能否改善单步模型的风格—内容权衡。
-
-Score prior 训练：3.27M 参数，1000 步，训练/验证 latent 数 14,545/1,000，最终 loss 0.5655，显存 7.27GB。
-
-| 方法 | Top-1 | Margin | CSD ΔT | DINO-S | DINO-C | LPIPS | Min 误判 |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| B3 λ20（anchor） | 17.8% | -0.1462 | 0.1025 | 0.4183 | 0.8325 | 0.4412 | 26.9% |
-| R1 only（4 步） | 31.7% | -0.0632 | 0.0722 | 0.4361 | 0.7516 | 0.5172 | 24.2% |
-| Score only（4 步） | 31.8% | -0.1398 | -0.0097 | 0.2845 | 0.5086 | 0.6245 | 58.8% |
-| R1 + Score（4 步） | 34.3% | -0.0932 | 0.0143 | 0.3559 | 0.5936 | 0.5750 | 47.9% |
-
-- **无配置通过 P4.3 联合门槛**。Score only 虽提高 Top-1，但严重破坏内容与同风格一致性；R1+Score 达到 Oracle 级 Top-1，但内容/画风相似度明显下降。
-- 结论：真实数据 score 先验没有解决 R1 的内容损伤问题；该路线不再作为主线推进。
+- **结果**：V1 Top-1 10.3%、V2 18.2%，均未超过 B3/B4；换 A0 latent 池本身没有解决风格迁移问题。
 
 ## P0：内容条件源风格泄漏与 Style-ID 因果审计（已完成）
 
@@ -91,7 +76,7 @@ Score prior 训练：3.27M 参数，1000 步，训练/验证 latent 数 14,545/1
 
 ## P1：真实 latent 密度先验 + 引导编辑（已完成）
 
-> 动机：R2 表 D 表明学生没有拟合 Oracle 教师，因此进一步测试“真实数据 score 先验 + R1 引导”能否改善单步模型的风格—内容权衡。
+> 动机：R2 表 D 表明学生没有拟合 Oracle 教师，因此进一步测试“真实数据 score 先验 + R1 引导”能否改善单步模型的风格—内容权衡。详细报告见 [W_P1_REPORT.md](docs/v6/W_P1_REPORT.md)。
 
 Score prior 训练：3.27M 参数，1000 步，训练/验证 latent 数 14,545/1,000，最终 loss 0.5655，显存 7.27GB。
 
@@ -104,6 +89,15 @@ Score prior 训练：3.27M 参数，1000 步，训练/验证 latent 数 14,545/1
 
 - **无配置通过 P4.3 联合门槛**。Score only 虽提高 Top-1，但严重破坏内容与同风格一致性；R1+Score 达到 Oracle 级 Top-1，但内容/画风相似度明显下降。
 - 结论：真实数据 score 先验没有解决 R1 的内容损伤问题；该路线不再作为主线推进。
+
+## P2：空间自适应风格编辑门控（进行中）
+
+> 动机：全局频带裁剪和全局 latent 编辑都会同时改动内容与风格区域。P2 改为在推理阶段对 R1 梯度施加空间/频带/内容保护门控，比较 uniform、HF、Top-K、content-tangential 与 target-style energy gating。
+
+- 起点：B4 λ50。
+- 评测：`tasks_750.json`，与既有协议一致。
+- 脚本：`sbflow/scripts/run_w_gating_eval.sh`。
+- 状态：已启动，结果待完成。
 
 ## P4.3 成功门槛判定（相对 B3 anchor）
 
@@ -119,6 +113,7 @@ bash sbflow/scripts/run_w_12h.sh            # W 主流水线（可续跑）
 bash sbflow/scripts/run_w_12h.sh --dry-run  # 仅预检（编译 + 14 单测 + A0/S10 校验）
 bash sbflow/scripts/run_w_vaeswap_12h.sh    # A0 重编码 + 换 VAE 训练对照
 bash sbflow/scripts/run_w_p1_12h.sh         # score prior + R1/Score/联合引导评测
+bash sbflow/scripts/run_w_gating_eval.sh    # P2 空间自适应门控评测
 python3 -m tools.v6_next.w_unit_tests       # 14 项单元测试
 python3 -m tools.v6_next.w_next_p0_audit    # 源风格泄漏 / Style-ID 因果审计
 ```
