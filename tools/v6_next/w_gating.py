@@ -44,8 +44,26 @@ def haar_band_filter(g: torch.Tensor, band: str = "hf") -> torch.Tensor:
     return (filtered / (filt_rms + 1e-12)) * orig_rms
 
 
-def topk_spatial_mask(g: torch.Tensor, frac: float = 0.25) -> torch.Tensor:
-    """Keep the top-k fraction of spatial positions by per-position gradient energy."""
+def topk_spatial_mask(
+    g: torch.Tensor,
+    frac: float = 0.25,
+) -> torch.Tensor:
+    B, C, H, W = g.shape
+    # 每张图独立计算空间梯度能量
+    energy = g.detach().square().sum(dim=1)  # [B,H,W]
+    k = max(1, min(H * W, round(frac * H * W)))
+    # 每张图独立选 TopK，避免阈值并列导致数量变化
+    idx = energy.flatten(1).topk(k, dim=1).indices
+    mask = torch.zeros_like(energy.flatten(1))
+    mask.scatter_(1, idx, 1.0)
+    return g * mask.view(B, 1, H, W)
+
+
+def topk_spatial_mask_legacy(
+    g: torch.Tensor,
+    frac: float = 0.25,
+) -> torch.Tensor:
+    """Old batch-shared TopK implementation. Kept only for fix audit comparisons."""
     b, c, h, w = g.shape
     energy = g.detach().pow(2).mean(dim=(0, 1))  # (H, W) across batch and channels
     k = max(1, int(round(frac * energy.numel())))
