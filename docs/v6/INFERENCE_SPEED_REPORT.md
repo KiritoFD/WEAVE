@@ -130,7 +130,8 @@
 | `docs/v6/S10_TRT_B8_SPEED.md` | TRT 专项 |
 | `docs/v6/INFERENCE_SPEED_BASELINE.md` | 三套口径可比性说明 |
 | `docs/v6/BASELINE_TIMING_TABLE.md` | 32 方法总表 + 时间维度 |
-| `deliver/bubble_csd.png` / `bubble_affinity.png` | content–style 气泡图（半径 ∝ img/s） |
+| `deliver/bubble_csd.png` / `bubble_affinity.png` | content–style 气泡图（半径 ∝ img/s，IDT/TGT 下界线） |
+| **`deliver/performance_advantage.png`** | **主图（2×2）**：(a) 速度–质量 Pareto 与同前端箭头；(b) Encoder/WEAVE/Decoder 三段堆叠与瓶颈转移；(c) 5 项质量指标不降反升；(d) 参数量 −78.5% 与 3.15×/2.71×/1.92×/2.13× 加速。脚本 `tools/plot_performance_advantage.py` |
 
 **3060 侧脚本**（WSL）：`tools/profile_staged_3060.py`、`tools/trt/export_s10_new_onnx.py`、`tools/trt/one_shot_s10_trt_b8.py`、`tools/trt/bench_s10_trt.py`。
 复现：`cd /mnt/i/Latent_Style/WEAVE && python3 tools/trt/one_shot_s10_trt_b8.py`（引擎已缓存，秒级重测）。
