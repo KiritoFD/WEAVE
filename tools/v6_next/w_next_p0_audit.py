@@ -1,22 +1,9 @@
-"""WEAVE W-next P0: content-condition source-style leakage & Style-ID causal response.
+"""WEAVE W-next P0: stratified source-style leakage and Style-ID causal audit.
 
-This audits whether the current generator actually uses Style-ID to change style,
-or whether the content condition still carries enough source-style information.
-
-Part 1 -- latent representation audit
-    Classify raw posterior-mean latents vs c1_gentle canonicalized latents with the
-    frozen R1 critic. If c1_gentle retains strong source-style classification, the
-    content condition is still leaking source style.
-
-Part 2 -- causal Style-ID response
-    For the same source latent, force all five Style-IDs and decode each output.
-    Measure CSD target-margin / Top-1, DINO-S, and DINO-C. A useful conditional
-    operator should show a strong diagonal response (target style follows the
-    requested Style-ID), not a fixed response dominated by source style.
-
-Outputs:
-    runs/v6_w/p0_style_leakage_audit.json
-    runs/v6_w/p0_style_leakage_audit.md
+This version fixes two issues from the previous attempt:
+  1. source style is parsed from the source_stem prefix, not ``Path(stem).parent``;
+  2. source sampling is stratified (8 images per style) so all five styles are covered;
+  3. DINO reference/vector dimensions are normalized to 2-D before matmul.
 """
 from __future__ import annotations
 
@@ -38,8 +25,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools" / "12h"))
 
 import csd_model  # noqa: E402
-from tools.pseudo_gt.matching import load_dino_model  # noqa: E402
-from tools.v5.route_c import csd_prototypes, load_vae, load_trt, decode_trt  # noqa: E402
+from tools.pseudo_gt.matching import encode_dino, load_dino_model  # noqa: E402
+from tools.v5.route_c import csd_prototypes, decode_trt, load_trt, load_vae  # noqa: E402
 from tools.v6.canonicalize import ContentCanonicalizer  # noqa: E402
 from tools.v6.models_v6 import C3UNet  # noqa: E402
 from tools.v6.train_eval_v6 import STYLES  # noqa: E402
@@ -47,18 +34,24 @@ from tools.v6_next.probe_style import LatentStyleNet  # noqa: E402
 
 REF_FEATURES = ROOT / "eval_protocol/cache/references_v1_features.pt"
 SRC_FEATURES = ROOT / "runs/v6_r2/cache/tasks750_source_features.pt"
+DMEAN = None
+DSTD = None
 
 
-def to_pil(t01):
+def to_pil(t01: torch.Tensor) -> Image.Image:
     arr = (t01.detach().cpu().permute(1, 2, 0).numpy() * 255.0).round().clip(0, 255).astype(np.uint8)
     return Image.fromarray(arr)
+
+
+def ensure_2d(x: torch.Tensor) -> torch.Tensor:
+    return x[None, :] if x.dim() == 1 else x
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--q2a-ckpt", default="runs/v6/Q2a_embed_style/Q2a_embed_style.pt")
     ap.add_argument("--critic-ckpt", default="runs/v6_next/probes/r1_r1.pt")
-    ap.add_argument("--sources", type=int, default=40)
+    ap.add_argument("--per-style", type=int, default=8)
     ap.add_argument("--out-dir", default="runs/v6_w/p0_style_leakage_audit")
     ap.add_argument("--device", default="cuda")
     args = ap.parse_args()
@@ -87,84 +80,84 @@ def main():
     dino = load_dino_model(device=device).eval()
     proto = csd_prototypes()
 
+    global DMEAN, DSTD
+    DMEAN = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
+    DSTD = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
+
     refs = torch.load(REF_FEATURES, map_location="cpu", weights_only=False)
-    ref_dino = {
-        s: F.normalize(refs["styles"][s]["dino_cls"].float(), dim=-1).to(device)
-        for s in STYLES
-    }
+    ref_dino = {}
+    for s in STYLES:
+        x = refs["styles"][s]["dino_cls"].float()
+        if x.dim() == 1:
+            x = x[None, :]
+        ref_dino[s] = F.normalize(x, dim=1).to(device)
 
     src_cache = torch.load(SRC_FEATURES, map_location="cpu", weights_only=False)
-    stems = sorted(src_cache["z_src"].keys())[: args.sources]
-    print(f"[P0-audit] using {len(stems)} sources", flush=True)
+    by_style = {s: [] for s in STYLES}
+    for k in sorted(src_cache["z_src"].keys()):
+        style = k.split("__", 1)[0]
+        if style in by_style:
+            by_style[style].append(k)
+    stems = []
+    for s in STYLES:
+        stems.extend(by_style[s][: args.per_style])
+    print(f"[P0-audit] using {len(stems)} stratified sources "
+          f"({args.per_style} per style)", flush=True)
 
-    # ---------------- Part 1: latent style leakage ----------------
+    # ---------------- Part 1: latent representation audit ----------------
     latent_rows = []
     with torch.inference_mode():
         for k in stems:
             z = src_cache["z_src"][k].to(device)
             c = canon(z, mode="c1_gentle", augment=False)
-            q_raw = critic(z.float()).float()
-            q_canon = critic(c.float()).float()
-            src_style = Path(k).parent.name
-            sid = STYLES.index(src_style) if src_style in STYLES else -1
+            src_style = k.split("__", 1)[0]
+            sid = STYLES.index(src_style)
 
-            def row(q):
+            def eval_one(q: torch.Tensor) -> dict:
                 pred = int(q[0].argmax())
                 sorted_q = q[0].sort(descending=True).values
                 return {
                     "pred": pred,
-                    "target_top1": int(pred == sid),
-                    "target_margin": float(q[0, sid] - sorted_q[1]) if sid >= 0 else float("nan"),
-                    "top2_gap": float(sorted_q[0] - sorted_q[1]),
+                    "pred_style": STYLES[pred],
+                    "source_top1": int(pred == sid),
+                    "source_margin": float(q[0, sid] - sorted_q[1]),
                 }
 
             latent_rows.append({
                 "stem": k,
                 "src_style": src_style,
-                "raw": row(q_raw),
-                "c1_gentle": row(q_canon),
+                "raw": eval_one(critic(z.float())),
+                "c1_gentle": eval_one(critic(c.float())),
             })
 
-    def summarize_latent(field):
-        n = len(latent_rows)
-        raw_acc = np.mean([r[field]["target_top1"] for r in latent_rows])
-        canon_acc = np.mean([r[field]["target_top1"] for r in latent_rows])
-        raw_margin = np.nanmean([r[field]["target_margin"] for r in latent_rows])
-        canon_margin = np.nanmean([r[field]["target_margin"] for r in latent_rows])
-        return {
-            "n": n,
-            "raw_source_style_top1": float(raw_acc),
-            "c1_gentle_source_style_top1": float(canon_acc),
-            "raw_source_style_margin": float(raw_margin),
-            "c1_gentle_source_style_margin": float(canon_margin),
-        }
-
     latent_summary = {
-        "raw": summarize_latent("raw"),
-        "c1_gentle": summarize_latent("c1_gentle"),
-        "per_style": {},
+        "n": len(latent_rows),
+        "raw_source_top1": float(np.mean([r["raw"]["source_top1"] for r in latent_rows])),
+        "c1_source_top1": float(np.mean([r["c1_gentle"]["source_top1"] for r in latent_rows])),
+        "raw_source_margin": float(np.mean([r["raw"]["source_margin"] for r in latent_rows])),
+        "c1_source_margin": float(np.mean([r["c1_gentle"]["source_margin"] for r in latent_rows])),
+        "per_style": {
+            s: {
+                "n": sum(1 for r in latent_rows if r["src_style"] == s),
+                "raw_top1": float(np.mean([r["raw"]["source_top1"] for r in latent_rows if r["src_style"] == s])),
+                "c1_top1": float(np.mean([r["c1_gentle"]["source_top1"] for r in latent_rows if r["src_style"] == s])),
+            } for s in STYLES
+        },
     }
-    for s in STYLES:
-        subset = [r for r in latent_rows if r["src_style"] == s]
-        latent_summary["per_style"][s] = {
-            "n": len(subset),
-            "raw_top1": float(np.mean([r["raw"]["target_top1"] for r in subset])),
-            "c1_top1": float(np.mean([r["c1_gentle"]["target_top1"] for r in subset])),
-            "raw_margin": float(np.nanmean([r["raw"]["target_margin"] for r in subset])),
-            "c1_margin": float(np.nanmean([r["c1_gentle"]["target_margin"] for r in subset])),
-        }
 
     # ---------------- Part 2: causal Style-ID response ----------------
     gen_rows = []
+    dmean = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
+    dstd = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
     with torch.inference_mode():
         for k in stems:
             z = src_cache["z_src"][k].to(device)
             c = canon(z, mode="c1_gentle", augment=False)
-            src_style = Path(k).parent.name
-            sid = STYLES.index(src_style) if src_style in STYLES else 0
+            src_style = k.split("__", 1)[0]
+            sid = STYLES.index(src_style)
             x01 = src_cache["raw_rgb"][k].to(device)
             src224 = F.interpolate(x01[None], size=(224, 224), mode="bicubic", align_corners=False)
-            src_dino = dcls = F.normalize(
+            src_dino = F.normalize(
                 dino((src224 - dmean) / dstd).last_hidden_state[:, 0].float(), dim=1)
 
             for tid, tgt in enumerate(STYLES):
@@ -179,8 +172,14 @@ def main():
                 margin = float(sc[tid] - np.max([sc[j] for j in range(5) if j != tid]))
                 dg, _ = encode_dino(dino, pils, batch=1, device=device)
                 dg = F.normalize(dg.float(), dim=1)
-                dino_s = float(dg @ ref_dino[tgt].T.max())
-                dino_c = float((dg @ src_dino.T).sum())
+                if dg.dim() == 1:
+                    dg = dg[None, :]
+                ref_matrix = ref_dino[tgt]
+                if ref_matrix.dim() == 1:
+                    ref_matrix = ref_matrix[None, :]
+                dino_s = float((dg @ ref_matrix.T).max())
+                src_vec = F.normalize(src_dino, dim=1)
+                dino_c = float((dg @ src_vec.T).sum())
                 gen_rows.append({
                     "stem": k,
                     "src_style": src_style,
@@ -216,11 +215,8 @@ def main():
         "same_top1": float(np.mean([r["csd_top1"] for r in same])),
         "same_dino_c": float(np.mean([r["dino_c"] for r in same])),
         "per_target_top1": agg(cross, "target_style", "csd_top1"),
-        "per_target_margin": agg(cross, "target_style", "csd_margin"),
         "per_target_dino_s": agg(cross, "target_style", "dino_s"),
-        "per_target_dino_c": agg(cross, "target_style", "dino_c"),
-        # source-style leakage in generated cross-style outputs: how often the CSD
-        # judge still picks the ORIGINAL source style instead of the requested target
+        # source-style leakage in generated cross-style outputs
         "cross_source_style_still_predicted": float(np.mean([
             int(r["csd_pred"] == r["src_style_id"]) for r in cross])),
     }
@@ -234,19 +230,18 @@ def main():
     (out_dir / "p0_style_leakage_audit.json").write_text(
         json.dumps(result, indent=2), encoding="utf-8")
 
-    # ---------------- Markdown ----------------
     lines = []
     lines.append("# WEAVE W-next P0：内容条件源风格泄漏与 Style-ID 因果审计\n")
-    lines.append(f"- Sources: **{len(stems)}**；generated pairs: **{len(gen_rows)}**"
-                 f"（含 {len(cross)} cross / {len(same)} same）")
+    lines.append(f"- stratified sources: **{len(stems)}**；generated pairs: **{len(gen_rows)}**"
+                 f"（{len(cross)} cross / {len(same)} same）")
     lines.append("")
     lines.append("## 1. 潜空间源风格泄漏（R1 判官）\n")
     lines.append("| Latent | Source-style Top-1 | Source-style Margin |")
     lines.append("|---|---:|---:|")
-    lines.append(f"| raw posterior latent | {latent_summary['raw']['raw_source_style_top1']*100:.1f}% | "
-                 f"{latent_summary['raw']['raw_source_style_margin']:+.4f} |")
-    lines.append(f"| c1_gentle canonicalized | {latent_summary['c1_gentle']['c1_gentle_source_style_top1']*100:.1f}% | "
-                 f"{latent_summary['c1_gentle']['c1_gentle_source_style_margin']:+.4f} |")
+    lines.append(f"| raw posterior latent | {latent_summary['raw_source_top1']*100:.1f}% | "
+                 f"{latent_summary['raw_source_margin']:+.4f} |")
+    lines.append(f"| c1_gentle canonicalized | {latent_summary['c1_source_top1']*100:.1f}% | "
+                 f"{latent_summary['c1_source_margin']:+.4f} |")
     lines.append("")
     lines.append("### 分风格 source-style Top-1\n")
     lines.append("| Style | n | raw | c1_gentle |")

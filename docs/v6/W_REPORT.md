@@ -46,6 +46,65 @@ R2 表 D 铁证：学生与 Oracle 教师位移 cos 0.638–0.683、RMS 比 0.52
 - 对照臂：`V1_A0_LossClean`（与 W2 完全同配方，只换 latent 池）、`V2_A0_PixelMSE`（A0 池 + 原始像素 MSE 蒸馏，隔离 VAE 本身的影响）。
 - 串行入口 `run_w_vaeswap_12h.sh`：A0 重编码 → 两臂训练 → 750 评测 → 配对比较，独立脚本以避开正在运行的 W 主流水线（单卡排他）。
 
+## P1：真实 latent 密度先验 + 引导编辑（已完成）
+
+> 动机：R2 表 D 表明学生没有拟合 Oracle 教师，因此进一步测试“真实数据 score 先验 + R1 引导”能否改善单步模型的风格—内容权衡。
+
+Score prior 训练：3.27M 参数，1000 步，训练/验证 latent 数 14,545/1,000，最终 loss 0.5655，显存 7.27GB。
+
+| 方法 | Top-1 | Margin | CSD ΔT | DINO-S | DINO-C | LPIPS | Min 误判 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| B3 λ20（anchor） | 17.8% | -0.1462 | 0.1025 | 0.4183 | 0.8325 | 0.4412 | 26.9% |
+| R1 only（4 步） | 31.7% | -0.0632 | 0.0722 | 0.4361 | 0.7516 | 0.5172 | 24.2% |
+| Score only（4 步） | 31.8% | -0.1398 | -0.0097 | 0.2845 | 0.5086 | 0.6245 | 58.8% |
+| R1 + Score（4 步） | 34.3% | -0.0932 | 0.0143 | 0.3559 | 0.5936 | 0.5750 | 47.9% |
+
+- **无配置通过 P4.3 联合门槛**。Score only 虽提高 Top-1，但严重破坏内容与同风格一致性；R1+Score 达到 Oracle 级 Top-1，但内容/画风相似度明显下降。
+- 结论：真实数据 score 先验没有解决 R1 的内容损伤问题；该路线不再作为主线推进。
+
+## P0：内容条件源风格泄漏与 Style-ID 因果审计（已完成）
+
+采用 40 张分层源图（每风格 8 张），先审计 latent 表示，再固定同一内容条件、强制切换 5 个 Style-ID 并解码评测。
+
+### 潜空间源风格泄漏（R1 判官）
+
+| Latent | Source-style Top-1 | Source-style Margin |
+|---|---:|---:|
+| raw posterior latent | 82.5% | +3.4672 |
+| c1_gentle canonicalized | 75.0% | +2.4528 |
+
+### 固定内容、改变 Style-ID 的因果响应
+
+| Metric | Value |
+|---|---:|
+| Cross600 Top-1 | 8.1% |
+| Cross600 Margin | -0.2442 |
+| Cross600 DINO-S | 0.3816 |
+| Cross600 DINO-C | 0.8705 |
+| Same150 Top-1 | 100.0% |
+| Same150 DINO-C | 0.8909 |
+| **输出仍被判为源风格的比例** | **82.5%** |
+
+分目标 Top-1：ER 6.2%、Imp 12.5%、Min 6.2%、Rococo 15.6%、Ukiyo 0.0%。
+
+**结论**：即使内容条件固定，输出仍有 82.5% 被判为源风格；Style-ID 的因果作用很弱。内容条件中的源风格泄漏是真实存在的，后续应优先改造内容条件，而不是继续增强蒸馏损失。
+
+## P1：真实 latent 密度先验 + 引导编辑（已完成）
+
+> 动机：R2 表 D 表明学生没有拟合 Oracle 教师，因此进一步测试“真实数据 score 先验 + R1 引导”能否改善单步模型的风格—内容权衡。
+
+Score prior 训练：3.27M 参数，1000 步，训练/验证 latent 数 14,545/1,000，最终 loss 0.5655，显存 7.27GB。
+
+| 方法 | Top-1 | Margin | CSD ΔT | DINO-S | DINO-C | LPIPS | Min 误判 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| B3 λ20（anchor） | 17.8% | -0.1462 | 0.1025 | 0.4183 | 0.8325 | 0.4412 | 26.9% |
+| R1 only（4 步） | 31.7% | -0.0632 | 0.0722 | 0.4361 | 0.7516 | 0.5172 | 24.2% |
+| Score only（4 步） | 31.8% | -0.1398 | -0.0097 | 0.2845 | 0.5086 | 0.6245 | 58.8% |
+| R1 + Score（4 步） | 34.3% | -0.0932 | 0.0143 | 0.3559 | 0.5936 | 0.5750 | 47.9% |
+
+- **无配置通过 P4.3 联合门槛**。Score only 虽提高 Top-1，但严重破坏内容与同风格一致性；R1+Score 达到 Oracle 级 Top-1，但内容/画风相似度明显下降。
+- 结论：真实数据 score 先验没有解决 R1 的内容损伤问题；该路线不再作为主线推进。
+
 ## P4.3 成功门槛判定（相对 B3 anchor）
 
 - 主门槛 DINO-S ≥ +0.020 且 CI 下界 > 0：**无模型通过**。
@@ -56,9 +115,12 @@ R2 表 D 铁证：学生与 Oracle 教师位移 cos 0.638–0.683、RMS 比 0.52
 ## 复现
 
 ```bash
-bash sbflow/scripts/run_w_12h.sh            # 单入口串行（可续跑）
+bash sbflow/scripts/run_w_12h.sh            # W 主流水线（可续跑）
 bash sbflow/scripts/run_w_12h.sh --dry-run  # 仅预检（编译 + 14 单测 + A0/S10 校验）
+bash sbflow/scripts/run_w_vaeswap_12h.sh    # A0 重编码 + 换 VAE 训练对照
+bash sbflow/scripts/run_w_p1_12h.sh         # score prior + R1/Score/联合引导评测
 python3 -m tools.v6_next.w_unit_tests       # 14 项单元测试
+python3 -m tools.v6_next.w_next_p0_audit    # 源风格泄漏 / Style-ID 因果审计
 ```
 
 - 结果目录 `runs/v6_w/`；A0 Encoder 在 `runs/a0/a0_encoder_only.pt`（SHA256 前缀 `70715532435ad6c2`，从 4090 `/root/Workspace/WEAVE_VAE/runs_vae/A0/` 导出）。

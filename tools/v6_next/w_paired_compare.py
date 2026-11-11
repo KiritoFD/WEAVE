@@ -36,6 +36,9 @@ W_ARMS = [
     ("W5 S10 ImgCalib", W / "eval_W5_ImgCalib/eval.json"),
     ("V1 A0-pool LossClean", W / "eval_V1_A0_LossClean/eval.json"),
     ("V2 A0-pool PixelMSE", W / "eval_V2_A0_PixelMSE/eval.json"),
+    ("R1 only", W / "eval_guided_r1/eval.json"),
+    ("Score only", W / "eval_guided_score/eval.json"),
+    ("R1 + Score", W / "eval_guided_both/eval.json"),
 ]
 
 
@@ -95,6 +98,7 @@ def main():
           f"{'ΔDINO-C':>8s} | {'P4.3 Gate':>10s}")
     print("  " + "-" * 112)
     gate_results = {}
+    paired_details = {}
     for name, d in rows:
         if "B3" in name or d["by_id"].keys() != b3["by_id"].keys():
             if "B3" not in name:
@@ -112,6 +116,12 @@ def main():
         gate = "PASS" if (dinos_ok and dinoc_ok and lpips_ok and top1_ok) else (
             "PARTIAL" if ci_ds["ci"][0] > 0 else "NO")
         gate_results[name] = gate
+        paired_details[name] = {
+            "top1": ci_t,
+            "dino_s": ci_ds,
+            "dino_c": ci_dc,
+            "lpips": ci_lp,
+        }
         t_str = f"{ci_t['diff']*100:+5.1f}pp [{ci_t['ci'][0]*100:+4.1f},{ci_t['ci'][1]*100:+4.1f}]"
         ds_str = f"{ci_ds['diff']:+.4f} [{ci_ds['ci'][0]:+.4f},{ci_ds['ci'][1]:+.4f}]"
         print(f"  {name:28s} | {t_str:>24s} | {ds_str:>26s} | {ci_dc['diff']:+8.4f} | {gate:>10s}")
@@ -138,7 +148,8 @@ def main():
 
     # verdict json
     out = {"gates_vs_B3": gate_results,
-           "p43_primary_gate_any_pass": any(v == "PASS" for v in gate_results.values())}
+           "p43_primary_gate_any_pass": any(v == "PASS" for v in gate_results.values()),
+           "paired_details_vs_B3": paired_details}
     (W / "w_paired_verdict.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
     print(f"\nWrote {W / 'w_paired_verdict.json'} : {out}")
 

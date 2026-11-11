@@ -114,6 +114,49 @@ def load_generator(args, device: str):
     elif args.gen == "identity":
         return {"kind": "identity"}
 
+    elif args.gen == "guided":
+        from tools.v6_next.w_guided import guided_edit
+
+        critic = None
+        if args.guided_mode in ("r1", "both"):
+            ck_c = torch.load(ROOT / args.guided_critic, map_location="cpu", weights_only=False)
+            critic = LatentStyleNet(width=ck_c.get("width", 64)).to(device).eval()
+            critic.load_state_dict(ck_c["model"])
+            for p in critic.parameters():
+                p.requires_grad_(False)
+        score_net = None
+        if args.guided_mode in ("score", "both"):
+            ck_s = torch.load(ROOT / args.guided_score_ckpt, map_location="cpu", weights_only=False)
+            score_net = ConditionalScoreNet(base_dim=args.guided_base_dim, num_styles=1).to(device).eval()
+            score_net.load_state_dict(ck_s["model"])
+            for p in score_net.parameters():
+                p.requires_grad_(False)
+        # The student generator is only the starting point; guided editing happens in latent space.
+        ck = torch.load(ROOT / args.ckpt, map_location="cpu", weights_only=False)
+        a = ck.get("args", {})
+        start_model = C3UNet(
+            base_dim=a.get("base_dim", 16), num_styles=5, mode="direct"
+        ).to(device).eval()
+        start_model.load_state_dict(ck["model"])
+        canon = ContentCanonicalizer(
+            torch.load(CANON_STATS, map_location="cpu", weights_only=False)
+        ).to(device).eval()
+        return {
+            "kind": "guided",
+            "start_model": start_model,
+            "canon": canon,
+            "canon_mode": args.canon_mode or a.get("canon_mode", "c1_gentle"),
+            "critic": critic,
+            "score_net": score_net,
+            "guided_mode": args.guided_mode,
+            "guided_steps": args.guided_steps,
+            "guided_rms": args.guided_rms,
+            "guided_sigma": args.guided_sigma,
+            "r1_weight": args.guided_r1_weight,
+            "score_weight": args.guided_score_weight,
+            "fn": guided_edit,
+        }
+
     raise ValueError(f"Unknown generator mode: {args.gen}")
 
 
@@ -166,6 +209,27 @@ def run_generator(gen_pack, z_batch, sid_batch, tid_batch):
             struct_anchor_weight=gen_pack["anchor"],
             seed=42,
         )
+
+    if kind == "guided":
+        # Start from the selected student's Direct output, then apply iterative
+        # latent-space guidance. This is an inference-time experiment, not a
+        # retrained generator.
+        c = gen_pack["canon"](z_batch, mode=gen_pack["canon_mode"], augment=False)
+        z0 = gen_pack["start_model"](c, 0.0, c, tid_batch)
+        return gen_pack["fn"](
+            z0,
+            tid_batch,
+            critic=gen_pack["critic"],
+            score_net=gen_pack["score_net"],
+            mode=gen_pack["guided_mode"],
+            steps=gen_pack["guided_steps"],
+            per_step_rms=gen_pack["guided_rms"],
+            sigma=gen_pack["guided_sigma"],
+            r1_weight=gen_pack["r1_weight"],
+            score_weight=gen_pack["score_weight"],
+        )
+
+    raise ValueError(f"Unknown generator kind: {kind}")
 
 
 def build_source_cache(tasks, vae, trt, csd, dino, cache_dir: Path, device: str):
@@ -607,7 +671,7 @@ def main():
     ap.add_argument("--out-dir", required=True)
     ap.add_argument(
         "--gen",
-        choices=["direct", "oracle", "scorediff", "identity"],
+        choices=["direct", "oracle", "scorediff", "identity", "guided"],
         default="direct",
     )
     ap.add_argument("--ckpt", default="")
@@ -617,6 +681,18 @@ def main():
     )
     ap.add_argument("--oracle-rms", type=float, default=0.25)
     ap.add_argument("--oracle-steps", type=int, default=1)
+    # W P1: iterative guided editing (R1 margin, real-data score prior, or both)
+    ap.add_argument("--guided-critic", default="runs/v6_next/probes/r1_r1.pt")
+    ap.add_argument(
+        "--guided-score-ckpt", default="runs/v6_w/score_prior/score_prior.pt"
+    )
+    ap.add_argument("--guided-mode", choices=["r1", "score", "both"], default="both")
+    ap.add_argument("--guided-steps", type=int, default=4)
+    ap.add_argument("--guided-rms", type=float, default=0.08)
+    ap.add_argument("--guided-sigma", type=float, default=0.30)
+    ap.add_argument("--guided-r1-weight", type=float, default=1.0)
+    ap.add_argument("--guided-score-weight", type=float, default=1.0)
+    ap.add_argument("--guided-base-dim", type=int, default=64)
     ap.add_argument(
         "--sd-ckpt", default="runs/v6/score_diff/score_diff_net.pt"
     )
