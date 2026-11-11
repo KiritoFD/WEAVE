@@ -47,11 +47,10 @@ def haar_band_filter(g: torch.Tensor, band: str = "hf") -> torch.Tensor:
 def topk_spatial_mask(g: torch.Tensor, frac: float = 0.25) -> torch.Tensor:
     """Keep the top-k fraction of spatial positions by per-position gradient energy."""
     b, c, h, w = g.shape
-    flat = g.flatten(1)
-    energy = flat.pow(2).mean(dim=0)  # (H*W,) across batch and channels
+    energy = g.detach().pow(2).mean(dim=(0, 1))  # (H, W) across batch and channels
     k = max(1, int(round(frac * energy.numel())))
-    threshold = torch.topk(energy, k).values[-1]
-    mask = (energy.view(1, 1, h, w) >= threshold).float()
+    threshold = torch.topk(energy.flatten(), k).values[-1]
+    mask = (energy >= threshold).float().view(1, 1, h, w)
     return g * mask
 
 

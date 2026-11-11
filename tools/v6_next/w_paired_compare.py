@@ -39,6 +39,11 @@ W_ARMS = [
     ("R1 only", W / "eval_guided_r1/eval.json"),
     ("Score only", W / "eval_guided_score/eval.json"),
     ("R1 + Score", W / "eval_guided_both/eval.json"),
+    ("P2 Gated Full", W / "eval_gated_full/eval.json"),
+    ("P2 Gated HF", W / "eval_gated_hf/eval.json"),
+    ("P2 Gated TopK", W / "eval_gated_topk/eval.json"),
+    ("P2 Gated Content", W / "eval_gated_content/eval.json"),
+    ("P2 Gated StyleEnergy", W / "eval_gated_style_energy/eval.json"),
 ]
 
 
