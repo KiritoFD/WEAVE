@@ -44,6 +44,9 @@ W_ARMS = [
     ("P2 Gated TopK", W / "eval_gated_topk/eval.json"),
     ("P2 Gated Content", W / "eval_gated_content/eval.json"),
     ("P2 Gated StyleEnergy", W / "eval_gated_style_energy/eval.json"),
+    ("P2 TopK10", W / "eval_gated_topk10/eval.json"),
+    ("P2 TopK50", W / "eval_gated_topk50/eval.json"),
+    ("P2 TopK25 S8", W / "eval_gated_topk25_s8/eval.json"),
 ]
 
 
