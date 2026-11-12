@@ -1,0 +1,32 @@
+{
+  "questions": {
+    "A": "YES — the local real-patch objective improved independent style metrics (best=E3)",
+    "B": "NO — explicit source conditioning did not rescue training (N2-N1 ΔDINO-S -0.0008); the corrector-on-B4 structure itself is the finding",
+    "C": "YES — corrector-on-B4 stayed near B4 content (DINO-C 0.5022) while the V7 relative relearn collapsed (M1 DINO-C 0.9316); the frozen-predictor + small-correction structure is the stable one"
+  },
+  "stage_verdicts": {
+    "P0": "AUDIT_DONE",
+    "P1": "GO_LOCAL",
+    "P2": "NO_PREDICTOR",
+    "P3": "NO_CORRECTOR",
+    "P4": "ROLLBACK_LR"
+  },
+  "pareto_front": [
+    "E2_B@1000",
+    "E2_B@2000",
+    "E2_C_lr@1000",
+    "E2_C_lr@500",
+    "E5@1000",
+    "R3c",
+    "R4c",
+    "V7_M1",
+    "p1a_R1_rand",
+    "p1a_S1_fwd",
+    "p1a_S1_rand",
+    "p1a_S2_rand",
+    "p1c_E2",
+    "p1c_E3",
+    "p1c_E4"
+  ],
+  "dev_set_statement": "All statistics are paired in-development-set results on tasks_750; no blind-test claim."
+}
