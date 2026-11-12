@@ -46,7 +46,7 @@ CANON_STATS = ROOT / "runs" / "v6" / "cache" / "canonicalizer_stats.pt"
 
 def load_generator(args, device: str):
     """Load model according to generator mode."""
-    if args.gen in ("direct", "oracle"):
+    if args.gen in ("direct", "oracle", "relative"):
         ck = torch.load(ROOT / args.ckpt, map_location="cpu", weights_only=False)
         a = ck.get("args", {})
         model = C3UNet(
@@ -89,6 +89,12 @@ def load_generator(args, device: str):
             "oracle_rms": args.oracle_rms,
             "oracle_steps": args.oracle_steps,
         }
+
+    elif args.gen == "v7":
+        # V7 test-time corrector (T0-T5). Additive mode; see tools/v7/p2_corrector.py
+        from tools.v7.p2_corrector import build_v7_pack
+
+        return build_v7_pack(args, device)
 
     elif args.gen == "scorediff":
         from tools.v6.score_diff import edit_with_score_difference
@@ -154,6 +160,12 @@ def load_generator(args, device: str):
             "style_energy_maps": style_energy_maps,
             "fn": apply_gated_edit,
         }
+
+    elif args.gen == "v7r":
+        # V7-R arms (P1 probes / E-objectives / P3 correctors / N predictors)
+        from tools.v7r.arms import build_v7r_pack
+
+        return build_v7r_pack(args, device)
 
     elif args.gen == "saved_images":
         return {
@@ -221,6 +233,25 @@ def run_generator(gen_pack, z_batch, sid_batch, tid_batch, task_batch=None):
         model = gen_pack["model"]
         c = canon(z_batch, mode=gen_pack["canon_mode"], augment=False)
         return model(c, 0.0, c, tid_batch)
+
+    if kind == "relative":
+        # V7 P0 relative parameterization: zs + F(c(zs), t) - F(c(zs), s)
+        canon = gen_pack["canon"]
+        model = gen_pack["model"]
+        c = canon(z_batch, mode=gen_pack["canon_mode"], augment=False)
+        z_t = model(c, 0.0, c, tid_batch)
+        z_s = model(c, 0.0, c, sid_batch)
+        return (z_batch + z_t - z_s).detach()
+
+    if kind == "v7":
+        from tools.v7.p2_corrector import run_v7_edit
+
+        return run_v7_edit(gen_pack, z_batch, sid_batch, tid_batch, task_batch)
+
+    if kind == "v7r":
+        from tools.v7r.arms import run_v7r_edit
+
+        return run_v7r_edit(gen_pack, z_batch, sid_batch, tid_batch, task_batch)
 
     if kind == "oracle":
         canon = gen_pack["canon"]
@@ -755,7 +786,8 @@ def main():
     ap.add_argument("--out-dir", required=True)
     ap.add_argument(
         "--gen",
-        choices=["direct", "oracle", "scorediff", "identity", "guided", "gated", "saved_images"],
+        choices=["direct", "oracle", "scorediff", "identity", "guided", "gated",
+                 "saved_images", "relative", "v7", "v7r"],
         default="direct",
     )
     ap.add_argument("--ckpt", default="")
@@ -789,6 +821,13 @@ def main():
     ap.add_argument("--gating-steps", type=int, default=4)
     ap.add_argument("--gating-rms", type=float, default=0.08)
     ap.add_argument("--gating-topk-frac", type=float, default=0.25)
+    # V7 additive modes (see tools/v7/): --gen relative / --gen v7
+    ap.add_argument("--v7-arm", default="T4",
+                    choices=["T0", "T1", "T2", "T3", "T4", "T5"])
+    ap.add_argument("--v7-energies", default="runs/v7/p1_energy")
+    ap.add_argument("--v7-start-mode", default="", choices=["", "direct", "relative"])
+    # V7-R additive mode (see tools/v7r/arms.py)
+    ap.add_argument("--v7r-arm", default="R0")
     ap.add_argument("--saved-image-dir", default="", help="Directory of pre-generated task images for --gen saved_images")
     ap.add_argument(
         "--sd-ckpt", default="runs/v6/score_diff/score_diff_net.pt"
@@ -851,11 +890,25 @@ def main():
 
     # Load generator
     gen_pack = load_generator(args, device)
+    if gen_pack.get("kind") in ("v7", "v7r"):
+        if gen_pack["kind"] == "v7":
+            from tools.v7.p2_corrector import set_eval_context
+        else:
+            from tools.v7r.arms import set_eval_context
+        gen_pack["trace_task_ids"] = set_eval_context(tasks)
+        gen_pack["models"] = models
+        gen_pack["src_cache"] = src_cache
+        gen_pack["ref_dino"] = {
+            s: F.normalize(ref_data["styles"][s]["dino_cls"].float(), dim=-1).to(device)
+            for s in STYLES
+        }
 
     # Evaluate
+    t_eval_start = time.time()
     rows, csd_feats, dino_feats = evaluate_tasks(
         args, tasks, gen_pack, src_cache, ref_data, proto_csd, models, device
     )
+    eval_wall = time.time() - t_eval_start
 
     # Summarize and save
     out_dir = ROOT / args.out_dir
@@ -871,6 +924,32 @@ def main():
         out_dir / "features.pt",
     )
     print(f"[P0] Saved features cache to {out_dir / 'features.pt'}")
+
+    # V7/V7-R trace artifacts (additive; v7/v7r modes only)
+    if gen_pack.get("kind") == "v7":
+        from tools.v7.p2_corrector import finish_v7_trace
+
+        finish_v7_trace(gen_pack, out_dir)
+    elif gen_pack.get("kind") == "v7r":
+        from tools.v7r.arms import finish_v7r_trace
+
+        finish_v7r_trace(gen_pack, out_dir)
+
+    # Runtime record (additive; all modes) — V7_EVAL_PROTOCOL.md section 7
+    try:
+        peak_mib = torch.cuda.max_memory_allocated() / (1024 ** 2)
+    except Exception:  # noqa: BLE001
+        peak_mib = 0.0
+    (out_dir / "runtime.json").write_text(json.dumps({
+        "gen": args.gen,
+        "ckpt": args.ckpt,
+        "n_tasks": len(rows),
+        "batch_size": args.batch_size,
+        "wall_sec": round(eval_wall, 1),
+        "per_task_sec": round(eval_wall / max(1, len(rows)), 4),
+        "peak_vram_mib": round(peak_mib, 1),
+        "recorded_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":

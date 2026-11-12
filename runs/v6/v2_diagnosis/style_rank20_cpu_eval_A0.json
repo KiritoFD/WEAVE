@@ -1,0 +1,33 @@
+{
+  "A0": {
+    "n": 2400,
+    "m_center_norm": 16.692,
+    "content_matched": {
+      "auroc": 48.98,
+      "lo": 46.75,
+      "hi": 51.08,
+      "n": 1000
+    },
+    "cross_artist": {
+      "auroc": 54.15,
+      "lo": 51.86,
+      "hi": 56.63,
+      "n": 1000
+    },
+    "same_genre_hard": {
+      "auroc": 50.25,
+      "lo": 47.2,
+      "hi": 52.78,
+      "n": 1000
+    },
+    "knn": {
+      "knn1": 11.79,
+      "knn5": 9.71,
+      "knn10": 9.07
+    },
+    "map10": 19.71,
+    "encode_sec": 1005.4,
+    "img_per_sec": 2.39,
+    "total_sec": 1011.0
+  }
+}

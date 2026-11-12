@@ -1,0 +1,16 @@
+{
+  "toy": {
+    "p_mean": 0.0,
+    "q_mean": 2.0,
+    "sigma": 0.8,
+    "alpha": 0.5,
+    "n": 4096
+  },
+  "analytic_direction_mean": 1.2195121049880981,
+  "corrected_loss_gradient_dm": 0.6248356699943542,
+  "old_loss_gradient_dm": -0.4727252721786499,
+  "m_after_one_gd_step_corrected": 1.9375164330005645,
+  "m_after_one_gd_step_old": 2.047272527217865,
+  "corrected_moves_toward_p": true,
+  "old_moves_away_from_p": true
+}

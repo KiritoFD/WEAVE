@@ -1,0 +1,47 @@
+{
+  "model_name": "B0_Original_sd-vae-ft-ema",
+  "vae_path": "/root/Workspace/xy/DiT/data/pretrained/sd-vae-ft-ema",
+  "n_validation_images": 2048,
+  "num_style_classes": 136,
+  "eval_wall_sec": 228.5,
+  "P0_reconstruction_quality": {
+    "LPIPS": 0.0822,
+    "PSNR_dB": 24.57,
+    "SSIM": 0.7484,
+    "L1": 0.0702,
+    "CSD_Style_Fidelity": 0.9321,
+    "mean_posterior_var": 0.0
+  },
+  "P1_style_separability": {
+    "probes_136_classes": {
+      "Linear_Flat": {
+        "Top1_Accuracy": 10.77,
+        "Top5_Accuracy": 37.96,
+        "Macro_F1": 2.31,
+        "train_sec": 0.8,
+        "Unseen_Artist_Top1": 8.9,
+        "Unseen_Artist_Macro_F1": 1.66
+      },
+      "Linear_Stats": {
+        "Top1_Accuracy": 14.23,
+        "Top5_Accuracy": 49.09,
+        "Macro_F1": 2.53,
+        "train_sec": 1.0,
+        "Unseen_Artist_Top1": 10.35,
+        "Unseen_Artist_Macro_F1": 1.55
+      },
+      "Shallow_CNN": {
+        "Top1_Accuracy": 16.24,
+        "Top5_Accuracy": 53.47,
+        "Macro_F1": 2.56,
+        "train_sec": 2.0,
+        "Unseen_Artist_Top1": 14.7,
+        "Unseen_Artist_Macro_F1": 1.94
+      }
+    },
+    "kNN_k5_retrieval_acc": 10.4,
+    "style_pair_auroc": 54.17,
+    "mean_intra_class_variance": 0.7496,
+    "latent_effective_rank": 1772.65
+  }
+}

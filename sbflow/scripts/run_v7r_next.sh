@@ -74,7 +74,10 @@ stage_p1(){
   gpu_free || return 0
   run p1 bank $PY -m tools.v7r_next.patch_transport build
   [[ -f "$RUNS/p1_bank.pt" ]] || { log "[p1] bank missing, fallback to E3 legacy bank"; echo "FALLBACK_E3" > "$STATE/p1.gate"; }
-  mark p1 runs/v7r_next/p1_bank.pt runs/v7r_next/p1_bank_meta.json
+  # C1..C6 full-750 ablations + P1 Gate (geometry must beat uniform on specificity)
+  run p1 evals $PY -m tools.v7r_next.run_evals p1
+  mark p1 runs/v7r_next/p1_bank.pt runs/v7r_next/p1_bank_meta.json \
+          runs/v7r_next/p1/p1_gate.json
 }
 stage_p1
 
@@ -84,9 +87,14 @@ stage_p2(){
   gpu_free || return 0
   run p2 rho $PY -m tools.v7r_next.corrector rho
   [[ -f "$RUNS/p2/rho_tiers.json" ]] || { log "[p2] rho unavailable -> P2 SKIPPED_BY_GATE"; echo "SKIPPED_BY_GATE" > "$STATE/p2.gate"; return 0; }
-  # P1 Gate: geometry must be valuable. Evaluated by P5's C2/C3 vs C1.
-  # Here we only prepare; the runner's eval_arm calls happen in P5 with the
-  # same --gen v7r mechanism extended for CPT arms.
+  # P1 Gate: geometry must be valuable. Now enforced by run_evals.p1_gate()
+  # (C2/C3 specificity > C1). T2..T6 full 750 only if Gate passed.
+  if $PY -c "import json,sys;g=json.load(open('runs/v7r_next/p1/p1_gate.json'));sys.exit(0 if g['geometry_valuable'] else 2)"; then
+    run p2 evals $PY -m tools.v7r_next.run_evals p2
+  else
+    log "[p2] SKIPPED_BY_GATE: P1 geometry not demonstrated; keep R3c/R4c"
+    echo "SKIPPED_BY_GATE" > "$STATE/p2.gate"
+  fi
   mark p2 runs/v7r_next/p2/rho_tiers.json
 }
 stage_p2
@@ -98,7 +106,14 @@ stage_p3(){
   run p3 teacher $PY -m tools.v7r_next.distill teacher --n 2000
   [[ -f "$RUNS/p3/teacher.pt" ]] || { log "[p3] teacher missing -> keep test-time line"; echo "TEACHER_FAILED" > "$STATE/p3.gate"; return 0; }
   run p3 D1 $PY -m tools.v7r_next.distill train --arm D1 --steps 3000
-  mark p3 runs/v7r_next/p3/teacher.pt runs/v7r_next/p3/D1/train_trace.json
+  run p3 D2 $PY -m tools.v7r_next.distill train --arm D2 --steps 3000
+  run p3 evals $PY -m tools.v7r_next.run_evals p3
+  if [[ -f "$RUNS/p3/teacher.pt" && -f "$RUNS/p3/D1/train_trace.json" ]]; then
+    mark p3 runs/v7r_next/p3/teacher.pt runs/v7r_next/p3/D1/train_trace.json
+  else
+    log "[p3] incomplete -> keep TEST-TIME CPT line, no trained-corrector claim"
+    echo "DISTILL_INCOMPLETE" > "$STATE/p3.gate"
+  fi
 }
 stage_p3
 

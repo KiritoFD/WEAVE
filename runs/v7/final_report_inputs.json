@@ -1,0 +1,112 @@
+{
+  "included": [
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p0_relative/p0_q2a_direct",
+      "included": true,
+      "status": "NO"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p0_relative/p0_q2a_relative",
+      "included": true,
+      "status": "NO"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p0_relative/p0_b4_direct",
+      "included": true,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p0_relative/p0_b4_relative",
+      "included": true,
+      "status": "NO"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p2_eval/T0",
+      "included": true,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p2_eval/T1",
+      "included": true,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p2_eval/T2",
+      "included": true,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p2_eval/T3",
+      "included": true,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p2_eval/T4",
+      "included": true,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p2_eval/T5",
+      "included": false,
+      "reason": "missing"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p3_eval/M1",
+      "included": true,
+      "status": "NO"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p3_eval/M2",
+      "included": true,
+      "status": "NO"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p4_eval/C0",
+      "included": true,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p4_eval/C1",
+      "included": true,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p4_eval/C2",
+      "included": false,
+      "reason": "missing"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p4_eval/C3",
+      "included": false,
+      "reason": "missing"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p4_eval/C4",
+      "included": false,
+      "reason": "missing"
+    }
+  ],
+  "b3_anchor": "/mnt/i/Latent_Style/WEAVE/runs/v6_r2/eval_B3_distill20",
+  "excluded": [
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p2_eval/T5",
+      "included": false,
+      "reason": "missing"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p4_eval/C2",
+      "included": false,
+      "reason": "missing"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p4_eval/C3",
+      "included": false,
+      "reason": "missing"
+    },
+    {
+      "path": "/mnt/i/Latent_Style/WEAVE/runs/v7/p4_eval/C4",
+      "included": false,
+      "reason": "missing"
+    }
+  ]
+}

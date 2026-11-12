@@ -1,0 +1,57 @@
+{
+  "p2_4_positive_strategy_V2": {
+    "d_near2_mean": 0.3346,
+    "d_random_crossartist_mean": 0.7609,
+    "d_far2_mean": 1.3024,
+    "ratio_random_over_near2": 2.274,
+    "nearest2_same_artist_rate": 0.4433,
+    "n_anchors_measured": 97
+  },
+  "p2_5_negative_balance_V2": {
+    "n_negatives_sampled": 1024,
+    "distinct_styles_as_negative": 27,
+    "top10_style_share": 0.7354,
+    "top10": [
+      {
+        "style_id": 132,
+        "count": 156
+      },
+      {
+        "style_id": 86,
+        "count": 102
+      },
+      {
+        "style_id": 41,
+        "count": 94
+      },
+      {
+        "style_id": 121,
+        "count": 88
+      },
+      {
+        "style_id": 10,
+        "count": 82
+      },
+      {
+        "style_id": 12,
+        "count": 64
+      },
+      {
+        "style_id": 111,
+        "count": 59
+      },
+      {
+        "style_id": 106,
+        "count": 51
+      },
+      {
+        "style_id": 59,
+        "count": 30
+      },
+      {
+        "style_id": 109,
+        "count": 27
+      }
+    ]
+  }
+}

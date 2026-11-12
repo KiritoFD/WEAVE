@@ -1,0 +1,186 @@
+{
+  "B0_Baseline": {
+    "model_name": "B0_Baseline",
+    "vae_path": "/root/Workspace/xy/DiT/data/pretrained/sd-vae-ft-ema",
+    "wall_sec": 218.8,
+    "P0_reconstruction": {
+      "LPIPS": 0.0822,
+      "PSNR_dB": 24.57,
+      "SSIM": 0.7484,
+      "L1": 0.0702,
+      "CSD_Style_Fidelity": 0.9322,
+      "latent_std": 4.6463,
+      "gate_lpips_pass": true,
+      "gate_psnr_pass": true,
+      "gate_stability_pass": true,
+      "overall_p0_passed": true
+    },
+    "P1_style_separability": {
+      "probes": {
+        "Linear_Flat": {
+          "Top1_Accuracy": 11.13,
+          "Top5_Accuracy": 35.58,
+          "Macro_F1": 2.82,
+          "Unseen_Artist_Top1": 8.07,
+          "Unseen_Artist_Macro_F1": 1.49
+        },
+        "Linear_Stats": {
+          "Top1_Accuracy": 12.23,
+          "Top5_Accuracy": 46.17,
+          "Macro_F1": 1.58,
+          "Unseen_Artist_Top1": 12.42,
+          "Unseen_Artist_Macro_F1": 2.06
+        },
+        "Shallow_CNN": {
+          "Top1_Accuracy": 17.52,
+          "Top5_Accuracy": 52.55,
+          "Macro_F1": 2.92,
+          "Unseen_Artist_Top1": 14.49,
+          "Unseen_Artist_Macro_F1": 2.04
+        }
+      },
+      "style_pair_auroc": 54.17,
+      "kNN_5_retrieval": 10.4,
+      "intra_class_variance": 0.7496,
+      "effective_rank": 1772.65
+    }
+  },
+  "A0_Recon_KL": {
+    "model_name": "A0_Recon_KL",
+    "vae_path": "/root/Workspace/WEAVE_VAE/runs_vae/A0/final_diffusers_vae",
+    "wall_sec": 215.4,
+    "P0_reconstruction": {
+      "LPIPS": 0.0762,
+      "PSNR_dB": 25.37,
+      "SSIM": 0.7739,
+      "L1": 0.064,
+      "CSD_Style_Fidelity": 0.9136,
+      "latent_std": 4.651,
+      "gate_lpips_pass": true,
+      "gate_psnr_pass": true,
+      "gate_stability_pass": true,
+      "overall_p0_passed": true
+    },
+    "P1_style_separability": {
+      "probes": {
+        "Linear_Flat": {
+          "Top1_Accuracy": 11.13,
+          "Top5_Accuracy": 34.49,
+          "Macro_F1": 3.78,
+          "Unseen_Artist_Top1": 8.07,
+          "Unseen_Artist_Macro_F1": 1.93
+        },
+        "Linear_Stats": {
+          "Top1_Accuracy": 14.96,
+          "Top5_Accuracy": 47.99,
+          "Macro_F1": 2.49,
+          "Unseen_Artist_Top1": 13.25,
+          "Unseen_Artist_Macro_F1": 1.98
+        },
+        "Shallow_CNN": {
+          "Top1_Accuracy": 15.51,
+          "Top5_Accuracy": 53.1,
+          "Macro_F1": 2.56,
+          "Unseen_Artist_Top1": 14.91,
+          "Unseen_Artist_Macro_F1": 1.86
+        }
+      },
+      "style_pair_auroc": 54.02,
+      "kNN_5_retrieval": 10.04,
+      "intra_class_variance": 0.7481,
+      "effective_rank": 1768.13
+    }
+  },
+  "A1_Style_CE": {
+    "model_name": "A1_Style_CE",
+    "vae_path": "/root/Workspace/WEAVE_VAE/runs_vae/A1/final_diffusers_vae",
+    "wall_sec": 216.0,
+    "P0_reconstruction": {
+      "LPIPS": 0.0766,
+      "PSNR_dB": 25.35,
+      "SSIM": 0.7733,
+      "L1": 0.0641,
+      "CSD_Style_Fidelity": 0.9132,
+      "latent_std": 4.4088,
+      "gate_lpips_pass": true,
+      "gate_psnr_pass": true,
+      "gate_stability_pass": true,
+      "overall_p0_passed": true
+    },
+    "P1_style_separability": {
+      "probes": {
+        "Linear_Flat": {
+          "Top1_Accuracy": 12.23,
+          "Top5_Accuracy": 35.4,
+          "Macro_F1": 3.25,
+          "Unseen_Artist_Top1": 9.11,
+          "Unseen_Artist_Macro_F1": 1.9
+        },
+        "Linear_Stats": {
+          "Top1_Accuracy": 11.86,
+          "Top5_Accuracy": 44.34,
+          "Macro_F1": 2.03,
+          "Unseen_Artist_Top1": 14.91,
+          "Unseen_Artist_Macro_F1": 2.34
+        },
+        "Shallow_CNN": {
+          "Top1_Accuracy": 15.69,
+          "Top5_Accuracy": 53.1,
+          "Macro_F1": 2.78,
+          "Unseen_Artist_Top1": 14.29,
+          "Unseen_Artist_Macro_F1": 1.94
+        }
+      },
+      "style_pair_auroc": 53.96,
+      "kNN_5_retrieval": 10.04,
+      "intra_class_variance": 0.7492,
+      "effective_rank": 1780.82
+    }
+  },
+  "A2_MoCo_SupCon": {
+    "model_name": "A2_MoCo_SupCon",
+    "vae_path": "/root/Workspace/WEAVE_VAE/runs_vae/A2/final_diffusers_vae",
+    "wall_sec": 216.6,
+    "P0_reconstruction": {
+      "LPIPS": 0.0763,
+      "PSNR_dB": 25.37,
+      "SSIM": 0.7739,
+      "L1": 0.064,
+      "CSD_Style_Fidelity": 0.9135,
+      "latent_std": 4.6484,
+      "gate_lpips_pass": true,
+      "gate_psnr_pass": true,
+      "gate_stability_pass": true,
+      "overall_p0_passed": true
+    },
+    "P1_style_separability": {
+      "probes": {
+        "Linear_Flat": {
+          "Top1_Accuracy": 11.5,
+          "Top5_Accuracy": 37.77,
+          "Macro_F1": 3.81,
+          "Unseen_Artist_Top1": 7.66,
+          "Unseen_Artist_Macro_F1": 1.67
+        },
+        "Linear_Stats": {
+          "Top1_Accuracy": 10.58,
+          "Top5_Accuracy": 42.52,
+          "Macro_F1": 1.76,
+          "Unseen_Artist_Top1": 9.73,
+          "Unseen_Artist_Macro_F1": 1.63
+        },
+        "Shallow_CNN": {
+          "Top1_Accuracy": 17.52,
+          "Top5_Accuracy": 53.28,
+          "Macro_F1": 2.71,
+          "Unseen_Artist_Top1": 15.11,
+          "Unseen_Artist_Macro_F1": 2.2
+        }
+      },
+      "style_pair_auroc": 54.03,
+      "kNN_5_retrieval": 10.58,
+      "intra_class_variance": 0.7481,
+      "effective_rank": 1768.33
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "questions": {
+    "A": {
+      "answer": "NO — real-distribution targets did not beat T0 at matched content level; negative result recorded",
+      "evidence": [
+        "runs/v7/p2_verdict.json"
+      ]
+    },
+    "B": {
+      "answer": "NO — relative residual parameterization / M2 did not reduce the conditional shortcut or beat baselines; next stage should target style-invariant content representation",
+      "evidence": [
+        "p0_verdict.json",
+        "p3_verdict.json"
+      ]
+    },
+    "C": {
+      "answer": "INCONCLUSIVE — C4 was not run (P2/P3 not both NEW)",
+      "evidence": [
+        "p4_skipped.json"
+      ]
+    }
+  },
+  "stage_verdicts": {
+    "P0": "NO_RELATIVE",
+    "P1": "GO_ENERGY",
+    "P2": "NO_CORRECTOR",
+    "P3": "NO_PREDICTOR",
+    "P4": "INCONCLUSIVE"
+  },
+  "best_overall": {
+    "arm": "T1",
+    "status": "PARTIAL",
+    "dino_s": 0.43614618601898353,
+    "dino_c": 0.755221770554781,
+    "lpips": 0.5072126699487368
+  },
+  "dev_set_statement": "All statistics are paired in-development-set results on tasks_750 (Val200 ⊂ Test750 / Test750 repeated use); no blind-test claim is made."
+}

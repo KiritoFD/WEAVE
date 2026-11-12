@@ -1,0 +1,102 @@
+{
+  "CSD_style_head": {
+    "dim": 768,
+    "overall": {
+      "auroc": 78.02,
+      "ci95_low": 75.79,
+      "ci95_high": 80.25,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.3278,
+      "mean_sim_neg": 0.1661,
+      "rel_margin": 0.3274
+    },
+    "cross_artist": {
+      "auroc": 74.27,
+      "ci95_low": 72.23,
+      "ci95_high": 76.83,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.299,
+      "mean_sim_neg": 0.1661,
+      "rel_margin": 0.2858
+    },
+    "same_genre_hard": {
+      "auroc": 60.33,
+      "ci95_low": 57.36,
+      "ci95_high": 62.94,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.299,
+      "mean_sim_neg": 0.2417,
+      "rel_margin": 0.1061
+    },
+    "knn": {
+      "knn1": 42.77,
+      "knn5": 34.34,
+      "knn10": 30.13
+    },
+    "map10": 49.76
+  },
+  "CSD_content_head": {
+    "dim": 768,
+    "overall": {
+      "auroc": 78.13,
+      "ci95_low": 76.22,
+      "ci95_high": 80.34,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.6005,
+      "mean_sim_neg": 0.4909,
+      "rel_margin": 0.1004
+    },
+    "cross_artist": {
+      "auroc": 74.77,
+      "ci95_low": 72.55,
+      "ci95_high": 77.46,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.583,
+      "mean_sim_neg": 0.4909,
+      "rel_margin": 0.0858
+    },
+    "same_genre_hard": {
+      "auroc": 60.37,
+      "ci95_low": 57.86,
+      "ci95_high": 63.04,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.583,
+      "mean_sim_neg": 0.5462,
+      "rel_margin": 0.0326
+    },
+    "knn": {
+      "knn1": 42.92,
+      "knn5": 34.97,
+      "knn10": 30.61
+    },
+    "map10": 48.63
+  },
+  "SWD_B0_latent_reference": {
+    "dim": "4x64x64 (SWD descriptor)",
+    "overall": {
+      "auroc": 57.39,
+      "ci95_low": 54.35,
+      "ci95_high": 60.43,
+      "n_pairs": 600
+    },
+    "cross_artist": {
+      "auroc": 56.37,
+      "ci95_low": 53.38,
+      "ci95_high": 59.65,
+      "n_pairs": 600
+    },
+    "same_genre_hard": {
+      "auroc": 51.11,
+      "ci95_low": 48.39,
+      "ci95_high": 54.4,
+      "n_pairs": 600
+    }
+  },
+  "verdict": {
+    "passed": true,
+    "csd_cross": 74.27,
+    "csd_hard": 60.33,
+    "swd_cross": 56.37,
+    "swd_hard": 51.11
+  }
+}

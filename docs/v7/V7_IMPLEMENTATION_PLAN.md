@@ -50,7 +50,7 @@ bash sbflow/scripts/run_v7_16h.sh              # full serial, resume-aware
 bash sbflow/scripts/run_v7_16h.sh --dry-run    # compile + unit + input check
 ```
 
-> 注意：`sbflow/scripts/run_v7_16h.sh` 及其 V7 子脚本目前是**规划路径，尚未创建**。本轮只完成方案细化与边界规定，未启动任何 GPU 任务；脚本实现与 dry-run 预检应在正式启动 V7 时单独完成。
+> 注意：`sbflow/scripts/run_v7_16h.sh` 与 `tools/v7/` 子脚本**已于 2026-11-12 实现并通过 dry-run 预检**（编译 + 19/19 CPU 单测 + 冻结输入检查），V7 串行已启动。
 
 任一阶段失败即停止，不允许自动跳到下一阶段；续跑只重跑缺失/失败阶段，已 `.done` 且产物完整的阶段跳过。阶段预算由 `V7_BUDGET_SEC` 控制，默认 57600 秒。
 

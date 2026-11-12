@@ -1,0 +1,17 @@
+{
+  "g_base_median": 0.230136,
+  "g_rank_median": 17.004062,
+  "g_ce_median": 4.942732,
+  "g_anchor_median": 1.22362,
+  "lambda_rank": 0.006767,
+  "lambda_ce": 0.004656,
+  "lambda_anchor": 0.028212,
+  "cos_rank_base_mean": -0.1004,
+  "cos_rank_ce_mean": -0.0868,
+  "cos_rank_anchor_mean": -0.0982,
+  "target_ratios": {
+    "rank": 0.5,
+    "ce": 0.1,
+    "anchor": 0.15
+  }
+}

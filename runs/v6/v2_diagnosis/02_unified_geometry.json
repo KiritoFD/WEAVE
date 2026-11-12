@@ -1,0 +1,378 @@
+{
+  "B0_original": {
+    "n_samples": 2048,
+    "latent_rms": 4.6497,
+    "channel_std": [
+      4.9794,
+      5.6008,
+      3.8594,
+      3.8038
+    ],
+    "overall": {
+      "auroc": 57.39,
+      "ci95_low": 54.35,
+      "ci95_high": 60.43,
+      "n_pairs": 600,
+      "mean_d_pos": 1.1636,
+      "mean_d_neg": 1.3728,
+      "rel_margin": 0.0825,
+      "margin_violation_rate": 0.5583
+    },
+    "cross_artist": {
+      "auroc": 56.37,
+      "ci95_low": 53.38,
+      "ci95_high": 59.65,
+      "n_pairs": 600,
+      "mean_d_pos": 1.1893,
+      "mean_d_neg": 1.3728,
+      "rel_margin": 0.0716,
+      "margin_violation_rate": 0.5567
+    },
+    "same_genre_hard": {
+      "auroc": 51.11,
+      "ci95_low": 48.39,
+      "ci95_high": 54.4,
+      "n_pairs": 600,
+      "mean_d_pos": 1.1893,
+      "mean_d_neg": 1.2125,
+      "rel_margin": 0.0097,
+      "margin_violation_rate": 0.5083
+    },
+    "knn": {
+      "knn1": 10.3,
+      "knn5": 9.01,
+      "knn10": 9.11
+    },
+    "mean_intra_swd": 1.3566,
+    "mean_inter_swd": 1.6093
+  },
+  "A0_recon_kl": {
+    "n_samples": 2048,
+    "latent_rms": 4.6559,
+    "channel_std": [
+      4.9656,
+      5.6215,
+      3.8721,
+      3.795
+    ],
+    "overall": {
+      "auroc": 57.26,
+      "ci95_low": 54.06,
+      "ci95_high": 60.28,
+      "n_pairs": 600,
+      "mean_d_pos": 1.2115,
+      "mean_d_neg": 1.4268,
+      "rel_margin": 0.0816,
+      "margin_violation_rate": 0.5583
+    },
+    "cross_artist": {
+      "auroc": 56.26,
+      "ci95_low": 53.12,
+      "ci95_high": 59.38,
+      "n_pairs": 600,
+      "mean_d_pos": 1.2418,
+      "mean_d_neg": 1.4268,
+      "rel_margin": 0.0693,
+      "margin_violation_rate": 0.5567
+    },
+    "same_genre_hard": {
+      "auroc": 51.09,
+      "ci95_low": 48.41,
+      "ci95_high": 54.3,
+      "n_pairs": 600,
+      "mean_d_pos": 1.2418,
+      "mean_d_neg": 1.2648,
+      "rel_margin": 0.0092,
+      "margin_violation_rate": 0.5067
+    },
+    "knn": {
+      "knn1": 10.35,
+      "knn5": 9.16,
+      "knn10": 8.98
+    },
+    "mean_intra_swd": 1.4015,
+    "mean_inter_swd": 1.6572
+  },
+  "V2_200": {
+    "n_samples": 2048,
+    "latent_rms": 4.6239,
+    "channel_std": [
+      4.9308,
+      5.5841,
+      3.8499,
+      3.7627
+    ],
+    "overall": {
+      "auroc": 57.28,
+      "ci95_low": 54.08,
+      "ci95_high": 60.28,
+      "n_pairs": 600,
+      "mean_d_pos": 1.1914,
+      "mean_d_neg": 1.4035,
+      "rel_margin": 0.0817,
+      "margin_violation_rate": 0.56
+    },
+    "cross_artist": {
+      "auroc": 56.25,
+      "ci95_low": 53.14,
+      "ci95_high": 59.32,
+      "n_pairs": 600,
+      "mean_d_pos": 1.2218,
+      "mean_d_neg": 1.4035,
+      "rel_margin": 0.0692,
+      "margin_violation_rate": 0.5567
+    },
+    "same_genre_hard": {
+      "auroc": 51.1,
+      "ci95_low": 48.41,
+      "ci95_high": 54.29,
+      "n_pairs": 600,
+      "mean_d_pos": 1.2218,
+      "mean_d_neg": 1.2437,
+      "rel_margin": 0.0089,
+      "margin_violation_rate": 0.5133
+    },
+    "knn": {
+      "knn1": 10.3,
+      "knn5": 9.21,
+      "knn10": 8.98
+    },
+    "mean_intra_swd": 1.3768,
+    "mean_inter_swd": 1.6275
+  },
+  "V2_400": {
+    "n_samples": 2048,
+    "latent_rms": 4.5334,
+    "channel_std": [
+      4.8415,
+      5.4675,
+      3.7865,
+      3.6797
+    ],
+    "overall": {
+      "auroc": 57.36,
+      "ci95_low": 54.14,
+      "ci95_high": 60.36,
+      "n_pairs": 600,
+      "mean_d_pos": 1.1297,
+      "mean_d_neg": 1.3322,
+      "rel_margin": 0.0823,
+      "margin_violation_rate": 0.5617
+    },
+    "cross_artist": {
+      "auroc": 56.29,
+      "ci95_low": 53.17,
+      "ci95_high": 59.39,
+      "n_pairs": 600,
+      "mean_d_pos": 1.1592,
+      "mean_d_neg": 1.3322,
+      "rel_margin": 0.0694,
+      "margin_violation_rate": 0.5617
+    },
+    "same_genre_hard": {
+      "auroc": 51.13,
+      "ci95_low": 48.41,
+      "ci95_high": 54.21,
+      "n_pairs": 600,
+      "mean_d_pos": 1.1592,
+      "mean_d_neg": 1.1793,
+      "rel_margin": 0.0086,
+      "margin_violation_rate": 0.5183
+    },
+    "knn": {
+      "knn1": 10.45,
+      "knn5": 9.25,
+      "knn10": 9.11
+    },
+    "mean_intra_swd": 1.303,
+    "mean_inter_swd": 1.5407
+  },
+  "V2_800": {
+    "n_samples": 2048,
+    "latent_rms": 4.2901,
+    "channel_std": [
+      4.5954,
+      5.1478,
+      3.608,
+      3.4596
+    ],
+    "overall": {
+      "auroc": 57.47,
+      "ci95_low": 54.3,
+      "ci95_high": 60.53,
+      "n_pairs": 600,
+      "mean_d_pos": 0.973,
+      "mean_d_neg": 1.1494,
+      "rel_margin": 0.0831,
+      "margin_violation_rate": 0.5733
+    },
+    "cross_artist": {
+      "auroc": 56.45,
+      "ci95_low": 53.36,
+      "ci95_high": 59.69,
+      "n_pairs": 600,
+      "mean_d_pos": 0.999,
+      "mean_d_neg": 1.1494,
+      "rel_margin": 0.07,
+      "margin_violation_rate": 0.565
+    },
+    "same_genre_hard": {
+      "auroc": 51.25,
+      "ci95_low": 48.5,
+      "ci95_high": 54.4,
+      "n_pairs": 600,
+      "mean_d_pos": 0.999,
+      "mean_d_neg": 1.015,
+      "rel_margin": 0.0079,
+      "margin_violation_rate": 0.5167
+    },
+    "knn": {
+      "knn1": 10.16,
+      "knn5": 9.4,
+      "knn10": 8.94
+    },
+    "mean_intra_swd": 1.1168,
+    "mean_inter_swd": 1.3234
+  },
+  "V2_1200": {
+    "n_samples": 2048,
+    "latent_rms": 4.0501,
+    "channel_std": [
+      4.347,
+      4.8221,
+      3.422,
+      3.2452
+    ],
+    "overall": {
+      "auroc": 57.61,
+      "ci95_low": 54.45,
+      "ci95_high": 60.76,
+      "n_pairs": 600,
+      "mean_d_pos": 0.8305,
+      "mean_d_neg": 0.9822,
+      "rel_margin": 0.0837,
+      "margin_violation_rate": 0.5683
+    },
+    "cross_artist": {
+      "auroc": 56.58,
+      "ci95_low": 53.54,
+      "ci95_high": 59.97,
+      "n_pairs": 600,
+      "mean_d_pos": 0.8532,
+      "mean_d_neg": 0.9822,
+      "rel_margin": 0.0703,
+      "margin_violation_rate": 0.56
+    },
+    "same_genre_hard": {
+      "auroc": 51.32,
+      "ci95_low": 48.45,
+      "ci95_high": 54.51,
+      "n_pairs": 600,
+      "mean_d_pos": 0.8532,
+      "mean_d_neg": 0.8653,
+      "rel_margin": 0.007,
+      "margin_violation_rate": 0.515
+    },
+    "knn": {
+      "knn1": 10.3,
+      "knn5": 9.4,
+      "knn10": 8.92
+    },
+    "mean_intra_swd": 0.9491,
+    "mean_inter_swd": 1.1286
+  },
+  "V2_1600": {
+    "n_samples": 2048,
+    "latent_rms": 3.8622,
+    "channel_std": [
+      4.1469,
+      4.5597,
+      3.2681,
+      3.0766
+    ],
+    "overall": {
+      "auroc": 57.73,
+      "ci95_low": 54.58,
+      "ci95_high": 60.91,
+      "n_pairs": 600,
+      "mean_d_pos": 0.7266,
+      "mean_d_neg": 0.8599,
+      "rel_margin": 0.084,
+      "margin_violation_rate": 0.5667
+    },
+    "cross_artist": {
+      "auroc": 56.69,
+      "ci95_low": 53.63,
+      "ci95_high": 60.13,
+      "n_pairs": 600,
+      "mean_d_pos": 0.7464,
+      "mean_d_neg": 0.8599,
+      "rel_margin": 0.0706,
+      "margin_violation_rate": 0.5617
+    },
+    "same_genre_hard": {
+      "auroc": 51.41,
+      "ci95_low": 48.47,
+      "ci95_high": 54.7,
+      "n_pairs": 600,
+      "mean_d_pos": 0.7464,
+      "mean_d_neg": 0.756,
+      "rel_margin": 0.0064,
+      "margin_violation_rate": 0.51
+    },
+    "knn": {
+      "knn1": 10.3,
+      "knn5": 9.46,
+      "knn10": 8.83
+    },
+    "mean_intra_swd": 0.8274,
+    "mean_inter_swd": 0.9867
+  },
+  "V2_1800": {
+    "n_samples": 2048,
+    "latent_rms": 3.7919,
+    "channel_std": [
+      4.0697,
+      4.4597,
+      3.2086,
+      3.0132
+    ],
+    "overall": {
+      "auroc": 57.77,
+      "ci95_low": 54.63,
+      "ci95_high": 60.95,
+      "n_pairs": 600,
+      "mean_d_pos": 0.6891,
+      "mean_d_neg": 0.8158,
+      "rel_margin": 0.0842,
+      "margin_violation_rate": 0.57
+    },
+    "cross_artist": {
+      "auroc": 56.74,
+      "ci95_low": 53.64,
+      "ci95_high": 60.19,
+      "n_pairs": 600,
+      "mean_d_pos": 0.708,
+      "mean_d_neg": 0.8158,
+      "rel_margin": 0.0707,
+      "margin_violation_rate": 0.5683
+    },
+    "same_genre_hard": {
+      "auroc": 51.41,
+      "ci95_low": 48.46,
+      "ci95_high": 54.7,
+      "n_pairs": 600,
+      "mean_d_pos": 0.708,
+      "mean_d_neg": 0.7167,
+      "rel_margin": 0.0061,
+      "margin_violation_rate": 0.5133
+    },
+    "knn": {
+      "knn1": 9.86,
+      "knn5": 9.66,
+      "knn10": 8.75
+    },
+    "mean_intra_swd": 0.7838,
+    "mean_inter_swd": 0.9358
+  }
+}

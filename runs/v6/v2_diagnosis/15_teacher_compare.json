@@ -1,0 +1,77 @@
+{
+  "CSD_style": {
+    "dim": 768,
+    "overall": {
+      "auroc": 78.02,
+      "ci95_low": 75.79,
+      "ci95_high": 80.25,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.3278,
+      "mean_sim_neg": 0.1661,
+      "rel_margin": 0.3274
+    },
+    "cross_artist": {
+      "auroc": 74.27,
+      "ci95_low": 72.23,
+      "ci95_high": 76.83,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.299,
+      "mean_sim_neg": 0.1661,
+      "rel_margin": 0.2858
+    },
+    "same_genre_hard": {
+      "auroc": 60.33,
+      "ci95_low": 57.36,
+      "ci95_high": 62.94,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.299,
+      "mean_sim_neg": 0.2417,
+      "rel_margin": 0.1061
+    },
+    "knn": {
+      "knn1": 42.77,
+      "knn5": 34.34,
+      "knn10": 30.13
+    },
+    "map10": 49.76
+  },
+  "ALADIN_ViT": {
+    "dim": 256,
+    "overall": {
+      "auroc": 69.45,
+      "ci95_low": 67.29,
+      "ci95_high": 72.17,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.528,
+      "mean_sim_neg": 0.399,
+      "rel_margin": 0.1392
+    },
+    "cross_artist": {
+      "auroc": 66.06,
+      "ci95_low": 63.94,
+      "ci95_high": 68.81,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.5014,
+      "mean_sim_neg": 0.399,
+      "rel_margin": 0.1138
+    },
+    "same_genre_hard": {
+      "auroc": 53.61,
+      "ci95_low": 51.41,
+      "ci95_high": 56.25,
+      "n_pairs": 800,
+      "mean_sim_pos": 0.5014,
+      "mean_sim_neg": 0.4815,
+      "rel_margin": 0.0202
+    },
+    "knn": {
+      "knn1": 28.47,
+      "knn5": 22.22,
+      "knn10": 19.39
+    },
+    "map10": 38.71
+  },
+  "geometry_agreement": {
+    "spearman_csd_vs_aladin": 0.4915
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "generated_by": "tools/v7/p1_energy.py",
+  "wall_sec": 33.7,
+  "val_per_style": 100,
+  "s2_per_style": 1500,
+  "pools": {
+    "sd": "/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16",
+    "a0": "/mnt/i/Latent_Style/WEAVE/pseudo_gt_24h/orig_mean_fp16_a0"
+  },
+  "audits": [
+    {
+      "kind": "S1",
+      "pool": "sd",
+      "auroc_mean": 0.722525,
+      "auroc_per_style": {
+        "Early_Renaissance": 0.759475,
+        "Impressionism": 0.8341000000000001,
+        "Minimalism": 0.43542499999999995,
+        "Rococo": 0.7991,
+        "Ukiyo_e": 0.784525
+      },
+      "intra_mean": 2.1826431547999383,
+      "inter_mean_min": 1.8097496808171272,
+      "margin_mean": -0.37289347398281114,
+      "margin_median": -0.008051574230194092,
+      "n_val": 500,
+      "separable": true
+    },
+    {
+      "kind": "S2",
+      "pool": "sd",
+      "auroc_mean": 0.983225,
+      "auroc_per_style": {
+        "Early_Renaissance": 0.981025,
+        "Impressionism": 0.988125,
+        "Minimalism": 0.999,
+        "Rococo": 0.9531000000000001,
+        "Ukiyo_e": 0.994875
+      },
+      "intra_mean": 762.0083111572266,
+      "inter_mean_min": 2787.9012614746093,
+      "margin_mean": 2025.8929503173827,
+      "margin_median": 1608.3209075927734,
+      "n_val": 500,
+      "separable": true
+    },
+    {
+      "kind": "S1",
+      "pool": "a0",
+      "auroc_mean": 0.7246349999999999,
+      "auroc_per_style": {
+        "Early_Renaissance": 0.7653,
+        "Impressionism": 0.81455,
+        "Minimalism": 0.45899999999999996,
+        "Rococo": 0.805725,
+        "Ukiyo_e": 0.7786
+      },
+      "intra_mean": 2.125589336514473,
+      "inter_mean_min": 1.8038115546107292,
+      "margin_mean": -0.32177778190374373,
+      "margin_median": 0.0038298964500427246,
+      "n_val": 500,
+      "separable": true
+    },
+    {
+      "kind": "S2",
+      "pool": "a0",
+      "auroc_mean": 0.9823299999999999,
+      "auroc_per_style": {
+        "Early_Renaissance": 0.980475,
+        "Impressionism": 0.9883,
+        "Minimalism": 0.9992,
+        "Rococo": 0.95065,
+        "Ukiyo_e": 0.993025
+      },
+      "intra_mean": 757.1012660217285,
+      "inter_mean_min": 2804.882660949707,
+      "margin_mean": 2047.7813949279785,
+      "margin_median": 1594.9429931640625,
+      "n_val": 500,
+      "separable": true
+    }
+  ],
+  "note": "A0 pools are对照 statistics only; optimization on generated SD latents may only use *_sd energies."
+}

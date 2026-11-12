@@ -1138,12 +1138,8 @@
       "verdict": "B4 sits ON the oracle's own strength-quality Pareto line (residual < 3 pts): the student reproduces the teacher's trade-off, so the gap to the 1-step oracle is a CONTENT-COST choice, not a direction failure."
     },
     "p1_status": {
-      "status": "blocked",
-      "missing": [
-        "runs/v6/Q2a_embed_style/Q2a_embed_style.pt",
-        "runs/v6_next/probes/r1_r1.pt",
-        "runs/v6/P1_B4_distill50/P1_B4_distill50.pt"
-      ],
+      "status": "ready",
+      "missing": [],
       "would_measure": [
         "cos(dz_B, dz_O)",
         "RMS(dz_B)/RMS(dz_O)",
@@ -1180,6 +1176,129 @@
           "near_not_crossed": 0.07
         }
       }
+    },
+    "p1_geometry": {
+      "n_tasks": 100,
+      "alignment": {
+        "mean_cos": 0.6457,
+        "median_cos": 0.6779,
+        "p10_cos": 0.494,
+        "frac_positive": 1.0,
+        "mean_rms_b4": 0.1542,
+        "mean_rms_oracle": 0.25,
+        "mean_rms_ratio": 0.617
+      },
+      "gradient_stability": {
+        "eps_0.05": {
+          "mean_cos": 0.9963,
+          "median_cos": 0.9964,
+          "p10_cos": 0.995
+        },
+        "eps_0.1": {
+          "mean_cos": 0.9846,
+          "median_cos": 0.985,
+          "p10_cos": 0.9791
+        },
+        "eps_0.25": {
+          "mean_cos": 0.8818,
+          "median_cos": 0.8912,
+          "p10_cos": 0.8263
+        }
+      },
+      "decoded_variants": {
+        "z0": {
+          "top1": 0.06,
+          "margin": -0.2419,
+          "dino_c": 0.8858,
+          "lpips": 0.3711
+        },
+        "zb": {
+          "top1": 0.21,
+          "margin": -0.1043,
+          "dino_c": 0.8085,
+          "lpips": 0.4608
+        },
+        "zo_0.25": {
+          "top1": 0.09,
+          "margin": -0.1852,
+          "dino_c": 0.8662,
+          "lpips": 0.3975
+        },
+        "zo_0.50": {
+          "top1": 0.21,
+          "margin": -0.1178,
+          "dino_c": 0.8325,
+          "lpips": 0.438
+        },
+        "zo_0.75": {
+          "top1": 0.3,
+          "margin": -0.07,
+          "dino_c": 0.7862,
+          "lpips": 0.4846
+        },
+        "zo_1.00": {
+          "top1": 0.36,
+          "margin": -0.0474,
+          "dino_c": 0.7313,
+          "lpips": 0.5331
+        }
+      },
+      "equal_content_matched": {
+        "b4_dino_c": 0.8085,
+        "b4_top1": 0.21,
+        "closest_alpha_variant": "zo_0.75",
+        "closest_alpha_top1": 0.3,
+        "matched_oracle_top1": 0.2567,
+        "gap_b4_minus_oracle": -0.0467
+      },
+      "per_target": {
+        "Early_Renaissance": {
+          "n": 20,
+          "cos_align": 0.5266,
+          "rms_ratio": 0.4968,
+          "b4_top1": 0.1,
+          "oracle_1_top1": 0.15,
+          "b4_dino_c": 0.848,
+          "oracle_1_dino_c": 0.747
+        },
+        "Impressionism": {
+          "n": 20,
+          "cos_align": 0.6669,
+          "rms_ratio": 0.6334,
+          "b4_top1": 0.35,
+          "oracle_1_top1": 0.65,
+          "b4_dino_c": 0.8303,
+          "oracle_1_dino_c": 0.7419
+        },
+        "Minimalism": {
+          "n": 20,
+          "cos_align": 0.7195,
+          "rms_ratio": 0.6993,
+          "b4_top1": 0.4,
+          "oracle_1_top1": 0.6,
+          "b4_dino_c": 0.803,
+          "oracle_1_dino_c": 0.7339
+        },
+        "Rococo": {
+          "n": 20,
+          "cos_align": 0.6368,
+          "rms_ratio": 0.6168,
+          "b4_top1": 0.15,
+          "oracle_1_top1": 0.35,
+          "b4_dino_c": 0.7997,
+          "oracle_1_dino_c": 0.7513
+        },
+        "Ukiyo_e": {
+          "n": 20,
+          "cos_align": 0.6787,
+          "rms_ratio": 0.6385,
+          "b4_top1": 0.05,
+          "oracle_1_top1": 0.05,
+          "b4_dino_c": 0.7617,
+          "oracle_1_dino_c": 0.6823
+        }
+      },
+      "verdict": "B4 IS MAINLY SHORTENING ORACLE STEP SIZE AND SITS ON THE SAME PARETO FRONTIER: cos(dz_B, dz_O)=+0.646 is high, RMS ratio=0.62, and at matched DINO-C (0.808), B4 Top-1 (21.0%) matches Oracle (25.7%). Direction is correct. TEMPORARILY DO NOT CHANGE VAE; existing supervision has strong amortization headroom."
     }
   }
 }

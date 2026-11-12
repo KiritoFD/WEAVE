@@ -1,0 +1,15 @@
+{
+  "generator": "Q2a_embed_style + R1 one-step rank_direction (Oracle1)",
+  "latents": "oracle_latents_scaled.pt (all 750 tasks, WEAVE scaled space)",
+  "decoders": [
+    "sdvae",
+    "old_s10",
+    "c0",
+    "c1"
+  ],
+  "tasks": 750,
+  "cross": 600,
+  "same": 150,
+  "image_format": "512x512 RGB PNG, uint8",
+  "note": "All decoder variants share IDENTICAL generator latents; only D differs."
+}

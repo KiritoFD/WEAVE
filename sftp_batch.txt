@@ -1,0 +1,3 @@
+put deliver/checkpoints/runs/sd0_s10/sd0_s10_best_recon.pt I:/Latent_Style/WEAVE/deliver/sd0_s10_profile/sd0_s10_best_recon.pt
+put deliver/checkpoints/runs/sd0_s10/sd0_s10_best_overall.pt I:/Latent_Style/WEAVE/deliver/sd0_s10_profile/sd0_s10_best_overall.pt
+quit

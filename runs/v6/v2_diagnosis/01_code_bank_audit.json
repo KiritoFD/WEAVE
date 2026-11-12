@@ -1,0 +1,2476 @@
+{
+  "dataset_bank": {
+    "num_styles": 136,
+    "train_images": 100207,
+    "val_images": 2048,
+    "bank_total_refs": 1556,
+    "bank_total_expected_136x12": 1632,
+    "bank_deficit": 76,
+    "overall_valid_cross_artist_positive_rate": 0.996,
+    "total_anchors": 100207,
+    "valid_cross_artist_anchors": 99803,
+    "single_artist_styles": [
+      "Analytical\u00a0Realism",
+      "Environmental (Land) Art",
+      "Gothic",
+      "Joseon Dynasty",
+      "Light and Space",
+      "Mechanistic Cubism",
+      "Miserablism",
+      "Nas-Taliq",
+      "Native Art",
+      "Neo-Rococo",
+      "New Casualism",
+      "New European Painting",
+      "Perceptism",
+      "Renaissance",
+      "Spectralism",
+      "Synchromism",
+      "Yamato-e"
+    ],
+    "single_artist_style_count": 17,
+    "scarce_styles_under_12": {
+      "Cartographic Art": 10,
+      "Environmental (Land) Art": 1,
+      "Ilkhanid": 2,
+      "Joseon Dynasty": 10,
+      "Kinetic Art": 3,
+      "Light and Space": 11,
+      "Mail Art": 10,
+      "Miserablism": 8,
+      "Nas-Taliq": 9,
+      "Perceptism": 6,
+      "Rayonism": 6,
+      "Renaissance": 1,
+      "Spectralism": 5,
+      "Synchromism": 10
+    },
+    "scarce_style_count": 14,
+    "per_style": {
+      "Abstract Art": {
+        "style_id": 0,
+        "n_train_samples": 958,
+        "n_artists": 110,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 958,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "2116": 132,
+          "1018": 56,
+          "1602": 46,
+          "2128": 38,
+          "2008": 30,
+          "103": 26,
+          "466": 20,
+          "1081": 20,
+          "750": 19,
+          "2171": 19
+        }
+      },
+      "Abstract Expressionism": {
+        "style_id": 1,
+        "n_train_samples": 2032,
+        "n_artists": 151,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 2032,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1791": 197,
+          "449": 71,
+          "1376": 67,
+          "1070": 60,
+          "852": 58,
+          "735": 56,
+          "416": 48,
+          "880": 41,
+          "1736": 39,
+          "1727": 37
+        }
+      },
+      "Academicism": {
+        "style_id": 2,
+        "n_train_samples": 943,
+        "n_artists": 53,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 943,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "675": 97,
+          "588": 79,
+          "1048": 72,
+          "894": 57,
+          "111": 56,
+          "1693": 47,
+          "91": 42,
+          "723": 37,
+          "699": 33,
+          "117": 31
+        }
+      },
+      "Action painting": {
+        "style_id": 3,
+        "n_train_samples": 97,
+        "n_artists": 8,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 97,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "983": 41,
+          "662": 34,
+          "1522": 6,
+          "311": 5,
+          "1197": 5,
+          "852": 4,
+          "8": 1,
+          "192": 1
+        }
+      },
+      "American Realism": {
+        "style_id": 4,
+        "n_train_samples": 274,
+        "n_artists": 9,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 274,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1749": 245,
+          "718": 22,
+          "1917": 1,
+          "1864": 1,
+          "412": 1,
+          "1822": 1,
+          "179": 1,
+          "2162": 1,
+          "1456": 1
+        }
+      },
+      "Analytical Cubism": {
+        "style_id": 5,
+        "n_train_samples": 86,
+        "n_artists": 5,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 86,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "738": 39,
+          "1575": 25,
+          "1155": 14,
+          "1040": 5,
+          "89": 3
+        }
+      },
+      "Analytical\u00a0Realism": {
+        "style_id": 6,
+        "n_train_samples": 87,
+        "n_artists": 1,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1615": 87
+        }
+      },
+      "Art Brut": {
+        "style_id": 7,
+        "n_train_samples": 195,
+        "n_artists": 11,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 195,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "2109": 41,
+          "1031": 36,
+          "922": 28,
+          "1299": 25,
+          "886": 22,
+          "712": 20,
+          "287": 10,
+          "232": 6,
+          "715": 5,
+          "1231": 1
+        }
+      },
+      "Art Deco": {
+        "style_id": 8,
+        "n_train_samples": 636,
+        "n_artists": 16,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 636,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "575": 359,
+          "1884": 66,
+          "2185": 48,
+          "1121": 36,
+          "1703": 27,
+          "1032": 25,
+          "345": 16,
+          "1716": 14,
+          "478": 13,
+          "1139": 11
+        }
+      },
+      "Art Informel": {
+        "style_id": 9,
+        "n_train_samples": 1243,
+        "n_artists": 98,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 1243,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1398": 63,
+          "587": 61,
+          "584": 54,
+          "188": 37,
+          "1315": 37,
+          "574": 31,
+          "126": 30,
+          "1509": 29,
+          "237": 26,
+          "1370": 26
+        }
+      },
+      "Art Nouveau (Modern)": {
+        "style_id": 10,
+        "n_train_samples": 4802,
+        "n_artists": 153,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 4802,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1704": 473,
+          "230": 238,
+          "969": 235,
+          "1984": 212,
+          "1295": 194,
+          "1211": 165,
+          "303": 161,
+          "1499": 144,
+          "883": 129,
+          "1816": 129
+        }
+      },
+      "Automatic Painting": {
+        "style_id": 11,
+        "n_train_samples": 35,
+        "n_artists": 9,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 35,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "486": 10,
+          "1604": 8,
+          "156": 6,
+          "2156": 3,
+          "1364": 3,
+          "1069": 2,
+          "1295": 1,
+          "1025": 1,
+          "1369": 1
+        }
+      },
+      "Baroque": {
+        "style_id": 12,
+        "n_train_samples": 4316,
+        "n_artists": 100,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 4316,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1711": 494,
+          "1626": 369,
+          "255": 174,
+          "659": 173,
+          "180": 168,
+          "985": 146,
+          "815": 132,
+          "479": 130,
+          "1012": 124,
+          "1309": 123
+        }
+      },
+      "Biedermeier": {
+        "style_id": 13,
+        "n_train_samples": 132,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 132,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "614": 79,
+          "338": 52,
+          "2272": 1
+        }
+      },
+      "Byzantine": {
+        "style_id": 14,
+        "n_train_samples": 75,
+        "n_artists": 4,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 75,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "162": 57,
+          "397": 16,
+          "1499": 1,
+          "1441": 1
+        }
+      },
+      "Cartographic Art": {
+        "style_id": 15,
+        "n_train_samples": 10,
+        "n_artists": 5,
+        "bank_refs_planned": 10,
+        "anchors_with_valid_cross_artist_pos": 10,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "135": 4,
+          "497": 2,
+          "1573": 2,
+          "1347": 1,
+          "949": 1
+        }
+      },
+      "Classicism": {
+        "style_id": 16,
+        "n_train_samples": 218,
+        "n_artists": 6,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 218,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1507": 114,
+          "402": 68,
+          "667": 15,
+          "994": 14,
+          "1807": 6,
+          "1941": 1
+        }
+      },
+      "Cloisonnism": {
+        "style_id": 17,
+        "n_train_samples": 170,
+        "n_artists": 13,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 170,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1597": 101,
+          "613": 18,
+          "1607": 16,
+          "735": 11,
+          "740": 6,
+          "2092": 4,
+          "518": 3,
+          "551": 3,
+          "2052": 3,
+          "1152": 2
+        }
+      },
+      "Color Field Painting": {
+        "style_id": 18,
+        "n_train_samples": 897,
+        "n_artists": 67,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 897,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "715": 127,
+          "1375": 98,
+          "1466": 79,
+          "1982": 46,
+          "252": 44,
+          "1791": 38,
+          "981": 29,
+          "1264": 27,
+          "1102": 26,
+          "868": 25
+        }
+      },
+      "Conceptual Art": {
+        "style_id": 19,
+        "n_train_samples": 124,
+        "n_artists": 33,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 124,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1267": 17,
+          "1549": 12,
+          "135": 10,
+          "256": 9,
+          "1725": 8,
+          "949": 8,
+          "497": 7,
+          "1344": 7,
+          "1609": 5,
+          "2285": 5
+        }
+      },
+      "Concretism": {
+        "style_id": 20,
+        "n_train_samples": 565,
+        "n_artists": 45,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 565,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1406": 61,
+          "1735": 37,
+          "1349": 35,
+          "2070": 28,
+          "353": 28,
+          "1260": 23,
+          "1574": 20,
+          "895": 20,
+          "686": 18,
+          "975": 18
+        }
+      },
+      "Constructivism": {
+        "style_id": 21,
+        "n_train_samples": 262,
+        "n_artists": 35,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 262,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "543": 54,
+          "1972": 27,
+          "1247": 26,
+          "571": 16,
+          "1238": 14,
+          "1074": 11,
+          "1331": 10,
+          "1140": 10,
+          "1844": 10,
+          "620": 8
+        }
+      },
+      "Contemporary Realism": {
+        "style_id": 22,
+        "n_train_samples": 302,
+        "n_artists": 16,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 302,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1110": 75,
+          "1490": 57,
+          "241": 37,
+          "2217": 26,
+          "2196": 19,
+          "604": 19,
+          "767": 16,
+          "1313": 14,
+          "2203": 13,
+          "1610": 9
+        }
+      },
+      "Costumbrismo": {
+        "style_id": 23,
+        "n_train_samples": 19,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 19,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1342": 11,
+          "1271": 5,
+          "1073": 3
+        }
+      },
+      "Cubism": {
+        "style_id": 24,
+        "n_train_samples": 1707,
+        "n_artists": 165,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 1707,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "620": 138,
+          "1155": 67,
+          "1343": 56,
+          "1575": 53,
+          "1593": 52,
+          "1297": 49,
+          "663": 40,
+          "747": 39,
+          "1353": 36,
+          "1682": 32
+        }
+      },
+      "Cubo-Expressionism": {
+        "style_id": 25,
+        "n_train_samples": 21,
+        "n_artists": 9,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 21,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "865": 7,
+          "735": 5,
+          "953": 2,
+          "1713": 2,
+          "521": 1,
+          "1785": 1,
+          "799": 1,
+          "1672": 1,
+          "823": 1
+        }
+      },
+      "Cubo-Futurism": {
+        "style_id": 26,
+        "n_train_samples": 137,
+        "n_artists": 13,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 137,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "106": 32,
+          "1538": 26,
+          "462": 24,
+          "203": 17,
+          "1487": 10,
+          "1541": 9,
+          "1174": 5,
+          "799": 5,
+          "823": 3,
+          "543": 2
+        }
+      },
+      "Dada": {
+        "style_id": 27,
+        "n_train_samples": 202,
+        "n_artists": 33,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 202,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1226": 31,
+          "1407": 24,
+          "1025": 17,
+          "1247": 13,
+          "1338": 12,
+          "647": 11,
+          "1878": 10,
+          "855": 10,
+          "845": 10,
+          "1171": 8
+        }
+      },
+      "Divisionism": {
+        "style_id": 28,
+        "n_train_samples": 328,
+        "n_artists": 21,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 328,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "879": 239,
+          "2039": 24,
+          "1040": 17,
+          "358": 10,
+          "340": 6,
+          "448": 6,
+          "880": 3,
+          "647": 3,
+          "1371": 3,
+          "763": 2
+        }
+      },
+      "Early Renaissance": {
+        "style_id": 29,
+        "n_train_samples": 1328,
+        "n_artists": 25,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 1328,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "641": 164,
+          "271": 142,
+          "1798": 124,
+          "487": 107,
+          "628": 98,
+          "341": 88,
+          "1638": 85,
+          "157": 75,
+          "1579": 66,
+          "779": 58
+        }
+      },
+      "Environmental (Land) Art": {
+        "style_id": 30,
+        "n_train_samples": 1,
+        "n_artists": 1,
+        "bank_refs_planned": 1,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "734": 1
+        }
+      },
+      "Existential Art": {
+        "style_id": 31,
+        "n_train_samples": 16,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 16,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "758": 10,
+          "1033": 6
+        }
+      },
+      "Expressionism": {
+        "style_id": 32,
+        "n_train_samples": 6868,
+        "n_artists": 339,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 6868,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "573": 369,
+          "147": 334,
+          "1385": 258,
+          "1313": 224,
+          "880": 204,
+          "2185": 204,
+          "540": 203,
+          "523": 159,
+          "1089": 106,
+          "1602": 96
+        }
+      },
+      "Fantastic Realism": {
+        "style_id": 33,
+        "n_train_samples": 29,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 29,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1611": 17,
+          "835": 12
+        }
+      },
+      "Fauvism": {
+        "style_id": 34,
+        "n_train_samples": 718,
+        "n_artists": 56,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 718,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "940": 53,
+          "735": 43,
+          "880": 41,
+          "1682": 37,
+          "1018": 30,
+          "364": 30,
+          "1403": 28,
+          "1300": 26,
+          "1412": 25,
+          "153": 24
+        }
+      },
+      "Feminist Art": {
+        "style_id": 35,
+        "n_train_samples": 18,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 18,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1420": 9,
+          "594": 5,
+          "1613": 4
+        }
+      },
+      "Figurative Expressionism": {
+        "style_id": 36,
+        "n_train_samples": 18,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 18,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "735": 12,
+          "247": 6
+        }
+      },
+      "Futurism": {
+        "style_id": 37,
+        "n_train_samples": 287,
+        "n_artists": 23,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 287,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "763": 56,
+          "462": 47,
+          "2039": 35,
+          "768": 29,
+          "1371": 28,
+          "1146": 17,
+          "756": 17,
+          "340": 13,
+          "1319": 6,
+          "704": 5
+        }
+      },
+      "Gongbi": {
+        "style_id": 38,
+        "n_train_samples": 38,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 38,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1686": 25,
+          "560": 13
+        }
+      },
+      "Gothic": {
+        "style_id": 39,
+        "n_train_samples": 12,
+        "n_artists": 1,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "254": 12
+        }
+      },
+      "Hard Edge Painting": {
+        "style_id": 40,
+        "n_train_samples": 367,
+        "n_artists": 35,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 367,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "715": 42,
+          "1140": 33,
+          "2059": 31,
+          "819": 24,
+          "1244": 19,
+          "1052": 18,
+          "83": 18,
+          "814": 16,
+          "1292": 15,
+          "678": 13
+        }
+      },
+      "High Renaissance": {
+        "style_id": 41,
+        "n_train_samples": 1284,
+        "n_artists": 27,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 1284,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1702": 179,
+          "1272": 148,
+          "1435": 137,
+          "2012": 129,
+          "1657": 113,
+          "1291": 105,
+          "157": 63,
+          "1310": 57,
+          "2095": 51,
+          "773": 49
+        }
+      },
+      "Hyper-Realism": {
+        "style_id": 42,
+        "n_train_samples": 47,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 47,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1056": 29,
+          "404": 17,
+          "1576": 1
+        }
+      },
+      "Ilkhanid": {
+        "style_id": 43,
+        "n_train_samples": 2,
+        "n_artists": 2,
+        "bank_refs_planned": 2,
+        "anchors_with_valid_cross_artist_pos": 2,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "219": 1,
+          "62": 1
+        }
+      },
+      "Impressionism": {
+        "style_id": 44,
+        "n_train_samples": 10422,
+        "n_artists": 318,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 10422,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "403": 486,
+          "382": 481,
+          "1646": 478,
+          "510": 473,
+          "128": 441,
+          "583": 435,
+          "327": 433,
+          "2140": 296,
+          "1216": 259,
+          "1386": 255
+        }
+      },
+      "Indian Space painting": {
+        "style_id": 45,
+        "n_train_samples": 24,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 24,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1863": 17,
+          "1624": 7
+        }
+      },
+      "Ink and wash painting": {
+        "style_id": 46,
+        "n_train_samples": 538,
+        "n_artists": 28,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 538,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1684": 88,
+          "1826": 77,
+          "482": 62,
+          "2160": 46,
+          "2164": 44,
+          "2174": 22,
+          "840": 20,
+          "1809": 19,
+          "245": 18,
+          "357": 18
+        }
+      },
+      "International Gothic": {
+        "style_id": 47,
+        "n_train_samples": 213,
+        "n_artists": 5,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 213,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1286": 147,
+          "716": 43,
+          "1833": 10,
+          "1424": 8,
+          "1661": 5
+        }
+      },
+      "Intimism": {
+        "style_id": 48,
+        "n_train_samples": 105,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 105,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1640": 55,
+          "518": 36,
+          "613": 14
+        }
+      },
+      "Japonism": {
+        "style_id": 49,
+        "n_train_samples": 116,
+        "n_artists": 21,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 116,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "2140": 18,
+          "1640": 18,
+          "1386": 15,
+          "1704": 9,
+          "1597": 6,
+          "518": 5,
+          "2092": 5,
+          "1004": 5,
+          "1005": 4,
+          "573": 4
+        }
+      },
+      "Joseon Dynasty": {
+        "style_id": 50,
+        "n_train_samples": 10,
+        "n_artists": 1,
+        "bank_refs_planned": 10,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1572": 10
+        }
+      },
+      "Kinetic Art": {
+        "style_id": 51,
+        "n_train_samples": 3,
+        "n_artists": 3,
+        "bank_refs_planned": 3,
+        "anchors_with_valid_cross_artist_pos": 3,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1247": 1,
+          "809": 1,
+          "314": 1
+        }
+      },
+      "Kitsch": {
+        "style_id": 52,
+        "n_train_samples": 46,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 46,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1998": 26,
+          "647": 19,
+          "1786": 1
+        }
+      },
+      "Lettrism": {
+        "style_id": 53,
+        "n_train_samples": 32,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 32,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "959": 15,
+          "135": 12,
+          "1450": 5
+        }
+      },
+      "Light and Space": {
+        "style_id": 54,
+        "n_train_samples": 11,
+        "n_artists": 1,
+        "bank_refs_planned": 11,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1524": 11
+        }
+      },
+      "Luminism": {
+        "style_id": 55,
+        "n_train_samples": 378,
+        "n_artists": 6,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 378,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "86": 280,
+          "465": 32,
+          "1382": 20,
+          "674": 18,
+          "1097": 15,
+          "552": 13
+        }
+      },
+      "Lyrical Abstraction": {
+        "style_id": 56,
+        "n_train_samples": 653,
+        "n_artists": 43,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 653,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "868": 64,
+          "1791": 54,
+          "1543": 38,
+          "829": 35,
+          "1715": 32,
+          "683": 32,
+          "1197": 30,
+          "787": 27,
+          "1039": 25,
+          "1030": 22
+        }
+      },
+      "Magic Realism": {
+        "style_id": 57,
+        "n_train_samples": 973,
+        "n_artists": 23,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 973,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "600": 411,
+          "2031": 114,
+          "613": 86,
+          "570": 76,
+          "968": 45,
+          "2194": 43,
+          "770": 42,
+          "388": 30,
+          "399": 24,
+          "334": 19
+        }
+      },
+      "Mail Art": {
+        "style_id": 58,
+        "n_train_samples": 10,
+        "n_artists": 3,
+        "bank_refs_planned": 10,
+        "anchors_with_valid_cross_artist_pos": 10,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1420": 5,
+          "1549": 3,
+          "481": 2
+        }
+      },
+      "Mannerism (Late Renaissance)": {
+        "style_id": 59,
+        "n_train_samples": 1312,
+        "n_artists": 28,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 1312,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "2011": 229,
+          "1580": 179,
+          "542": 164,
+          "2012": 116,
+          "991": 100,
+          "76": 77,
+          "771": 71,
+          "1336": 57,
+          "1584": 42,
+          "857": 40
+        }
+      },
+      "Mechanistic Cubism": {
+        "style_id": 60,
+        "n_train_samples": 68,
+        "n_artists": 1,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1731": 68
+        }
+      },
+      "Metaphysical art": {
+        "style_id": 61,
+        "n_train_samples": 189,
+        "n_artists": 18,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 189,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "772": 97,
+          "1595": 11,
+          "340": 10,
+          "1754": 9,
+          "770": 8,
+          "1712": 8,
+          "1371": 7,
+          "2161": 7,
+          "1407": 6,
+          "1797": 6
+        }
+      },
+      "Minimalism": {
+        "style_id": 62,
+        "n_train_samples": 447,
+        "n_artists": 62,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 447,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "75": 47,
+          "1030": 29,
+          "1109": 24,
+          "1082": 22,
+          "1776": 21,
+          "2115": 20,
+          "2179": 20,
+          "1841": 19,
+          "1757": 16,
+          "1468": 16
+        }
+      },
+      "Miserablism": {
+        "style_id": 63,
+        "n_train_samples": 8,
+        "n_artists": 1,
+        "bank_refs_planned": 8,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "274": 8
+        }
+      },
+      "Modernismo": {
+        "style_id": 64,
+        "n_train_samples": 43,
+        "n_artists": 4,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 43,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "554": 17,
+          "1717": 14,
+          "1476": 8,
+          "222": 4
+        }
+      },
+      "Mosan art": {
+        "style_id": 65,
+        "n_train_samples": 37,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 37,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1500": 36,
+          "136": 1
+        }
+      },
+      "Muralism": {
+        "style_id": 66,
+        "n_train_samples": 147,
+        "n_artists": 9,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 147,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "478": 62,
+          "459": 31,
+          "1129": 21,
+          "2068": 21,
+          "343": 5,
+          "1930": 3,
+          "90": 2,
+          "1778": 1,
+          "330": 1
+        }
+      },
+      "Nanga (Bunjinga)": {
+        "style_id": 67,
+        "n_train_samples": 58,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 58,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "937": 45,
+          "2018": 13
+        }
+      },
+      "Nas-Taliq": {
+        "style_id": 68,
+        "n_train_samples": 9,
+        "n_artists": 1,
+        "bank_refs_planned": 9,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1448": 9
+        }
+      },
+      "Native Art": {
+        "style_id": 69,
+        "n_train_samples": 21,
+        "n_artists": 1,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1125": 21
+        }
+      },
+      "Naturalism": {
+        "style_id": 70,
+        "n_train_samples": 429,
+        "n_artists": 9,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 429,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1104": 178,
+          "1358": 83,
+          "371": 60,
+          "201": 36,
+          "1357": 33,
+          "127": 22,
+          "1728": 9,
+          "530": 7,
+          "22": 1
+        }
+      },
+      "Na\u00efve Art (Primitivism)": {
+        "style_id": 71,
+        "n_train_samples": 2258,
+        "n_artists": 83,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 2258,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1343": 242,
+          "1512": 215,
+          "130": 161,
+          "1356": 116,
+          "882": 115,
+          "620": 113,
+          "462": 105,
+          "970": 89,
+          "681": 77,
+          "528": 74
+        }
+      },
+      "Neo-Byzantine": {
+        "style_id": 72,
+        "n_train_samples": 18,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 18,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1629": 13,
+          "1476": 5
+        }
+      },
+      "Neo-Concretism": {
+        "style_id": 73,
+        "n_train_samples": 42,
+        "n_artists": 8,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 42,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "870": 10,
+          "975": 8,
+          "1325": 8,
+          "148": 7,
+          "1450": 4,
+          "1324": 3,
+          "797": 1,
+          "796": 1
+        }
+      },
+      "Neo-Dada": {
+        "style_id": 74,
+        "n_train_samples": 127,
+        "n_artists": 10,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 127,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "481": 42,
+          "564": 38,
+          "1144": 12,
+          "1090": 8,
+          "225": 8,
+          "1573": 7,
+          "715": 6,
+          "311": 3,
+          "1064": 2,
+          "310": 1
+        }
+      },
+      "Neo-Expressionism": {
+        "style_id": 75,
+        "n_train_samples": 417,
+        "n_artists": 27,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 417,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1051": 131,
+          "1631": 47,
+          "449": 37,
+          "1610": 23,
+          "1488": 22,
+          "433": 18,
+          "1201": 16,
+          "1381": 13,
+          "1383": 12,
+          "891": 12
+        }
+      },
+      "Neo-Figurative Art": {
+        "style_id": 76,
+        "n_train_samples": 27,
+        "n_artists": 4,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 27,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "567": 12,
+          "268": 8,
+          "310": 6,
+          "248": 1
+        }
+      },
+      "Neo-Rococo": {
+        "style_id": 77,
+        "n_train_samples": 96,
+        "n_artists": 1,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "666": 96
+        }
+      },
+      "Neo-Romanticism": {
+        "style_id": 78,
+        "n_train_samples": 557,
+        "n_artists": 35,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 557,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1978": 226,
+          "1857": 195,
+          "2110": 92,
+          "535": 9,
+          "431": 3,
+          "933": 2,
+          "1273": 2,
+          "2028": 1,
+          "257": 1,
+          "457": 1
+        }
+      },
+      "Neo-baroque": {
+        "style_id": 79,
+        "n_train_samples": 104,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 104,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "772": 98,
+          "2172": 6
+        }
+      },
+      "Neoclassicism": {
+        "style_id": 80,
+        "n_train_samples": 2002,
+        "n_artists": 54,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 2002,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "776": 497,
+          "1026": 280,
+          "2149": 144,
+          "1117": 140,
+          "1122": 126,
+          "996": 87,
+          "1648": 62,
+          "666": 57,
+          "168": 55,
+          "698": 49
+        }
+      },
+      "Neoplasticism": {
+        "style_id": 81,
+        "n_train_samples": 171,
+        "n_artists": 12,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 171,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1972": 71,
+          "1649": 32,
+          "2224": 18,
+          "253": 13,
+          "688": 12,
+          "748": 12,
+          "704": 5,
+          "353": 4,
+          "2280": 1,
+          "1109": 1
+        }
+      },
+      "New Casualism": {
+        "style_id": 82,
+        "n_train_samples": 22,
+        "n_artists": 1,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1699": 22
+        }
+      },
+      "New European Painting": {
+        "style_id": 83,
+        "n_train_samples": 25,
+        "n_artists": 1,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1830": 25
+        }
+      },
+      "New Realism": {
+        "style_id": 84,
+        "n_train_samples": 323,
+        "n_artists": 7,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 323,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "529": 127,
+          "1098": 99,
+          "728": 48,
+          "2138": 29,
+          "1153": 12,
+          "2172": 6,
+          "370": 2
+        }
+      },
+      "Nihonga": {
+        "style_id": 85,
+        "n_train_samples": 29,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 29,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "909": 11,
+          "2037": 9,
+          "2014": 9
+        }
+      },
+      "Northern Renaissance": {
+        "style_id": 86,
+        "n_train_samples": 2326,
+        "n_artists": 44,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 2326,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "100": 487,
+          "1311": 220,
+          "902": 177,
+          "854": 160,
+          "853": 144,
+          "1034": 108,
+          "1392": 108,
+          "847": 98,
+          "1762": 87,
+          "1651": 86
+        }
+      },
+      "Nouveau R\u00e9alisme": {
+        "style_id": 87,
+        "n_train_samples": 141,
+        "n_artists": 11,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 141,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "2179": 57,
+          "1446": 23,
+          "1557": 19,
+          "205": 11,
+          "874": 11,
+          "897": 6,
+          "1370": 5,
+          "1022": 3,
+          "1511": 3,
+          "391": 2
+        }
+      },
+      "Op Art": {
+        "style_id": 88,
+        "n_train_samples": 516,
+        "n_artists": 48,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 516,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1332": 142,
+          "851": 53,
+          "1989": 34,
+          "2078": 30,
+          "1546": 19,
+          "520": 18,
+          "513": 16,
+          "1636": 13,
+          "1317": 13,
+          "2111": 13
+        }
+      },
+      "Orientalism": {
+        "style_id": 89,
+        "n_train_samples": 386,
+        "n_artists": 35,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 386,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "537": 97,
+          "1048": 94,
+          "586": 64,
+          "880": 14,
+          "953": 13,
+          "1182": 11,
+          "1979": 10,
+          "917": 9,
+          "422": 8,
+          "643": 6
+        }
+      },
+      "Orphism": {
+        "style_id": 90,
+        "n_train_samples": 244,
+        "n_artists": 14,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 244,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1843": 82,
+          "1275": 38,
+          "231": 33,
+          "1744": 28,
+          "661": 26,
+          "620": 23,
+          "89": 3,
+          "165": 3,
+          "522": 3,
+          "1968": 1
+        }
+      },
+      "Ottoman Period": {
+        "style_id": 91,
+        "n_train_samples": 69,
+        "n_artists": 15,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 69,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1823": 16,
+          "839": 13,
+          "78": 10,
+          "1473": 8,
+          "862": 8,
+          "837": 4,
+          "838": 2,
+          "501": 1,
+          "285": 1,
+          "246": 1
+        }
+      },
+      "Outsider art": {
+        "style_id": 92,
+        "n_train_samples": 68,
+        "n_artists": 5,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 68,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "639": 36,
+          "1302": 11,
+          "2127": 10,
+          "1765": 10,
+          "1919": 1
+        }
+      },
+      "Perceptism": {
+        "style_id": 93,
+        "n_train_samples": 6,
+        "n_artists": 1,
+        "bank_refs_planned": 6,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1705": 6
+        }
+      },
+      "Photorealism": {
+        "style_id": 94,
+        "n_train_samples": 61,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 61,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "359": 43,
+          "1203": 15,
+          "1119": 3
+        }
+      },
+      "Pointillism": {
+        "style_id": 95,
+        "n_train_samples": 494,
+        "n_artists": 32,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 494,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "884": 94,
+          "746": 85,
+          "1973": 81,
+          "1608": 54,
+          "879": 40,
+          "327": 29,
+          "88": 21,
+          "1353": 13,
+          "741": 9,
+          "1399": 7
+        }
+      },
+      "Pop Art": {
+        "style_id": 96,
+        "n_train_samples": 778,
+        "n_artists": 57,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 778,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "166": 178,
+          "2108": 54,
+          "1587": 50,
+          "1771": 44,
+          "1374": 29,
+          "1730": 29,
+          "1201": 25,
+          "1887": 25,
+          "595": 25,
+          "1590": 23
+        }
+      },
+      "Post-Impressionism": {
+        "style_id": 97,
+        "n_train_samples": 5660,
+        "n_artists": 202,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 5660,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "2092": 284,
+          "1593": 275,
+          "827": 251,
+          "1399": 240,
+          "1597": 234,
+          "515": 224,
+          "1794": 221,
+          "883": 195,
+          "1682": 190,
+          "1640": 155
+        }
+      },
+      "Post-Minimalism": {
+        "style_id": 98,
+        "n_train_samples": 31,
+        "n_artists": 8,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 31,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "832": 9,
+          "1883": 6,
+          "1003": 5,
+          "393": 4,
+          "1699": 3,
+          "594": 2,
+          "1058": 1,
+          "714": 1
+        }
+      },
+      "Post-Painterly Abstraction": {
+        "style_id": 99,
+        "n_train_samples": 164,
+        "n_artists": 13,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 164,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1746": 47,
+          "1058": 33,
+          "1791": 23,
+          "1589": 17,
+          "1841": 15,
+          "1055": 8,
+          "1225": 7,
+          "979": 7,
+          "715": 2,
+          "868": 2
+        }
+      },
+      "Poster Art Realism": {
+        "style_id": 100,
+        "n_train_samples": 43,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 43,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1763": 26,
+          "1745": 17
+        }
+      },
+      "Precisionism": {
+        "style_id": 101,
+        "n_train_samples": 269,
+        "n_artists": 16,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 269,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "750": 189,
+          "361": 23,
+          "74": 15,
+          "1146": 13,
+          "370": 8,
+          "1467": 7,
+          "1056": 3,
+          "1697": 3,
+          "1936": 1,
+          "1570": 1
+        }
+      },
+      "Primitivism": {
+        "style_id": 102,
+        "n_train_samples": 36,
+        "n_artists": 4,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 36,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "2034": 27,
+          "720": 7,
+          "244": 1,
+          "2088": 1
+        }
+      },
+      "Proto Renaissance": {
+        "style_id": 103,
+        "n_train_samples": 265,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 265,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "502": 135,
+          "774": 130
+        }
+      },
+      "Purism": {
+        "style_id": 104,
+        "n_train_samples": 154,
+        "n_artists": 8,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 154,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "620": 109,
+          "146": 16,
+          "1697": 9,
+          "1251": 6,
+          "1567": 6,
+          "1040": 5,
+          "1813": 2,
+          "823": 1
+        }
+      },
+      "Rayonism": {
+        "style_id": 105,
+        "n_train_samples": 6,
+        "n_artists": 2,
+        "bank_refs_planned": 6,
+        "anchors_with_valid_cross_artist_pos": 6,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1487": 5,
+          "310": 1
+        }
+      },
+      "Realism": {
+        "style_id": 106,
+        "n_train_samples": 10312,
+        "n_artists": 247,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 10312,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "976": 489,
+          "941": 478,
+          "325": 406,
+          "957": 406,
+          "303": 297,
+          "2065": 256,
+          "1005": 249,
+          "825": 246,
+          "1116": 245,
+          "876": 243
+        }
+      },
+      "Regionalism": {
+        "style_id": 107,
+        "n_train_samples": 314,
+        "n_artists": 8,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 314,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1523": 210,
+          "804": 59,
+          "1118": 27,
+          "1378": 7,
+          "1994": 4,
+          "1416": 3,
+          "1041": 3,
+          "730": 1
+        }
+      },
+      "Renaissance": {
+        "style_id": 108,
+        "n_train_samples": 1,
+        "n_artists": 1,
+        "bank_refs_planned": 1,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1295": 1
+        }
+      },
+      "Rococo": {
+        "style_id": 109,
+        "n_train_samples": 2688,
+        "n_artists": 51,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 2688,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "732": 205,
+          "1151": 178,
+          "1991": 166,
+          "1400": 147,
+          "777": 122,
+          "2136": 121,
+          "484": 101,
+          "276": 94,
+          "2096": 94,
+          "1103": 86
+        }
+      },
+      "Romanesque": {
+        "style_id": 110,
+        "n_train_samples": 55,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 55,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "900": 36,
+          "903": 18,
+          "1928": 1
+        }
+      },
+      "Romanticism": {
+        "style_id": 111,
+        "n_train_samples": 9077,
+        "n_artists": 195,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 9077,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "967": 491,
+          "826": 489,
+          "650": 376,
+          "365": 270,
+          "1217": 258,
+          "372": 228,
+          "1008": 221,
+          "2147": 220,
+          "1553": 217,
+          "1835": 193
+        }
+      },
+      "Safavid Period": {
+        "style_id": 112,
+        "n_train_samples": 39,
+        "n_artists": 4,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 39,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1724": 17,
+          "1449": 11,
+          "1872": 10,
+          "1176": 1
+        }
+      },
+      "Shin-hanga": {
+        "style_id": 113,
+        "n_train_samples": 371,
+        "n_artists": 15,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 371,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1537": 124,
+          "861": 52,
+          "1489": 36,
+          "2019": 27,
+          "1828": 26,
+          "1207": 22,
+          "223": 19,
+          "906": 18,
+          "2168": 17,
+          "966": 13
+        }
+      },
+      "Social Realism": {
+        "style_id": 114,
+        "n_train_samples": 301,
+        "n_artists": 31,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 301,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "754": 34,
+          "731": 31,
+          "529": 28,
+          "986": 26,
+          "478": 24,
+          "981": 19,
+          "330": 15,
+          "345": 12,
+          "1523": 11,
+          "459": 11
+        }
+      },
+      "Socialist Realism": {
+        "style_id": 115,
+        "n_train_samples": 92,
+        "n_artists": 17,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 92,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1220": 34,
+          "105": 12,
+          "1682": 6,
+          "977": 5,
+          "1018": 5,
+          "303": 5,
+          "466": 4,
+          "2069": 4,
+          "940": 4,
+          "1385": 3
+        }
+      },
+      "Spatialism": {
+        "style_id": 116,
+        "n_train_samples": 82,
+        "n_artists": 12,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 82,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "556": 17,
+          "1578": 14,
+          "1316": 14,
+          "1390": 8,
+          "1637": 7,
+          "96": 5,
+          "451": 5,
+          "1757": 4,
+          "787": 3,
+          "621": 3
+        }
+      },
+      "Spectralism": {
+        "style_id": 117,
+        "n_train_samples": 5,
+        "n_artists": 1,
+        "bank_refs_planned": 5,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1538": 5
+        }
+      },
+      "Street art": {
+        "style_id": 118,
+        "n_train_samples": 23,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 23,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "319": 22,
+          "1201": 1
+        }
+      },
+      "Suprematism": {
+        "style_id": 119,
+        "n_train_samples": 80,
+        "n_artists": 6,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 80,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1195": 40,
+          "1541": 13,
+          "543": 11,
+          "1328": 7,
+          "106": 5,
+          "620": 4
+        }
+      },
+      "Surrealism": {
+        "style_id": 120,
+        "n_train_samples": 4078,
+        "n_artists": 181,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 4078,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "2183": 490,
+          "1790": 371,
+          "1716": 323,
+          "1407": 298,
+          "1343": 152,
+          "1069": 151,
+          "1575": 138,
+          "1595": 101,
+          "1712": 101,
+          "1332": 97
+        }
+      },
+      "Symbolism": {
+        "style_id": 121,
+        "n_train_samples": 3397,
+        "n_artists": 110,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 3397,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1535": 366,
+          "1499": 316,
+          "1227": 207,
+          "1218": 187,
+          "1438": 165,
+          "828": 141,
+          "2130": 108,
+          "1471": 103,
+          "1214": 102,
+          "1005": 99
+        }
+      },
+      "Synchromism": {
+        "style_id": 122,
+        "n_train_samples": 10,
+        "n_artists": 1,
+        "bank_refs_planned": 10,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "1460": 10
+        }
+      },
+      "Synthetic Cubism": {
+        "style_id": 123,
+        "n_train_samples": 182,
+        "n_artists": 8,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 182,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1155": 107,
+          "738": 43,
+          "1575": 22,
+          "768": 3,
+          "340": 3,
+          "1040": 2,
+          "1174": 1,
+          "58": 1
+        }
+      },
+      "Synthetism": {
+        "style_id": 124,
+        "n_train_samples": 47,
+        "n_artists": 3,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 47,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1607": 37,
+          "551": 7,
+          "1597": 3
+        }
+      },
+      "S\u014dsaku hanga": {
+        "style_id": 125,
+        "n_train_samples": 368,
+        "n_artists": 30,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 368,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1337": 78,
+          "1208": 57,
+          "2021": 46,
+          "1178": 43,
+          "1223": 36,
+          "908": 32,
+          "2042": 26,
+          "223": 13,
+          "1177": 9,
+          "2168": 8
+        }
+      },
+      "Tachisme": {
+        "style_id": 126,
+        "n_train_samples": 424,
+        "n_artists": 28,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 424,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1766": 56,
+          "155": 38,
+          "118": 38,
+          "324": 23,
+          "550": 22,
+          "364": 22,
+          "742": 21,
+          "1832": 19,
+          "753": 18,
+          "237": 18
+        }
+      },
+      "Tenebrism": {
+        "style_id": 127,
+        "n_train_samples": 218,
+        "n_artists": 10,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 218,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1175": 78,
+          "749": 60,
+          "1393": 16,
+          "278": 16,
+          "873": 13,
+          "1368": 12,
+          "1508": 7,
+          "1394": 7,
+          "212": 6,
+          "786": 3
+        }
+      },
+      "Timurid Period": {
+        "style_id": 128,
+        "n_train_samples": 17,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 17,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1176": 16,
+          "1448": 1
+        }
+      },
+      "Tonalism": {
+        "style_id": 129,
+        "n_train_samples": 198,
+        "n_artists": 19,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 198,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1004": 55,
+          "1100": 25,
+          "2163": 18,
+          "531": 16,
+          "1266": 16,
+          "93": 16,
+          "726": 14,
+          "1411": 13,
+          "1165": 11,
+          "677": 5
+        }
+      },
+      "Transautomatism": {
+        "style_id": 130,
+        "n_train_samples": 74,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 74,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "684": 73,
+          "691": 1
+        }
+      },
+      "Tubism": {
+        "style_id": 131,
+        "n_train_samples": 20,
+        "n_artists": 2,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 20,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "620": 19,
+          "1567": 1
+        }
+      },
+      "Ukiyo-e": {
+        "style_id": 132,
+        "n_train_samples": 1403,
+        "n_artists": 59,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 1403,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "2047": 332,
+          "1192": 250,
+          "1600": 142,
+          "1206": 117,
+          "1200": 92,
+          "907": 88,
+          "2045": 78,
+          "2025": 44,
+          "2032": 44,
+          "1825": 32
+        }
+      },
+      "Verism": {
+        "style_id": 133,
+        "n_train_samples": 82,
+        "n_artists": 7,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 82,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1564": 45,
+          "196": 19,
+          "1405": 6,
+          "608": 6,
+          "1170": 4,
+          "667": 1,
+          "388": 1
+        }
+      },
+      "Yamato-e": {
+        "style_id": 134,
+        "n_train_samples": 12,
+        "n_artists": 1,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 0,
+        "valid_positive_rate": 0.0,
+        "is_single_artist": true,
+        "artist_distribution": {
+          "2020": 12
+        }
+      },
+      "Zen": {
+        "style_id": 135,
+        "n_train_samples": 94,
+        "n_artists": 14,
+        "bank_refs_planned": 12,
+        "anchors_with_valid_cross_artist_pos": 94,
+        "valid_positive_rate": 1.0,
+        "is_single_artist": false,
+        "artist_distribution": {
+          "1483": 20,
+          "2184": 15,
+          "2167": 8,
+          "475": 8,
+          "563": 8,
+          "1482": 7,
+          "1199": 7,
+          "840": 6,
+          "1189": 5,
+          "1839": 5
+        }
+      }
+    }
+  },
+  "swd_correctness": {
+    "self_distance": 0.0,
+    "self_distance_near_zero": true,
+    "symmetry_abs_diff": 0.0,
+    "is_symmetric": true,
+    "is_nonnegative": true,
+    "d_12": 0.003034,
+    "grad_exists": true,
+    "grad_nonzero_pct": 100.0,
+    "grad_norm": 0.00130899,
+    "autograd_grad": -7.14e-06,
+    "finite_diff_grad": -2.33e-06,
+    "fd_vs_autograd_rel_error": 0.673832,
+    "patch_samples": 256,
+    "projections": 32,
+    "quantiles": 16,
+    "descriptor_shape": [
+      1,
+      32,
+      16
+    ],
+    "proj_directions_unit_norm": true
+  },
+  "projection_stability": {
+    "seed42_proj32": 58.62,
+    "seed42_proj64": 58.43,
+    "seed42_proj128": 59.24,
+    "seed7_proj32": 59.29,
+    "seed123_proj32": 58.8,
+    "seed2024_proj32": 58.8,
+    "seed999_proj32": 58.74,
+    "seed_std_32proj": 0.23
+  }
+}

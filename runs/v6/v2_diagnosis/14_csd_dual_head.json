@@ -1,0 +1,33 @@
+{
+  "n_images": 2048,
+  "per_image_cosine": {
+    "mean": 0.7971,
+    "min": 0.6595,
+    "max": 0.9165,
+    "std": 0.0357
+  },
+  "cka_style_vs_content": 0.9811,
+  "spearman_simmat": 0.8923,
+  "top10_neighbour_overlap": 0.8492,
+  "error_analysis": {
+    "cross_artist": {
+      "n_pairs": 1990,
+      "style_error_rate": 0.2291,
+      "content_error_rate": 0.2327,
+      "error_overlap_rate": 0.1744,
+      "error_jaccard": 0.6066,
+      "mean_sim_pos_style": 0.2905,
+      "mean_sim_pos_content": 0.5803
+    },
+    "same_genre_hard": {
+      "n_pairs": 2011,
+      "style_error_rate": 0.3192,
+      "content_error_rate": 0.3217,
+      "error_overlap_rate": 0.2606,
+      "error_jaccard": 0.685,
+      "mean_sim_pos_style": 0.2409,
+      "mean_sim_pos_content": 0.5475
+    }
+  },
+  "verdict": "NO DISENTANGLEMENT: heads differ per-image but relational geometry is nearly identical"
+}

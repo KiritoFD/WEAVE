@@ -1,0 +1,35 @@
+{
+  "A0": {
+    "L_pos": 0.193467,
+    "L_neg": 0.115671,
+    "L_all": 0.13123,
+    "ratio_pos_over_neg": 1.6726,
+    "pairs_per_batch": {
+      "pos": 6,
+      "neg": 24
+    },
+    "pos_share_of_pairs": 0.2
+  },
+  "REPA_100": {
+    "L_pos": 0.193633,
+    "L_neg": 0.109981,
+    "L_all": 0.126712,
+    "ratio_pos_over_neg": 1.7606,
+    "pairs_per_batch": {
+      "pos": 6,
+      "neg": 24
+    },
+    "pos_share_of_pairs": 0.2
+  },
+  "REPA_200": {
+    "L_pos": 0.191733,
+    "L_neg": 0.107627,
+    "L_all": 0.124448,
+    "ratio_pos_over_neg": 1.7814,
+    "pairs_per_batch": {
+      "pos": 6,
+      "neg": 24
+    },
+    "pos_share_of_pairs": 0.2
+  }
+}

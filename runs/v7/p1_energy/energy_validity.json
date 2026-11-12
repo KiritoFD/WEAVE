@@ -1,0 +1,224 @@
+{
+  "verdict": "GO_ENERGY",
+  "best_energy": "S2_sd",
+  "candidates": {
+    "S1_sd": {
+      "separable": true,
+      "balanced": false,
+      "perturbation_stable": false,
+      "optimization_consistent": true,
+      "delta_dino_s_mean": 0.0007048057392239571,
+      "valid": false
+    },
+    "S1_a0": {
+      "separable": true,
+      "balanced": false,
+      "perturbation_stable": true,
+      "optimization_consistent": true,
+      "delta_dino_s_mean": null,
+      "valid": false
+    },
+    "S2_sd": {
+      "separable": true,
+      "balanced": true,
+      "perturbation_stable": true,
+      "optimization_consistent": true,
+      "delta_dino_s_mean": 0.0008444350212812423,
+      "valid": true
+    },
+    "S2_a0": {
+      "separable": true,
+      "balanced": true,
+      "perturbation_stable": true,
+      "optimization_consistent": true,
+      "delta_dino_s_mean": null,
+      "valid": true
+    }
+  },
+  "audit": {
+    "S1_sd": {
+      "kind": "S1",
+      "pool": "sd",
+      "auroc_mean": 0.722525,
+      "auroc_per_style": {
+        "Early_Renaissance": 0.759475,
+        "Impressionism": 0.8341000000000001,
+        "Minimalism": 0.43542499999999995,
+        "Rococo": 0.7991,
+        "Ukiyo_e": 0.784525
+      },
+      "intra_mean": 2.1826431547999383,
+      "inter_mean_min": 1.8097496808171272,
+      "margin_mean": -0.37289347398281114,
+      "margin_median": -0.008051574230194092,
+      "n_val": 500,
+      "separable": true
+    },
+    "S2_sd": {
+      "kind": "S2",
+      "pool": "sd",
+      "auroc_mean": 0.983225,
+      "auroc_per_style": {
+        "Early_Renaissance": 0.981025,
+        "Impressionism": 0.988125,
+        "Minimalism": 0.999,
+        "Rococo": 0.9531000000000001,
+        "Ukiyo_e": 0.994875
+      },
+      "intra_mean": 762.0083111572266,
+      "inter_mean_min": 2787.9012614746093,
+      "margin_mean": 2025.8929503173827,
+      "margin_median": 1608.3209075927734,
+      "n_val": 500,
+      "separable": true
+    },
+    "S1_a0": {
+      "kind": "S1",
+      "pool": "a0",
+      "auroc_mean": 0.7246349999999999,
+      "auroc_per_style": {
+        "Early_Renaissance": 0.7653,
+        "Impressionism": 0.81455,
+        "Minimalism": 0.45899999999999996,
+        "Rococo": 0.805725,
+        "Ukiyo_e": 0.7786
+      },
+      "intra_mean": 2.125589336514473,
+      "inter_mean_min": 1.8038115546107292,
+      "margin_mean": -0.32177778190374373,
+      "margin_median": 0.0038298964500427246,
+      "n_val": 500,
+      "separable": true
+    },
+    "S2_a0": {
+      "kind": "S2",
+      "pool": "a0",
+      "auroc_mean": 0.9823299999999999,
+      "auroc_per_style": {
+        "Early_Renaissance": 0.980475,
+        "Impressionism": 0.9883,
+        "Minimalism": 0.9992,
+        "Rococo": 0.95065,
+        "Ukiyo_e": 0.993025
+      },
+      "intra_mean": 757.1012660217285,
+      "inter_mean_min": 2804.882660949707,
+      "margin_mean": 2047.7813949279785,
+      "margin_median": 1594.9429931640625,
+      "n_val": 500,
+      "separable": true
+    }
+  },
+  "perturbation": {
+    "S1_sd": {
+      "0.02": {
+        "delta_mean_gauss": -1.3871639966964721e-05,
+        "delta_mean_ll": -0.0009622281789779663,
+        "inter_style_margin": -0.008051574230194092,
+        "stable_gauss": false,
+        "stable_ll": false
+      },
+      "0.05": {
+        "delta_mean_gauss": -0.0016751237213611602,
+        "delta_mean_ll": -0.006397586762905121,
+        "inter_style_margin": -0.008051574230194092,
+        "stable_gauss": false,
+        "stable_ll": false
+      }
+    },
+    "S2_sd": {
+      "0.02": {
+        "delta_mean_gauss": -0.5233882904052735,
+        "delta_mean_ll": -1.2983011627197265,
+        "inter_style_margin": 1608.3209075927734,
+        "stable_gauss": true,
+        "stable_ll": true
+      },
+      "0.05": {
+        "delta_mean_gauss": -2.4836016845703126,
+        "delta_mean_ll": -3.064196243286133,
+        "inter_style_margin": 1608.3209075927734,
+        "stable_gauss": true,
+        "stable_ll": true
+      }
+    },
+    "S1_a0": {
+      "0.02": {
+        "delta_mean_gauss": 4.5774877071380615e-06,
+        "delta_mean_ll": -0.0009220357239246368,
+        "inter_style_margin": 0.0038298964500427246,
+        "stable_gauss": true,
+        "stable_ll": true
+      },
+      "0.05": {
+        "delta_mean_gauss": -0.0015045644342899323,
+        "delta_mean_ll": -0.006245679855346679,
+        "inter_style_margin": 0.0038298964500427246,
+        "stable_gauss": true,
+        "stable_ll": true
+      }
+    },
+    "S2_a0": {
+      "0.02": {
+        "delta_mean_gauss": -0.48648773193359374,
+        "delta_mean_ll": -1.2036515045166016,
+        "inter_style_margin": 1594.9429931640625,
+        "stable_gauss": true,
+        "stable_ll": true
+      },
+      "0.05": {
+        "delta_mean_gauss": -2.0824820709228518,
+        "delta_mean_ll": -2.6820262908935546,
+        "inter_style_margin": 1594.9429931640625,
+        "stable_gauss": true,
+        "stable_ll": true
+      }
+    }
+  },
+  "optimization": {
+    "S1_sd": {
+      "delta_dino_s_mean": 0.0007048057392239571,
+      "delta_dino_s_per_style": {
+        "Early_Renaissance": -0.002662375569343567,
+        "Impressionism": 0.007844632491469383,
+        "Minimalism": -0.0025774622336030006,
+        "Rococo": 0.0006344802677631378,
+        "Ukiyo_e": 0.0002847537398338318
+      },
+      "n_styles_improved": 3,
+      "energy_before": 0.3077729344367981,
+      "energy_after": 0.17846450209617615,
+      "energy_reduced": true,
+      "pass": true
+    },
+    "S2_sd": {
+      "delta_dino_s_mean": 0.0008444350212812423,
+      "delta_dino_s_per_style": {
+        "Early_Renaissance": 0.0030733421444892883,
+        "Impressionism": 0.0002974513918161392,
+        "Minimalism": 0.0037976838648319244,
+        "Rococo": -0.003586266189813614,
+        "Ukiyo_e": 0.0006399638950824738
+      },
+      "n_styles_improved": 4,
+      "energy_before": 6.815467357635498,
+      "energy_after": 2.486466646194458,
+      "energy_reduced": true,
+      "pass": true
+    }
+  },
+  "thresholds": {
+    "perturb_rms": [
+      0.02,
+      0.05
+    ],
+    "opt_steps": 4,
+    "opt_per_step_rms": 0.02,
+    "dino_s_nondegrade": -0.005,
+    "min_styles_improve": 3
+  },
+  "notes": [
+    "Optimization consistency is only measured for *_sd energies: generated latents (B4 direct) live in the SD-VAE latent space; *_a0 energies are对照 statistics and cannot drive SD-latent edits."
+  ],
+  "wall_sec": 26.5
+}

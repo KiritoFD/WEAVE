@@ -1,0 +1,60 @@
+{
+  "checkpoint": "/root/Workspace/WEAVE_VAE/runs_vae/V2/checkpoint_step_000200.pt",
+  "step": 200,
+  "posterior_audit": {
+    "p5_sigma": 0.00012627881369553506,
+    "p50_sigma": 0.0007243477739393711,
+    "p95_sigma": 0.0025605307891964912,
+    "mean_kl": 16.7,
+    "latent_std": 4.4421
+  },
+  "swd_auroc_audit": {
+    "overall_auroc": 57.35,
+    "cross_artist_auroc": 53.85,
+    "a0_baseline_cross_artist": 54.67,
+    "delta_cross_artist": -0.82
+  },
+  "gradient_audit": {
+    "cos_style_rec": -0.6136,
+    "cos_style_kl": 0.5644,
+    "effective_gradient_ratio": 31.9
+  },
+  "p2_decoder_sensitivity": {
+    "0.0": {
+      "mean_delta_T_vae": 0.0,
+      "mean_delta_T_rgb": -0.0256,
+      "mean_LPIPS": 0.0716,
+      "pct_positive_gain_vae": 0.0
+    },
+    "0.01": {
+      "mean_delta_T_vae": -0.0003,
+      "mean_delta_T_rgb": -0.0259,
+      "mean_LPIPS": 0.0717,
+      "pct_positive_gain_vae": 53.3
+    },
+    "0.05": {
+      "mean_delta_T_vae": -0.0001,
+      "mean_delta_T_rgb": -0.0258,
+      "mean_LPIPS": 0.0735,
+      "pct_positive_gain_vae": 53.3
+    },
+    "0.1": {
+      "mean_delta_T_vae": -0.0003,
+      "mean_delta_T_rgb": -0.0259,
+      "mean_LPIPS": 0.079,
+      "pct_positive_gain_vae": 46.7
+    },
+    "0.2": {
+      "mean_delta_T_vae": -0.0004,
+      "mean_delta_T_rgb": -0.026,
+      "mean_LPIPS": 0.0992,
+      "pct_positive_gain_vae": 53.3
+    },
+    "0.3": {
+      "mean_delta_T_vae": -0.0041,
+      "mean_delta_T_rgb": -0.0297,
+      "mean_LPIPS": 0.1299,
+      "pct_positive_gain_vae": 46.7
+    }
+  }
+}

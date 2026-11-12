@@ -1,0 +1,27 @@
+{
+  "n": 256,
+  "results": {
+    "A0_std": {
+      "l1": 0.06463,
+      "lpips": 0.0772,
+      "psnr": 25.53408,
+      "ssim": 0.7694,
+      "csd": 0.91624
+    },
+    "S10_pqc": {
+      "l1": 0.0654,
+      "lpips": 0.3902,
+      "psnr": 25.58344,
+      "ssim": 0.7693,
+      "csd": 0.60797
+    },
+    "S10_raw": {
+      "l1": 0.98468,
+      "lpips": 0.95197,
+      "psnr": 5.39076,
+      "ssim": 0.00509,
+      "csd": 0.10226
+    }
+  },
+  "verdict": "S10 was trained WITH post_quant_conv (pqc path clearly better)"
+}

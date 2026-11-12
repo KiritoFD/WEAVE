@@ -1,0 +1,423 @@
+{
+  "raw_u0_first768": {
+    "k": 768,
+    "content_matched": {
+      "auroc": 51.95,
+      "lo": 49.15,
+      "hi": 54.94,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 54.67,
+      "lo": 52.12,
+      "hi": 57.12,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 48.71,
+      "lo": 46.18,
+      "hi": 51.18,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 7.18,
+      "knn5": 7.02,
+      "knn10": 6.86
+    },
+    "map10": 15.65,
+    "teacher_cos": -0.0038,
+    "orth_err": 0.0
+  },
+  "P0_random_k128": {
+    "k": 128,
+    "content_matched": {
+      "auroc": 51.25,
+      "lo": 48.6,
+      "hi": 53.83,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 55.21,
+      "lo": 52.1,
+      "hi": 57.95,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 50.76,
+      "lo": 48.22,
+      "hi": 53.77,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 8.84,
+      "knn5": 8.31,
+      "knn10": 7.91
+    },
+    "map10": 15.98,
+    "teacher_cos": null,
+    "orth_err": 3.5762786865234375e-07
+  },
+  "P0_random_k256": {
+    "k": 256,
+    "content_matched": {
+      "auroc": 50.85,
+      "lo": 47.96,
+      "hi": 53.61,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 54.88,
+      "lo": 52.14,
+      "hi": 57.38,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 48.98,
+      "lo": 46.33,
+      "hi": 51.59,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 8.89,
+      "knn5": 8.4,
+      "knn10": 8.02
+    },
+    "map10": 18.76,
+    "teacher_cos": null,
+    "orth_err": 4.76837158203125e-07
+  },
+  "P0_random_k768": {
+    "k": 768,
+    "content_matched": {
+      "auroc": 51.73,
+      "lo": 48.73,
+      "hi": 54.73,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 54.88,
+      "lo": 52.27,
+      "hi": 57.2,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 49.84,
+      "lo": 47.27,
+      "hi": 52.51,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 8.74,
+      "knn5": 8.31,
+      "knn10": 7.97
+    },
+    "map10": 19.22,
+    "teacher_cos": 0.0019,
+    "orth_err": 5.960464477539062e-07
+  },
+  "P1_csdpls_k128": {
+    "k": 128,
+    "content_matched": {
+      "auroc": 51.43,
+      "lo": 48.68,
+      "hi": 54.24,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 55.03,
+      "lo": 52.44,
+      "hi": 57.69,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 49.36,
+      "lo": 46.85,
+      "hi": 52.11,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 10.79,
+      "knn5": 9.67,
+      "knn10": 9.16
+    },
+    "map10": 19.34,
+    "teacher_cos": null,
+    "orth_err": 0.0005872249603271484
+  },
+  "P1_csdpls_k256": {
+    "k": 256,
+    "content_matched": {
+      "auroc": 51.39,
+      "lo": 48.63,
+      "hi": 54.18,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 55.07,
+      "lo": 52.48,
+      "hi": 57.73,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 49.35,
+      "lo": 46.91,
+      "hi": 52.05,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 10.64,
+      "knn5": 9.74,
+      "knn10": 9.23
+    },
+    "map10": 19.74,
+    "teacher_cos": null,
+    "orth_err": 0.0005871057510375977
+  },
+  "P1_csdpls_k768": {
+    "k": 768,
+    "content_matched": {
+      "auroc": 51.39,
+      "lo": 48.64,
+      "hi": 54.22,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 55.11,
+      "lo": 52.56,
+      "hi": 57.72,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 49.38,
+      "lo": 46.96,
+      "hi": 52.06,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 10.3,
+      "knn5": 9.68,
+      "knn10": 9.16
+    },
+    "map10": 18.9,
+    "teacher_cos": 0.0024,
+    "orth_err": 0.0005870461463928223
+  },
+  "P2_genrepls_k128": {
+    "k": 128,
+    "content_matched": {
+      "auroc": 51.43,
+      "lo": 48.7,
+      "hi": 54.25,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 55.03,
+      "lo": 52.44,
+      "hi": 57.66,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 49.39,
+      "lo": 46.89,
+      "hi": 52.15,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 11.13,
+      "knn5": 9.68,
+      "knn10": 9.18
+    },
+    "map10": 19.26,
+    "teacher_cos": null,
+    "orth_err": 0.00045102834701538086
+  },
+  "P2_genrepls_k256": {
+    "k": 256,
+    "content_matched": {
+      "auroc": 51.39,
+      "lo": 48.64,
+      "hi": 54.18,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 55.06,
+      "lo": 52.47,
+      "hi": 57.7,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 49.37,
+      "lo": 46.92,
+      "hi": 52.1,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 10.6,
+      "knn5": 9.65,
+      "knn10": 9.21
+    },
+    "map10": 19.73,
+    "teacher_cos": null,
+    "orth_err": 0.00045108795166015625
+  },
+  "P2_genrepls_k768": {
+    "k": 768,
+    "content_matched": {
+      "auroc": 51.39,
+      "lo": 48.64,
+      "hi": 54.21,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 55.09,
+      "lo": 52.52,
+      "hi": 57.7,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 49.4,
+      "lo": 46.97,
+      "hi": 52.08,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 10.3,
+      "knn5": 9.65,
+      "knn10": 9.15
+    },
+    "map10": 18.74,
+    "teacher_cos": -0.0046,
+    "orth_err": 0.00045102834701538086
+  },
+  "P3_fisher_k64": {
+    "k": 64,
+    "content_matched": {
+      "auroc": 50.47,
+      "lo": 47.92,
+      "hi": 53.31,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 57.7,
+      "lo": 55.1,
+      "hi": 60.28,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 50.32,
+      "lo": 47.52,
+      "hi": 53.09,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 11.28,
+      "knn5": 10.23,
+      "knn10": 9.87
+    },
+    "map10": 22.78,
+    "teacher_cos": null,
+    "orth_err": 4.76837158203125e-07
+  },
+  "P3_fisher_k128": {
+    "k": 128,
+    "content_matched": {
+      "auroc": 50.44,
+      "lo": 47.59,
+      "hi": 53.41,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 56.94,
+      "lo": 54.61,
+      "hi": 59.45,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 50.25,
+      "lo": 47.72,
+      "hi": 53.06,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 11.04,
+      "knn5": 10.35,
+      "knn10": 10.01
+    },
+    "map10": 19.42,
+    "teacher_cos": null,
+    "orth_err": 5.960464477539062e-07
+  },
+  "P3_fisher_k256": {
+    "k": 256,
+    "content_matched": {
+      "auroc": 51.91,
+      "lo": 48.94,
+      "hi": 54.06,
+      "n": 800
+    },
+    "cross_artist": {
+      "auroc": 57.2,
+      "lo": 54.77,
+      "hi": 59.51,
+      "n": 800
+    },
+    "same_genre_hard": {
+      "auroc": 50.05,
+      "lo": 47.32,
+      "hi": 53.2,
+      "n": 800
+    },
+    "knn": {
+      "knn1": 12.4,
+      "knn5": 10.43,
+      "knn10": 9.82
+    },
+    "map10": 19.0,
+    "teacher_cos": null,
+    "orth_err": 9.5367431640625e-07
+  },
+  "_stability": {
+    "P1_csdpls_k128": {
+      "R": 0.19506,
+      "random": 0.00781,
+      "ratio": 24.97
+    },
+    "P2_genrepls_k128": {
+      "R": 0.1917,
+      "random": 0.00781,
+      "ratio": 24.54
+    },
+    "P1_csdpls_k256": {
+      "R": 0.15598,
+      "random": 0.01562,
+      "ratio": 9.98
+    },
+    "P2_genrepls_k256": {
+      "R": 0.15415,
+      "random": 0.01562,
+      "ratio": 9.87
+    },
+    "P3_fisher_k64": {
+      "R": 0.04817,
+      "random": 0.00391,
+      "ratio": 12.33
+    },
+    "P3_fisher_k128": {
+      "R": 0.10031,
+      "random": 0.00781,
+      "ratio": 12.84
+    }
+  },
+  "_meta": {
+    "n_train": 12991,
+    "n_val": 2048,
+    "elapsed_sec": 15.3,
+    "baselines": {
+      "A0_raw_CM": 51.65,
+      "SmallCNN_CM": 53.39,
+      "SmallCNN_Cross": 61.4,
+      "CSD_CM": 59.62,
+      "CSD_Cross": 74.27
+    }
+  }
+}

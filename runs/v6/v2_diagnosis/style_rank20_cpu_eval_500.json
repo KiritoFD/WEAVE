@@ -1,0 +1,157 @@
+{
+  "A0": {
+    "n": 500,
+    "m_center_norm": 16.692,
+    "content_matched": {
+      "auroc": 54.91,
+      "lo": 51.28,
+      "hi": 58.61,
+      "n": 500
+    },
+    "cross_artist": {
+      "auroc": 54.21,
+      "lo": 50.56,
+      "hi": 57.44,
+      "n": 500
+    },
+    "same_genre_hard": {
+      "auroc": 50.15,
+      "lo": 47.14,
+      "hi": 53.65,
+      "n": 485
+    },
+    "knn": {
+      "knn1": 13.4,
+      "knn5": 13.24,
+      "knn10": 12.48
+    },
+    "map10": 23.6,
+    "encode_sec": 206.8,
+    "img_per_sec": 2.42,
+    "total_sec": 210.8
+  },
+  "ckpt_u00200": {
+    "n": 500,
+    "m_center_norm": 17.839,
+    "content_matched": {
+      "auroc": 54.75,
+      "lo": 51.18,
+      "hi": 58.35,
+      "n": 500
+    },
+    "cross_artist": {
+      "auroc": 54.0,
+      "lo": 50.28,
+      "hi": 57.4,
+      "n": 500
+    },
+    "same_genre_hard": {
+      "auroc": 49.89,
+      "lo": 46.86,
+      "hi": 53.43,
+      "n": 485
+    },
+    "knn": {
+      "knn1": 14.2,
+      "knn5": 13.2,
+      "knn10": 12.58
+    },
+    "map10": 23.67,
+    "encode_sec": 212.8,
+    "img_per_sec": 2.35,
+    "total_sec": 215.1
+  },
+  "ckpt_u00500": {
+    "n": 500,
+    "m_center_norm": 17.419,
+    "content_matched": {
+      "auroc": 54.82,
+      "lo": 51.22,
+      "hi": 58.4,
+      "n": 500
+    },
+    "cross_artist": {
+      "auroc": 54.06,
+      "lo": 50.41,
+      "hi": 57.37,
+      "n": 500
+    },
+    "same_genre_hard": {
+      "auroc": 49.94,
+      "lo": 46.92,
+      "hi": 53.43,
+      "n": 485
+    },
+    "knn": {
+      "knn1": 14.0,
+      "knn5": 13.08,
+      "knn10": 12.56
+    },
+    "map10": 23.34,
+    "encode_sec": 201.4,
+    "img_per_sec": 2.48,
+    "total_sec": 204.0
+  },
+  "ckpt_u01000": {
+    "n": 500,
+    "m_center_norm": 16.447,
+    "content_matched": {
+      "auroc": 55.0,
+      "lo": 51.37,
+      "hi": 58.74,
+      "n": 500
+    },
+    "cross_artist": {
+      "auroc": 54.27,
+      "lo": 50.56,
+      "hi": 57.54,
+      "n": 500
+    },
+    "same_genre_hard": {
+      "auroc": 50.15,
+      "lo": 47.14,
+      "hi": 53.61,
+      "n": 485
+    },
+    "knn": {
+      "knn1": 13.8,
+      "knn5": 13.0,
+      "knn10": 12.78
+    },
+    "map10": 23.24,
+    "encode_sec": 207.5,
+    "img_per_sec": 2.41,
+    "total_sec": 209.5
+  },
+  "ckpt_u01500": {
+    "n": 500,
+    "m_center_norm": 18.136,
+    "content_matched": {
+      "auroc": 54.82,
+      "lo": 51.25,
+      "hi": 58.58,
+      "n": 500
+    },
+    "cross_artist": {
+      "auroc": 54.09,
+      "lo": 50.32,
+      "hi": 57.43,
+      "n": 500
+    },
+    "same_genre_hard": {
+      "auroc": 49.91,
+      "lo": 46.88,
+      "hi": 53.46,
+      "n": 485
+    },
+    "knn": {
+      "knn1": 14.4,
+      "knn5": 13.28,
+      "knn10": 12.72
+    },
+    "map10": 23.54,
+    "encode_sec": 212.8,
+    "img_per_sec": 2.35,
+    "total_sec": 214.8
+  }
+}

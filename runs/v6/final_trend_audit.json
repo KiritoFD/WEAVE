@@ -1,0 +1,46 @@
+{
+  "A0_baseline": {
+    "overall_auroc": 59.9,
+    "cross_artist_auroc": 54.67,
+    "knn5_top1": 10.4,
+    "p50_sigma": null,
+    "mean_kl": 17.5,
+    "effective_rank": 1772.65
+  },
+  "step_1200": {
+    "overall_auroc": 58.59,
+    "cross_artist_auroc": 55.36,
+    "knn5_top1": 20.31,
+    "p50_sigma": 0.001274,
+    "mean_kl": 13.9,
+    "effective_rank": 234.58,
+    "eval_sec": 424.6
+  },
+  "step_1400": {
+    "overall_auroc": 58.64,
+    "cross_artist_auroc": 55.43,
+    "knn5_top1": 18.75,
+    "p50_sigma": 0.001472,
+    "mean_kl": 13.39,
+    "effective_rank": 234.85,
+    "eval_sec": 384.6
+  },
+  "step_1600": {
+    "overall_auroc": 58.71,
+    "cross_artist_auroc": 55.49,
+    "knn5_top1": 17.19,
+    "p50_sigma": 0.001678,
+    "mean_kl": 12.96,
+    "effective_rank": 235.06,
+    "eval_sec": 415.4
+  },
+  "step_1800": {
+    "overall_auroc": 58.77,
+    "cross_artist_auroc": 55.53,
+    "knn5_top1": 17.19,
+    "p50_sigma": 0.001877,
+    "mean_kl": 12.61,
+    "effective_rank": 235.23,
+    "eval_sec": 387.6
+  }
+}

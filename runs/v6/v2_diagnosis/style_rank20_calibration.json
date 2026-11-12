@@ -1,0 +1,13 @@
+{
+  "g_base_median": 0.125955,
+  "g_rank_median": 13.713203,
+  "g_ce_median": 5.132875,
+  "lambda_rank": 0.004592,
+  "lambda_ce": 0.002454,
+  "cos_rank_base_mean": -0.0369,
+  "cos_rank_ce_mean": -0.0257,
+  "target_ratios": {
+    "rank": 0.5,
+    "ce": 0.1
+  }
+}

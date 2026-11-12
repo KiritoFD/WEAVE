@@ -1,0 +1,138 @@
+{
+  "n_classes": 20,
+  "pool_images": 78515,
+  "n_triplets": 24000,
+  "frac_gap_lt_005": 0.9853,
+  "frac_gap_lt_010": 0.0147,
+  "n_rejected": 407,
+  "gap_mean": 0.0043,
+  "gap_p95": 0.0167,
+  "mu_z_rms": 0.5989,
+  "P_orth_err": 7.152557373046875e-07,
+  "proto_offdiag_mean": -0.05263157933950424,
+  "triplets_per_style": {
+    "1": 1176,
+    "9": 1217,
+    "10": 1280,
+    "12": 1179,
+    "24": 1157,
+    "29": 1219,
+    "32": 1251,
+    "41": 1243,
+    "44": 1202,
+    "59": 1207,
+    "71": 1212,
+    "80": 1182,
+    "86": 1177,
+    "97": 1233,
+    "106": 1215,
+    "109": 1216,
+    "111": 1234,
+    "120": 1249,
+    "121": 1216,
+    "132": 935
+  },
+  "classes": [
+    {
+      "id": 1,
+      "name": "Abstract Expressionism",
+      "n": 2032
+    },
+    {
+      "id": 9,
+      "name": "Art Informel",
+      "n": 1243
+    },
+    {
+      "id": 10,
+      "name": "Art Nouveau (Modern)",
+      "n": 4802
+    },
+    {
+      "id": 12,
+      "name": "Baroque",
+      "n": 4316
+    },
+    {
+      "id": 24,
+      "name": "Cubism",
+      "n": 1707
+    },
+    {
+      "id": 29,
+      "name": "Early Renaissance",
+      "n": 1328
+    },
+    {
+      "id": 32,
+      "name": "Expressionism",
+      "n": 6868
+    },
+    {
+      "id": 41,
+      "name": "High Renaissance",
+      "n": 1284
+    },
+    {
+      "id": 44,
+      "name": "Impressionism",
+      "n": 10422
+    },
+    {
+      "id": 59,
+      "name": "Mannerism (Late Renaissance)",
+      "n": 1312
+    },
+    {
+      "id": 71,
+      "name": "Na\u00efve Art (Primitivism)",
+      "n": 2258
+    },
+    {
+      "id": 80,
+      "name": "Neoclassicism",
+      "n": 2002
+    },
+    {
+      "id": 86,
+      "name": "Northern Renaissance",
+      "n": 2326
+    },
+    {
+      "id": 97,
+      "name": "Post-Impressionism",
+      "n": 5660
+    },
+    {
+      "id": 106,
+      "name": "Realism",
+      "n": 10312
+    },
+    {
+      "id": 109,
+      "name": "Rococo",
+      "n": 2688
+    },
+    {
+      "id": 111,
+      "name": "Romanticism",
+      "n": 9077
+    },
+    {
+      "id": 120,
+      "name": "Surrealism",
+      "n": 4078
+    },
+    {
+      "id": 121,
+      "name": "Symbolism",
+      "n": 3397
+    },
+    {
+      "id": 132,
+      "name": "Ukiyo-e",
+      "n": 1403
+    }
+  ],
+  "seed": 20260109
+}

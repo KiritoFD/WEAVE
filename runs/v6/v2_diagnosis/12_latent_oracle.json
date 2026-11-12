@@ -1,0 +1,317 @@
+{
+  "B0": {
+    "p5_3": {
+      "n_sources": 8,
+      "mean_swd_drop_pct": 19.2,
+      "mean_csd_gain": 0.0153,
+      "pct_positive_csd": 100.0,
+      "mean_dino_c": 0.9545,
+      "mean_lpips": 0.0755,
+      "mean_pert_rel": 0.0818,
+      "per_source": [
+        {
+          "swd_before": 0.7187,
+          "swd_after": 0.5499,
+          "swd_drop_pct": 23.49,
+          "csd_gain": 0.0137,
+          "dino_c": 0.8853,
+          "lpips": 0.0763,
+          "pert_norm": 48.8905,
+          "pert_rel": 0.0852
+        },
+        {
+          "swd_before": 2.5209,
+          "swd_after": 2.1896,
+          "swd_drop_pct": 13.14,
+          "csd_gain": 0.0624,
+          "dino_c": 0.9565,
+          "lpips": 0.0313,
+          "pert_norm": 50.4223,
+          "pert_rel": 0.097
+        },
+        {
+          "swd_before": 1.2641,
+          "swd_after": 1.0561,
+          "swd_drop_pct": 16.45,
+          "csd_gain": 0.0081,
+          "dino_c": 0.9658,
+          "lpips": 0.1726,
+          "pert_norm": 47.8656,
+          "pert_rel": 0.0885
+        },
+        {
+          "swd_before": 1.4619,
+          "swd_after": 1.1401,
+          "swd_drop_pct": 22.02,
+          "csd_gain": 0.0154,
+          "dino_c": 0.9575,
+          "lpips": 0.0573,
+          "pert_norm": 51.1541,
+          "pert_rel": 0.0685
+        },
+        {
+          "swd_before": 1.1232,
+          "swd_after": 0.9572,
+          "swd_drop_pct": 14.78,
+          "csd_gain": 0.0042,
+          "dino_c": 0.959,
+          "lpips": 0.0776,
+          "pert_norm": 50.5229,
+          "pert_rel": 0.0801
+        },
+        {
+          "swd_before": 0.6523,
+          "swd_after": 0.5183,
+          "swd_drop_pct": 20.54,
+          "csd_gain": 0.0026,
+          "dino_c": 0.9648,
+          "lpips": 0.0663,
+          "pert_norm": 47.3055,
+          "pert_rel": 0.0795
+        },
+        {
+          "swd_before": 0.6424,
+          "swd_after": 0.4728,
+          "swd_drop_pct": 26.4,
+          "csd_gain": 0.0039,
+          "dino_c": 0.9771,
+          "lpips": 0.0705,
+          "pert_norm": 49.0694,
+          "pert_rel": 0.0834
+        },
+        {
+          "swd_before": 2.9104,
+          "swd_after": 2.4229,
+          "swd_drop_pct": 16.75,
+          "csd_gain": 0.0123,
+          "dino_c": 0.9702,
+          "lpips": 0.0519,
+          "pert_norm": 53.0497,
+          "pert_rel": 0.0719
+        }
+      ]
+    },
+    "p5_4": {
+      "cos_gswd_gcsd_mean": 0.0013,
+      "cos_values": [
+        0.0008,
+        0.0027,
+        -0.0113,
+        0.0172,
+        0.0006,
+        -0.0022
+      ],
+      "interpretation": "weak/negative - SWD direction does not raise CSD"
+    }
+  },
+  "A0": {
+    "p5_3": {
+      "n_sources": 8,
+      "mean_swd_drop_pct": 17.22,
+      "mean_csd_gain": 0.0168,
+      "pct_positive_csd": 87.5,
+      "mean_dino_c": 0.932,
+      "mean_lpips": 0.0703,
+      "mean_pert_rel": 0.0832,
+      "per_source": [
+        {
+          "swd_before": 1.0576,
+          "swd_after": 0.8716,
+          "swd_drop_pct": 17.59,
+          "csd_gain": 0.031,
+          "dino_c": 0.833,
+          "lpips": 0.0704,
+          "pert_norm": 49.4795,
+          "pert_rel": 0.0861
+        },
+        {
+          "swd_before": 2.2765,
+          "swd_after": 1.9103,
+          "swd_drop_pct": 16.09,
+          "csd_gain": 0.0399,
+          "dino_c": 0.9497,
+          "lpips": 0.0297,
+          "pert_norm": 50.1709,
+          "pert_rel": 0.0966
+        },
+        {
+          "swd_before": 1.1517,
+          "swd_after": 0.963,
+          "swd_drop_pct": 16.38,
+          "csd_gain": 0.0144,
+          "dino_c": 0.9697,
+          "lpips": 0.1597,
+          "pert_norm": 48.6794,
+          "pert_rel": 0.0892
+        },
+        {
+          "swd_before": 1.5961,
+          "swd_after": 1.2638,
+          "swd_drop_pct": 20.82,
+          "csd_gain": 0.0096,
+          "dino_c": 0.9248,
+          "lpips": 0.0518,
+          "pert_norm": 50.9594,
+          "pert_rel": 0.0688
+        },
+        {
+          "swd_before": 1.3713,
+          "swd_after": 1.1706,
+          "swd_drop_pct": 14.64,
+          "csd_gain": 0.0007,
+          "dino_c": 0.9224,
+          "lpips": 0.0759,
+          "pert_norm": 51.4283,
+          "pert_rel": 0.0818
+        },
+        {
+          "swd_before": 0.803,
+          "swd_after": 0.6801,
+          "swd_drop_pct": 15.31,
+          "csd_gain": 0.0349,
+          "dino_c": 0.939,
+          "lpips": 0.0666,
+          "pert_norm": 49.5233,
+          "pert_rel": 0.0834
+        },
+        {
+          "swd_before": 0.7333,
+          "swd_after": 0.5818,
+          "swd_drop_pct": 20.66,
+          "csd_gain": -0.0039,
+          "dino_c": 0.9727,
+          "lpips": 0.0607,
+          "pert_norm": 50.8843,
+          "pert_rel": 0.0859
+        },
+        {
+          "swd_before": 1.9198,
+          "swd_after": 1.6069,
+          "swd_drop_pct": 16.3,
+          "csd_gain": 0.0081,
+          "dino_c": 0.9443,
+          "lpips": 0.0479,
+          "pert_norm": 54.8943,
+          "pert_rel": 0.0741
+        }
+      ]
+    },
+    "p5_4": {
+      "cos_gswd_gcsd_mean": 0.0028,
+      "cos_values": [
+        -0.0029,
+        0.0139,
+        0.0037,
+        -0.0007,
+        0.0027,
+        0.0001
+      ],
+      "interpretation": "weak/negative - SWD direction does not raise CSD"
+    }
+  },
+  "V2_1800": {
+    "p5_3": {
+      "n_sources": 8,
+      "mean_swd_drop_pct": 20.22,
+      "mean_csd_gain": 0.0086,
+      "pct_positive_csd": 75.0,
+      "mean_dino_c": 0.8806,
+      "mean_lpips": 0.0693,
+      "mean_pert_rel": 0.0986,
+      "per_source": [
+        {
+          "swd_before": 0.6537,
+          "swd_after": 0.5376,
+          "swd_drop_pct": 17.77,
+          "csd_gain": 0.0089,
+          "dino_c": 0.7651,
+          "lpips": 0.0692,
+          "pert_norm": 48.3729,
+          "pert_rel": 0.1067
+        },
+        {
+          "swd_before": 1.464,
+          "swd_after": 1.1645,
+          "swd_drop_pct": 20.46,
+          "csd_gain": -0.0433,
+          "dino_c": 0.9014,
+          "lpips": 0.034,
+          "pert_norm": 49.5653,
+          "pert_rel": 0.112
+        },
+        {
+          "swd_before": 0.6806,
+          "swd_after": 0.5361,
+          "swd_drop_pct": 21.22,
+          "csd_gain": 0.0227,
+          "dino_c": 0.9448,
+          "lpips": 0.1534,
+          "pert_norm": 47.7797,
+          "pert_rel": 0.1107
+        },
+        {
+          "swd_before": 1.5277,
+          "swd_after": 1.2245,
+          "swd_drop_pct": 19.85,
+          "csd_gain": -0.0106,
+          "dino_c": 0.8652,
+          "lpips": 0.0515,
+          "pert_norm": 48.6846,
+          "pert_rel": 0.0836
+        },
+        {
+          "swd_before": 0.6592,
+          "swd_after": 0.522,
+          "swd_drop_pct": 20.82,
+          "csd_gain": 0.024,
+          "dino_c": 0.8486,
+          "lpips": 0.0816,
+          "pert_norm": 50.0927,
+          "pert_rel": 0.0996
+        },
+        {
+          "swd_before": 0.572,
+          "swd_after": 0.4373,
+          "swd_drop_pct": 23.54,
+          "csd_gain": 0.0031,
+          "dino_c": 0.9146,
+          "lpips": 0.0613,
+          "pert_norm": 46.9764,
+          "pert_rel": 0.0941
+        },
+        {
+          "swd_before": 0.6082,
+          "swd_after": 0.4852,
+          "swd_drop_pct": 20.23,
+          "csd_gain": 0.0344,
+          "dino_c": 0.9165,
+          "lpips": 0.0576,
+          "pert_norm": 46.9052,
+          "pert_rel": 0.0983
+        },
+        {
+          "swd_before": 1.021,
+          "swd_after": 0.8384,
+          "swd_drop_pct": 17.89,
+          "csd_gain": 0.0292,
+          "dino_c": 0.8887,
+          "lpips": 0.0455,
+          "pert_norm": 51.5564,
+          "pert_rel": 0.0839
+        }
+      ]
+    },
+    "p5_4": {
+      "cos_gswd_gcsd_mean": 0.0013,
+      "cos_values": [
+        0.0017,
+        0.005,
+        0.0057,
+        -0.007,
+        -0.0015,
+        0.0039
+      ],
+      "interpretation": "weak/negative - SWD direction does not raise CSD"
+    }
+  }
+}

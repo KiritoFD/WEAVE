@@ -1,0 +1,12 @@
+{
+  "verdict": "NO_RELATIVE",
+  "reasons": [
+    "p0_b4_relative: no qualifying gain",
+    "p0_q2a_relative: no qualifying gain"
+  ],
+  "thresholds": {
+    "dino_c_min_delta": -0.005,
+    "lpips_max_delta": 0.005,
+    "dino_s_gain": 0.002
+  }
+}

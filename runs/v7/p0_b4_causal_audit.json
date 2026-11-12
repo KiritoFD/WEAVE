@@ -1,0 +1,176 @@
+{
+  "ckpt": "/mnt/i/Latent_Style/WEAVE/runs/v6/P1_B4_distill50/P1_B4_distill50.pt",
+  "tasks_sha256": "8b578c2bc421f954fba2d76c64ed763d1a91c01522c29181d88f1231b83bbb12",
+  "per_style": 8,
+  "n_sources": 40,
+  "routes": {
+    "Early_Renaissance->Early_Renaissance": {
+      "n": 8,
+      "dino_s": 0.6274973601102829,
+      "dino_c": 0.9204108864068985
+    },
+    "Early_Renaissance->Impressionism": {
+      "n": 8,
+      "dino_s": 0.4390066098421812,
+      "dino_c": 0.8635189011693001
+    },
+    "Early_Renaissance->Minimalism": {
+      "n": 8,
+      "dino_s": 0.17652303259819746,
+      "dino_c": 0.7998185679316521
+    },
+    "Early_Renaissance->Rococo": {
+      "n": 8,
+      "dino_s": 0.5238854475319386,
+      "dino_c": 0.8659485653042793
+    },
+    "Early_Renaissance->Ukiyo_e": {
+      "n": 8,
+      "dino_s": 0.4386671055108309,
+      "dino_c": 0.8366025760769844
+    },
+    "Impressionism->Early_Renaissance": {
+      "n": 8,
+      "dino_s": 0.4298420622944832,
+      "dino_c": 0.9026242792606354
+    },
+    "Impressionism->Impressionism": {
+      "n": 8,
+      "dino_s": 0.7173215448856354,
+      "dino_c": 0.918308325111866
+    },
+    "Impressionism->Minimalism": {
+      "n": 8,
+      "dino_s": 0.2924648392945528,
+      "dino_c": 0.8321246802806854
+    },
+    "Impressionism->Rococo": {
+      "n": 8,
+      "dino_s": 0.47162817418575287,
+      "dino_c": 0.8561993688344955
+    },
+    "Impressionism->Ukiyo_e": {
+      "n": 8,
+      "dino_s": 0.5472711250185966,
+      "dino_c": 0.8341478109359741
+    },
+    "Minimalism->Early_Renaissance": {
+      "n": 8,
+      "dino_s": 0.2601034604012966,
+      "dino_c": 0.7397235929965973
+    },
+    "Minimalism->Impressionism": {
+      "n": 8,
+      "dino_s": 0.30127726309001446,
+      "dino_c": 0.7152185514569283
+    },
+    "Minimalism->Minimalism": {
+      "n": 8,
+      "dino_s": 0.3559284284710884,
+      "dino_c": 0.7805505618453026
+    },
+    "Minimalism->Rococo": {
+      "n": 8,
+      "dino_s": 0.2515224739909172,
+      "dino_c": 0.7084458731114864
+    },
+    "Minimalism->Ukiyo_e": {
+      "n": 8,
+      "dino_s": 0.3219976890832186,
+      "dino_c": 0.6962560936808586
+    },
+    "Rococo->Early_Renaissance": {
+      "n": 8,
+      "dino_s": 0.5590869188308716,
+      "dino_c": 0.8768826723098755
+    },
+    "Rococo->Impressionism": {
+      "n": 8,
+      "dino_s": 0.6508125141263008,
+      "dino_c": 0.8290047980844975
+    },
+    "Rococo->Minimalism": {
+      "n": 8,
+      "dino_s": 0.20973067451268435,
+      "dino_c": 0.7856190800666809
+    },
+    "Rococo->Rococo": {
+      "n": 8,
+      "dino_s": 0.6193333193659782,
+      "dino_c": 0.8732264488935471
+    },
+    "Rococo->Ukiyo_e": {
+      "n": 8,
+      "dino_s": 0.5483469851315022,
+      "dino_c": 0.759286068379879
+    },
+    "Ukiyo_e->Early_Renaissance": {
+      "n": 8,
+      "dino_s": 0.43268217891454697,
+      "dino_c": 0.8855281919240952
+    },
+    "Ukiyo_e->Impressionism": {
+      "n": 8,
+      "dino_s": 0.5310878530144691,
+      "dino_c": 0.8237090036273003
+    },
+    "Ukiyo_e->Minimalism": {
+      "n": 8,
+      "dino_s": 0.23876827582716942,
+      "dino_c": 0.8017515763640404
+    },
+    "Ukiyo_e->Rococo": {
+      "n": 8,
+      "dino_s": 0.4308950938284397,
+      "dino_c": 0.8109594509005547
+    },
+    "Ukiyo_e->Ukiyo_e": {
+      "n": 8,
+      "dino_s": 0.6449541337788105,
+      "dino_c": 0.8644127398729324
+    }
+  },
+  "per_target": {
+    "Early_Renaissance": {
+      "n": 40,
+      "dino_s": 0.46184239611029626,
+      "dino_c": 0.8650339245796204,
+      "source_residual_r1": 0.2,
+      "source_residual_csd": 0.9
+    },
+    "Impressionism": {
+      "n": 40,
+      "dino_s": 0.5279011569917202,
+      "dino_c": 0.8299519158899784,
+      "source_residual_r1": 0.2,
+      "source_residual_csd": 0.625
+    },
+    "Minimalism": {
+      "n": 40,
+      "dino_s": 0.2546830501407385,
+      "dino_c": 0.7999728932976723,
+      "source_residual_r1": 0.2,
+      "source_residual_csd": 0.575
+    },
+    "Rococo": {
+      "n": 40,
+      "dino_s": 0.4594529017806053,
+      "dino_c": 0.8229559414088726,
+      "source_residual_r1": 0.2,
+      "source_residual_csd": 0.7
+    },
+    "Ukiyo_e": {
+      "n": 40,
+      "dino_s": 0.5002474077045918,
+      "dino_c": 0.7981410577893258,
+      "source_residual_r1": 0.2,
+      "source_residual_csd": 0.75
+    }
+  },
+  "overall": {
+    "source_residual_r1": 0.2,
+    "source_residual_csd": 0.71,
+    "pairwise_latent_rms_mean": 0.5700072439759969,
+    "pairwise_csd_l2_mean": 0.8324962832033634
+  }
+}

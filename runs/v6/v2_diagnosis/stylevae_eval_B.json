@@ -1,0 +1,260 @@
+{
+  "probe": {
+    "n_styles": 20,
+    "chance_pct": 5.0,
+    "test_pct": 13.75,
+    "train_pct": 100.0,
+    "s8_split": {
+      "mu_only": 11.25,
+      "logsigma_only": 7.87,
+      "s_full": 13.25
+    },
+    "s8_abs_mean": 2.5124,
+    "mu_abs_mean": 3.7636,
+    "logsigma_abs_mean": 1.2612
+  },
+  "recon": {
+    "l1": 0.06435,
+    "lpips": 0.07447,
+    "csd": 0.87196,
+    "n": 128
+  },
+  "swap": {
+    "n_cross": 20,
+    "n_same": 5,
+    "cross_top1": 0.1883,
+    "cross_dprob": 0.05754,
+    "cross_dino_c": 0.86156,
+    "cross_lpips": 0.55535,
+    "same_top1": 0.5533,
+    "chance_top1": 0.2,
+    "judge_heldout_acc": 0.615,
+    "rows": [
+      {
+        "src": "Impressionism",
+        "tgt": "Impressionism",
+        "same": true,
+        "top1": 0.5667,
+        "dprob": -0.02219,
+        "dino_c": 0.85818,
+        "lpips": 0.54323
+      },
+      {
+        "src": "Impressionism",
+        "tgt": "Realism",
+        "same": false,
+        "top1": 0.4333,
+        "dprob": 0.02193,
+        "dino_c": 0.82373,
+        "lpips": 0.53643
+      },
+      {
+        "src": "Impressionism",
+        "tgt": "Romanticism",
+        "same": false,
+        "top1": 0.2,
+        "dprob": 0.10198,
+        "dino_c": 0.8314,
+        "lpips": 0.55409
+      },
+      {
+        "src": "Impressionism",
+        "tgt": "Expressionism",
+        "same": false,
+        "top1": 0.3333,
+        "dprob": 0.07331,
+        "dino_c": 0.82225,
+        "lpips": 0.67194
+      },
+      {
+        "src": "Impressionism",
+        "tgt": "Post-Impressionism",
+        "same": false,
+        "top1": 0.0333,
+        "dprob": -0.03277,
+        "dino_c": 0.84808,
+        "lpips": 0.5457
+      },
+      {
+        "src": "Realism",
+        "tgt": "Impressionism",
+        "same": false,
+        "top1": 0.0667,
+        "dprob": 0.02614,
+        "dino_c": 0.88537,
+        "lpips": 0.48587
+      },
+      {
+        "src": "Realism",
+        "tgt": "Realism",
+        "same": true,
+        "top1": 0.4667,
+        "dprob": -0.00222,
+        "dino_c": 0.86398,
+        "lpips": 0.46217
+      },
+      {
+        "src": "Realism",
+        "tgt": "Romanticism",
+        "same": false,
+        "top1": 0.3,
+        "dprob": 0.05933,
+        "dino_c": 0.87242,
+        "lpips": 0.46487
+      },
+      {
+        "src": "Realism",
+        "tgt": "Expressionism",
+        "same": false,
+        "top1": 0.4333,
+        "dprob": 0.10223,
+        "dino_c": 0.86453,
+        "lpips": 0.60024
+      },
+      {
+        "src": "Realism",
+        "tgt": "Post-Impressionism",
+        "same": false,
+        "top1": 0.0,
+        "dprob": 0.0337,
+        "dino_c": 0.88372,
+        "lpips": 0.48595
+      },
+      {
+        "src": "Romanticism",
+        "tgt": "Impressionism",
+        "same": false,
+        "top1": 0.0333,
+        "dprob": 0.05216,
+        "dino_c": 0.86637,
+        "lpips": 0.55915
+      },
+      {
+        "src": "Romanticism",
+        "tgt": "Realism",
+        "same": false,
+        "top1": 0.1667,
+        "dprob": -0.00062,
+        "dino_c": 0.86942,
+        "lpips": 0.52305
+      },
+      {
+        "src": "Romanticism",
+        "tgt": "Romanticism",
+        "same": true,
+        "top1": 0.8,
+        "dprob": 0.04372,
+        "dino_c": 0.87206,
+        "lpips": 0.53883
+      },
+      {
+        "src": "Romanticism",
+        "tgt": "Expressionism",
+        "same": false,
+        "top1": 0.2,
+        "dprob": 0.14488,
+        "dino_c": 0.85651,
+        "lpips": 0.69476
+      },
+      {
+        "src": "Romanticism",
+        "tgt": "Post-Impressionism",
+        "same": false,
+        "top1": 0.0,
+        "dprob": 0.048,
+        "dino_c": 0.87963,
+        "lpips": 0.55067
+      },
+      {
+        "src": "Expressionism",
+        "tgt": "Impressionism",
+        "same": false,
+        "top1": 0.0667,
+        "dprob": 0.05744,
+        "dino_c": 0.89075,
+        "lpips": 0.50393
+      },
+      {
+        "src": "Expressionism",
+        "tgt": "Realism",
+        "same": false,
+        "top1": 0.0,
+        "dprob": 0.06748,
+        "dino_c": 0.87588,
+        "lpips": 0.49337
+      },
+      {
+        "src": "Expressionism",
+        "tgt": "Romanticism",
+        "same": false,
+        "top1": 0.2,
+        "dprob": 0.1192,
+        "dino_c": 0.87501,
+        "lpips": 0.515
+      },
+      {
+        "src": "Expressionism",
+        "tgt": "Expressionism",
+        "same": true,
+        "top1": 0.9,
+        "dprob": 0.06183,
+        "dino_c": 0.8775,
+        "lpips": 0.62054
+      },
+      {
+        "src": "Expressionism",
+        "tgt": "Post-Impressionism",
+        "same": false,
+        "top1": 0.0667,
+        "dprob": 0.00191,
+        "dino_c": 0.89058,
+        "lpips": 0.50508
+      },
+      {
+        "src": "Post-Impressionism",
+        "tgt": "Impressionism",
+        "same": false,
+        "top1": 0.5,
+        "dprob": 0.01424,
+        "dino_c": 0.86417,
+        "lpips": 0.56361
+      },
+      {
+        "src": "Post-Impressionism",
+        "tgt": "Realism",
+        "same": false,
+        "top1": 0.1333,
+        "dprob": 0.06641,
+        "dino_c": 0.83175,
+        "lpips": 0.56822
+      },
+      {
+        "src": "Post-Impressionism",
+        "tgt": "Romanticism",
+        "same": false,
+        "top1": 0.0667,
+        "dprob": 0.13363,
+        "dino_c": 0.84689,
+        "lpips": 0.59042
+      },
+      {
+        "src": "Post-Impressionism",
+        "tgt": "Expressionism",
+        "same": false,
+        "top1": 0.5333,
+        "dprob": 0.06019,
+        "dino_c": 0.85273,
+        "lpips": 0.69472
+      },
+      {
+        "src": "Post-Impressionism",
+        "tgt": "Post-Impressionism",
+        "same": true,
+        "top1": 0.0333,
+        "dprob": -0.04131,
+        "dino_c": 0.85635,
+        "lpips": 0.56702
+      }
+    ]
+  }
+}

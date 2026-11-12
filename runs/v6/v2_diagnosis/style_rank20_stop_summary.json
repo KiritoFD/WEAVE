@@ -1,0 +1,10 @@
+{
+  "stopped_at_update": 1930,
+  "stopped_at_hours": 3.874,
+  "stopped_at_epoch": 1.18,
+  "last_durable_checkpoint": "ckpt_u01500.pt",
+  "checkpoint_update": 1500,
+  "updates_lost_since_last_ckpt": 430,
+  "reason": "no measurable Content-Matched AUROC improvement at 1500-1930 steps",
+  "archived_at": "2026-11-09 17:33:02"
+}

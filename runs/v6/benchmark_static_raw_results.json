@@ -1,0 +1,44 @@
+{
+  "A0": {
+    "mode": "A0",
+    "use_compile": true,
+    "dynamic_shapes": false,
+    "microbatch": 6,
+    "effective_batch": 24,
+    "accum_steps": 4,
+    "compile_warmup_sec": 6.592,
+    "steady_sec_per_update": 5.8571,
+    "steady_std_sec": 0.007,
+    "throughput_img_per_sec": 4.1,
+    "peak_vram_mib": 18353.9,
+    "vram_utilization_pct": 74.7
+  },
+  "A1": {
+    "mode": "A1",
+    "use_compile": true,
+    "dynamic_shapes": false,
+    "microbatch": 6,
+    "effective_batch": 24,
+    "accum_steps": 4,
+    "compile_warmup_sec": 6.011,
+    "steady_sec_per_update": 5.8749,
+    "steady_std_sec": 0.0009,
+    "throughput_img_per_sec": 4.09,
+    "peak_vram_mib": 18353.5,
+    "vram_utilization_pct": 74.7
+  },
+  "A2": {
+    "mode": "A2",
+    "use_compile": true,
+    "dynamic_shapes": false,
+    "microbatch": 6,
+    "effective_batch": 24,
+    "accum_steps": 4,
+    "compile_warmup_sec": 6.213,
+    "steady_sec_per_update": 6.0593,
+    "steady_std_sec": 0.0021,
+    "throughput_img_per_sec": 3.96,
+    "peak_vram_mib": 18487.6,
+    "vram_utilization_pct": 75.3
+  }
+}

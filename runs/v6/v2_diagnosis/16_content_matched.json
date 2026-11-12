@@ -1,0 +1,44 @@
+{
+  "pair_stats": {
+    "n_pairs": 1200,
+    "content_gap_mean": 0.0015,
+    "content_gap_median": 0.0006,
+    "content_gap_p95": 0.0041
+  },
+  "CSD_style": {
+    "auroc": 59.62,
+    "ci95_low": 57.5,
+    "ci95_high": 61.58,
+    "n_pairs": 1200
+  },
+  "ALADIN": {
+    "auroc": 55.43,
+    "ci95_low": 53.16,
+    "ci95_high": 57.4,
+    "n_pairs": 1200
+  },
+  "A0_latent": {
+    "auroc": 51.65,
+    "ci95_low": 49.11,
+    "ci95_high": 53.91,
+    "n_pairs": 1200
+  },
+  "REPA_100": {
+    "auroc": 50.82,
+    "ci95_low": 48.46,
+    "ci95_high": 53.05,
+    "n_pairs": 1200
+  },
+  "REPA_200": {
+    "auroc": 50.76,
+    "ci95_low": 48.54,
+    "ci95_high": 53.08,
+    "n_pairs": 1200
+  },
+  "DINOv2_content_control": {
+    "auroc": 49.99,
+    "ci95_low": 47.56,
+    "ci95_high": 52.17,
+    "n_pairs": 1200
+  }
+}
