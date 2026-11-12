@@ -40,11 +40,13 @@ runs/*
 data/
 datasets/
 results/
-exp/
+exp/*
+!exp/v8/
 experiments/
 state/
 archives/
-archive/
+archive/*
+!archive/v8_ot_geometry/
 eval_outputs/
 weights/
 eval_cache/
