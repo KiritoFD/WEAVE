@@ -67,9 +67,17 @@ def eval_arm(arm: str, out_dir: Path, seed: int | None = None,
     with open(log, "w") as lf:
         rc = subprocess.call(cmd, cwd=str(C.ROOT), env=env, stdout=lf, stderr=lf)
     if rc != 0:
-        raise RuntimeError(f"eval {arm} seed={seed} rc={rc}: {log}")
+        print(f"  [P0] arm {arm} seed={seed} FAILED rc={rc} ({log})", flush=True)
+        C.write_json(C.RUNS / "p0_arm_failures.json",
+                     {**(_read_failures()), f"{arm}_{seed}": rc})
+        return None          # single-arm failure must NOT kill whole pipeline
     C.record_timing("eval750", time.time() - t0)
     return C.read_json(f)
+
+
+def _read_failures() -> dict:
+    p = C.RUNS / "p0_arm_failures.json"
+    return C.read_json(p) if p.exists() else {}
 
 
 def specificity(d: dict) -> dict:
@@ -80,6 +88,9 @@ def specificity(d: dict) -> dict:
 def p0a_direction() -> dict:
     """P0.1: direction + target specificity + seed isolation."""
     OUT.mkdir(parents=True, exist_ok=True)
+    # Always write a gate file FIRST; runner's `mark p0` requires it.
+    C.write_json(C.RUNS / "p0_gate.json",
+                 {"verdict": "INCOMPLETE", "note": "direction audit crashed / running"})
     # existing v7r probe arm names: p1a_{S1,S2,R1}_{fwd,rev,wrong,rand}
     # B4 = R0 (no edit); zero = R0 as well (documented equality check).
     arms = {
@@ -90,15 +101,19 @@ def p0a_direction() -> dict:
         "fwd_S2": "p1a_S2_fwd", "rev_S2": "p1a_S2_rev",
         "wrong_S2": "p1a_S2_wrong",
     }
-    # E3 has no single-step probe arm in v7r; use p1c_E3 (4-step E3 energy)
-    # and R4c as the weak-R1-supplemented reference.
-    arms["E3_4step"] = "p1c_E3"
+    # E3: ARM_CONFIGS key is "E3" (4-step energy edit), NOT "p1c_E3" (which is
+    # the V7-R eval directory name). Explicitly recorded as 4-step, not a
+    # single-step probe (ARM_CONFIGS has no 1-step E3 probe).
+    arms["E3_4step_ref"] = "E3"
     arms["R4c_ref"] = "R4c"
     arms["B4_zero"] = "R0"
 
     results = {}
     for label, arm in arms.items():
         d = eval_arm(arm, OUT / "dir" / label)
+        if d is None:
+            results[label] = {"arm": arm, "FAILED": True}
+            continue
         c = d["cross600"]
         sp = specificity(d)
         results[label] = {
@@ -119,6 +134,9 @@ def p0a_direction() -> dict:
         for seed in range(5):
             d = eval_arm(f"p1a_{obj}_rand", OUT / "rand" / f"{obj}_s{seed}",
                          seed=seed)
+            if d is None:
+                rand[f"{obj}_s{seed}"] = {"FAILED": True}
+                continue
             c = d["cross600"]
             sp = specificity(d)
             rand[f"{obj}_s{seed}"] = {
@@ -131,22 +149,32 @@ def p0a_direction() -> dict:
             }
     C.write_json(OUT / "random_seeds.json", rand)
 
-    # ---- checks ----
-    base = results["B4_zero"]
-    fwd = results["fwd_R1"]
-    rev = results["rev_R1"]
-    zero_eq_b4 = (base["arm"] == "R0")
-    fwd_better_own = fwd["dino_s"] > base["dino_s"]
-    rev_opposite = rev["dino_s"] < fwd["dino_s"]
-    seeds_isolated = len({v["eval_hash"] for v in rand.values()}) == len(rand)
+    # ---- checks (robust to individual FAILED arms) ----
+    base = results.get("B4_zero", {})
+    fwd = results.get("fwd_R1", {})
+    rev = results.get("rev_R1", {})
+    ok = lambda r: bool(r) and not r.get("FAILED") and "dino_s" in r
+    zero_eq_b4 = (base.get("arm") == "R0") and ok(base)
+    fwd_better_own = ok(fwd) and ok(base) and fwd["dino_s"] > base["dino_s"]
+    rev_opposite = ok(rev) and ok(fwd) and rev["dino_s"] < fwd["dino_s"]
+    good_rand = [v for v in rand.values() if "dino_s" in v and not v.get("FAILED")]
+    seeds_isolated = (len(good_rand) == len(rand) and
+                      len({v["eval_hash"] for v in good_rand}) == len(good_rand))
+    # R1 classifier margin (critic), NOT the CSD margin in eval.json
+    r1_margin_check = r1_margin_direction_check(results)
     # specificity gate: do random directions raise DINO-S without specificity?
-    rands = [v for k, v in rand.items()]
-    rand_dino_gain = float(np_mean([v["dino_s"] for v in rands])) - base["dino_s"]
-    rand_spec_gain = float(np_mean([v["specificity"] for v in rands])) - \
-        base["specificity"]["mean"]
+    rands = good_rand
+    base_spec = (base.get("specificity") or {}).get("mean", 0.0) \
+        if isinstance(base.get("specificity"), dict) else 0.0
+    rand_dino_gain = (float(np_mean([v["dino_s"] for v in rands])) - base["dino_s"]) \
+        if rands and ok(base) else 0.0
+    rand_spec_gain = (float(np_mean([v["specificity"] for v in rands])) - base_spec) \
+        if rands else 0.0
     specificity_gate = (rand_dino_gain > 0.002 and rand_spec_gain <= 0.001)
+    r1_ok = (r1_margin_check["fwd_raises_r1_margin"] and
+             r1_margin_check["rev_lowers_r1_margin"])
     verdict = "PASS" if (zero_eq_b4 and fwd_better_own and rev_opposite
-                         and seeds_isolated) else "FIX_AND_REEVAL"
+                         and seeds_isolated and r1_ok) else "FIX_AND_REEVAL"
     gate = {
         "verdict": verdict,
         "checks": {
@@ -154,7 +182,15 @@ def p0a_direction() -> dict:
             "R1_fwd_raises_DINO_S": fwd_better_own,
             "R1_rev_opposite": rev_opposite,
             "random_seeds_isolated": seeds_isolated,
-            "R1_fwd_raises_target_margin": fwd["margin"] > base["margin"],
+            # R1 classifier margin (critic), NOT the CSD margin in eval.json
+            "R1_fwd_raises_r1_target_margin": r1_margin_check["fwd_raises_r1_margin"],
+            "R1_rev_lowers_r1_target_margin": r1_margin_check["rev_lowers_r1_margin"],
+            "r1_margin_note": r1_margin_check["note"],
+        },
+        "csd_margin_reference_only": {
+            "B4": base.get("margin"), "R1_fwd": fwd.get("margin"),
+            "note": "eval.json `margin` is CSD target margin, shown for "
+                    "reference; the R1 gate above uses the critic directly.",
         },
         "random_direction": {
             "mean_DINO_S_gain": round(rand_dino_gain, 5),
@@ -170,6 +206,59 @@ def p0a_direction() -> dict:
     C.write_json(C.RUNS / "p0_gate.json", gate)
     C.write_json(OUT / "direction_all.json", results)
     return gate
+
+
+def r1_margin_direction_check(results: dict) -> dict:
+    """P0.1: does R1-fwd RAISE and R1-rev LOWER the R1 CLASSIFIER target margin?
+
+    eval.json only stores CSD target_margin; the R1 gate must use the frozen
+    critic directly. We reconstruct z0 from a small fixed source set, apply
+    the same unit-RMS R1 gradient (fwd / rev / zero), and compare the critic's
+    target margin. No decoding, no 750 eval -> seconds.
+    """
+    import torch
+    import torch.nn.functional as F
+    from tools.v7r.arms import make_style_objective
+    from tools.v7r.v7r_common import rms_normalize
+    from tools.v6.train_eval_v6 import STYLES
+    dev = "cuda"
+    critic = C.load_critic(dev)
+    canon = C.load_canon(dev)
+    b4 = C.load_c3unet(dev)
+    # fixed small source set from the frozen TRAIN pool (not tasks_750)
+    from tools.v7r.v7r_common import load_pool
+    pool, _, _ = load_pool(device="cpu")
+    C.set_seed()
+    zs = torch.stack([pool[STYLES[s % 5]][s * 7] for s in range(10)]).to(dev)
+    tid = torch.arange(10, device=dev) % 5
+    with torch.no_grad():
+        c = canon(zs.float(), mode="c1_gentle", augment=False)
+        z0 = b4(c, 0.0, c, tid).detach()
+    obj = make_style_objective("R1", {"critic": critic}, tid)
+
+    def r1_margin(z):
+        q = critic(z.float()).float()
+        oh = F.one_hot(tid, 5).bool()
+        m = q.gather(1, tid[:, None]).squeeze(1) - torch.logsumexp(
+            q.masked_fill(oh, torch.finfo(q.dtype).min), dim=1)
+        return float(m.mean())
+    zr = z0.clone().requires_grad_(True)
+    g = torch.autograd.grad(obj(zr), zr)[0]
+    g = rms_normalize(g)
+    rms = 0.25  # PROBE_RMS, matches the single-step probe budget
+    m0 = r1_margin(z0)
+    mf = r1_margin((z0 + rms * g).detach())
+    mr = r1_margin((z0 - rms * g).detach())
+    return {
+        "r1_margin_B4": round(m0, 5),
+        "r1_margin_fwd": round(mf, 5),
+        "r1_margin_rev": round(mr, 5),
+        "fwd_raises_r1_margin": bool(mf > m0),
+        "rev_lowers_r1_margin": bool(mr < m0),
+        "note": "R1 classifier target margin computed directly from frozen "
+                "critic on 10 fixed TRAIN-pool latents; NOT the CSD margin "
+                "stored in eval.json. Unit-RMS gradient, same probe budget.",
+    }
 
 
 def np_mean(x):
