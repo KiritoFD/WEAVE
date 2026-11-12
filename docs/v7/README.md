@@ -1,5 +1,9 @@
-# WEAVE V7 阶段文档导航
+# WEAVE V7 / V7-R 阶段文档导航
 
+> **当前主报告**：[V7R_NEXT_BREAKTHROUGH.md](<V7R_NEXT_BREAKTHROUGH.md>)。
+> V7-R 已完成历史运行；CPT/NEXT 尚处 P0 可信度审计，不能依据旧总控 FINISHED 宣称完成。
+> 保留 R3c/R4c 的测试时编辑结果；N1/N2 学习式 Corrector 失败。目标特异性新证据与历史结论修正在主报告中。
+> 原始全量结果/配对统计/源码归档：[实验证据索引](<../../deliver/v7r_snapshot/manifest.json>)。
 > 来源：`E:\writing-block.md`（用户 2026-11-11 拍板的下一阶段方案）  
 > 设备：单卡 RTX 3060 12GB  
 > 时间预算：16 小时  
@@ -76,4 +80,26 @@ V7 产物统一写入 `runs/v7/` 与 `docs/v7/`，不覆盖 `runs/v6_w/` 或 `ru
 
 ## 当前状态
 
-**仅完成方案细化与边界规定，未启动任何 GPU 任务。** 启动入口与预检要求见 `V7_IMPLEMENTATION_PLAN.md` 的「单卡串行入口」。
+**V7 全部阶段已完成（2026-11-12 00:31–01:36，3060 单卡 tmux 串行，实际耗时约 65 分钟）。**
+
+- 串行入口：`sbflow/scripts/run_v7_16h.sh`（已实现；`--dry-run` 预检通过：编译 + 19/19 CPU 单测 + 冻结输入检查；全程 resume-aware）
+- 子脚本：`tools/v7/`（v7_common / p0_causal_audit / p1_energy / p1_validity / p2_corrector / p3_train / p4_combine / p5_report / p5_visual_grid / v7_tests）
+- `r2_eval.py` 仅追加 `--gen relative` 与 `--gen v7` 两个 generator mode，既有模式输出不变
+
+### 最终结论（详见 `V7_REPORT.md` / `runs/v7/final_verdict.json`）
+
+| 阶段 | 判定 |
+|---|---|
+| P0 相对参数化 | **NO_RELATIVE**（B4 relative Top-1 +10.7pp 但 DINO-C −0.038、DINO-S −0.009） |
+| P1 真实风格能量 | **GO_ENERGY**，`best_energy = S2_sd`（AUROC 0.983；S1 未过均衡性/稳定性，作对照） |
+| P2 测试时优化 | **NO_CORRECTOR**（T2–T4 内容大幅改善 DINO-C 0.85 vs T0 0.745，但 DINO-S 未超过 T0；T5 无正信号未跑） |
+| P3 Predictor | **NO_PREDICTOR**（M1 恒等坍缩 Top-1 0.022；M2 风格响应增强 Top-1 0.268 但内容崩坏 DINO-C 0.50） |
+| P4 组合 | C2/C3/C4 按规则跳过（`p4_skipped.json`）；C0/C1 锚点复用 |
+
+**问题 A = 否**（真实分布能量有效可分但不能在等 DINO-C 下胜过 R1 边界的 DINO-S）；**问题 B = 否**（相对残差未减少条件捷径，下一阶段应转向风格不变内容表示）；**问题 C = 无结论**（C4 未运行）。最佳臂为 T1（修复后 TopK25，PARTIAL，与 V6 结论一致）。
+
+### 运行记录
+
+- 运行日志：`runs/v7/logs/`；阶段标志：`runs/v7/state/*.done`（6 阶段全部完成）
+- 预定义 scale 策略（P2，协议 §6）：分量梯度按 step-0 实测 RMS 定标 + 组合目标回溯线搜索（α ∈ {1,…,1/32}）；smoke 实测 S2 能量 7.07→3.39、margin 上升、内容无损
+- 开销：单次 750 评测 88–180 s；M1/M2 训练 736/856 s（有效 batch 240，峰值显存 1.8/2.8 GiB）

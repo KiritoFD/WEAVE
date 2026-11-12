@@ -1,5 +1,10 @@
 # WEAVE V7-R 最终报告：进展、结果与判定
 
+> **历史报告，结论已修订**：以 [CPT 当前主报告](<V7R_NEXT_BREAKTHROUGH.md>) 为准。
+> 本文 A/C=YES 不构成学习式 Corrector 成功证据；新审计显示 R3c/R4c 的 DINO-S 提升未伴随目标特异性改善。
+> 重复指标不证明错误复用；2946s 为最后续跑段，不能推算全程约 2h49min。
+> 本文保留原始叙述便于追溯，不应脱离上述修正引用。
+
 **核定时间**：2026-11-12 17:35
 **执行机器**：3060（WSL，RTX 3060 12GB，`/mnt/i/Latent_Style/WEAVE`）
 **流水线**：`sbflow/scripts/run_v7r_14h.sh`，11 个阶段
