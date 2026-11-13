@@ -21,7 +21,12 @@ class FeatureStack:
     """Loads CSD (ViT-L), DINOv2-small, CLIP ViT-B/32 and LPIPS once."""
 
     def __init__(self, device: str = "cuda"):
-        from tools.v6_next import r2_eval as ref
+        try:
+            from tools.v6_next import r2_eval as ref
+        except Exception:
+            # tools.v6_next.r2_eval -> tools.v5.route_c -> tools.eval_fast ->
+            # `resource` (Unix-only). Fall back to identical re-exports.
+            from src.utils import _local_eval_refs as ref
         self._ref = ref
         self.device = device
         self.csd, _, _ = ref.csd_model.load_csd(device)

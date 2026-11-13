@@ -1,0 +1,135 @@
+{
+  "dataset": {
+    "data_root": "G:\\GitHub\\Latent_Style\\Dataset\\distinct5_512_latents_ema\\wikiart_distinct5_samam_512_latents_ema\\train",
+    "style_subdirs": [
+      "Early_Renaissance",
+      "Impressionism",
+      "Minimalism",
+      "Rococo",
+      "Ukiyo_e"
+    ],
+    "files_per_style": {
+      "Early_Renaissance": 1000,
+      "Impressionism": 1000,
+      "Minimalism": 1000,
+      "Rococo": 1000,
+      "Ukiyo_e": 1000
+    }
+  },
+  "experiment_a_energy": {
+    "total_samples": 5000,
+    "subbands": {
+      "LL": {
+        "mean": 0.6592072682588223,
+        "std": 0.1315312541200624,
+        "median": 0.6478337025176404,
+        "p5": 0.4593729912498452,
+        "p95": 0.9041702116779977,
+        "min": 0.2444285741858764,
+        "max": 0.9846436504234111
+      },
+      "LH": {
+        "mean": 0.11472513145079559,
+        "std": 0.04559900672742255,
+        "median": 0.11722160747871199,
+        "p5": 0.031805942446214576,
+        "p95": 0.18353643309878628,
+        "min": 0.005056876938842039,
+        "max": 0.3310985690540748
+      },
+      "HL": {
+        "mean": 0.12516850691826345,
+        "std": 0.049669824919631664,
+        "median": 0.12643146855972362,
+        "p5": 0.03835664801801589,
+        "p95": 0.20080592264853522,
+        "min": 0.005608398685805298,
+        "max": 0.4870880145663028
+      },
+      "HH": {
+        "mean": 0.10089909337211857,
+        "std": 0.04437278856159845,
+        "median": 0.10316363790339228,
+        "p5": 0.020629980196605214,
+        "p95": 0.17101887501573856,
+        "min": 0.002365105188870289,
+        "max": 0.2803201943606527
+      }
+    },
+    "assertions": {
+      "E_LL_over_E_total": 0.6592072682588223,
+      "E_HH_over_E_total": 0.10089909337211857,
+      "E_LL_to_E_HH_ratio": 6.533331928242885,
+      "gradient_hegemony_lower_bound_sqrt_K": 2.5560383268337126
+    }
+  },
+  "experiment_c_fstat": {
+    "total_samples": 500,
+    "num_styles": 5,
+    "subbands": {
+      "LL": {
+        "F_statistic": 95.78624541885434,
+        "p_value_approx": 2.627372677374358e-60,
+        "eta_squared": 0.43631175907241765,
+        "df_between": 4,
+        "df_within": 495,
+        "group_means": {
+          "Early_Renaissance": 0.9612180626392365,
+          "Impressionism": 1.0008590203523635,
+          "Minimalism": 1.5631312227249146,
+          "Rococo": 1.1219759392738342,
+          "Ukiyo_e": 1.048099382519722
+        }
+      },
+      "LH": {
+        "F_statistic": 45.752628587763944,
+        "p_value_approx": 1.0352329538509178e-32,
+        "eta_squared": 0.2699228263830401,
+        "df_between": 4,
+        "df_within": 495,
+        "group_means": {
+          "Early_Renaissance": 0.44352147579193113,
+          "Impressionism": 0.4348548445105553,
+          "Minimalism": 0.35953219726681707,
+          "Rococo": 0.4159072268009186,
+          "Ukiyo_e": 0.4694062891602516
+        }
+      },
+      "HL": {
+        "F_statistic": 74.27757055374663,
+        "p_value_approx": 2.7396719255409085e-49,
+        "eta_squared": 0.3750870161465066,
+        "df_between": 4,
+        "df_within": 495,
+        "group_means": {
+          "Early_Renaissance": 0.48215302944183347,
+          "Impressionism": 0.43439748406410217,
+          "Minimalism": 0.3645416684448719,
+          "Rococo": 0.4329647997021675,
+          "Ukiyo_e": 0.4847519102692604
+        }
+      },
+      "HH": {
+        "F_statistic": 123.42841030920869,
+        "p_value_approx": 5.37416755511621e-73,
+        "eta_squared": 0.4993494786005197,
+        "df_between": 4,
+        "df_within": 495,
+        "group_means": {
+          "Early_Renaissance": 0.42598107606172564,
+          "Impressionism": 0.40889168173074725,
+          "Minimalism": 0.2908955351263285,
+          "Rococo": 0.3969800993800163,
+          "Ukiyo_e": 0.4487157717347145
+        }
+      }
+    },
+    "assertions": {
+      "F_LL": 95.78624541885434,
+      "F_HH": 123.42841030920869,
+      "F_HH_to_F_LL_ratio": 1.288581776741333,
+      "monotonic_increase": false
+    }
+  },
+  "wall_sec": 9.360823392868042
+}

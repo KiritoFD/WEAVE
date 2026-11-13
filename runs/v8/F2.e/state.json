@@ -1,0 +1,19 @@
+{
+  "state": "DONE",
+  "arm": {
+    "id": "F2.e",
+    "kind": "actuated",
+    "start": "B4",
+    "act_ckpt": "F2",
+    "steps": 2,
+    "eta": 0.05,
+    "group": "F_eval"
+  },
+  "started_at": 1794585889.1068969,
+  "updated_at": "2026-11-14 00:07:46",
+  "gen_sec": 123.88,
+  "n_tasks": 750,
+  "error": "RuntimeError: PytorchStreamReader failed reading zip archive: failed finding central directory. This is an internal miniz error. If you are seeing this error, there is a high likelihood that your checkpoint file is corrupted. This can happen if the checkpoint was not saved properly, was transferred incorrectly, or the file was modified after saving.",
+  "eval_sec": 177.1,
+  "n_rows": 750
+}

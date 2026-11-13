@@ -15,6 +15,7 @@ stored optimiser trajectory (that is the R2/W failure mode).
 from __future__ import annotations
 
 import json
+import os
 import time
 from dataclasses import asdict
 from pathlib import Path
@@ -110,7 +111,7 @@ def train_arm(arm_id: str, *, device: str = "cuda", log_every: int = 100):
     kind = arm["kind"]
     updates = arm["updates"]
     ckpts = set(arm.get("checkpoints", [0, updates]))
-    micro = MICROBATCH[arm_id]
+    micro = int(os.environ.get(f"V8_MICRO_{arm_id}", MICROBATCH[arm_id]))
     eff = 240 if arm_id in ("A3", "A4", "C3") else 128
     accum = max(1, round(eff / micro))
 

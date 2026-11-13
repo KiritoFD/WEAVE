@@ -12,6 +12,7 @@ V6/W/V7 results, tasks_750) are read-only.
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -38,7 +39,8 @@ LOGS = RUNS_V7R / "logs"
 V7_P1 = ROOT / "runs" / "v7" / "p1_energy"
 V7_P2 = ROOT / "runs" / "v7" / "p2_eval"
 
-SD_POOL = Path("/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16")
+SD_POOL = Path(os.environ.get(
+    "WEAVE_SD_POOL", "/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16"))
 
 # P2 corrector defaults (predefined; documented in V7R_PLAN.md)
 CORRECTOR_BASE_DIM = 48

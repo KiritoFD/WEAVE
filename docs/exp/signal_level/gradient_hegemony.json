@@ -1,0 +1,114 @@
+{
+  "probe_config": {
+    "batch_size": 4,
+    "fixed_t": 0.5,
+    "seed": 42,
+    "data_root": "G:/GitHub/Latent_Style/Dataset/distinct5_512_latents_ema/wikiart_distinct5_samam_512_latents_ema/train",
+    "style_subdirs": [
+      "Early_Renaissance",
+      "Impressionism",
+      "Minimalism",
+      "Rococo",
+      "Ukiyo_e"
+    ]
+  },
+  "checkpoints": [
+    {
+      "label": "w03_weave",
+      "checkpoint": "G:\\GitHub\\Latent_Style\\WEAVE\\exp\\dino_s_break\\brk_a_ll03_10ep\\epoch_0010.pt",
+      "spectral_w_ll": 0.3,
+      "enable_hh_head": false
+    },
+    {
+      "label": "w10_global_mse",
+      "checkpoint": "G:\\GitHub\\Latent_Style\\WEAVE\\exp\\dino_s_break\\brk_d_wll10_10ep\\epoch_0010.pt",
+      "spectral_w_ll": 1.0,
+      "enable_hh_head": false
+    },
+    {
+      "label": "hh_head",
+      "checkpoint": "G:\\GitHub\\Latent_Style\\WEAVE\\exp\\dino_s_break\\brk_u_hh_head\\epoch_0010.pt",
+      "spectral_w_ll": 0.3,
+      "enable_hh_head": true
+    }
+  ],
+  "results": [
+    {
+      "internal_probe_active": 1.0,
+      "internal_probe_gate_mean": 0.0,
+      "internal_probe_loss_ll": 0.030273016542196274,
+      "internal_probe_loss_hf": 1.1443347930908203,
+      "internal_probe_shared_ll_grad_norm": 0.5915289896030133,
+      "internal_probe_shared_hf_grad_norm": 1.6108843145611125,
+      "internal_probe_shared_ll_hf_grad_ratio": 0.3672076164971591,
+      "internal_probe_target_hf_route_grad_norm": 0.0,
+      "internal_probe_hf_head_grad_norm": 0.4485575592783237,
+      "internal_probe_route_shared_hf_grad_ratio": 0.0,
+      "internal_probe_route_hf_head_grad_ratio": 0.0,
+      "label": "w03_weave",
+      "checkpoint": "G:\\GitHub\\Latent_Style\\WEAVE\\exp\\dino_s_break\\brk_a_ll03_10ep\\epoch_0010.pt",
+      "wall_sec": 0.742297887802124,
+      "spectral_w_ll": 0.3,
+      "spectral_w_lh": 1.0,
+      "spectral_w_hl": 1.0,
+      "spectral_w_hh": 2.0,
+      "enable_hh_head": false
+    },
+    {
+      "internal_probe_active": 1.0,
+      "internal_probe_gate_mean": 0.0,
+      "internal_probe_loss_ll": 2.935402498849271e-08,
+      "internal_probe_loss_hf": 1.1443989276885986,
+      "internal_probe_shared_ll_grad_norm": 4.2672914214189525e-07,
+      "internal_probe_shared_hf_grad_norm": 2.112683009215969,
+      "internal_probe_shared_ll_hf_grad_ratio": 2.0198446254369952e-07,
+      "internal_probe_target_hf_route_grad_norm": 0.0,
+      "internal_probe_hf_head_grad_norm": 0.44313831823599276,
+      "internal_probe_route_shared_hf_grad_ratio": 0.0,
+      "internal_probe_route_hf_head_grad_ratio": 0.0,
+      "label": "w10_global_mse",
+      "checkpoint": "G:\\GitHub\\Latent_Style\\WEAVE\\exp\\dino_s_break\\brk_d_wll10_10ep\\epoch_0010.pt",
+      "wall_sec": 0.6949136257171631,
+      "spectral_w_ll": 1.0,
+      "spectral_w_lh": 1.0,
+      "spectral_w_hl": 1.0,
+      "spectral_w_hh": 2.0,
+      "enable_hh_head": false
+    },
+    {
+      "internal_probe_active": 1.0,
+      "internal_probe_gate_mean": 0.0,
+      "internal_probe_loss_ll": 0.02874607965350151,
+      "internal_probe_loss_hf": 2.1383023262023926,
+      "internal_probe_shared_ll_grad_norm": 0.5801336415884236,
+      "internal_probe_shared_hf_grad_norm": 3.3511074349960768,
+      "internal_probe_shared_ll_hf_grad_ratio": 0.17311699276777429,
+      "internal_probe_target_hf_route_grad_norm": 0.0,
+      "internal_probe_hf_head_grad_norm": 0.6479535999629237,
+      "internal_probe_route_shared_hf_grad_ratio": 0.0,
+      "internal_probe_route_hf_head_grad_ratio": 0.0,
+      "label": "hh_head",
+      "checkpoint": "G:\\GitHub\\Latent_Style\\WEAVE\\exp\\dino_s_break\\brk_u_hh_head\\epoch_0010.pt",
+      "wall_sec": 0.6168153285980225,
+      "spectral_w_ll": 0.3,
+      "spectral_w_lh": 1.0,
+      "spectral_w_hl": 1.0,
+      "spectral_w_hh": 2.0,
+      "enable_hh_head": true
+    }
+  ],
+  "assertions": {
+    "w03_ratio": 0.3672076164971591,
+    "w03_ll_grad": 0.5915289896030133,
+    "w03_hf_grad": 1.6108843145611125,
+    "w03_route_grad": 0.0,
+    "w10_ratio": 2.0198446254369952e-07,
+    "w10_ll_grad": 4.2672914214189525e-07,
+    "w10_hf_grad": 2.112683009215969,
+    "w10_route_grad": 0.0,
+    "liberation_factor": 5.500552098304915e-07,
+    "hh_head_ratio": 0.17311699276777429,
+    "hh_head_route_grad": 0.0,
+    "hh_head_head_grad": 0.6479535999629237
+  }
+}

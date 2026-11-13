@@ -1,0 +1,18 @@
+{
+  "state": "DONE",
+  "arm": {
+    "id": "F2.s1",
+    "kind": "actuated",
+    "start": "B4",
+    "act_ckpt": "F2",
+    "steps": 1,
+    "eta": 0.05,
+    "group": "F_eval"
+  },
+  "started_at": 1794586130.3393767,
+  "updated_at": "2026-11-14 00:11:48",
+  "gen_sec": 121.15,
+  "n_tasks": 750,
+  "eval_sec": 178.4,
+  "n_rows": 750
+}
