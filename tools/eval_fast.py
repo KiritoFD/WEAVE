@@ -57,10 +57,10 @@ sys.path.insert(0, str(_ROOT))
 sys.path.insert(0, str(_ROOT / "tools"))
 sys.path.insert(0, str(_ROOT / "tools" / "trt"))
 
-from config_schema import load_config, resolve_full_eval_section  # noqa: E402
-from utils.compute_dino_metrics import DINO_TRANSFORM, list_style_images, load_dino  # noqa: E402
-from utils.inference import decode_latent, encode_image, load_vae, LGTInference  # noqa: E402
-from utils.run_evaluation import (  # noqa: E402
+from tools.legacy_root.config_schema import load_config, resolve_full_eval_section  # noqa: E402
+from tools.legacy_utils.compute_dino_metrics import DINO_TRANSFORM, list_style_images, load_dino  # noqa: E402
+from tools.legacy_utils.inference import decode_latent, encode_image, load_vae, LGTInference  # noqa: E402
+from tools.legacy_utils.run_evaluation import (  # noqa: E402
     _clip_image_size_from_runtime,
     _clip_mean_std_from_runtime,
     _extract_clip_embeddings,

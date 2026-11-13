@@ -29,7 +29,7 @@ import torch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from wavelet import dwt2_haar, idwt2_haar  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar  # noqa: E402
 from tools.v6_next.r2_teacher import (  # noqa: E402
     compute_content_losses,
     compute_r1_gradient,

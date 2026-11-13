@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 import torch
-from wavelet import dwt2_haar, idwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))

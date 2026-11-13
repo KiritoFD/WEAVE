@@ -28,7 +28,7 @@ from typing import Dict, Iterable, Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from wavelet import dwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 IMP_IDX = STYLES.index("Impressionism")

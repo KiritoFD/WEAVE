@@ -456,7 +456,7 @@ def finish_v7r_trace(pack: dict, out_dir: Path) -> None:
     if models is not None and tr["final_z"]:
         from tools.v5.route_c import decode_trt
         from tools.v6.train_eval_v6 import encode_dino
-        from utils.run_evaluation import to_lpips_input
+        from tools.legacy_utils.run_evaluation import to_lpips_input
         import numpy as np
         from PIL import Image
         task_ids = sorted(tr["final_z"].keys())

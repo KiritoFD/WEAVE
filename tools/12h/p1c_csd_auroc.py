@@ -25,7 +25,7 @@ for _p in (ROOT, ROOT / "tools", ROOT / "tools" / "trt"):
     sys.path.insert(0, str(_p))
 import eval_fast as ef
 import trt_vae_decoder
-from utils.inference import encode_image, load_vae
+from tools.legacy_utils.inference import encode_image, load_vae
 import csd_model
 
 ap = argparse.ArgumentParser()

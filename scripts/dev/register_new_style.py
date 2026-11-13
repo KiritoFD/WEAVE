@@ -29,8 +29,8 @@ from config_schema import ExperimentConfig, load_config, merge_config_dicts
 from flow import FlowMatchingObjective
 from model import build_model_from_config
 from style_families import prune_state_dict_for_tokenizer_family
-from utils.inference import encode_image, load_vae
-from utils.training import strip_compile_prefix
+from tools.legacy_utils.inference import encode_image, load_vae
+from tools.legacy_utils.training import strip_compile_prefix
 
 
 def _pil_to_tensor(pil_img):

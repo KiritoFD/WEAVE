@@ -32,7 +32,7 @@ sys.path.insert(0, str(ROOT))
 import numpy as np
 import torch
 
-from wavelet import dwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar
 
 CACHE = Path("/mnt/i/Latent_Style/pseudo_gt_24h/orig_mean_fp16")
 FILES = ["00_Early_Renaissance.pt", "01_Impressionism.pt", "02_Minimalism.pt",

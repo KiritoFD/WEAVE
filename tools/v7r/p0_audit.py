@@ -38,7 +38,7 @@ from tools.v7.v7_common import (
     write_json,
 )
 from tools.v7r.v7r_common import P0_CKPTS, P0_DIR, painter_of
-from wavelet import dwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar
 
 SRC_CACHE = ROOT / "runs" / "v6_r2" / "cache" / "tasks750_source_features.pt"
 V7_P0_EVAL = ROOT / "runs" / "v7" / "p0_relative" / "p0_b4_direct"

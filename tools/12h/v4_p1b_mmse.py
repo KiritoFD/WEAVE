@@ -147,7 +147,7 @@ def main() -> int:
     model.eval()
     schedule = Schedule.linear(cfg.timesteps, cfg.beta_start, cfg.beta_end, device="cuda")
 
-    from utils.inference import decode_latent, encode_image, load_vae
+    from tools.legacy_utils.inference import decode_latent, encode_image, load_vae
     vae = load_vae("cuda", model_id="ema", cache_dir=str(hf_cache_root()))
 
     # ---- 1) 用训练 latent 估 Style × 子带 × 通道 方差 ----
@@ -229,7 +229,7 @@ def main() -> int:
     src_x = torch.stack([load_image(Path(r["src"])) for r in rows], 0)
     try:
         import lpips
-        from utils.run_evaluation import _lpips_forward_safe
+        from tools.legacy_utils.run_evaluation import _lpips_forward_safe
         loss_fn = lpips.LPIPS(net="alex", verbose=False).cuda().eval()
         for v in variants:
             gen = torch.stack([load_image(out_dir / "images" / f"{r['tag']}_{v}.png")
@@ -244,7 +244,7 @@ def main() -> int:
         print("[A] lpips failed:", type(exc).__name__, exc, flush=True)
 
     try:
-        from utils.compute_dino_metrics import load_dino
+        from tools.legacy_utils.compute_dino_metrics import load_dino
         cache = str(hf_cache_root())
         dino = load_dino("facebook/dinov2-small", "cuda", cache, allow_network=False)
         mean = torch.tensor([0.485, 0.456, 0.406], device="cuda").view(1, 3, 1, 1)

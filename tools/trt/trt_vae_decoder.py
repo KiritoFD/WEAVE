@@ -13,7 +13,7 @@ from pathlib import Path
 
 import torch
 
-from utils.inference import decode_latent
+from tools.legacy_utils.inference import decode_latent
 
 
 class TrtVaeDecoder:

@@ -25,7 +25,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
 from paths import hf_cache_root, runs_root  # noqa: E402
-from utils.inference import load_vae  # noqa: E402
+from tools.legacy_utils.inference import load_vae  # noqa: E402
 
 
 class DecoderExport(torch.nn.Module):

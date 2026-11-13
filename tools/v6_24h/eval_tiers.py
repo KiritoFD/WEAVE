@@ -35,7 +35,7 @@ from tools.v6.train_eval_v6 import (STYLES, V6_ROOT, csd_model, csd_prototypes,
                                     decode_trt, encode_dino, load_dino_model, load_trt,
                                     load_vae, _load_eval_image_tensor)
 from tools.v6_24h.stats import cluster_ci
-from utils.run_evaluation import to_lpips_input
+from tools.legacy_utils.run_evaluation import to_lpips_input
 
 
 def main() -> None:

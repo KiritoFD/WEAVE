@@ -29,9 +29,9 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
 import diagnose_saturation as ds  # noqa: E402
-from config_schema import load_experiment_config  # noqa: E402
-from model import build_model_from_config  # noqa: E402
-from utils.dataset import AdaCUTLatentDataset  # noqa: E402
+from tools.legacy_root.config_schema import load_experiment_config  # noqa: E402
+from tools.legacy_root.model import build_model_from_config  # noqa: E402
+from tools.legacy_utils.dataset import AdaCUTLatentDataset  # noqa: E402
 
 SUBBANDS = ("ll", "lh", "hl")
 FIXED_T = 0.5

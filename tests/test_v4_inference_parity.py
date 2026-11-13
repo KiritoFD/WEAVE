@@ -9,10 +9,10 @@ from dataclasses import asdict
 
 import torch
 
-from v4.config import V4Config
-from v4.diffusion import Schedule, ddim_sample, sdedit
-from v4.inference import V4Inference
-from v4.model import V4UNet
+from tools.legacy_v4.config import V4Config
+from tools.legacy_v4.diffusion import Schedule, ddim_sample, sdedit
+from tools.legacy_v4.inference import V4Inference
+from tools.legacy_v4.model import V4UNet
 
 
 def _make_payload(pred_type: str, seed: int = 0):

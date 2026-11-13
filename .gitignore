@@ -20,10 +20,14 @@ env/
 .vscode/
 .idea/
 .tools/
+.zcode/
 foi26/
 *.swp
 *.swo
 *~
+
+# ============ Local weights cache (large, machine-local) ============
+weights_local/
 
 # ============ OS ============
 .DS_Store
@@ -42,11 +46,10 @@ datasets/
 results/
 exp/*
 !exp/v8/
+!exp/v9_local/
 experiments/
 state/
 archives/
-archive/*
-!archive/v8_ot_geometry/
 eval_outputs/
 weights/
 eval_cache/

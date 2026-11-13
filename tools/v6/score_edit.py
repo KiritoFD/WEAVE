@@ -6,7 +6,7 @@ from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 
-from wavelet import dwt2_haar, idwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar
 from tools.v6.models_v6 import ConditionalScoreNet
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]

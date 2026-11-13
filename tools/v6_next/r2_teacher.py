@@ -16,7 +16,7 @@ from typing import Dict, Optional, Tuple
 
 import torch
 import torch.nn.functional as F
-from wavelet import dwt2_haar, idwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar
 
 
 def compute_r1_gradient(

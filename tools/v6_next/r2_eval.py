@@ -37,7 +37,7 @@ from tools.v6.models_v6 import C3UNet, ConditionalScoreNet
 from tools.v6.train_eval_v6 import STYLES, csd_model, encode_dino, load_dino_model
 from tools.v6_24h.stats import cluster_ci, paired_cluster_ci
 from tools.v6_next.probe_style import LatentStyleNet
-from utils.run_evaluation import _load_eval_image_tensor, to_lpips_input
+from tools.legacy_utils.run_evaluation import _load_eval_image_tensor, to_lpips_input
 
 DEFAULT_TASKS = ROOT / "eval_protocol" / "tasks_750.json"
 DEFAULT_REFS = ROOT / "eval_protocol" / "cache" / "references_v1_features.pt"

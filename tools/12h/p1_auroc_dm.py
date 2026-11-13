@@ -16,7 +16,7 @@ for _p in (ROOT, ROOT / "tools", ROOT / "tools" / "trt"):
     sys.path.insert(0, str(_p))
 import eval_fast as ef
 import trt_vae_decoder
-from utils.inference import encode_image, load_vae
+from tools.legacy_utils.inference import encode_image, load_vae
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--manifest", default=str(ROOT / "data" / "wikiart_new_packed" / "manifest.json"))

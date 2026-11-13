@@ -23,7 +23,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from config_schema import load_experiment_config  # noqa: E402
+from tools.legacy_root.config_schema import load_experiment_config  # noqa: E402
 from v2.config import V2Config  # noqa: E402
 from v2.data512 import StyleLatentPool  # noqa: E402
 from v2.distances import mmd2_rbf, swd2  # noqa: E402
@@ -66,7 +66,7 @@ def main() -> int:
     check("residual_head_zero_init", zeros == 0.0 and v2cfg.residual_head_zero_init, f"max|W_head|={zeros:.2e}")
 
     # ---------- 1. 恒等映射 + decode PSNR ----------
-    from utils.inference import load_vae, encode_image
+    from tools.legacy_utils.inference import load_vae, encode_image
 
     vae = load_vae(device=str(device), model_id="ema", compile_dtype=torch.float32,
                    enable_xformers=True, compile_decoder=False)

@@ -40,9 +40,9 @@ for _p in (ROOT, ROOT / "tools", ROOT / "tools" / "trt"):
 
 import eval_fast as ef  # noqa: E402
 import trt_vae_decoder  # noqa: E402
-from utils.inference import encode_image, load_vae, LGTInference  # noqa: E402
-from utils.compute_dino_metrics import DINO_TRANSFORM, list_style_images  # noqa: E402
-from wavelet import dwt2_lowpass  # noqa: E402
+from tools.legacy_utils.inference import encode_image, load_vae, LGTInference  # noqa: E402
+from tools.legacy_utils.compute_dino_metrics import DINO_TRANSFORM, list_style_images  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_lowpass  # noqa: E402
 
 IMAGE_EXTS = ef.IMAGE_EXTS
 

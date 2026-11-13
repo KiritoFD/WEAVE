@@ -12,33 +12,28 @@ from typing import Iterable
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-# 历史资料 / 论文产物目录整体放行
+# 历史资料 / 论文产物目录整体放行（EXPERIMENT_ARCHAEOLOGY 已并入 archives/）
 WHITELIST_PREFIXES = (
-    "EXPERIMENT_ARCHAEOLOGY/",
     "archives/",
     "aaai2027_v4/",
     "docs/",
 )
 
-# 本机 MCP 工具配置，不属于 WEAVE 运行路径
-MACHINE_LOCAL_FILES = {
-    "config/mcporter.json",
-    "config/config/mcporter.json",
-}
+# 本机 MCP 工具配置，不属于 WEAVE 运行路径（2026-11-14 起归入 archives/，已被前缀放行）
+MACHINE_LOCAL_FILES = set()
 
-# B3-B6 待改造清单（每批改完后删除对应条目）
+# B3-B6 待改造清单（每批改完后删除对应条目；路径以 2026-11-14 重组后为准）
 KNOWN_DEBT = {
     "BASELINE_PROGRESS.md",
     "Plan.md",
     "REPOSITORY_INVENTORY.md",
-    "pack_code_zip.py",
-    "pack_subpack.py",
-    "prepare_submission_v6.py",
-    "probes/probe_velocity_adain.py",
-    "register_new_style.py",
+    "tools/legacy_root/pack_code_zip.py",
+    "tools/legacy_root/pack_subpack.py",
+    "tools/legacy_root/prepare_submission_v6.py",
+    "tools/oneoff/probe_velocity_adain.py",
+    "tools/legacy_root/register_new_style.py",
     "scripts/_audit_stylealigned_cross.py",
     "scripts/_print_cross_table.py",
-    "scripts/_repro_dino_eval.py",
     "scripts/_scan_ablation_sources.py",
     "scripts/build_submission_pack.py",
     "scripts/dev/BASELINE_PROGRESS.md",
@@ -46,7 +41,6 @@ KNOWN_DEBT = {
     "scripts/dev/pack_subpack.py",
     "scripts/dev/prepare_submission_v6.py",
     "scripts/dev/register_new_style.py",
-    "scripts/eval_other5.py",
     "scripts/pull_submission_pack_remote.bat",
     "scripts/register_other5.py",
     "scripts/scripts/_audit_stylealigned_cross.py",
@@ -54,7 +48,6 @@ KNOWN_DEBT = {
     "scripts/scripts/_repro_dino_eval.py",
     "scripts/scripts/_scan_ablation_sources.py",
     "scripts/scripts/build_submission_pack.py",
-    "scripts/scripts/eval_other5.py",
     "scripts/scripts/pull_submission_pack_remote.bat",
     "scripts/scripts/register_other5.py",
     "tools/12h/trt_parity.py",
@@ -77,8 +70,8 @@ KNOWN_DEBT = {
     "tools/vae_encode_p2a256.py",
     "tools/vae_encode_r5.py",
     "tools/vae_recon_probe.py",
-    "v4/audit_data.py",
-    "v4/evaluate.py",
+    "tools/legacy_v4/audit_data.py",
+    "tools/legacy_v4/evaluate.py",
 }
 
 # 盘符路径 / WSL 挂载 / 家目录；负向后行断言避免误伤 http:// 等 URL。

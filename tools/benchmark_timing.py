@@ -19,7 +19,7 @@ def sync():
         torch.cuda.synchronize()
 
 def load_vae_sd15():
-    from utils.inference import load_vae
+    from tools.legacy_utils.inference import load_vae
     return load_vae(device=DEVICE, model_id="ema", enable_xformers=False)
 
 def load_vae_taesd():
@@ -31,7 +31,7 @@ def load_vae_taesd():
     return vae
 
 def load_weave_model(ckpt_path, config_override=None):
-    from utils.inference import LGTInference
+    from tools.legacy_utils.inference import LGTInference
     inf = LGTInference(str(ckpt_path), device=DEVICE, num_steps=1, config_override_path=config_override)
     inf.model.eval()
     inf.model.solver_type = "euler"

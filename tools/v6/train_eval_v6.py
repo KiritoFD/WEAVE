@@ -38,12 +38,12 @@ sys.path.insert(0, str(REPO_ROOT / "tools" / "trt"))
 
 import paths  # noqa: E402
 import csd_model  # noqa: E402
-from wavelet import dwt2_haar, idwt2_haar  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar  # noqa: E402
 from tools.eval_fast import (  # noqa: E402
     METRIC_HEADER, DINO_HEADER, MetricEngine, Timer, build_protocol, write_csv,
 )
 from tools.pseudo_gt.matching import encode_dino, load_dino_model  # noqa: E402
-from utils.run_evaluation import _load_eval_image_tensor, to_lpips_input  # noqa: E402
+from tools.legacy_utils.run_evaluation import _load_eval_image_tensor, to_lpips_input  # noqa: E402
 from tools.v5.route_c import csd_prototypes, decode_trt, load_trt, load_vae  # noqa: E402
 from tools.v6.canonicalize import ContentCanonicalizer, spatial_self_sim_corr, gradient_dir_cos  # noqa: E402
 from tools.v6.models_v6 import C3UNet  # noqa: E402

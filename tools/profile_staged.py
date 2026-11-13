@@ -82,7 +82,7 @@ def build_decoders(dev):
 
 
 def build_weave(dev, num_steps):
-    from utils.inference import LGTInference
+    from tools.legacy_utils.inference import LGTInference
     inf = LGTInference(str(WEAVE_CKPT), device=dev, num_steps=num_steps,
                        step_size=1.0, style_strength=1.0)
     inf.model.eval()

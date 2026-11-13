@@ -27,12 +27,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from config_schema import BridgeConfig, ModelConfig  # noqa: E402
-from model import (  # noqa: E402
+from tools.legacy_root.config_schema import BridgeConfig, ModelConfig  # noqa: E402
+from tools.legacy_root.model import (  # noqa: E402
     WEAVE,
     build_model_from_config,
 )
-from flow import FlowMatchingObjective  # noqa: E402
+from tools.legacy_root.flow import FlowMatchingObjective  # noqa: E402
 
 
 def _make_t11_cfg() -> tuple[ModelConfig, BridgeConfig]:
@@ -144,7 +144,7 @@ def test_deleted_bridge_config_fields_absent():
 
 def test_blocks_no_llgsi_attributes():
     """ResidualBlock must not expose LLGSI/CASI/LLGQCA attributes."""
-    from blocks import ResidualBlock
+    from tools.legacy_root.blocks import ResidualBlock
 
     block = ResidualBlock(
         dim=64, num_heads=4, dwt_route=True, dwt_route_train_prob=0.8,
@@ -162,7 +162,7 @@ def test_blocks_no_llgsi_attributes():
 
 def test_compute_use_dwt_method_exists():
     """Suggestion 6: _compute_use_dwt method must exist."""
-    from blocks import ResidualBlock
+    from tools.legacy_root.blocks import ResidualBlock
 
     block = ResidualBlock(dim=64, num_heads=4, dwt_route=True, dwt_route_train_prob=0.8)
     assert callable(getattr(block, "_compute_use_dwt", None)), "_compute_use_dwt missing"
@@ -170,7 +170,7 @@ def test_compute_use_dwt_method_exists():
 
 def test_compute_use_dwt_disabled_when_dwt_route_false():
     """_compute_use_dwt returns False when dwt_route=False."""
-    from blocks import ResidualBlock
+    from tools.legacy_root.blocks import ResidualBlock
 
     block = ResidualBlock(dim=64, num_heads=4, dwt_route=False)
     block.train()
@@ -179,7 +179,7 @@ def test_compute_use_dwt_disabled_when_dwt_route_false():
 
 def test_compute_use_dwt_always_true_in_eval():
     """_compute_use_dwt returns True in eval mode when dwt_route=True."""
-    from blocks import ResidualBlock
+    from tools.legacy_root.blocks import ResidualBlock
 
     block = ResidualBlock(dim=64, num_heads=4, dwt_route=True, dwt_route_train_prob=0.8)
     block.eval()
@@ -188,7 +188,7 @@ def test_compute_use_dwt_always_true_in_eval():
 
 def test_compute_use_dwt_deterministic_when_prob_zero():
     """_compute_use_dwt returns True in train mode when prob=0 (4J.1 behavior)."""
-    from blocks import ResidualBlock
+    from tools.legacy_root.blocks import ResidualBlock
 
     block = ResidualBlock(dim=64, num_heads=4, dwt_route=True, dwt_route_train_prob=0.0)
     block.train()
@@ -197,7 +197,7 @@ def test_compute_use_dwt_deterministic_when_prob_zero():
 
 def test_compute_use_dwt_stochastic_when_prob_positive():
     """_compute_use_dwt returns mix of True/False in train mode when prob=0.8."""
-    from blocks import ResidualBlock
+    from tools.legacy_root.blocks import ResidualBlock
 
     block = ResidualBlock(dim=64, num_heads=4, dwt_route=True, dwt_route_train_prob=0.8)
     block.train()
@@ -390,7 +390,7 @@ def test_losses_compute_clean():
     bridge = _make_bridge(mcfg, bcfg)
     bridge.train()
 
-    from config_schema import DataConfig, ExperimentConfig, TrainingConfig
+    from tools.legacy_root.config_schema import DataConfig, ExperimentConfig, TrainingConfig
     dc = DataConfig()
     tc = TrainingConfig(batch_size=2)
     ecfg = ExperimentConfig(model=mcfg, bridge=bcfg, data=dc, training=tc)
@@ -539,7 +539,7 @@ def test_structure_aligned_target_changes_loss():
     bridge = _make_bridge(mcfg, bcfg)
     bridge.train()
 
-    from config_schema import DataConfig, ExperimentConfig, TrainingConfig
+    from tools.legacy_root.config_schema import DataConfig, ExperimentConfig, TrainingConfig
     dc = DataConfig()
     tc = TrainingConfig(batch_size=2)
     ecfg = ExperimentConfig(model=mcfg, bridge=bcfg, data=dc, training=tc)

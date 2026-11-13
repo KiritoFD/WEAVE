@@ -19,7 +19,7 @@ from tools.v6.canonicalize import ContentCanonicalizer
 from tools.v6.models_v6 import C3UNet
 from tools.v6_next.probe_style import LatentStyleNet
 from tools.v6_next.w_guided import r1_gradient, r1_margin_per_sample, rms_normalize
-from wavelet import dwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar
 
 ROOT = Path(__file__).resolve().parents[2]
 

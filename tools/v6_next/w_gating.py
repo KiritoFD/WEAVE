@@ -20,7 +20,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from PIL import Image
-from wavelet import dwt2_haar, idwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar
 
 from tools.v6_next.w_guided import r1_gradient, rms_normalize
 

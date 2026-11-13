@@ -13,14 +13,14 @@ def sync():
     if torch.cuda.is_available(): torch.cuda.synchronize()
 
 # 1. Load VAE
-from utils.inference import load_vae
+from tools.legacy_utils.inference import load_vae
 print("Loading SD1.5 VAE..."); t0 = time.perf_counter()
 vae = load_vae(device=DEVICE, model_id="ema", enable_xformers=False)
 vae = vae.to(device=DEVICE, dtype=torch.float16)
 print(f"  VAE loaded in {time.perf_counter()-t0:.1f}s")
 
 # 2. Load WEAVE
-from utils.inference import LGTInference
+from tools.legacy_utils.inference import LGTInference
 ckpt = str(ROOT / "runs/submission/canonical_oriented_epoch4/epoch_0004.pt")
 print("Loading WEAVE..."); t0 = time.perf_counter()
 inf = LGTInference(ckpt, device=DEVICE, num_steps=1)

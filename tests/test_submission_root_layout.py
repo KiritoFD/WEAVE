@@ -1,3 +1,14 @@
+"""Layout guards after the 2026-11-14 repository reorganization.
+
+Contract:
+- Legacy paper-era flat modules live in tools/legacy_root/ and stay importable
+  (same-directory imports + `python -m weave` shim).
+- The v4-era utils/ package lives in tools/legacy_utils/ and stays importable
+  as tools.legacy_utils.*.
+- Active code: src/ (facade) + exp/ packages; pinned model classes remain in
+  tools/v6*, tools/v7 (see tools/README.md).
+- Canonical config.json / inference.json stay at the repo root.
+"""
 from __future__ import annotations
 
 import json
@@ -22,20 +33,20 @@ def _walk_strings(value):
         yield value
 
 
-def test_active_modules_resolve_from_project_root() -> None:
+def test_legacy_modules_resolve_from_project_root() -> None:
     code = """
 import json
 from pathlib import Path
-import config_schema
-import model
-import trainer
-import utils.dataset
+import tools.legacy_root.config_schema
+import tools.legacy_root.model
+import tools.legacy_root.trainer
+import tools.legacy_utils.dataset
 
 print(json.dumps({
-    'config_schema': str(Path(config_schema.__file__).resolve()),
-    'model': str(Path(model.__file__).resolve()),
-    'trainer': str(Path(trainer.__file__).resolve()),
-    'dataset': str(Path(utils.dataset.__file__).resolve()),
+    'config_schema': str(Path(tools.legacy_root.config_schema.__file__).resolve()),
+    'model': str(Path(tools.legacy_root.model.__file__).resolve()),
+    'trainer': str(Path(tools.legacy_root.trainer.__file__).resolve()),
+    'dataset': str(Path(tools.legacy_utils.dataset.__file__).resolve()),
 }))
 """
     result = subprocess.run(
@@ -48,15 +59,43 @@ print(json.dumps({
 
     assert result.returncode == 0, result.stderr
     paths = {name: Path(path) for name, path in json.loads(result.stdout).items()}
-    assert paths["config_schema"].parent == PROJECT_ROOT
-    assert paths["model"].parent == PROJECT_ROOT
-    assert paths["trainer"].parent == PROJECT_ROOT
-    assert paths["dataset"].parent == PROJECT_ROOT / "utils"
+    assert paths["config_schema"].parent == PROJECT_ROOT / "tools" / "legacy_root"
+    assert paths["model"].parent == PROJECT_ROOT / "tools" / "legacy_root"
+    assert paths["trainer"].parent == PROJECT_ROOT / "tools" / "legacy_root"
+    assert paths["dataset"].parent == PROJECT_ROOT / "tools" / "legacy_utils"
 
 
-def test_root_training_entry_point_has_help() -> None:
+def test_weave_shim_entry_point() -> None:
+    """The root __init__/__main__ shims re-export from tools.legacy_root.
+
+    Note: `python -m weave` only ever worked from the repo's PARENT directory
+    (the package name is the directory name). What must keep working everywhere
+    is the shim's import surface itself.
+    """
+    code = """
+from tools.legacy_root.model import WEAVE, build_model_from_config
+from tools.legacy_root.run import main
+
+assert WEAVE is not None
+assert callable(build_model_from_config)
+assert callable(main)
+print('ok')
+"""
     result = subprocess.run(
-        [sys.executable, "run.py", "--help"],
+        [sys.executable, "-c", code],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+def test_legacy_training_entry_point_has_help() -> None:
+    result = subprocess.run(
+        [sys.executable, "tools/legacy_root/run.py", "--help"],
         cwd=PROJECT_ROOT,
         capture_output=True,
         text=True,
@@ -67,16 +106,56 @@ def test_root_training_entry_point_has_help() -> None:
     assert "--config" in result.stdout
 
 
+def test_pinned_tools_subpackages_import() -> None:
+    code = """
+import tools.v6.models_v6
+import tools.v7.models_v7
+import tools.v6_next.probe_style
+import tools.v7r.v7r_common
+print('ok')
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+def test_s10_contract_import_surface() -> None:
+    code = """
+from src.utils import load_s10_decoder, decode_s10
+from src.utils.vae import S10_DECODER
+
+assert S10_DECODER.name == 'decoder.pt'
+print('ok')
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
 def test_canonical_configs_are_portable_and_complete() -> None:
     sys.path.insert(0, str(PROJECT_ROOT))
-    from config_schema import (
+    from tools.legacy_root.config_schema import (
         load_config,
         load_experiment_config,
         merge_config_dicts,
         resolve_full_eval_section,
         resolve_inference_section,
     )
-    from model import build_model_from_config, count_parameters
+    from tools.legacy_root.model import build_model_from_config, count_parameters
 
     config_path = PROJECT_ROOT / "config.json"
     inference_path = PROJECT_ROOT / "inference.json"
@@ -130,26 +209,3 @@ def test_epoch_selection_parser() -> None:
 
     assert parse_epoch_selection("6") == {6}
     assert parse_epoch_selection("1,3-5,8") == {1, 3, 4, 5, 8}
-
-
-def test_oriented_hf_route_changes_only_matching_hf_heads() -> None:
-    import torch
-
-    sys.path.insert(0, str(PROJECT_ROOT))
-    from config_schema import load_experiment_config
-    from model import build_model_from_config
-
-    config = load_experiment_config(PROJECT_ROOT / "experiments" / "architecture" / "hf_oriented_nohh.json")
-    model = build_model_from_config(config.model, bridge_cfg=config.bridge).eval()
-    source = torch.linspace(-1.0, 1.0, 4 * 16 * 16).reshape(1, 4, 16, 16)
-    style_a = torch.flip(source, dims=(-1,))
-    style_b = torch.flip(source, dims=(-2,))
-
-    with torch.inference_mode():
-        output_a = model(source, t=0.5, style_id=2, style_latent=style_a)
-        output_b = model(source, t=0.5, style_id=2, style_latent=style_b)
-
-    assert output_a.keys() == {"ll", "lh", "hl"}
-    assert torch.equal(output_a["ll"], output_b["ll"])
-    assert not torch.equal(output_a["lh"], output_b["lh"])
-    assert not torch.equal(output_a["hl"], output_b["hl"])

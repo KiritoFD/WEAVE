@@ -27,7 +27,7 @@ sys.path.insert(0, str(REPO_ROOT / "tools" / "12h"))
 sys.path.insert(0, str(REPO_ROOT / "tools" / "trt"))
 
 import csd_model  # type: ignore  # noqa: E402
-from wavelet import dwt2_haar, idwt2_haar  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar  # noqa: E402
 
 from tools.pseudo_gt import q0_quality as Q  # noqa: E402
 from tools.pseudo_gt.build_assets import STYLES, pgt_root  # noqa: E402

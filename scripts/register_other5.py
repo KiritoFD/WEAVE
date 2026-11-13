@@ -113,7 +113,7 @@ def freeze_for_mode(model: torch.nn.Module, mode: str):
 # Registration latent preparation
 # --------------------------------------------------------------------------- #
 def prepare_latents(n: int = 30) -> None:
-    from utils.inference import load_vae, encode_image
+    from tools.legacy_utils.inference import load_vae, encode_image
 
     REG_LATENT_DIR.mkdir(parents=True, exist_ok=True)
     # exclude the 30 eval-test images per style

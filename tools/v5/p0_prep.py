@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 import paths
-from wavelet import dwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 STYLE_IDS = {name: i for i, name in enumerate(STYLES)}
@@ -122,7 +122,7 @@ def encode_sources(sources: List[dict], device: str = "cuda") -> Dict[str, torch
         print(f"[p0] Found local VAE at: {vae_dir}", flush=True)
         vae = AutoencoderKL.from_pretrained(str(vae_dir), local_files_only=True).to(device=device, dtype=torch.float32).eval()
     else:
-        from utils.inference import download_vae_with_fallback
+        from tools.legacy_utils.inference import download_vae_with_fallback
         vae = download_vae_with_fallback("stabilityai/sd-vae-ft-ema", device=device)
         vae = vae.to(dtype=torch.float32).eval()
     

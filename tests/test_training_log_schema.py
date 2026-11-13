@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from utils.training import append_training_log, initialize_training_log  # noqa: E402
+from tools.legacy_utils.training import append_training_log, initialize_training_log  # noqa: E402
 
 
 def test_training_log_keeps_internal_dynamics_probes(tmp_path):

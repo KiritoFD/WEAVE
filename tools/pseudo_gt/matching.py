@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from PIL import Image
 
 from tools.pseudo_gt.masks import Rect
-from utils.compute_dino_metrics import DINO_TRANSFORM, load_dino
+from tools.legacy_utils.compute_dino_metrics import DINO_TRANSFORM, load_dino
 
 DEVICE = "cuda"
 DINO_NAME = "facebook/dinov2-small"

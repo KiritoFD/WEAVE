@@ -27,7 +27,7 @@ sys.path.insert(0, str(REPO_ROOT / "tools" / "trt"))
 
 import paths  # noqa: E402
 from tools.evaluation_v2.features import EvaluatorModels, build_reference_features_cache  # noqa: E402
-from utils.run_evaluation import _load_eval_image_tensor  # noqa: E402
+from tools.legacy_utils.run_evaluation import _load_eval_image_tensor  # noqa: E402
 from tools.v5.route_c import decode_trt, load_trt, load_vae  # noqa: E402
 from tools.v6.models_v6 import ConditionalScoreNet  # noqa: E402
 

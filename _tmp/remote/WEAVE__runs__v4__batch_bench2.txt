@@ -1,4 +1,0 @@
-batch=64 metric_batch=32 save_threads=8 tag=b64_t8 rc=0 total=162s wall=107.9 imgs_per_s=6.95 peak_vram=9331mib
-batch=96 metric_batch=32 save_threads=8 tag=b96_t8 rc=0 total=163s wall=108.99 imgs_per_s=6.88 peak_vram=9873mib
-batch=64 metric_batch=128 save_threads=8 tag=b64_m128_t8 rc=0 total=169s wall=108.18 imgs_per_s=6.93 peak_vram=9329mib
-BENCH2 DONE

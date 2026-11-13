@@ -67,7 +67,7 @@ def load_official_vae(dev):
         return AutoencoderKL.from_pretrained(
             str(SD0_DIR), torch_dtype=torch.float16, local_files_only=True
         ).to(dev).eval()
-    from utils.inference import load_vae
+    from tools.legacy_utils.inference import load_vae
     return load_vae(device=dev, model_id="ema", enable_xformers=False)
 
 
@@ -113,7 +113,7 @@ def main():
     sf = float(getattr(vae.config, "scaling_factor", 0.18215))
     decoders = build_decoders(vae, dev)
 
-    from utils.inference import LGTInference
+    from tools.legacy_utils.inference import LGTInference
     inf = LGTInference(str(WEAVE_CKPT), device=dev, num_steps=args.num_steps,
                        step_size=1.0, style_strength=1.0)
     inf.model.eval()

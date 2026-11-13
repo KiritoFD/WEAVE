@@ -9,7 +9,7 @@ for _p in (ROOT, ROOT / "tools", ROOT / "tools" / "trt"):
     sys.path.insert(0, str(_p))
 import eval_fast as ef
 import trt_vae_decoder
-from utils.inference import encode_image, load_vae, LGTInference
+from tools.legacy_utils.inference import encode_image, load_vae, LGTInference
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--test-dir", default=str(ROOT / "data" / "test"))

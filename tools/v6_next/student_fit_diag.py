@@ -25,7 +25,7 @@ sys.path.insert(0, str(ROOT))
 import numpy as np
 import torch
 import torch.nn.functional as F
-from wavelet import dwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar
 
 from tools.v6.canonicalize import ContentCanonicalizer
 from tools.v6.models_v6 import C3UNet

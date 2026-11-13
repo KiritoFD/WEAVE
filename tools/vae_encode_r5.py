@@ -18,7 +18,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from utils.inference import load_vae
+from tools.legacy_utils.inference import load_vae
 
 # Config
 R5_TRAIN_ROOT = Path(r"I:\datasets\r5\train")

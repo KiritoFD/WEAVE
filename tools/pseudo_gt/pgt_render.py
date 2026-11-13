@@ -31,7 +31,7 @@ for _p in (ROOT, ROOT / "tools", ROOT / "tools" / "trt"):
 import eval_fast as ef  # noqa: E402
 import paths  # noqa: E402
 import trt_vae_decoder  # noqa: E402
-from utils.inference import encode_image, load_vae, LGTInference  # noqa: E402
+from tools.legacy_utils.inference import encode_image, load_vae, LGTInference  # noqa: E402
 
 
 def _mean_latent(vae, image: torch.Tensor, device: str) -> torch.Tensor:

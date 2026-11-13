@@ -52,7 +52,7 @@ def main() -> None:
     out["dino_n_files_er"] = len(list((dinoc / "Early_Renaissance").glob("*.pt")))
 
     # VAE presence
-    from utils.inference import load_vae, decode_latent  # noqa: E402
+    from tools.legacy_utils.inference import load_vae, decode_latent  # noqa: E402
     vae = load_vae("cuda", model_id="ema", cache_dir=str(hf_cache_root()),
                    compile_decoder=False)
     z = torch.load(files[0], map_location="cpu", weights_only=False)["latents"][:2].float().cuda()

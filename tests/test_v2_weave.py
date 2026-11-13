@@ -12,15 +12,15 @@ import torch
 
 from pathlib import Path
 
-from config_schema import load_experiment_config
-from flow import FlowMatchingObjective
+from tools.legacy_root.config_schema import load_experiment_config
+from tools.legacy_root.flow import FlowMatchingObjective
 
-from v2.config import V2Config, expand_variant_defaults
-from v2.discriminator import ConditionalPatchDiscriminator
-from v2.distill import DistillObjective
-from v2.model import FiLMResBlock, V2Backbone, V2Generator, count_parameters
-from v2.objective import PatchNCEEncoder, PatchNCELoss, V2DistributionObjective, patch_nce_logits
-from v2.style_stats import build_style_stats_from_tensors, compute_style_stats
+from tools.legacy_v2.config import V2Config, expand_variant_defaults
+from tools.legacy_v2.discriminator import ConditionalPatchDiscriminator
+from tools.legacy_v2.distill import DistillObjective
+from tools.legacy_v2.model import FiLMResBlock, V2Backbone, V2Generator, count_parameters
+from tools.legacy_v2.objective import PatchNCEEncoder, PatchNCELoss, V2DistributionObjective, patch_nce_logits
+from tools.legacy_v2.style_stats import build_style_stats_from_tensors, compute_style_stats
 
 
 def tiny_cfg(**kwargs) -> V2Config:
@@ -52,7 +52,7 @@ def test_default_path_is_unchanged():
     obj = FlowMatchingObjective(exp)
     assert obj is not None
     # v2 包导入不改变旧模型的参数规模（历史基线约 1.04M）
-    from model import build_model_from_config
+    from tools.legacy_root.model import build_model_from_config
 
     legacy = build_model_from_config(exp.model, bridge_cfg=exp.bridge)
     assert count_parameters(legacy) < 2_000_000

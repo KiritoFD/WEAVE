@@ -40,7 +40,7 @@ from tools.pseudo_gt.matching import encode_dino, load_dino_model
 from tools.v5.route_c import csd_prototypes, decode_trt, load_trt, load_vae
 from tools.v6.models_v6 import ConditionalScoreNet
 from tools.v6.score_diff import edit_with_score_difference
-from utils.run_evaluation import _load_eval_image_tensor, to_lpips_input
+from tools.legacy_utils.run_evaluation import _load_eval_image_tensor, to_lpips_input
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 V6_ROOT = REPO_ROOT / "runs" / "v6"

@@ -34,7 +34,7 @@ from tools.pseudo_gt import q0_quality as Q  # noqa: E402
 from tools.pseudo_gt.build_assets import STYLES, _load_rgb, _to_tensor, load_manifest  # noqa: E402
 from tools.pseudo_gt.masks import Rect, build_patch_layout, rasterize, subband_mask  # noqa: E402
 from tools.pseudo_gt.matching import Match, encode_dino, match_rect  # noqa: E402
-from wavelet import dwt2_haar, idwt2_haar  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar  # noqa: E402
 
 CONFIGS: List[str] = [
     "R64", "G64", "C64", "S64", "F64", "R128", "G128", "C128",

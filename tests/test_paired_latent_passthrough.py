@@ -8,9 +8,9 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from flow import FlowMatchingObjective  # noqa: E402
+from tools.legacy_root.flow import FlowMatchingObjective  # noqa: E402
 from tools.pseudo_gt.cache import SampleRecord, ShardWriter  # noqa: E402
-from utils.dataset import PairedLatentDataset  # noqa: E402
+from tools.legacy_utils.dataset import PairedLatentDataset  # noqa: E402
 
 
 def test_passthrough_returns_target_untouched():

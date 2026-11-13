@@ -38,7 +38,7 @@ from tools.v6.train_eval_v6 import (STYLES, V5_ROOT, V6_ROOT, boot_ci,  # noqa: 
                                     csd_model, csd_prototypes, decode_trt,
                                     encode_dino, load_dino_model, load_trt, load_vae,
                                     _load_eval_image_tensor)
-from utils.run_evaluation import to_lpips_input  # noqa: E402
+from tools.legacy_utils.run_evaluation import to_lpips_input  # noqa: E402
 
 ALPHAS = [0.0, 0.25, 0.5, 0.75, 1.0]
 

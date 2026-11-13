@@ -8,7 +8,7 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 
-from v4.model import SelfAttention2d
+from tools.legacy_v4.model import SelfAttention2d
 
 
 def _nonzero_proj(mod: SelfAttention2d, seed: int = 1) -> None:
@@ -127,7 +127,7 @@ def test_channel_impl_reproduces_legacy_math():
 
 def test_from_ckpt_payload_defaults_legacy_to_channel():
     """历史 ckpt（payload 无 attn_impl）必须回落到 channel；新 ckpt 显式字段优先。"""
-    from v4.config import V4Config
+    from tools.legacy_v4.config import V4Config
 
     legacy = {"v4_config": {"channels": [64, 128, 192, 256]}}
     assert V4Config.from_ckpt_payload(legacy).attn_impl == "channel"

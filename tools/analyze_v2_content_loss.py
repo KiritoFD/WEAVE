@@ -16,10 +16,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
-from config_schema import load_experiment_config  # noqa: E402
+from tools.legacy_root.config_schema import load_experiment_config  # noqa: E402
 from eval_fast import build_protocol, build_source_latents, build_target_latents, _load_eval_image_tensor  # noqa: E402
-from utils.inference import LGTInference, decode_latent, load_vae  # noqa: E402
-from wavelet import dwt2_haar  # noqa: E402
+from tools.legacy_utils.inference import LGTInference, decode_latent, load_vae  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_haar  # noqa: E402
 
 
 def _gaussian_kernel(size: int = 11, sigma: float = 1.5, device="cuda", dtype=torch.float32) -> torch.Tensor:

@@ -34,7 +34,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from utils.inference import (  # noqa: E402
+from tools.legacy_utils.inference import (  # noqa: E402
     LGTInference,
     decode_latent,
     encode_image,

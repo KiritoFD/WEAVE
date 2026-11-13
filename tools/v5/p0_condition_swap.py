@@ -21,8 +21,8 @@ sys.path.insert(0, str(REPO_ROOT / "tools" / "12h"))
 
 import paths
 import csd_model
-from config_schema import load_config
-from model import WEAVE
+from tools.legacy_root.config_schema import load_config
+from tools.legacy_root.model import WEAVE
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 STYLE_IDS = {name: i for i, name in enumerate(STYLES)}

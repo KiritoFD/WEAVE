@@ -44,7 +44,7 @@ import paths
 import csd_model
 from tools.eval_fast import MetricEngine, Timer, build_protocol
 from tools.pseudo_gt.matching import encode_dino, load_dino_model
-from utils.run_evaluation import _load_eval_image_tensor, to_lpips_input
+from tools.legacy_utils.run_evaluation import _load_eval_image_tensor, to_lpips_input
 from tools.v5.route_c import csd_prototypes, load_vae, load_trt, decode_trt
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]

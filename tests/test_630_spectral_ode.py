@@ -17,9 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from config_schema import BridgeConfig, ModelConfig, load_experiment_config  # noqa: E402
-from model import build_model_from_config  # noqa: E402
-from model import WEAVE  # noqa: E402
+from tools.legacy_root.config_schema import BridgeConfig, ModelConfig, load_experiment_config  # noqa: E402
+from tools.legacy_root.model import build_model_from_config  # noqa: E402
+from tools.legacy_root.model import WEAVE  # noqa: E402
 
 
 ACTIVE_CONFIG = ROOT / "config.json"

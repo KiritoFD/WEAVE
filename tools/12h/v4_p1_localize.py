@@ -197,7 +197,7 @@ def main() -> int:
             raise SystemExit(f"没有源图: {test_dir / name}")
         sources.extend((sid, p) for p in files)
 
-    from utils.inference import decode_latent, encode_image, load_vae
+    from tools.legacy_utils.inference import decode_latent, encode_image, load_vae
     vae = load_vae("cuda", model_id="ema", cache_dir=str(hf_cache_root()))
 
     z0_list: list[torch.Tensor] = []
@@ -268,7 +268,7 @@ def main() -> int:
 
         try:
             import lpips
-            from utils.run_evaluation import _lpips_forward_safe
+            from tools.legacy_utils.run_evaluation import _lpips_forward_safe
             loss_fn = lpips.LPIPS(net="alex", verbose=False).cuda().eval()
             d_single = _lpips_forward_safe(loss_fn, single_x.cuda(), src_x.cuda(), device="cuda",
                                            chunk_size=2, cpu_fallback=True, tag="p1-single")
@@ -285,7 +285,7 @@ def main() -> int:
             image_metrics["lpips_error"] = f"{type(exc).__name__}: {exc}"
 
         try:
-            from utils.compute_dino_metrics import load_dino
+            from tools.legacy_utils.compute_dino_metrics import load_dino
             device = "cuda" if torch.cuda.is_available() else "cpu"
             cache = args.dino_cache or str(hf_cache_root())
             dino = load_dino("facebook/dinov2-small", device, cache, allow_network=False)

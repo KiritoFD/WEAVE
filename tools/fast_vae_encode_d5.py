@@ -32,7 +32,7 @@ _ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 
 from paths import datasets_root  # noqa: E402
-from utils.inference import load_vae  # noqa: E402
+from tools.legacy_utils.inference import load_vae  # noqa: E402
 
 # Clean pre-resized 512 JPEGs (fastest decode + no runtime resize).
 D5_ROOT_CLEAN = datasets_root("train_512clean")

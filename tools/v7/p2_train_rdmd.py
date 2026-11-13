@@ -32,7 +32,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 import paths  # noqa: E402
-from wavelet import dwt2_haar  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_haar  # noqa: E402
 from tools.v6.canonicalize import ContentCanonicalizer  # noqa: E402
 from tools.v6.models_v6 import ConditionalScoreNet  # noqa: E402
 from tools.v7.common import STYLES, V6_ROOT, V7_ROOT, ensure_v7_dirs, save_json  # noqa: E402

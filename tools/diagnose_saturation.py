@@ -35,10 +35,10 @@ import torch.nn.functional as F
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from config_schema import load_experiment_config
-from flow import FlowMatchingObjective
-from model import build_model_from_config, count_parameters
-from wavelet import dwt2_haar
+from tools.legacy_root.config_schema import load_experiment_config
+from tools.legacy_root.flow import FlowMatchingObjective
+from tools.legacy_root.model import build_model_from_config, count_parameters
+from tools.legacy_root.wavelet import dwt2_haar
 
 SUBBANDS = ("ll", "lh", "hl", "hh")
 TIME_BUCKETS = ((0.0, 0.1), (0.1, 0.25), (0.25, 0.5), (0.5, 0.75), (0.75, 1.0))

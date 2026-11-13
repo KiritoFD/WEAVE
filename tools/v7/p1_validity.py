@@ -30,7 +30,7 @@ from tools.v7.v7_common import (
     B4_CKPT, P1_DIR, ROOT, STYLES, load_c3unet, load_canon, load_critic,
     model_direct, rms_normalize, write_json,
 )
-from wavelet import dwt2_haar, idwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar
 
 SRC_CACHE = ROOT / "runs" / "v6_r2" / "cache" / "tasks750_source_features.pt"
 DEFAULT_REFS = ROOT / "eval_protocol" / "cache" / "references_v1_features.pt"

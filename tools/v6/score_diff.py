@@ -37,7 +37,7 @@ sys.path.insert(0, str(REPO_ROOT / "tools" / "trt"))
 import paths  # noqa: E402
 import csd_model  # noqa: E402
 from tools.pseudo_gt.matching import encode_dino, load_dino_model  # noqa: E402
-from utils.run_evaluation import _load_eval_image_tensor, to_lpips_input  # noqa: E402
+from tools.legacy_utils.run_evaluation import _load_eval_image_tensor, to_lpips_input  # noqa: E402
 from tools.v5.route_c import csd_prototypes, decode_trt, load_trt, load_vae  # noqa: E402
 from tools.v6.canonicalize import build_content_matched_subset  # noqa: E402
 from tools.v6.models_v6 import ConditionalScoreNet  # noqa: E402

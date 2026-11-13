@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 from tools.pseudo_gt.matching import Match
 from tools.pseudo_gt.masks import Rect, rasterize, subband_mask
-from wavelet import dwt2_haar, idwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar
 
 
 def construct_A(src: torch.Tensor, donor: torch.Tensor, matches: Sequence[Match]) -> torch.Tensor:

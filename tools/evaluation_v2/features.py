@@ -34,7 +34,7 @@ import paths
 import csd_model
 from tools.pseudo_gt.matching import encode_dino, load_dino_model
 from tools.v5.route_c import csd_prototypes, decode_trt, load_trt, load_vae
-from utils.run_evaluation import _load_eval_image_tensor, to_lpips_input
+from tools.legacy_utils.run_evaluation import _load_eval_image_tensor, to_lpips_input
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 PROTOCOL_DIR = REPO_ROOT / "eval_protocol"

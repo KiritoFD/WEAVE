@@ -44,7 +44,7 @@ from tools.v7r.v7r_common import (
     N_LR, N_STEPS, N_WARMUP, P2_DIR, SD_POOL, W_ANCHOR, W_CONTENT, W_R1,
     W_STYLE, canon_inv_loss, load_pool, randomized_canon, save_corrector,
 )
-from wavelet import dwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar
 
 
 def build_style_objective(name: str, ctx):

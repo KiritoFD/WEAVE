@@ -34,7 +34,7 @@ sys.path.insert(0, str(REPO_ROOT / "tools" / "12h"))
 sys.path.insert(0, str(REPO_ROOT / "tools" / "trt"))
 
 import paths  # noqa: E402
-from wavelet import dwt2_haar, idwt2_haar  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar  # noqa: E402
 from tools.pseudo_gt.matching import encode_dino, load_dino_model  # noqa: E402
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]

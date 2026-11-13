@@ -257,7 +257,7 @@ def main() -> None:
 
 
 def to_lpips(x):
-    from utils.run_evaluation import to_lpips_input
+    from tools.legacy_utils.run_evaluation import to_lpips_input
     return to_lpips_input(x)
 
 

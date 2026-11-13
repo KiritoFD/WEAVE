@@ -27,10 +27,10 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from config_schema import load_experiment_config  # noqa: E402
-from features import build_feature_extractor  # noqa: E402
-from model import build_model_from_config  # noqa: E402
-from output_supervision import OutputSupervision, build_latent_decoder  # noqa: E402
+from tools.legacy_root.config_schema import load_experiment_config  # noqa: E402
+from tools.legacy_root.features import build_feature_extractor  # noqa: E402
+from tools.legacy_root.model import build_model_from_config  # noqa: E402
+from tools.legacy_root.output_supervision import OutputSupervision, build_latent_decoder  # noqa: E402
 
 
 def main() -> int:

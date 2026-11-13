@@ -50,8 +50,8 @@ from tools.eval_fast import (  # noqa: E402
     METRIC_HEADER, DINO_HEADER, MetricEngine, Timer, build_protocol, write_csv,
 )
 from tools.pseudo_gt.matching import encode_dino, load_dino_model  # noqa: E402
-from utils.run_evaluation import _load_eval_image_tensor, to_lpips_input  # noqa: E402
-from wavelet import dwt2_haar, idwt2_haar  # noqa: E402
+from tools.legacy_utils.run_evaluation import _load_eval_image_tensor, to_lpips_input  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar  # noqa: E402
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 V5 = REPO_ROOT / "runs" / "v5"

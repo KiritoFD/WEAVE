@@ -3,8 +3,8 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import torch
 
-from config_schema import BridgeConfig, ModelConfig
-from model import WEAVE
+from tools.legacy_root.config_schema import BridgeConfig, ModelConfig
+from tools.legacy_root.model import WEAVE
 
 
 def _make_t11_cfg():

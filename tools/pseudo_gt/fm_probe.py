@@ -20,10 +20,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 import paths  # noqa: E402
-from flow import FlowMatchingObjective  # noqa: E402
-from config_schema import ExperimentConfig  # noqa: E402
-from utils.inference import LGTInference  # noqa: E402
-from utils.dataset import PairedLatentDataset  # noqa: E402
+from tools.legacy_root.flow import FlowMatchingObjective  # noqa: E402
+from tools.legacy_root.config_schema import ExperimentConfig  # noqa: E402
+from tools.legacy_utils.inference import LGTInference  # noqa: E402
+from tools.legacy_utils.dataset import PairedLatentDataset  # noqa: E402
 from tools.pseudo_gt.build_assets import STYLES  # noqa: E402
 
 T_FIXED = 0.5

@@ -12,7 +12,7 @@ import copy
 import pytest
 import torch
 
-from blocks import ResidualBlock, _Relu2AttentionFn, _relu2_attn_legacy
+from tools.legacy_root.blocks import ResidualBlock, _Relu2AttentionFn, _relu2_attn_legacy
 
 
 def _ref_stats(attended_inputs):

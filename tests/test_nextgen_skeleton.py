@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from config_schema import ExperimentConfig
+from tools.legacy_root.config_schema import ExperimentConfig
 
 
 def _tiny_cfg(**bridge_over):
@@ -20,7 +20,7 @@ def _tiny_cfg(**bridge_over):
 
 
 def _tiny_model(cfg):
-    from model import build_model_from_config
+    from tools.legacy_root.model import build_model_from_config
 
     return build_model_from_config(cfg.model, bridge_cfg=cfg.bridge)
 
@@ -30,7 +30,7 @@ def _tiny_model(cfg):
 # --------------------------------------------------------------------------
 
 def test_swd_identical_vs_shifted():
-    from swd import sliced_wasserstein_distance
+    from tools.legacy_root.swd import sliced_wasserstein_distance
 
     torch.manual_seed(0)
     a = torch.randn(400, 8)
@@ -43,7 +43,7 @@ def test_swd_identical_vs_shifted():
 
 
 def test_swd_gradient_flows():
-    from swd import sliced_wasserstein_distance
+    from tools.legacy_root.swd import sliced_wasserstein_distance
 
     a = torch.randn(128, 8, requires_grad=True)
     b = torch.randn(128, 8)
@@ -53,8 +53,8 @@ def test_swd_gradient_flows():
 
 
 def test_output_supervision_backward():
-    from features import build_feature_extractor
-    from output_supervision import OutputSupervision, build_latent_decoder
+    from tools.legacy_root.features import build_feature_extractor
+    from tools.legacy_root.output_supervision import OutputSupervision, build_latent_decoder
 
     torch.manual_seed(0)
     ext = build_feature_extractor("tiny_conv")
@@ -77,7 +77,7 @@ def test_output_supervision_backward():
 
 
 def test_feature_extractor_invalid_layer():
-    from features import build_feature_extractor
+    from tools.legacy_root.features import build_feature_extractor
 
     ext = build_feature_extractor("tiny_conv")
     with pytest.raises(KeyError):
@@ -89,7 +89,7 @@ def test_feature_extractor_invalid_layer():
 # --------------------------------------------------------------------------
 
 def test_endpoint_mode_pseudo_substitution():
-    from flow import FlowMatchingObjective
+    from tools.legacy_root.flow import FlowMatchingObjective
 
     torch.manual_seed(0)
     cfg = _tiny_cfg(endpoint_mode="mixed")
@@ -105,14 +105,14 @@ def test_endpoint_mode_pseudo_substitution():
 
 
 def test_endpoint_mode_invalid_rejected():
-    from flow import FlowMatchingObjective
+    from tools.legacy_root.flow import FlowMatchingObjective
 
     with pytest.raises(ValueError):
         FlowMatchingObjective(_tiny_cfg(endpoint_mode="bogus"))
 
 
 def test_endpoint_mode_default_unchanged():
-    from flow import FlowMatchingObjective
+    from tools.legacy_root.flow import FlowMatchingObjective
 
     objective = FlowMatchingObjective(_tiny_cfg())
     target = torch.randn(2, 4, 16, 16)
@@ -121,7 +121,7 @@ def test_endpoint_mode_default_unchanged():
 
 
 def test_pseudo_cache_roundtrip(tmp_path: Path):
-    from pseudo_targets import PseudoTargetCache, PseudoTargetCacheWriter
+    from tools.legacy_root.pseudo_targets import PseudoTargetCache, PseudoTargetCacheWriter
 
     writer = PseudoTargetCacheWriter(tmp_path, shard_size=2)
     lat = torch.randn(3, 4, 8, 8)
@@ -138,8 +138,8 @@ def test_pseudo_cache_roundtrip(tmp_path: Path):
 
 
 def test_fallback_teacher_and_scoring():
-    from features import build_feature_extractor
-    from pseudo_targets import FallbackStatsTeacher, score_content_consistency
+    from tools.legacy_root.features import build_feature_extractor
+    from tools.legacy_root.pseudo_targets import FallbackStatsTeacher, score_content_consistency
 
     torch.manual_seed(0)
     teacher = FallbackStatsTeacher()
@@ -156,7 +156,7 @@ def test_fallback_teacher_and_scoring():
 # --------------------------------------------------------------------------
 
 def test_reference_encoder_shapes_and_nce():
-    from reference_encoder import ReferenceStyleEncoder, info_nce_loss
+    from tools.legacy_root.reference_encoder import ReferenceStyleEncoder, info_nce_loss
 
     torch.manual_seed(0)
     enc = ReferenceStyleEncoder(in_dim=16, model_dim=32, num_tokens=8, proj_dim=16)
@@ -170,7 +170,7 @@ def test_reference_encoder_shapes_and_nce():
 
 
 def test_reference_conditioner_zero_init_noop():
-    from reference_encoder import ReferenceConditioner
+    from tools.legacy_root.reference_encoder import ReferenceConditioner
 
     cond = ReferenceConditioner(32, 256, 8, gate_init=0.0)
     fam = torch.randn(2, 256, 32)
@@ -183,7 +183,7 @@ def test_model_reference_hybrid_variant():
     mcfg = cfg.model.to_dict()
     mcfg["conditioner_variant"] = "reference_hybrid"
     mcfg["reference_encoder_in_dim"] = 16
-    from config_schema import ModelConfig
+    from tools.legacy_root.config_schema import ModelConfig
 
     cfg2 = ExperimentConfig.from_mapping({"model": mcfg, "bridge": {}})
     model = _tiny_model(cfg2)
@@ -229,7 +229,7 @@ def test_heun_rk4_update_hh_when_head_enabled():
     mcfg["enable_hh_head"] = True
     cfg2 = ExperimentConfig.from_mapping({"model": mcfg, "bridge": {}})
     model = _tiny_model(cfg2).eval()
-    from wavelet import dwt2_haar
+    from tools.legacy_root.wavelet import dwt2_haar
 
     x = torch.randn(1, 4, 16, 16)
     for solver in ("heun", "rk4", "euler"):
@@ -244,7 +244,7 @@ def test_heun_rk4_update_hh_when_head_enabled():
 
 
 def test_t_sampling_modes():
-    from flow import FlowMatchingObjective
+    from tools.legacy_root.flow import FlowMatchingObjective
 
     torch.manual_seed(0)
     # legacy compat: uniform regardless of mode name
@@ -284,8 +284,8 @@ def test_texture_refiner_slot_default_off_and_noop_when_on():
 
 def test_trainer_end_to_end_all_routes(tmp_path: Path):
     from torch.utils.data import DataLoader, Dataset
-    from pseudo_targets import PseudoTargetCacheWriter
-    from trainer import SBTrainer
+    from tools.legacy_root.pseudo_targets import PseudoTargetCacheWriter
+    from tools.legacy_root.trainer import SBTrainer
 
     torch.manual_seed(0)
     cache_dir = tmp_path / "pc"
@@ -341,7 +341,7 @@ def test_trainer_end_to_end_all_routes(tmp_path: Path):
 
 def test_trainer_default_config_unchanged(tmp_path: Path):
     """Route B/C/D machinery must stay off; internal early stop is now default-on."""
-    from trainer import SBTrainer
+    from tools.legacy_root.trainer import SBTrainer
 
     cfg = ExperimentConfig.from_mapping({
         "model": {"base_dim": 32, "num_res_blocks": 2, "num_styles": 3, "contract_family": "weave"},

@@ -20,7 +20,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 sys.path.insert(0, str(_ROOT / "tools" / "trt"))
 
-from utils.inference import decode_latent, load_vae  # noqa: E402
+from tools.legacy_utils.inference import decode_latent, load_vae  # noqa: E402
 from trt_vae_decoder import TrtVaeDecoder  # noqa: E402
 
 

@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from utils.inference import DecoderOnlyVAE, decode_latent, prune_retired_checkpoint_keys  # noqa: E402
+from tools.legacy_utils.inference import DecoderOnlyVAE, decode_latent, prune_retired_checkpoint_keys  # noqa: E402
 
 
 class _IdentityDecoder(torch.nn.Module):

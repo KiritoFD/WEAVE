@@ -36,9 +36,9 @@ ROOT = Path(__file__).resolve().parents[2]
 for p in (ROOT, ROOT / "tools", ROOT / "tools" / "trt"):
     sys.path.insert(0, str(p))
 
-from utils.compute_dino_metrics import load_dino  # noqa: E402
-from utils.inference import decode_latent, load_vae  # noqa: E402
-from utils.run_evaluation import (  # noqa: E402
+from tools.legacy_utils.compute_dino_metrics import load_dino  # noqa: E402
+from tools.legacy_utils.inference import decode_latent, load_vae  # noqa: E402
+from tools.legacy_utils.run_evaluation import (  # noqa: E402
     _clip_image_size_from_runtime,
     _clip_mean_std_from_runtime,
     _extract_clip_embeddings,

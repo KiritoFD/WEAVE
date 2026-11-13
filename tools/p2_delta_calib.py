@@ -22,7 +22,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from utils.compute_dino_metrics import DINO_TRANSFORM, load_dino  # noqa: E402
+from tools.legacy_utils.compute_dino_metrics import DINO_TRANSFORM, load_dino  # noqa: E402
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 
@@ -145,7 +145,7 @@ def main():
     # VAE round-trip on the sources (separates VAE loss from style transfer)
     if not args.skip_vae:
         try:
-            from utils.inference import load_vae, encode_image
+            from tools.legacy_utils.inference import load_vae, encode_image
         except Exception:
             load_vae = encode_image = None
         if load_vae is not None:

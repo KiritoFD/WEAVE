@@ -20,7 +20,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from utils.compute_dino_metrics import DINO_TRANSFORM, load_dino  # noqa: E402
+from tools.legacy_utils.compute_dino_metrics import DINO_TRANSFORM, load_dino  # noqa: E402
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 

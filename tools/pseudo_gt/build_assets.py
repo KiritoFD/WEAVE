@@ -23,7 +23,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 import paths  # noqa: E402
 from tools.pseudo_gt.matching import DEVICE, encode_dino, load_dino_model, assert_cuda  # noqa: E402
-from utils.inference import download_vae_with_fallback  # noqa: E402
+from tools.legacy_utils.inference import download_vae_with_fallback  # noqa: E402
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 STYLE_IDS = {s: i for i, s in enumerate(STYLES)}

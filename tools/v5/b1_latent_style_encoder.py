@@ -27,7 +27,7 @@ sys.path.insert(0, str(REPO_ROOT / "tools" / "12h"))
 
 import paths
 import csd_model
-from wavelet import dwt2_haar, idwt2_haar
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar
 from tools.pseudo_gt.matching import load_dino_model, encode_dino
 
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]

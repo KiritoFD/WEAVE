@@ -28,7 +28,7 @@ from tools.pseudo_gt.build_assets import STYLES, STYLE_IDS, _load_rgb, _to_tenso
 from tools.pseudo_gt.cache import SampleRecord, ShardWriter, make_sample_id  # noqa: E402
 from tools.pseudo_gt.matching import DEVICE, assert_cuda, encode_dino, load_dino_model, match_layout  # noqa: E402
 from tools.pseudo_gt.masks import E_SPECS, build_patch_layout, rasterize  # noqa: E402
-from utils.inference import download_vae_with_fallback  # noqa: E402
+from tools.legacy_utils.inference import download_vae_with_fallback  # noqa: E402
 
 
 def load_latents() -> Dict[str, dict]:

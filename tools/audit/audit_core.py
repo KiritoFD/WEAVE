@@ -379,7 +379,7 @@ def load_metric_models(device: str = "cuda", need_clip: bool = True, need_lpips:
                                       cache_dir=str(hf_cache_root("hub")),
                                       local_files_only=True).to(device).eval()
         _METRIC_STATE["dino"] = d
-    from utils.inference import load_vae
+    from tools.legacy_utils.inference import load_vae
     _METRIC_STATE["vae"] = load_vae(device, model_id="ema",
                                     cache_dir=str(hf_cache_root()),
                                     compile_decoder=False)
@@ -391,7 +391,7 @@ def load_metric_models(device: str = "cuda", need_clip: bool = True, need_lpips:
 @torch.inference_mode()
 def decode(z: torch.Tensor, *, batch: int = 8, device: str = "cuda") -> torch.Tensor:
     """Offline latent -> [0,1] RGB.  Strictly no gradient."""
-    from utils.inference import decode_latent
+    from tools.legacy_utils.inference import decode_latent
     st = _METRIC_STATE.get("loaded") and _METRIC_STATE or load_metric_models(device)
     vae = st["vae"]
     out = []

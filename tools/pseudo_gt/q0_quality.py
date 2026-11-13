@@ -37,7 +37,7 @@ from tools.pseudo_gt.matching import (  # noqa: E402
     match_layout,
 )
 from tools.pseudo_gt.masks import E_SPECS, PATCH_SPECS, build_patch_layout  # noqa: E402
-from utils.inference import download_vae_with_fallback  # noqa: E402
+from tools.legacy_utils.inference import download_vae_with_fallback  # noqa: E402
 
 SPECS_A = ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9"]
 SPECS_BCD = ["P2", "P5", "P7", "P9"]

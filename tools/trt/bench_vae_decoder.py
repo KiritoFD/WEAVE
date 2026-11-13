@@ -32,7 +32,7 @@ sys.path.insert(0, str(_ROOT))
 sys.path.insert(0, str(_ROOT / "tools" / "trt"))
 
 from paths import hf_cache_root, runs_root  # noqa: E402
-from utils.inference import load_vae, decode_latent  # noqa: E402
+from tools.legacy_utils.inference import load_vae, decode_latent  # noqa: E402
 
 TRT_INPUT = "z"
 TRT_OUTPUT = "image"

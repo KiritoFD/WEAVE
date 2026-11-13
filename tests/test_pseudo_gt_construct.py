@@ -16,7 +16,7 @@ from tools.pseudo_gt.construct import (  # noqa: E402
 )
 from tools.pseudo_gt.masks import build_patch_layout, rasterize  # noqa: E402
 from tools.pseudo_gt.matching import Match  # noqa: E402
-from wavelet import dwt2_haar  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_haar  # noqa: E402
 
 
 def _matches(spec="P2"):

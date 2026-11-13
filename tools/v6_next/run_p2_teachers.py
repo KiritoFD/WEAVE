@@ -41,7 +41,7 @@ from tools.v6_next.r2_teacher import (
     project_tangential,
     rms_normalize,
 )
-from utils.run_evaluation import to_lpips_input
+from tools.legacy_utils.run_evaluation import to_lpips_input
 
 DEFAULT_TASKS = ROOT / "eval_protocol" / "tasks_750.json"
 DEFAULT_REFS = ROOT / "eval_protocol" / "cache" / "references_v1_features.pt"

@@ -37,7 +37,7 @@ sys.path.insert(0, str(REPO_ROOT / "tools" / "trt"))
 
 import paths  # noqa: E402
 import csd_model  # noqa: E402
-from wavelet import dwt2_haar, idwt2_haar  # noqa: E402
+from tools.legacy_root.wavelet import dwt2_haar, idwt2_haar  # noqa: E402
 from tools.pseudo_gt.matching import encode_dino, load_dino_model  # noqa: E402
 
 P1 = importlib.import_module("tools.v5.p1_oracle")

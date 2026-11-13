@@ -14,7 +14,7 @@ from PIL import Image
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
-from utils.inference import encode_image, load_vae
+from tools.legacy_utils.inference import encode_image, load_vae
 
 P2A_IMAGE_ROOT = Path(r"I:\Github\Latent_Style\style_data\train")
 P2A_STYLES = ["cezanne", "Hayao", "monet", "photo", "vangogh"]
