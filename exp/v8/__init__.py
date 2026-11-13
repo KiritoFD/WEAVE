@@ -18,11 +18,13 @@ geometric-matching route, because a fixed-plan squared distance reduces to
 weighted-mean regression and cannot represent multi-modal stroke statistics.
 """
 from .controls import ControlSpec, ControlledGenerator, Controls, wrap
-from .guidance import (LatentSPDEditor, SPDHead, UnrollConfig, UnsupervisedUnroll,
-                       generate_edit, project_rms, target_margin)
+from .guidance import (ControlSPDHead, LatentSPDEditor, SPDHead, UnrollConfig,
+                       UnsupervisedUnroll, generate_control_edit, generate_edit,
+                       project_rms, target_margin)
 from .energy import RealSupport, SupportedEnergy, build_real_support
 
 __all__ = ["ControlSpec", "ControlledGenerator", "Controls", "wrap",
-           "LatentSPDEditor", "SPDHead", "UnrollConfig", "UnsupervisedUnroll",
-           "generate_edit", "project_rms", "target_margin",
+           "LatentSPDEditor", "SPDHead", "ControlSPDHead", "UnrollConfig",
+           "UnsupervisedUnroll", "generate_edit", "generate_control_edit",
+           "project_rms", "target_margin",
            "RealSupport", "SupportedEnergy", "build_real_support"]

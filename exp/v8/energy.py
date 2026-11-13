@@ -80,6 +80,84 @@ def _embed(critic, z: torch.Tensor) -> torch.Tensor:
     return critic(z.float())
 
 
+def _featmap(critic, z: torch.Tensor) -> torch.Tensor:
+    """R1's spatial feature map BEFORE the global pool: (B, w*3, 16, 16).
+
+    Replicates LatentStyleNet.embed's conv stack minus adaptive_avg_pool2d so
+    the support term can be computed per region instead of only globally.
+    """
+    h = critic.stem(z.float())
+    h = critic.b64(h)
+    h = critic.b32(critic.down32(h))
+    h = critic.b16(critic.down16(h))
+    return h
+
+
+@dataclass
+class SpatialSupport:
+    """Regional real-painting support in R1 feature-map space (C2 local support).
+
+    prototypes: (5, R, K, D) — R grid regions (default 4x4 over the 16x16 map),
+    K medoids per region per style. energy() averages the per-region soft-min
+    support energy, so a generated image must look real LOCALLY, not just on
+    average. Still a support proxy in a frozen feature space, not a density.
+    """
+    prototypes: torch.Tensor      # (5, R, K, D)
+    sigma: torch.Tensor           # (5,)
+    grid: int = 4
+    tau: float = 1.0
+
+    def regional_embed(self, critic, z: torch.Tensor) -> torch.Tensor:
+        """(B, C, 16, 16) -> (B, R, D) with R = grid*grid."""
+        h = _featmap(critic, z)
+        h = F.adaptive_avg_pool2d(h, self.grid)          # (B,D,g,g)
+        b, d, gh, gw = h.shape
+        return h.flatten(2).transpose(1, 2)              # (B, R, D)
+
+    def energy(self, critic, z: torch.Tensor, tid: torch.Tensor) -> torch.Tensor:
+        reg = self.regional_embed(critic, z)             # (B,R,D)
+        out = []
+        for i in range(z.shape[0]):
+            t = int(tid[i])
+            mu = self.prototypes[t].to(reg.device)       # (R,K,D)
+            d = (reg[i:i + 1, :, None, :] - mu[None]).square().sum(-1) \
+                / (2 * self.tau * self.sigma[t].to(reg.device) ** 2)   # (1,R,K)
+            e = -self.tau * torch.logsumexp(-d, dim=-1)  # (1,R)
+            out.append(e.mean())
+        return torch.stack(out)
+
+
+def build_local_support(critic, pool_dir: Path, *, k: int = 8, grid: int = 4,
+                        seed: int = 42, device: str = "cuda",
+                        max_per_style: int = 400) -> SpatialSupport:
+    """Regional prototypes from REAL training paintings (same pool rules as
+    build_real_support: training split only, never eval sources)."""
+    from tools.v7r.v7r_common import SD_POOL
+    pool = Path(pool_dir) if pool_dir else SD_POOL
+    tmp = SpatialSupport(torch.zeros(5, grid * grid, k, 1), torch.ones(5), grid)
+    g = torch.Generator().manual_seed(seed)
+    protos, sigmas = [], []
+    for sid, name in enumerate(STYLES):
+        d = torch.load(pool / f"{sid:02d}_{name}.pt", map_location="cpu", weights_only=False)
+        x = d["latents"].float()[100:]
+        take = torch.randperm(x.shape[0], generator=g)[:max_per_style]
+        xb = x[take].to(device)
+        with torch.inference_mode():
+            reg = tmp.regional_embed(critic, xb)         # (n,R,D)
+        n, r, dim = reg.shape
+        proto_r, dist_r = [], []
+        for j in range(r):
+            emb = F.normalize(reg[:, j], dim=-1)
+            proto = _kmeans(emb, k, seed=seed + sid * 100 + j)
+            assign = torch.cdist(emb, proto).argmin(1)
+            d2 = (emb - proto[assign]).square().sum(-1)
+            dist_r.append(d2.mean())
+            proto_r.append(proto)
+        protos.append(torch.stack(proto_r))              # (R,K,D)
+        sigmas.append(torch.stack(dist_r).mean().sqrt().clamp_min(1e-3))
+    return SpatialSupport(torch.stack(protos), torch.stack(sigmas), grid)
+
+
 def _kmeans(x: torch.Tensor, k: int, *, seed: int, iters: int = 25) -> torch.Tensor:
     g = torch.Generator().manual_seed(seed)
     idx = torch.randperm(x.shape[0], generator=g)[:k]
@@ -100,11 +178,12 @@ class SupportedEnergy:
     support term cannot dominate; the two registered values are 0.1 and 0.3.
     """
 
-    def __init__(self, critic, support: RealSupport | None = None,
-                 lambda_ratio: float = 0.0):
+    def __init__(self, critic, support: RealSupport | SpatialSupport | None = None,
+                 lambda_ratio: float = 0.0, local_support: bool = False):
         self.critic = critic
         self.support = support
         self.lambda_ratio = lambda_ratio
+        self.local_support = local_support
 
     def margin(self, z, tid):
         logits = self.critic(z.float()).float()
@@ -116,8 +195,12 @@ class SupportedEnergy:
         m = self.margin(z, tid)
         if self.support is None or self.lambda_ratio == 0:
             return m
-        emb = F.normalize(_embed(self.critic, z).float(), dim=-1)
-        return m - self.lambda_ratio * self.support.energy(emb, tid)
+        if self.local_support and isinstance(self.support, SpatialSupport):
+            e = self.support.energy(self.critic, z, tid)
+        else:
+            emb = F.normalize(_embed(self.critic, z).float(), dim=-1)
+            e = self.support.energy(emb, tid)
+        return m - self.lambda_ratio * e
 
     def gradient(self, z, tid, *, normalize_rms: bool = True):
         zr = z.detach().clone().requires_grad_(True)

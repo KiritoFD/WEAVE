@@ -108,9 +108,9 @@ for a in A0 A0.s2 A0.s4 A1 A1.s2 A1.s4 A2 A2.s2 A2.s4 A2b A3.eval A4.eval; do
   run_arm "$a"
 done
 # C inference
-for a in C0 C1.l010 C1.l030 C2 C4; do run_arm "$a"; done
+for a in C0 C1.l010 C1.l030 C2 C4 C3o.r15 C3o.r25; do run_arm "$a"; done
 # B inference
-for a in L0.r08 L0.r15 L0.r25 L1.b4.r25 L1.b4.r15 L1.topk; do run_arm "$a"; done
+for a in L0.r08 L0.r15 L0.r25 L1.b4.r25 L1.b4.r15 L1.topk L2.e L3.e; do run_arm "$a"; done
 # I joint
 for a in I0 I1 I2 I3; do run_arm "$a"; done
 

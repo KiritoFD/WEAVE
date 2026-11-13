@@ -96,6 +96,15 @@ def _save(arm_id: str, step: int, payload: dict):
 
 def train_arm(arm_id: str, *, device: str = "cuda", log_every: int = 100):
     arm = find_arm(arm_id)
+    # Resume guard: a DONE training arm is never restarted by the queue.
+    st = TRAIN_DIR / arm_id / "state.json"
+    if st.exists():
+        try:
+            if json.loads(st.read_text()).get("state") == "DONE":
+                print(f"[{arm_id}] already DONE, skipping", flush=True)
+                return
+        except Exception:
+            pass
     kind = arm["kind"]
     updates = arm["updates"]
     ckpts = set(arm.get("checkpoints", [0, updates]))
@@ -105,9 +114,12 @@ def train_arm(arm_id: str, *, device: str = "cuda", log_every: int = 100):
 
     from src.infer import canonicalizer, load_c3unet, load_critic
     from exp.v8.controls import ControlSpec, Controls, wrap
-    from exp.v8.guidance import SPDHead, UnsupervisedUnroll
+    from exp.v8.guidance import (ControlSPDHead, SPDHead, UnsupervisedUnroll)
 
-    base_path = REPO / "runs/v6/Q2a_embed_style/Q2a_embed_style.pt"
+    starts = {"Q2a": "runs/v6/Q2a_embed_style/Q2a_embed_style.pt",
+              "B4": "runs/v6/P1_B4_distill50/P1_B4_distill50.pt",
+              "B3": "runs/v6/P1_B3_distill20/P1_B3_distill20.pt"}
+    base_path = REPO / starts.get(arm.get("start", "Q2a"), starts["Q2a"])
     base, _ = load_c3unet(base_path, device)
     canon = canonicalizer(device)
     critic = load_critic(device)
@@ -181,10 +193,16 @@ def train_arm(arm_id: str, *, device: str = "cuda", log_every: int = 100):
     # ------------------------------------------------ L2/L3/L4: SPD operators
     if kind == "train_spd":
         rank = arm.get("rank", 2)
-        head = SPDHead(rank=rank).to(device)
+        if arm["space"] == "control":
+            from exp.v8.controls import ControlSpec
+            cspec = ControlSpec(local_rank=2 if "local" in arm.get("spec", "") else 0)
+            head = ControlSPDHead(dim=cspec.dim, rank=rank).to(device)
+        else:
+            head = SPDHead(rank=rank).to(device)
         opt = torch.optim.AdamW(head.parameters(), lr=2e-4, weight_decay=1e-4)
         ed = UnsupervisedUnroll(critic, head, base, canon, space=arm["space"],
-                                steps=arm.get("steps_k", 2), rho=0.25, device=device)
+                                steps=arm.get("steps_k", 2), rho=0.25, device=device,
+                                control_spec=cspec if arm["space"] == "control" else None)
         for step in range(1, updates + 1):
             z_s, sid, tid = pool.sample(micro, gen)
             out = ed(z_s, tid)

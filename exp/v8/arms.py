@@ -60,6 +60,11 @@ B_INFER = [
      "steps": 1, "rho": 0.15},
     {"id": "L1.topk", "kind": "r1_steps", "start": "B4", "topk_frac": 0.25,
      "steps": 4, "step_rms": 0.08},
+    # Trained latent SPD heads get their own eval arms (steps_k/rho match train).
+    {"id": "L2.e", "kind": "spd_latent", "start": "B4", "spd_ckpt": "L2",
+     "steps": 2, "step_rms": 0.08, "rho": 0.25},
+    {"id": "L3.e", "kind": "spd_latent", "start": "B4", "spd_ckpt": "L3",
+     "steps": 4, "step_rms": 0.08, "rho": 0.25},
 ]
 B_TRAIN = [
     {"id": "L2", "kind": "train_spd", "space": "latent", "start": "B4",
@@ -85,6 +90,12 @@ C_INFER = [
      "local_support": True, "steps": 1, "rho": 0.25},
     {"id": "C4", "kind": "supported", "start": "Q2a", "lambda_ratio": 0.10,
      "critic_ckpt": "C3", "steps": 1, "rho": 0.25},
+    # C3 as a drop-in R1 replacement: same-budget Oracle from the B4 start,
+    # isolating critic quality from support/local terms.
+    {"id": "C3o.r15", "kind": "oracle", "start": "B4", "steps": 1,
+     "rho": 0.15, "critic_ckpt": "C3"},
+    {"id": "C3o.r25", "kind": "oracle", "start": "B4", "steps": 1,
+     "rho": 0.25, "critic_ckpt": "C3"},
 ]
 C_TRAIN = [
     {"id": "C3", "kind": "train_critic", "updates": 2500, "seed": 42,

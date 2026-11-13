@@ -27,10 +27,12 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--out", default=str(OUT))
+    ap.add_argument("--local", action="store_true",
+                    help="also build the regional (4x4 grid) support bank -> local_support.pt")
     a = ap.parse_args()
 
     from src.infer import load_critic
-    from exp.v8.energy import build_real_support
+    from exp.v8.energy import build_local_support, build_real_support
     from tools.v7r.v7r_common import SD_POOL
 
     critic = load_critic(a.device)
@@ -46,6 +48,19 @@ def main():
     print(json.dumps({"out": str(out), "k": a.k,
                       "sigma": [round(float(s), 5) for s in support.sigma],
                       "prototypes_shape": list(support.prototypes.shape)}), flush=True)
+
+    if a.local:
+        from exp.v8.energy import SpatialSupport
+        loc = build_local_support(critic, SD_POOL, grid=4, seed=a.seed,
+                                  device=a.device, max_per_style=a.max_per_style)
+        lout = REPO / "runs/v8/local_support.pt"
+        torch.save({"prototypes": loc.prototypes.cpu(), "sigma": loc.sigma.cpu(),
+                    "grid": loc.grid, "k": loc.prototypes.shape[2], "seed": a.seed,
+                    "source": "training pool [100:] only, regional features"},
+                   lout)
+        print(json.dumps({"out": str(lout), "grid": loc.grid,
+                          "sigma": [round(float(s), 5) for s in loc.sigma],
+                          "prototypes_shape": list(loc.prototypes.shape)}), flush=True)
 
 
 if __name__ == "__main__":

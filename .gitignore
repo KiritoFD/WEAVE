@@ -110,3 +110,6 @@ docs/baseline/*.tar.gz
 
 # ============ Local scratch (commit messages, one-off helpers) ============
 _tmp/
+
+# large binary backups (B4+R1 ckpt + eval images, ~1GB)
+docs/best/

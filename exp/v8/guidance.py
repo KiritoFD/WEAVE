@@ -91,6 +91,50 @@ class SPDHead(nn.Module):
         return dg + (u * ug.unsqueeze(2)).sum(1)
 
 
+class ControlSPDHead(nn.Module):
+    """SPD operator on the generator's FLAT control vector u (B, D).
+
+    The conv SPDHead cannot be reused here: control gradients are (B, D)
+    vectors, not (B, 4, 64, 64) feature maps — feeding them to SPDHead is what
+    crashed L4 training. P = diag(softplus(d) + eps) + U U^T with U of shape
+    (B, rank, D); identity-initialised so step 0 is plain gradient ascent.
+    """
+
+    def __init__(self, dim: int, rank: int = 2, width: int = 256,
+                 eps: float = 1e-3):
+        super().__init__()
+        self.dim = dim
+        self.rank = rank
+        self.eps = eps
+        self.net = nn.Sequential(
+            nn.Linear(dim + 5, width), nn.SiLU(),
+            nn.Linear(width, width), nn.SiLU(),
+            nn.Linear(width, dim + rank * dim),
+        )
+        nn.init.zeros_(self.net[-1].weight)
+        # bias: diag part -> softplus(b) + eps ~= 1  =>  b ~= 0.5413; U part 0
+        with torch.no_grad():
+            self.net[-1].bias.zero_()
+            self.net[-1].bias[:dim].fill_(0.5413)
+
+    def forward(self, g_u: torch.Tensor, tid: torch.Tensor):
+        """g_u: (B, D) control gradient -> (diag (B,D), U (B,rank,D))."""
+        b = g_u.shape[0]
+        scale = g_u.detach().abs().mean().clamp_min(1e-8)
+        oh = F.one_hot(tid.long(), 5).float()
+        feat = torch.cat([g_u / scale, oh], dim=1)
+        out = self.net(feat)
+        diag_raw, u_raw = out[:, :self.dim], out[:, self.dim:]
+        diag = F.softplus(diag_raw) + self.eps
+        u = u_raw.view(b, self.rank, self.dim)
+        return diag, u
+
+    def apply(self, diag, u, g):
+        """delta = P g = diag*g + U (U^T g), all per-sample flat vectors."""
+        ug = (u * g.unsqueeze(1)).sum(2)                  # (B,rank)
+        return diag * g + (u * ug.unsqueeze(2)).sum(1)
+
+
 @dataclass
 class UnrollConfig:
     steps: int = 2
@@ -197,10 +241,13 @@ class UnsupervisedUnroll(nn.Module):
             ur = u_ctrl.detach().clone().requires_grad_(True)
             z = gen(c, 0.0, c, tid, controls=Controls.from_tensor(ur, self.control_spec))
             g_u = torch.autograd.grad(self.margin(z, tid).sum(), ur)[0].detach()
-            scale = g_u.abs().mean().clamp_min(1e-8)
-            diag_raw, u_low = self.head(c, z, tid, g_u / scale)
-            diag = torch.nn.functional.softplus(diag_raw[..., :1].mean()) + 1e-3
-            u_ctrl = (ur + self.step_rms * diag * g_u).clamp(-self.rho, self.rho)
+            diag, u_low = self.head(g_u, tid)
+            delta = self.head.apply(diag, u_low, g_u)
+            # same contract as the latent branch: fixed-RMS step along P g,
+            # hard clamp on u (the control-space rho), per-sample
+            step = delta / delta.square().flatten(1).mean(1).sqrt() \
+                .clamp_min(1e-12).view(-1, 1)
+            u_ctrl = (ur + self.step_rms * step).clamp(-self.rho, self.rho)
         return gen(c, 0.0, c, tid, controls=Controls.from_tensor(u_ctrl, self.control_spec))
 
     def margin(self, z, tid):
@@ -227,4 +274,36 @@ def generate_edit(critic, head, generator, canon, z_s, tid, *, steps=2,
             delta = (diag * g) + (u * (u * g.unsqueeze(1)).sum(2).unsqueeze(2)).sum(1)
         z = project_rms(z + step_rms * normalize(delta), z0, rho)
     return {"z0": z0, "final": z}
+
+
+def generate_control_edit(critic, head, base, canon, control_spec, z_s, tid, *,
+                          steps=2, step_rms=0.08, rho=0.25, u0=None,
+                          device="cuda"):
+    """Inference-time SPD edit in the generator's control coordinates (B-u / L4 / I2-I3).
+
+    Mirrors UnsupervisedUnroll's control branch exactly: per step, differentiate
+    the R1 margin w.r.t. u, apply the learned SPD operator, take a fixed-RMS
+    step, clamp u to +/-rho. u0 optionally warm-starts (e.g. from a trained
+    control policy); default is the zero control = plain checkpoint output.
+    """
+    from .controls import Controls, wrap
+    with torch.no_grad():
+        c = canon(z_s.float(), mode="c1_gentle", augment=False)
+        gen = wrap(base, control_spec, device)
+        z0 = gen.base(c, 0.0, c, tid).detach()
+    u = (u0.detach().clone() if u0 is not None
+         else torch.zeros(z_s.shape[0], control_spec.dim, device=device))
+    for _ in range(steps):
+        with torch.enable_grad():
+            ur = u.detach().clone().requires_grad_(True)
+            z = gen(c, 0.0, c, tid, controls=Controls.from_tensor(ur, control_spec))
+            g_u = torch.autograd.grad(target_margin(critic, z, tid).sum(), ur)[0].detach()
+            diag, u_low = head(g_u, tid)
+            delta = head.apply(diag, u_low, g_u)
+        step = delta / delta.square().flatten(1).mean(1).sqrt() \
+            .clamp_min(1e-12).view(-1, 1)
+        u = (u + step_rms * step).clamp(-rho, rho)
+    with torch.no_grad():
+        final = gen(c, 0.0, c, tid, controls=Controls.from_tensor(u, control_spec))
+    return {"z0": z0, "final": final, "u": u}
 

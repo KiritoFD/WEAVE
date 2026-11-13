@@ -98,13 +98,84 @@ def _relative(spec, device):
     return gen
 
 
+def _critic_for(spec, device):
+    """R1 critic, optionally swapped for a trained checkpoint (e.g. C3).
+
+    extra['critic_ckpt'] is a resolved .pt path whose file holds
+    {'model': state_dict} — the same layout load_critic already accepts.
+    """
+    path = spec.extra.get("critic_ckpt")
+    return load_critic(device, Path(path) if path else None)
+
+
+def _support_banks(spec, device, critic):
+    """Load the real-painting support bank(s) required by this spec.
+
+    Returns (global_support, local_support); either may be None. Raises rather
+    than silently degrading when lambda_ratio demands a missing bank.
+    """
+    from exp.v8.energy import RealSupport, SpatialSupport
+    lam = float(spec.extra.get("lambda_ratio", 0.0))
+    local = bool(spec.extra.get("local_support", False))
+    glob = loc = None
+    if lam and not local:
+        sp = REPO / "runs/v8/real_support.pt"
+        if not sp.exists():
+            raise FileNotFoundError(f"lambda_ratio={lam} needs {sp}")
+        st = torch.load(sp, map_location="cpu", weights_only=False)
+        glob = RealSupport(st["prototypes"].to(device), st["sigma"].to(device))
+    if lam and local:
+        sp = REPO / "runs/v8/local_support.pt"
+        if not sp.exists():
+            raise FileNotFoundError(f"local_support needs {sp}")
+        st = torch.load(sp, map_location="cpu", weights_only=False)
+        loc = SpatialSupport(st["prototypes"].to(device), st["sigma"].to(device),
+                             grid=int(st.get("grid", 4)))
+    return glob, loc
+
+
+def _load_policy(ckpt_path: str, device: str):
+    """Load a trained A-route control policy.
+
+    train.py saves {'policy': MLP state_dict, 'spec': ControlSpec dict, ...}.
+    The MLP is Linear(dim+5 -> 256) -> SiLU -> Linear(256 -> dim); its input is
+    [control_dim noise, 5-way target onehot]. We feed ZEROS for the noise at
+    inference so the output is deterministic (training sampled randn, whose
+    mean is zero).
+    """
+    import torch.nn as nn
+    from exp.v8.controls import ControlSpec
+    ck = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    sd = ck["spec"]
+    cspec = ControlSpec(global_dim=sd.get("global_dim", 32),
+                        per_scale_dim=sd.get("per_scale_dim", 32),
+                        scales=tuple(sd.get("scales", ("64", "32", "16", "out"))),
+                        palette=sd.get("palette", True),
+                        local_rank=sd.get("local_rank", 0))
+    dim = cspec.dim
+    policy = nn.Sequential(nn.Linear(dim + 5, 256), nn.SiLU(),
+                           nn.Linear(256, dim)).to(device).eval()
+    policy.load_state_dict(ck["policy"])
+    for p in policy.parameters():
+        p.requires_grad_(False)
+    return policy, cspec
+
+
+def _policy_u0(policy, cspec, tid, device):
+    b = tid.shape[0]
+    noise = torch.zeros(b, cspec.dim, device=device)
+    oh = F.one_hot(tid.long(), 5).float()
+    with torch.no_grad():
+        return policy(torch.cat([noise, oh], 1))
+
+
 @register("oracle")
 def _oracle(spec, device):
     if spec.ckpt is None:
         raise ValueError("oracle requires --ckpt")
     model, _ = load_c3unet(spec.ckpt, device)
     canon = canonicalizer(device)
-    critic = load_critic(device)
+    critic = _critic_for(spec, device)
     steps = int(spec.extra.get("oracle_steps", 1))
     total_rms = float(spec.extra.get("oracle_rms", 0.25))
     per = total_rms / max(steps, 1)
@@ -127,7 +198,7 @@ def _r1_steps(spec, device):
         raise ValueError("r1_steps requires --ckpt for the start model")
     model, _ = load_c3unet(spec.ckpt, device)
     canon = canonicalizer(device)
-    critic = load_critic(device)
+    critic = _critic_for(spec, device)
     frac = float(spec.extra.get("topk_frac", 0.0))
     def gen(z, sid, tid, tasks):
         trace = []
@@ -138,10 +209,16 @@ def _r1_steps(spec, device):
                 cur = cur.detach().clone().requires_grad_(True)
                 g = torch.autograd.grad(_r1_margin(critic, cur, tid).sum(), cur)[0]
                 if frac > 0:
-                    flat = g.flatten(1)
-                    k = max(1, int(flat.shape[1] * frac))
-                    thresh = flat.topk(k, dim=1).values[:, -1:]
-                    g = g * (flat >= thresh).view_as(g).float()
+                    # Same rule as tools/v6_next/w_gating.topk_spatial_mask:
+                    # per-image SPATIAL top-k on channel-summed squared
+                    # gradient energy — NOT signed elementwise topk.
+                    energy = g.detach().square().sum(1)          # (B,H,W)
+                    bh, bw = energy.shape[-2:]
+                    k = max(1, int(round(frac * bh * bw)))
+                    idx = energy.flatten(1).topk(k, dim=1).indices
+                    mask = torch.zeros_like(energy.flatten(1))
+                    mask.scatter_(1, idx, 1.0)
+                    g = g * mask.view(-1, 1, bh, bw).to(g.dtype)
                 d = _normalize(g)
                 cur = (cur + spec.step_rms * d).detach()
                 trace.append({"step": step,
@@ -166,28 +243,34 @@ def _control(spec, device):
     base_path = spec.ckpt or (REPO / "runs/v6/Q2a_embed_style/Q2a_embed_style.pt")
     base, _ = load_c3unet(base_path, device)
     canon = canonicalizer(device)
-    critic = load_critic(device)
+    critic = _critic_for(spec, device)
     spec_map = {"global": ControlSpec(palette=False, scales=()),
                 "hier": ControlSpec(palette=False),
                 "hier_palette": ControlSpec(),
                 "hier_palette_local": ControlSpec(local_rank=2)}
-    cspec = spec_map[spec.extra.get("spec", "hier_palette")]
-    gen = wrap(base, cspec, device)
+    # A trained control policy overrides BOTH the control spec and the u init:
+    # its saved spec decides the control space, and its output warm-starts u.
+    policy = None
+    ck_path = spec.extra.get("control_ckpt")
+    if ck_path:
+        policy, ck_spec = _load_policy(ck_path, device)
+        cspec = ck_spec
+        gen = wrap(base, cspec, device)
+    else:
+        cspec = spec_map[spec.extra.get("spec", "hier_palette")]
+        gen = wrap(base, cspec, device)
     lam = float(spec.extra.get("lambda_ratio", 0.0))
-    support = None
-    if lam:
-        sp = REPO / "runs/v8/real_support.pt"
-        if not sp.exists():
-            raise FileNotFoundError(
-                f"lambda_ratio={lam} needs the real support bank at {sp}")
-        st = torch.load(sp, map_location="cpu", weights_only=False)
-        support = RealSupport(st["prototypes"].to(device), st["sigma"].to(device))
-    scorer = SupportedEnergy(critic, support, lam)
+    glob_sup, loc_sup = _support_banks(spec, device, critic)
+    support = loc_sup if (loc_sup is not None and spec.extra.get("local_support")) else glob_sup
+    scorer = SupportedEnergy(critic, support, lam,
+                             local_support=bool(spec.extra.get("local_support", False)) and loc_sup is not None)
 
     def gen_fn(z, sid, tid, tasks):
         with torch.enable_grad():
             c = canon(z.float(), mode=spec.canon_mode, augment=False)
-            u = torch.zeros(z.shape[0], cspec.dim, device=device, requires_grad=True)
+            u0 = _policy_u0(policy, cspec, tid, device) if policy is not None \
+                else torch.zeros(z.shape[0], cspec.dim, device=device)
+            u = u0.detach().clone().requires_grad_(True)
             with torch.no_grad():
                 z0 = gen.base(c, 0.0, c, tid)
             for _ in range(spec.steps):
@@ -211,16 +294,13 @@ def _supported(spec, device):
     base_path = spec.ckpt or (REPO / "runs/v6/Q2a_embed_style/Q2a_embed_style.pt")
     base, _ = load_c3unet(base_path, device)
     canon = canonicalizer(device)
-    critic = load_critic(device)
+    critic = _critic_for(spec, device)
     lam = float(spec.extra.get("lambda_ratio", 0.1))
-    support = None
-    if lam:
-        sp = REPO / "runs/v8/real_support.pt"
-        if not sp.exists():
-            raise FileNotFoundError(f"support bank missing: {sp}")
-        st = torch.load(sp, map_location="cpu", weights_only=False)
-        support = RealSupport(st["prototypes"].to(device), st["sigma"].to(device))
-    scorer = SupportedEnergy(critic, support, lam)
+    glob_sup, loc_sup = _support_banks(spec, device, critic)
+    support = loc_sup if (loc_sup is not None and spec.extra.get("local_support")) else glob_sup
+    scorer = SupportedEnergy(
+        critic, support, lam,
+        local_support=bool(spec.extra.get("local_support", False)) and loc_sup is not None)
 
     def gen_fn(z, sid, tid, tasks):
         with torch.enable_grad():
@@ -231,6 +311,92 @@ def _supported(spec, device):
                 g, _ = scorer.gradient(cur, tid)
                 cur = cur + spec.rho * g
             return {"z0": z0, "final": cur, "trace": []}
+    return gen_fn
+
+
+@register("spd_edit")
+def _spd_edit(spec, device):
+    """B-u: K-step SPD-preconditioned R1 edit inside the generator control space.
+
+    u_{k+1} = clamp(u_k + step_rms * normalize(P_theta g_u), +/-rho) with
+    g_u = grad_u margin_R1(G(c,t;u), t). Optional control_ckpt warm-starts u
+    from a trained A-route policy (the I2/I3 joint arms).
+    """
+    from exp.v8.controls import ControlSpec, Controls, wrap
+    from exp.v8.guidance import ControlSPDHead, generate_control_edit
+    base_path = spec.ckpt or (REPO / "runs/v6/Q2a_embed_style/Q2a_embed_style.pt")
+    base, _ = load_c3unet(base_path, device)
+    canon = canonicalizer(device)
+    critic = _critic_for(spec, device)
+
+    policy = None
+    ck_path = spec.extra.get("control_ckpt")
+    if ck_path:
+        policy, cspec = _load_policy(ck_path, device)
+    else:
+        spec_map = {"global": ControlSpec(palette=False, scales=()),
+                    "hier": ControlSpec(palette=False),
+                    "hier_palette": ControlSpec(),
+                    "hier_palette_local": ControlSpec(local_rank=2)}
+        cspec = spec_map[spec.extra.get("spec", "hier_palette")]
+    sp = spec.extra.get("spd_ckpt")
+    if not sp:
+        raise ValueError("spd_edit requires extra['spd_ckpt']")
+    ck = torch.load(sp, map_location="cpu", weights_only=False)
+    head = ControlSPDHead(dim=cspec.dim, rank=ck.get("rank", 2)).to(device).eval()
+    head.load_state_dict(ck["head"])
+    for p in head.parameters():
+        p.requires_grad_(False)
+
+    def gen_fn(z, sid, tid, tasks):
+        u0 = _policy_u0(policy, cspec, tid, device) if policy is not None else None
+        return generate_control_edit(critic, head, base, canon, cspec, z, tid,
+                                     steps=spec.steps, step_rms=spec.step_rms,
+                                     rho=spec.rho, u0=u0, device=device)
+    return gen_fn
+
+
+@register("spd_latent")
+def _spd_latent(spec, device):
+    """B-z: K-step SPD-preconditioned R1 edit directly on the latent.
+
+    Replicates UnsupervisedUnroll's latent branch at inference time:
+    g = grad_z margin; delta = P_theta g; z <- project_rms(z + rms*norm(delta)).
+    """
+    from exp.v8.guidance import SPDHead, normalize, project_rms, target_margin
+    base_path = spec.ckpt or (REPO / "runs/v6/Q2a_embed_style/Q2a_embed_style.pt")
+    model, _ = load_c3unet(base_path, device)
+    canon = canonicalizer(device)
+    critic = _critic_for(spec, device)
+    sp = spec.extra.get("spd_ckpt")
+    if not sp:
+        raise ValueError("spd_latent requires extra['spd_ckpt']")
+    ck = torch.load(sp, map_location="cpu", weights_only=False)
+    head = SPDHead(rank=int(ck.get("rank", 0))).to(device).eval()
+    head.load_state_dict(ck["head"])
+    for p in head.parameters():
+        p.requires_grad_(False)
+
+    def spd_apply(diag, u, g):
+        dg = diag * g
+        ug = (u * g.unsqueeze(1)).sum(2)
+        return dg + (u * ug.unsqueeze(2)).sum(1)
+
+    def gen_fn(z, sid, tid, tasks):
+        with torch.no_grad():
+            c = canon(z.float(), mode=spec.canon_mode, augment=False)
+            z0 = model(c, 0.0, c, tid).detach()
+        cur = z0.clone()
+        for _ in range(spec.steps):
+            with torch.enable_grad():
+                zr = cur.detach().clone().requires_grad_(True)
+                g = torch.autograd.grad(
+                    target_margin(critic, zr.float(), tid).sum(), zr)[0].detach()
+                diag, u = head(c, cur, tid, g)
+                delta = spd_apply(diag, u, g)
+            cur = project_rms(cur + spec.step_rms * normalize(delta),
+                              z0, spec.rho).detach()
+        return {"z0": z0, "final": cur, "trace": []}
     return gen_fn
 
 

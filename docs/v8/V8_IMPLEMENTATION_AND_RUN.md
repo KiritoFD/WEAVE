@@ -206,12 +206,12 @@ A推理 → C推理 → B推理 → I联合`。单臂失败记 FAILED 但**不�
 | L4 | A3 控制坐标空间 SPD，K=2 | 2000 | 0/1000/2000 |
 | C3 | R1 真实画作小半径鲁棒微调 | 2500 | 0/1250/2500 |
 
-**推理臂（28 个，全部 tasks_750）**
+**推理臂（33 个，全部 tasks_750；第二轮新增 5 个）**
 
-- A：`A0/A0.s2/A0.s4`（global）、`A1*`（hier）、`A2/A2.s2/A2.s4`（hier_palette，Q2a）、`A2b`（hier_palette，B4 起点）、`A3.eval/A4.eval`（训练后策略）
-- B：`L0.r08/r15/r25`（Q2a+Oracle 单步三档 ρ）、`L1.b4.r25/r15`（B4+Oracle）、`L1.topk`（B4+R1 TopK25 四步）
-- C：`C0`（纯 R1 margin）、`C1.l010/l030`（+真实支持 λ=0.1/0.3）、`C2`（局部支持）、`C4`（C3 critic）
-- I：`I0–I3`（A3 控制 × L4 SPD × λ_ratio 0/0.1）
+- A：`A0/A0.s2/A0.s4`（global）、`A1*`（hier）、`A2/A2.s2/A2.s4`（hier_palette，Q2a）、`A2b`（hier_palette，B4 起点）、`A3.eval/A4.eval`（训练后策略，第二轮起真正加载 ckpt）
+- B：`L0.r08/r15/r25`（Q2a+Oracle 单步三档 ρ）、`L1.b4.r25/r15`（B4+Oracle）、`L1.topk`（B4+R1 TopK25 四步）、`L2.e/L3.e`（第二轮新增：训练好的 latent SPD 头，K=2/4）
+- C：`C0`（纯 R1 margin）、`C1.l010/l030`（+真实支持 λ=0.1/0.3）、`C2`（局部支持，第二轮起真正加载 local_support.pt）、`C4`（C3 critic）、`C3o.r15/C3o.r25`（第二轮新增：C3 critic 替换 R1 的 B4 起点同预算 Oracle）
+- I：`I0–I3`（A3 控制 × L4 SPD × λ_ratio 0/0.1；第二轮起 spd_edit/control_ckpt 真实生效）
 
 ## 9. 与 24h 设计文档的差异（必须知道）
 
@@ -221,20 +221,55 @@ A推理 → C推理 → B推理 → I联合`。单臂失败记 FAILED 但**不�
 
 1. **`exp/v8/energies.py` 不可导入**：`from .features import N_PATCH`，但 `exp/v8/features.py` 已随 OT 路线归档（`archive/v8_ot_geometry/features_geometry.py`）。当前无任何活跃代码 import 它，属死代码；若要复用需先恢复 features 或删除该文件。
 2. **`exp/v8/models.py` 不存在**：`src/infer/variants.py` 的 `student` 变体 `from exp.v8.models import build_corrector`，该模块未实现 → student 变体当前不可用。
-3. **`spd_edit` 映射是占位**：`specs.py` 中 `I2/I3`（kind=`spd_edit`）返回 `kind="control"` 的 InferSpec 且注释 "replaced below"——**I2/I3 实际会按普通 control 臂跑，SPD/L4 不会被加载**，结果不代表联合臂。队列跑到 I 段前需要修复 `specs.py`/`variants.py` 或从队列移除 I2/I3。
-4. **`control_ckpt` 未被消费**：`A3.eval/A4.eval` 经 `infer_spec_for` 把训练好的 policy 路径放进 `extra["control_ckpt"]`，但 `variants._control` 不读该字段——**A3.eval/A4.eval 目前等价于零训练控制臂**，不会加载 `runs/v8/train/A3/step_03000.pt`。同理 L4 的 `control_ckpt`/`spd_ckpt` 也无消费方。
-5. **训练 ckpt 与推理变体未打通**：`train.py` 保存 `{"policy": ...}` / `{"head": ...}`，但没有对应的推理加载路径（见 3/4）。
+3. ~~**`spd_edit` 映射是占位**~~ **已修复（10:34 第二轮）**：`specs.py` 现把 `spd_ckpt`/`control_ckpt`/`critic_ckpt` 解析为 `runs/v8/train/<arm>/step_*.pt` 真实路径；`variants._spd_edit` 加载 `ControlSPDHead`（`guidance.py` 新增，flat (B,D) 控制梯度 → diag+UUᵀ）并走 `generate_control_edit`；I0/I1 的 `control_ckpt` 也真正生效（policy u0 热启动 + 2 步精修）。
+4. ~~**`control_ckpt` 未被消费**~~ **已修复**：`variants._load_policy`/`_policy_u0` 现在加载 A3/A4 的 policy state_dict（按 ckpt 内 `spec` 重建 ControlSpec），u0 由 policy(0, onehot(t)) 确定性给出，再做注册步数的 margin 精修。`check_ckpt_effect` 门验证：A3.eval vs A2.s2 的 z_final RMS 差 = 0.363（原先为 ~0）。
+5. ~~**训练 ckpt 与推理变体未打通**~~ **已修复**：latent SPD 头此前**完全没有推理路径**——新增 `spd_latent` 变体（`variants._spd_latent`，复刻 UnsupervisedUnroll latent 分支）与 `L2.e`/`L3.e` 评测臂；control SPD 由 `spd_edit` 承载（I2/I3、未来 L4.e）。
 6. 中间 checkpoint（A3/A4 的 1500、L* 的 1000、C3 的 1250）已登记但队列只评测最终推理臂，**非零 ckpt 的 750 评测未排入队列**。
 7. 有效 batch 大于设计值（microbatch 288/512 > 240/128，accum=1），已在 §4 记录，非静默改动。
+8. **第一轮 27 臂结果中，凡依赖未接线参数的臂作废**：`A3.eval/A4.eval`（≈A2.s2）、`C1.l010/C1.l030/C2/C4`（互相相同）、`I0–I3`（spd_edit 占位 + control_ckpt 未生效）。这些臂的 gen/eval/state 已在 3060 删除并重跑；不依赖 ckpt 的臂（A0–A2b、L0/L1、C0）结果仍然有效。
+9. **L1.topk 语义已核对**：现实现为**逐样本空间 TopK**——`energy = g².sum(channel)` 在 (H,W) 上取 top frac，等价 `tools/v6_next/w_gating.topk_spatial_mask`；不是逐元素带符号 TopK。历史 TopK（DINO-C .7552/LPIPS .5072）与本轮（.7393/.5397）仍有差距，可能来自步数/ρ/起点差异，待 L2.e/L3.e 结果一起分析。
 
 ## 11. 待完成与不可宣称的部分
 
+**第一轮队列结果（02:55–07:13，27 臂 DONE）**：可靠的**推理基线扫描**，但不是对学习式方法的判决——A3/A4 policy、C3 critic、L4 SPD 均未进入当时的推理路径。Cross600 代表值：B4+R1 r=.15 → dino_s .431/dino_c .774/lpips .499/Top1 34.7%；r=.25 → .434/.706/.549/40.3%；L1.topk → .435/.739/.540/35.7%。所有臂 G 为负（−.007~−.037），但相对 B4 的历史 G=−.021 有改善，应比较 ΔG 而非绝对值。
+
+**第二轮队列（10:34 启动，接线修复后）**：L4 用 `ControlSPDHead` 重训（修掉了把 flat (B,D) 控制梯度喂给 conv `SPDHead` 的维度错误与 OOM）；重跑 A3.eval/A4.eval、I0–I3、C1.l010/C1.l030/C2/C4；新增 `L2.e/L3.e`（latent SPD 训练头首次进入评测）、`C3o.r15/C3o.r25`（C3 critic 替换 R1 的同预算 Oracle 对照）。`train_arm` 新增 DONE 跳过保护，已完成训练不会重跑。
+
+**诊断已完成**：
+- `check_ckpt_effect`：A3.eval vs A2.s2 z_final RMS 差 0.363 → policy 确实被消费（修复前为 ~0）。
+- `check_spd_dir`：L2 `gᵀPg` min=1.8e-3>0、方向导数 +38.3、margin 轨迹 6.64→8.91 单调升；L3 同样 OK（→8.97）。**SPD 方向数学上健康**，训练期 margin 下降应归因于内容惩罚/分布差异而非符号错误。
+
+**第二轮队列结果（10:34–12:05，全部完成：31 done / 0 failed；L4 重训成功 2000 updates，margin ~5.8–6.3）**
+
+Cross600 均值（dino_s / dino_c / lpips / Top1 / dT / G）：
+
+| 臂 | 含义 | dino_s | dino_c | lpips | Top1 | G |
+|---|---|---:|---:|---:|---:|---:|
+| A3.eval | A3 policy 真加载 | .4147 | .7033 | .6361 | .245 | −.015 |
+| A4.eval | A4 policy 真加载 | .4146 | .7029 | .6375 | .245 | −.014 |
+| C1.l010/l030 | R1+全局 support λ=.1/.3 | .4278/.4277 | .7298/.7292 | .524 | .345/.350 | −.013 |
+| C2 | R1+局部 support | .4167 | .7675 | .4722 | **.135** | −.031 |
+| C4 | C3 critic+support | .4043 | .8261 | .4293 | **.047** | −.051 |
+| C3o.r15/r25 | C3 critic 纯 Oracle（B4 起点） | .4137/.4119 | .8138/.7774 | .446/.478 | .145/.157 | −.031/−.035 |
+| L2.e | 训练 latent SPD（对角，K=2） | .4306 | **.7901** | .4805 | .288 | −.020 |
+| L3.e | 训练 latent SPD（4×4，K=4） | .4223 | .7803 | .4780 | .305 | −.020 |
+| I0/I1 | A3 policy + λ 0/.1 | .4147/.4153 | .703 | .636 | .245/.247 | −.015 |
+| I2/I3 | A3 policy + L4 control-SPD | .4229/.4230 | **.8061** | .4876 | .197/.200 | −.027 |
+
+参照（第一轮有效基线）：B4+R1 r.15 = .4310/.7737/.4985/.347；r.25 = .4337/.7057/.5489/.403；L1.topk = .4350/.7393/.5397/.357；C0=Q2a Oracle = .4277/.7303/.5240/.343。
+
+**判读（Cross600 研发集内，不可外推）**：
+- **A 路线**：policy 真正生效后 A3/A4 ≈ 手工 A2.s2/s4（.415/.70/.64/.245），学习策略**未超过手工控制**；I0≈A3.eval 复核一致，I1 的 λ_ratio=.1 支持项影响可忽略。
+- **B 路线**：L2.e（.4306/.7901/.4805/.288）是**首个 dino_c>.79 且 dino_s>.43 的臂**，但 Top1/lpips 弱于 B4+R1 r.15；L3.e 更差。latent SPD 学到了"保内容"方向而非"提风格"方向，与诊断中 margin 上升但幅度有限一致。
+- **C 路线**：全局 support 无效应（C1≈C0）；**局部 support 使 Top1 崩至 .135**；**C3 critic 作为 margin 评分器显著弱于 R1**（C3o Top1 .145/.157 vs R1 Oracle .347/.403）——C3 的低 CE 不转化为生成引导能力，C 路线当前证据为负。
+- **I 路线**：I2/I3（A3 policy + L4 control-SPD）dino_c .806 为全场最高之一，但 dino_s .423/Top1 .20 说明 L4 SPD 主要起**内容保持**作用、牺牲风格强度；I2≈I3（λ 差异仍可忽略）。
+- **Pareto 前沿未变**：仍是 B4+R1 r.15（.431/.774/.499/.347）与 L1.topk（.435/.739/.540/.357）。没有任何臂同时达到 DINO-S≥.44 且 DINO-C≥.80 的目标；最接近的是 L2.e（.431/.790）与 I2（.423/.806）。
+
 **未完成**：
-- A3/A4/L2/L3/L4/C3 训练尚未跑完；无 checkpoint
-- 28 个推理臂无一完成 750 评测（仅 8 张 smoke 通过）
-- I0–I3 联合臂依赖 A3/L4 checkpoint，尚未开始
+- N1（生成器空间 R1 优化）、N2（直接训练更新算子）、N3（控制空间 SPD 联合）尚未实现——这是下一阶段主攻方向
 - 尚无视觉检查、无真实 b1/b8 端到端测速
-- 无 `V8_RESULTS.md` 结果报告
+- 无 `V8_RESULTS.md` 独立结果报告（本文 §11 已含两轮全量 Cross600 指标）
+- B4+R1 最优工作点已备份至 `docs/best/b4r1/`（ckpt + 三臂 eval 图像/eval.json，含 PROVENANCE.txt）
 
 **不可宣称**：
 - 不能说 A/B/C 任何一条路线"有效"或"更强"
