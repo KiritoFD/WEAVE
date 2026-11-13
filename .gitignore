@@ -113,3 +113,6 @@ _tmp/
 
 # large binary backups (B4+R1 ckpt + eval images, ~1GB)
 docs/best/
+
+# historical doc archives (not part of active work)
+docs/archive/
