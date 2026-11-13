@@ -1,3 +1,5 @@
+> **已归档（2026-11-14 仓库重组）**：论文快照期/阶段性文档，现状见 [docs/README.md](../README.md)。
+
 # Baseline 补充进度与交接文档
 
 > 目的：为论文主表补充近两年 3 个强 baseline（StyleAligned / Z-STAR / StyleShot）的推理 + 评估结果。

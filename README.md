@@ -15,6 +15,25 @@
 
 ---
 
+## 🧭 Current research state (2026-11)
+
+> The paragraph above describes the original AAAI-2027 submission snapshot.
+> Research has since moved on; the paper-era flat modules referenced below now
+> live in `tools/legacy_root/` (root `__init__.py`/`__main__.py` are thin
+> compatibility shims). For the current research state, read in order:
+>
+> 1. [`AGENTS.md`](AGENTS.md) — decision protocol (2026-11-14): **all decoding uses the
+>    S10 pruned VAE decoder** (10.66M params, −78.5%, 2.86× faster; measurably better
+>    than the original decoder under the same protocol).
+> 2. [`docs/HIGHLIGHTS.md`](docs/HIGHLIGHTS.md) — the two headline results: the S10
+>    decoder and the **Q2A + Oracle** route/protocol (32-method leaderboard, Affinity
+>    0.5587, CSD Top-1 36.3%, rank #4).
+> 3. [`docs/README.md`](docs/README.md) — full documentation index (per-phase docs,
+>    retrospective `docs/1111/`, leaderboards, negative results).
+>
+> Active code now lives in `src/` (facade) + `exp/v8`, `exp/v9_local` (experiment
+> packages); historical code is archived under `tools/` and `archives/`.
+
 ## 📖 Introduction
 
 Artistic style transfer must balance two competing objectives: faithfully
@@ -88,41 +107,29 @@ are marked `—`.
 
 ```text
 WEAVE/
-├── model.py                # WEAVE main model: latent → DWT → backbone → 4 velocity heads → iDWT
-├── flow.py                 # Per-subband Flow Matching objective (FC-SB)
-├── wavelet.py              # Exact Haar DWT / IDWT utilities
-├── trainer.py              # SBTrainer: optimizer, AMP, checkpoints, full-eval scheduling
-├── run.py                  # Training entry point + per-epoch full evaluation + early stop
-├── run_evaluation.py       # Evaluation driver: single ckpt / batch dir / multi-experiment
-├── blocks.py               # ResidualBlock: AdaLN(t) → Self-Attn → Cross-Attn(style) → FFN
-├── style.py                # StyleConditioner: learnable style-memory token projector
-├── style_families.py       # Tokenizer / contract family registry and validation
-├── internal_dynamics.py    # Training-dynamics probes (HF routing gates, gradient stats)
-├── config_schema.py        # All config dataclasses + JSON load / merge / defaults
-├── __init__.py             # Package exports: WEAVE, build_model_from_config
-├── __main__.py             # `python -m WEAVE` entry → run.main()
+├── src/                    # ACTIVE: facade layer (model/infer/eval/utils)
+├── exp/                    # ACTIVE experiment packages: v8 (arm matrix), v9_local (V9-LD)
+├── tools/                  # Historical code archive; PINNED subpackages used by src/
+│   │                       # (see tools/README.md), incl. legacy_root/ = paper-era flat modules
+│   │                       # (model.py, trainer.py, run.py, config_schema.py, ...)
+├── scripts/                # Submission / reproduction scripts
+├── tests/                  # Pytest suite (layout guards, spectral ODE, infra, dynamics)
+├── configs → tools/configs_retired/   # retired experiment variants (moved 2026-11-14)
 │
 ├── config.json             # Canonical training / model / data config
 ├── inference.json          # Canonical 8-step inference & evaluation protocol
-├── configs/                # Inference & rebuttal experiment variants
-│   ├── inference_fix_whitening.json
-│   ├── inference_no_preserve_mean.json
-│   ├── exp_rebuttal_hh_head_p256.json
-│   ├── exp_rebuttal_w10_p256.json
-│   └── exp_rebuttal_w03_p256.json
+├── paths.py                # Central path resolver (WEAVE_ROOT / asset roots)
 │
-├── utils/                  # Datasets, metric computation, training/inference helpers
-├── tools/                  # One-off scripts: dataset prep, encoding, benchmarks, plots
-├── tests/                  # Pytest suite (spectral ODE, infra, dynamics, layout)
+├── eval_protocol/          # Frozen 750-task benchmark (Cross600 + Same150)
+├── deliver/                # Delivery package incl. the S10 decoder checkpoints
+├── runs/                   # Run outputs (mostly gitignored)
+├── docs/                   # Documentation (start at docs/README.md)
+├── archives/               # Cold storage (scratch, IDE workspaces, old outputs)
+├── aaai2027_v4/            # LaTeX paper build
 │
-├── requirements.txt        # Runtime dependencies
-├── requirements-dev.txt    # Development / testing dependencies
-├── pytest.ini              # Test configuration
-│
-├── INSTALL.md              # Installation guide
-├── CHANGELOG.md            # Release history
-├── CITATION.cff            # Citation metadata
-└── LICENSE                 # MIT license
+├── requirements.txt / requirements-dev.txt / pytest.ini
+├── INSTALL.md / CHANGELOG.md / CITATION.cff / LICENSE
+└── __init__.py / __main__.py   # compatibility shims → tools.legacy_root
 ```
 
 ---
@@ -137,20 +144,20 @@ conda activate weave
 # 2. Install runtime dependencies
 pip install -r requirements.txt
 
-# 3. Verify the package imports
-python -c "from WEAVE import WEAVE, build_model_from_config; print('WEAVE package OK')"
+# 3. Verify the package imports (paper-era modules live in tools/legacy_root/)
+python -c "import tools.legacy_root.model as m; print('WEAVE model OK:', m.WEAVE.__name__)"
 
 # 4. Train the canonical 15-epoch run (single RTX 3060 12 GB, batch size 8)
-python -m WEAVE --config config.json
+python tools/legacy_root/run.py --config config.json
 
 # 5. Evaluate a checkpoint with the 8-step inference protocol
-python run_evaluation.py --checkpoint runs/submission/canonical_oriented_epoch4/epoch_0004.pt \
-                         --inference inference.json
+python tools/legacy_root/run_evaluation.py --checkpoint runs/submission/canonical_oriented_epoch4/epoch_0004.pt \
+                                           --inference inference.json
 ```
 
 > 💡 The first time you run training or evaluation, latent caches will be built
 > under `runs/cache/`. See [INSTALL.md](INSTALL.md) for GPU memory tuning and
-> [DATA.md](DATA.md) (forthcoming) for dataset layout.
+> [docs/legacy_root/DATA.md](docs/legacy_root/DATA.md) for dataset layout.
 
 ---
 
@@ -162,10 +169,11 @@ python run_evaluation.py --checkpoint runs/submission/canonical_oriented_epoch4/
 | [CHANGELOG.md](CHANGELOG.md)     | Versioned release history (Keep a Changelog format)    | ✅ |
 | [CITATION.cff](CITATION.cff)     | Citation metadata in CFF 1.2 format                    | ✅ |
 | [LICENSE](LICENSE)               | MIT license                                            | ✅ |
-| DATA.md                          | Dataset layout (D5-512, R5-512, P2A-256) and preparation | 📝 forthcoming |
-| REPRODUCE.md                     | Step-by-step reproduction of all paper tables          | 📝 forthcoming |
-| EXPERIMENTS.md                   | Ablation and rebuttal experiment index                 | 📝 forthcoming |
-| CHECKPOINT.md                    | Checkpoint conventions and download mirrors            | 📝 forthcoming |
+| [REPRODUCE.md](REPRODUCE.md)     | Step-by-step reproduction of all paper tables          | ✅ |
+| [docs/README.md](docs/README.md) | Current documentation index (research state, highlights)| ✅ |
+| [docs/legacy_root/DATA.md](docs/legacy_root/DATA.md) | Dataset layout (D5-512, R5-512, P2A-256) and preparation | 📝 archived |
+| [docs/legacy_root/EXPERIMENTS.md](docs/legacy_root/EXPERIMENTS.md) | Ablation and rebuttal experiment index | 📝 archived |
+| [docs/legacy_root/CHECKPOINT.md](docs/legacy_root/CHECKPOINT.md) | Checkpoint conventions and download mirrors | 📝 archived |
 
 ---
 

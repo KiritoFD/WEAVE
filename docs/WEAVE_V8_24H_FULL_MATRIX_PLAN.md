@@ -4,7 +4,7 @@
 **设备：RTX 3060 12GB，单卡 GPU 严格串行**  
 **预算：24h 墙钟硬上限；所有已登记实验先固定排队，不以科学结果 NO 中断后续独立实验**  
 **评测：`tasks_750.json`，Cross600 + Same150，所有正式臂完整评测；统一 `paper_rgb_v1`**  
-**输入条件：冻结标准 SD-VAE、B4 与 R1；S10 只作为另列部署对照**  
+**输入条件：冻结标准 SD-VAE、B4 与 R1；S10 只作为另列部署对照**（⚠ 2026-11-14 已作废：解码一律用 S10，见 AGENTS.md 决策协议）  
 **代码基点：GitHub `a311bf8`（2026-11-12，V7-R/CPT 归档），上游 CPT `c3edb98`**  
 **建议产物：`docs/v8/V8_24H_RESEARCH_PLAN.md`；`runs/v8_24h/`；独立 `run_v8_24h.sh`**
 
@@ -282,7 +282,7 @@ R1、M2/M3 的正负梯度均需有单位校验。原 Patch 的低幅度收益�
 5. 全 Ours 与外部的 2D / 3D Pareto；正式点不包括随机梯度、单步诊断和重复配置。
 6. 真实 3060 batch=1 / 8 的编码、B4、R1、Patch 检索与更新、学生、官方 Decoder、新 S10 Decoder、整条生成速度和显存；用实际质量输出配速，不把 `45.78 ms/img` 拼接估计传播到所有新臂。
 
-在 `paper_rgb_v1` 标准质量表中仍保持同一 Decoder；S10 仅形成部署子表，确认权重与 latent scaling/post_quant_conv 匹配，不把不同 Decoder 的收益混入方法收益。
+在 `paper_rgb_v1` 标准质量表中仍保持同一 Decoder（⚠ 2026-11-14 已作废：解码一律用 S10，见 AGENTS.md 决策协议）；S10 仅形成部署子表，确认权重与 latent scaling/post_quant_conv 匹配，不把不同 Decoder 的收益混入方法收益。
 
 ### H5.2 视觉检查
 

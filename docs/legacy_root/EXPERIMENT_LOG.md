@@ -1,3 +1,5 @@
+> **已归档（2026-11-14 仓库重组）**：论文快照期/阶段性文档，现状见 [docs/README.md](../README.md)。
+
 # Experiment Log - SchrodingerBridge
 
 Reviewed on `2026-05-16`.

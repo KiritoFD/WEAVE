@@ -24,9 +24,6 @@ MACHINE_LOCAL_FILES = set()
 
 # B3-B6 待改造清单（每批改完后删除对应条目；路径以 2026-11-14 重组后为准）
 KNOWN_DEBT = {
-    "BASELINE_PROGRESS.md",
-    "Plan.md",
-    "REPOSITORY_INVENTORY.md",
     "tools/legacy_root/pack_code_zip.py",
     "tools/legacy_root/pack_subpack.py",
     "tools/legacy_root/prepare_submission_v6.py",

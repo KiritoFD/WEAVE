@@ -1,5 +1,12 @@
 # WEAVE 复现指南
 
+> **⚠ 2026-11-14 仓库重组**：论文期平铺模块已从仓库根迁至 `tools/legacy_root/`。
+> 下文所有 `python tools/legacy_root/run.py ...` 命令请改用对应脚本路径（功能等价，内部 import 已自举）：
+> `python tools/legacy_root/run.py ...`、`python tools/legacy_root/run_evaluation.py ...`；
+> `verify_main_table.py` → `python tools/legacy_root/verify_main_table.py`。
+> 当前研究线的评测协议（750 任务、S10 解码）见 [docs/README.md](docs/README.md) 与
+> [docs/HIGHLIGHTS.md](docs/HIGHLIGHTS.md)——与本文的论文口径（原版 decoder）是两代协议。
+
 本指南说明如何从零复现论文 Table 1 中 **WEAVE** 行的三个核心指标：
 **DINO-S (C↑, content, max 口径)、CLIP-S (S↑, style)、LPIPS (D↓, perceptual)**。
 
@@ -22,16 +29,16 @@
 
 ```powershell
 # 训练
-python -m weave --config config.json --train
+python tools/legacy_root/run.py --config config.json --train
 
 # 推理
-python -m weave --config inference.json --infer
+python tools/legacy_root/run.py --config inference.json --infer
 
 # 评估
-python -m weave --eval --output-dir results/
+python tools/legacy_root/run.py --eval --output-dir results/
 
 # 一条命令验证主表
-python verify_main_table.py
+python tools/legacy_root/verify_main_table.py
 ```
 
 **双盲说明**：本指南不涉及作者身份信息；所有日志、checkpoint 与指标文件均以方法名 `WEAVE` 标识。
@@ -98,7 +105,7 @@ runs/
 python tools/preencode_d5_packed.py --data-root data/train --output data/train/.latent_cache/packed
 
 # 3. 构建配对缓存（top-k=8）
-python -m weave --config config.json --train --build-pairing-cache-only
+python tools/legacy_root/run.py --config config.json --train --build-pairing-cache-only
 ```
 
 测试集 `data/test/` 包含 150 张图（5 风格 × 30 内容），评估时与 5 个风格的参考图配对生成 750 对。
@@ -110,7 +117,7 @@ python -m weave --config config.json --train --build-pairing-cache-only
 ### 4.1 命令
 
 ```powershell
-python -m weave --config config.json --train
+python tools/legacy_root/run.py --config config.json --train
 ```
 
 ### 4.2 关键训练参数（`config.json`）
@@ -168,7 +175,7 @@ runs/submission/canonical_oriented_epoch4/
 ### 5.1 命令
 
 ```powershell
-python -m weave --config inference.json --infer
+python tools/legacy_root/run.py --config inference.json --infer
 ```
 
 ### 5.2 关键推理参数（`inference.json`）
@@ -208,7 +215,7 @@ HF 子带走 oriented 路径（见 `experiments/architecture/hf_oriented_nohh.js
 
 ```powershell
 # 评估 WEAVE 生成结果（750 对）
-python -m weave --eval --output-dir results/
+python tools/legacy_root/run.py --eval --output-dir results/
 ```
 
 ### 6.2 750 对评估协议
@@ -228,7 +235,7 @@ IDT (identity) baseline = 输出等于输入内容（output == content）。
 
 ```powershell
 # 运行 IDT baseline 评估（输出到 exp/idt_baseline/）
-python -m weave --eval --output-dir exp/idt_baseline --idt-baseline
+python tools/legacy_root/run.py --eval --output-dir exp/idt_baseline --idt-baseline
 
 # 产出：
 #   exp/idt_baseline/metrics.csv    # per-pair: clip_style, content_lpips
@@ -248,7 +255,7 @@ IDT baseline 理论值：
 ### 7.1 一条命令验证
 
 ```powershell
-python verify_main_table.py
+python tools/legacy_root/verify_main_table.py
 ```
 
 ### 7.2 预期输出
@@ -267,9 +274,9 @@ Match: YES
 ### 7.3 脚本选项
 
 ```powershell
-python verify_main_table.py --results-dir /path/to/WEAVE     # 指定项目根
-python verify_main_table.py --checkpoint epoch_0004          # 指定 checkpoint 名
-python verify_main_table.py --verbose                        # 打印数据来源
+python tools/legacy_root/verify_main_table.py --results-dir /path/to/WEAVE     # 指定项目根
+python tools/legacy_root/verify_main_table.py --checkpoint epoch_0004          # 指定 checkpoint 名
+python tools/legacy_root/verify_main_table.py --verbose                        # 打印数据来源
 ```
 
 ### 7.4 数据来源
@@ -303,8 +310,8 @@ python verify_main_table.py --verbose                        # 打印数据来�
 
 ```powershell
 # 关闭 DWT 路由，退化为纯空间路径
-python -m weave --config inference_block.json --infer
-python -m weave --eval --output-dir results/ablation_dwt_block
+python tools/legacy_root/run.py --config inference_block.json --infer
+python tools/legacy_root/run.py --eval --output-dir results/ablation_dwt_block
 ```
 
 `inference_block.json` 关闭 `spectral_ode_enabled`，迫使所有计算走空间分支。
@@ -313,8 +320,8 @@ python -m weave --eval --output-dir results/ablation_dwt_block
 
 ```powershell
 # 仅在最后一步 Euler step 应用 AdaIN
-python -m weave --config inference_endpoint_only.json --infer
-python -m weave --eval --output-dir results/ablation_endpoint_only
+python tools/legacy_root/run.py --config inference_endpoint_only.json --infer
+python tools/legacy_root/run.py --eval --output-dir results/ablation_endpoint_only
 ```
 
 `inference_endpoint_only.json` 设置 `endpoint_adain_only_last_step=true`。
@@ -323,7 +330,7 @@ python -m weave --eval --output-dir results/ablation_endpoint_only
 
 ```powershell
 # 训练时启用 Stepwise AdaIN（默认关闭）
-python -m weave --config config.json --train --config_override bridge.train_adain_enabled=true bridge.train_adain_scale=0.3
+python tools/legacy_root/run.py --config config.json --train --config_override bridge.train_adain_enabled=true bridge.train_adain_scale=0.3
 ```
 
 对应 `flow.py` 中的 Stage9 机制（spatial_fiber mean+std matching）。
@@ -333,9 +340,9 @@ python -m weave --config config.json --train --config_override bridge.train_adai
 ```powershell
 # 扫描 1.0 / 1.5 / 2.0 / 2.5
 foreach ($s in @(1.0, 1.5, 2.0, 2.5)) {
-    python -m weave --config inference.json --infer `
+    python tools/legacy_root/run.py --config inference.json --infer `
         --config_override model.endpoint_adain_scale=$s
-    python -m weave --eval --output-dir "results/sweep_adain_${s}"
+    python tools/legacy_root/run.py --eval --output-dir "results/sweep_adain_${s}"
 }
 ```
 
@@ -353,7 +360,7 @@ foreach ($s in @(1.0, 1.5, 2.0, 2.5)) {
 
 ```powershell
 python tools/infer_latent_wct.py --output-dir results/baselines/latent_wct
-python -m weave --eval --output-dir results/baselines/latent_wct
+python tools/legacy_root/run.py --eval --output-dir results/baselines/latent_wct
 ```
 
 ### 9.3 其他基线
@@ -408,9 +415,9 @@ python -m weave --eval --output-dir results/baselines/latent_wct
 **症状**：`verify_main_table.py` 退出码 2。
 
 **解决**：
-1. 先运行推理：`python -m weave --config inference.json --infer`
-2. 再运行评估：`python -m weave --eval --output-dir results/`
-3. 运行 IDT baseline：`python -m weave --eval --output-dir exp/idt_baseline --idt-baseline`
+1. 先运行推理：`python tools/legacy_root/run.py --config inference.json --infer`
+2. 再运行评估：`python tools/legacy_root/run.py --eval --output-dir results/`
+3. 运行 IDT baseline：`python tools/legacy_root/run.py --eval --output-dir exp/idt_baseline --idt-baseline`
 4. 用 `--results-dir` 指定正确的项目根
 
 ### 10.5 训练不收敛

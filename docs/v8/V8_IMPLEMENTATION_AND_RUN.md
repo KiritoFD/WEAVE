@@ -30,7 +30,7 @@ src/
 exp/v8/      controls.py(A) guidance.py(B) energy.py(C) p0_contract.py
              arms.py train.py run_arm.py specs.py build_support.py
              probe_step.py bench_train.py
-archive/v8_ot_geometry/   已停用的 OT/几何匹配路线（含停止理由）
+tools/v8_ot_geometry/   已停用的 OT/几何匹配路线（含停止理由）
 ```
 
 **已注册的 9 种推理变体**：`direct / relative / oracle / r1_steps / control /
@@ -39,7 +39,7 @@ supported / random / student / identity`。V8 的 28 个推理臂全部映射到
 
 ### 2.1 为什么归档 OT 路线
 
-`archive/v8_ot_geometry/README.md` 记录了理由，核心是一个代数事实：
+`tools/v8_ot_geometry/README.md` 记录了理由，核心是一个代数事实：
 
 > 固定权重下 `E(h) = Σ π_j ||h − a_j||² = ||h − μ||² + const`，只能回归加权均值。
 
@@ -219,7 +219,7 @@ A推理 → C推理 → B推理 → I联合`。单臂失败记 FAILED 但**不�
 
 ## 10. 已知缺口（整理时核对代码发现）
 
-1. **`exp/v8/energies.py` 不可导入**：`from .features import N_PATCH`，但 `exp/v8/features.py` 已随 OT 路线归档（`archive/v8_ot_geometry/features_geometry.py`）。当前无任何活跃代码 import 它，属死代码；若要复用需先恢复 features 或删除该文件。
+1. **`exp/v8/energies.py` 不可导入**：`from .features import N_PATCH`，但 `exp/v8/features.py` 已随 OT 路线归档（`tools/v8_ot_geometry/features_geometry.py`）。当前无任何活跃代码 import 它，属死代码；若要复用需先恢复 features 或删除该文件。
 2. **`exp/v8/models.py` 不存在**：`src/infer/variants.py` 的 `student` 变体 `from exp.v8.models import build_corrector`，该模块未实现 → student 变体当前不可用。
 3. ~~**`spd_edit` 映射是占位**~~ **已修复（10:34 第二轮）**：`specs.py` 现把 `spd_ckpt`/`control_ckpt`/`critic_ckpt` 解析为 `runs/v8/train/<arm>/step_*.pt` 真实路径；`variants._spd_edit` 加载 `ControlSPDHead`（`guidance.py` 新增，flat (B,D) 控制梯度 → diag+UUᵀ）并走 `generate_control_edit`；I0/I1 的 `control_ckpt` 也真正生效（policy u0 热启动 + 2 步精修）。
 4. ~~**`control_ckpt` 未被消费**~~ **已修复**：`variants._load_policy`/`_policy_u0` 现在加载 A3/A4 的 policy state_dict（按 ckpt 内 `spec` 重建 ControlSpec），u0 由 policy(0, onehot(t)) 确定性给出，再做注册步数的 margin 精修。`check_ckpt_effect` 门验证：A3.eval vs A2.s2 的 z_final RMS 差 = 0.363（原先为 ~0）。
