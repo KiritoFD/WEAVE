@@ -58,7 +58,8 @@ def main():
         r = v9_merged_means(arm)
         if r:
             rows.append((f"{arm} (v9, merged-750)", r))
-    for arm in ("E1", "E2", "E4", "E2_nomask", "E2_mix", "E2_ld4plus"):
+    for arm in ("E1", "E2", "E4", "E2_nomask", "E2_mix", "E2_ld4plus",
+                "C-T", "C-TM", "C-TS"):
         r = v10_means(arm)
         if r:
             rows.append((f"{arm} (v10, 750)", r))
