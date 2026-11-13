@@ -47,6 +47,7 @@ results/
 exp/*
 !exp/v8/
 !exp/v9_local/
+!exp/v10/
 experiments/
 state/
 archives/
