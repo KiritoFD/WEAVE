@@ -72,6 +72,14 @@ class SPDHead(nn.Module):
         )
         nn.init.zeros_(self.net[-1].weight)
         nn.init.zeros_(self.net[-1].bias)
+        # U=0 is a saddle point: d(u u^T g)/du = (u.g)I + u g^T vanishes at u=0,
+        # so a zero U init can never learn the low-rank branch. Seed the U
+        # output channels with a small nonzero bias instead.
+        g = torch.Generator(device='cpu').manual_seed(0)
+        u_channels = self.net[-1].bias.shape[0] - 4
+        with torch.no_grad():
+            self.net[-1].bias[4:].copy_(
+                torch.randn(u_channels, generator=g) * 0.05)
 
     def forward(self, c, z, tid, g):
         b = z.shape[0]
@@ -112,10 +120,15 @@ class ControlSPDHead(nn.Module):
             nn.Linear(width, dim + rank * dim),
         )
         nn.init.zeros_(self.net[-1].weight)
-        # bias: diag part -> softplus(b) + eps ~= 1  =>  b ~= 0.5413; U part 0
+        # bias: diag part -> softplus(b) + eps ~= 1  =>  b ~= 0.5413
         with torch.no_grad():
             self.net[-1].bias.zero_()
             self.net[-1].bias[:dim].fill_(0.5413)
+            # nonzero U seed: at U=0 the low-rank branch has zero gradient
+            g = torch.Generator(device='cpu').manual_seed(0)
+            self.net[-1].bias[dim:].copy_(
+                torch.randn(self.net[-1].bias.shape[0] - dim,
+                            generator=g) * 0.05)
 
     def forward(self, g_u: torch.Tensor, tid: torch.Tensor):
         """g_u: (B, D) control gradient -> (diag (B,D), U (B,rank,D))."""

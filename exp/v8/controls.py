@@ -303,7 +303,11 @@ class ControlledGenerator(nn.Module):
                            ones_h * xs.square()], dim=1)   # (1,4,H,W)
         bases = bases[:, :rank]                            # (1,r,H,W)
         mixed = (amps.view(B, rank, 1, 1) * bases).sum(1, keepdim=True)   # (B,1,H,W)
-        scale = torch.tanh(gains.mean(1, keepdim=True)).view(B, 1, 1, 1)
+        # 1 + tanh: at zero init the gain factor is 1, not 0 — otherwise
+        # d(out)/d(amps) = bases*tanh(0) = 0 and d(out)/d(gains) ~ mixed = 0,
+        # a deadlock that keeps the local branch untrainable. u=0 still gives
+        # amps=0 -> out=0, so zero control reproduces the base exactly.
+        scale = (1.0 + torch.tanh(gains.mean(1, keepdim=True))).view(B, 1, 1, 1)
         out = (mixed * scale).expand(-1, C, -1, -1)
         return out - out.mean(dim=(2, 3), keepdim=True)
 

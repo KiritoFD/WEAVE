@@ -102,6 +102,16 @@ train_arm("C3")
 PY
 log "train C3 rc=$?"
 
+# N2: constrained style maximization (latent SPD, hinge content budget)
+for a in N2A N2B N2C; do
+  python3 - <<PY >> logs/v8_train.log 2>&1
+import sys; sys.path.insert(0,'.')
+from exp.v8.train import train_arm
+train_arm("$a")
+PY
+  log "train $a rc=$?"
+done
+
 # ---------------------------------------------------------------- inference
 # A inference (no training needed) then A3/A4 driven arms
 for a in A0 A0.s2 A0.s4 A1 A1.s2 A1.s4 A2 A2.s2 A2.s4 A2b A3.eval A4.eval; do
@@ -110,7 +120,10 @@ done
 # C inference
 for a in C0 C1.l010 C1.l030 C2 C4 C3o.r15 C3o.r25; do run_arm "$a"; done
 # B inference
-for a in L0.r08 L0.r15 L0.r25 L1.b4.r25 L1.b4.r15 L1.topk L2.e L3.e; do run_arm "$a"; done
+for a in L0.r08 L0.r15 L0.r25 L1.b4.r25 L1.b4.r15 L1.topk L2.e L3.e \
+         L2.e.m08 L2.e.m125 L2.e.m150; do run_arm "$a"; done
+# N2 eval
+for a in N2A.e N2B.e N2C.e; do run_arm "$a"; done
 # I joint
 for a in I0 I1 I2 I3; do run_arm "$a"; done
 

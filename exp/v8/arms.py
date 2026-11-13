@@ -65,6 +65,14 @@ B_INFER = [
      "steps": 2, "step_rms": 0.08, "rho": 0.25},
     {"id": "L3.e", "kind": "spd_latent", "start": "B4", "spd_ckpt": "L3",
      "steps": 4, "step_rms": 0.08, "rho": 0.25},
+    # Zero-training step-size probe on the trained L2 head: is L2.e simply
+    # under-stepped? (1.0x already exists as L2.e)
+    {"id": "L2.e.m08", "kind": "spd_latent", "start": "B4", "spd_ckpt": "L2",
+     "steps": 2, "step_rms": 0.064, "rho": 0.25},
+    {"id": "L2.e.m125", "kind": "spd_latent", "start": "B4", "spd_ckpt": "L2",
+     "steps": 2, "step_rms": 0.10, "rho": 0.25},
+    {"id": "L2.e.m150", "kind": "spd_latent", "start": "B4", "spd_ckpt": "L2",
+     "steps": 2, "step_rms": 0.12, "rho": 0.25},
 ]
 B_TRAIN = [
     {"id": "L2", "kind": "train_spd", "space": "latent", "start": "B4",
@@ -102,6 +110,67 @@ C_TRAIN = [
      "checkpoints": [0, 1250, 2500]},
 ]
 
+# ------------------------------------------------- N2: constrained style max
+# Same latent SPD structure as L2 (diagonal, K=2, B4 start); only the objective
+# changes: -margin + lam*relu(cost-eps)^2 with cost = ||z'-z0||^2/||z0-z_s||^2.
+N2_TRAIN = [
+    {"id": "N2A", "kind": "train_n2", "start": "B4", "rank": 0, "steps_k": 2,
+     "updates": 4000, "seed": 42, "checkpoints": [0, 2000, 4000],
+     "lam": 50.0, "eps": 0.15, "adaptive": False, "w_style_dist": 0.0},
+    {"id": "N2B", "kind": "train_n2", "start": "B4", "rank": 0, "steps_k": 2,
+     "updates": 4000, "seed": 42, "checkpoints": [0, 2000, 4000],
+     "lam": 50.0, "eps": 0.15, "adaptive": True, "w_style_dist": 0.0},
+    {"id": "N2C", "kind": "train_n2", "start": "B4", "rank": 0, "steps_k": 2,
+     "updates": 4000, "seed": 42, "checkpoints": [0, 2000, 4000],
+     "lam": 50.0, "eps": 0.15, "adaptive": True, "w_style_dist": 0.25},
+]
+N2_EVAL = [
+    {"id": "N2A.e", "kind": "spd_latent", "start": "B4", "spd_ckpt": "N2A",
+     "steps": 2, "step_rms": 0.08, "rho": 0.25},
+    {"id": "N2B.e", "kind": "spd_latent", "start": "B4", "spd_ckpt": "N2B",
+     "steps": 2, "step_rms": 0.08, "rho": 0.25},
+    {"id": "N2C.e", "kind": "spd_latent", "start": "B4", "spd_ckpt": "N2C",
+     "steps": 2, "step_rms": 0.08, "rho": 0.25},
+]
+
+# ------------------------------------------------- F: style actuation
+# Trainable (c,t)->control map + gated per-instance u correction, driving the
+# frozen B4 control space. steps_k = inner R1 steps during training; the eval
+# arms run the SAME inner loop so train/infer are consistent.
+F_TRAIN = [
+    {"id": "F0", "kind": "train_actuation", "start": "B4", "u_dim": 32,
+     "steps_k": 0, "updates": 4000, "seed": 42,
+     "checkpoints": [0, 2000, 4000],
+     "lam": 50.0, "eps": 0.15, "w_style_dist": 0.0},
+    {"id": "F1", "kind": "train_actuation", "start": "B4", "u_dim": 32,
+     "steps_k": 1, "updates": 4000, "seed": 42,
+     "checkpoints": [0, 2000, 4000],
+     "lam": 50.0, "eps": 0.15, "w_style_dist": 0.0},
+    {"id": "F2", "kind": "train_actuation", "start": "B4", "u_dim": 32,
+     "steps_k": 2, "updates": 4000, "seed": 42,
+     "checkpoints": [0, 2000, 4000],
+     "lam": 50.0, "eps": 0.15, "w_style_dist": 0.0},
+    {"id": "F3", "kind": "train_actuation", "start": "B4", "u_dim": 32,
+     "steps_k": 2, "updates": 4000, "seed": 42,
+     "checkpoints": [0, 2000, 4000],
+     "lam": 50.0, "eps": 0.15, "w_style_dist": 0.25},
+]
+F_EVAL = [
+    {"id": "F0.e", "kind": "actuated", "start": "B4", "act_ckpt": "F0",
+     "steps": 0},
+    {"id": "F1.e", "kind": "actuated", "start": "B4", "act_ckpt": "F1",
+     "steps": 1, "eta": 0.05},
+    {"id": "F2.e", "kind": "actuated", "start": "B4", "act_ckpt": "F2",
+     "steps": 2, "eta": 0.05},
+    {"id": "F3.e", "kind": "actuated", "start": "B4", "act_ckpt": "F3",
+     "steps": 2, "eta": 0.05},
+    # inference-time step sweep on the strongest trained actuator
+    {"id": "F2.s1", "kind": "actuated", "start": "B4", "act_ckpt": "F2",
+     "steps": 1, "eta": 0.05},
+    {"id": "F2.s4", "kind": "actuated", "start": "B4", "act_ckpt": "F2",
+     "steps": 4, "eta": 0.05},
+]
+
 # ---------------------------------------------------------------- I: joint
 I_ARMS = [
     {"id": "I0", "kind": "control", "start": "Q2a", "control_ckpt": "A3",
@@ -123,6 +192,10 @@ GROUPS = {
     "B_train": B_TRAIN,
     "C_infer": C_INFER,
     "C_train": C_TRAIN,
+    "N2_train": N2_TRAIN,
+    "N2_eval": N2_EVAL,
+    "F_train": F_TRAIN,
+    "F_eval": F_EVAL,
     "I": I_ARMS,
 }
 

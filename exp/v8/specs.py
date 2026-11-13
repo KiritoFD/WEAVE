@@ -104,6 +104,18 @@ def infer_spec_for(arm: dict) -> InferSpec:
             rho=arm.get("rho", 0.25),
             extra={"spd_ckpt": ckpt_of("spd_ckpt"),
                    "critic_ckpt": ckpt_of("critic_ckpt"),
+                   "eta_search": bool(arm.get("eta_search", False)),
+                   "budget_eps": arm.get("budget_eps", 0.15),
+                   "arm": aid})
+
+    if kind == "actuated":
+        return InferSpec(
+            ckpt=_start(arm), kind="actuated",
+            steps=arm.get("steps", 0), step_rms=arm.get("step_rms", 0.08),
+            rho=arm.get("rho", 0.25),
+            extra={"act_ckpt": ckpt_of("act_ckpt"),
+                   "critic_ckpt": ckpt_of("critic_ckpt"),
+                   "eta": arm.get("eta", 0.05),
                    "arm": aid})
 
     if kind == "student":

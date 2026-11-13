@@ -134,14 +134,22 @@ def _support_banks(spec, device, critic):
     return glob, loc
 
 
+def _content_feat(c):
+    """Content-conditioning features for A-route policies: channel-wise
+    mean + std of the canonicalized source latent. Shape-agnostic and cheap;
+    identical computation in train.py and here so train/infer match."""
+    c = c.float()
+    return torch.cat([c.mean(dim=(2, 3)), c.std(dim=(2, 3))], dim=1)
+
+
 def _load_policy(ckpt_path: str, device: str):
     """Load a trained A-route control policy.
 
-    train.py saves {'policy': MLP state_dict, 'spec': ControlSpec dict, ...}.
-    The MLP is Linear(dim+5 -> 256) -> SiLU -> Linear(256 -> dim); its input is
-    [control_dim noise, 5-way target onehot]. We feed ZEROS for the noise at
-    inference so the output is deterministic (training sampled randn, whose
-    mean is zero).
+    train.py saves {'policy': MLP state_dict, 'spec': ControlSpec dict,
+    'feat_dim': int, ...}. The MLP is Linear(feat_dim+5 -> 256) -> SiLU ->
+    Linear(256 -> control_dim); its input is [content features of the
+    canonicalized source, 5-way target onehot]. `feat_dim` falls back to the
+    control dim for checkpoints trained before content conditioning.
     """
     import torch.nn as nn
     from exp.v8.controls import ControlSpec
@@ -153,7 +161,8 @@ def _load_policy(ckpt_path: str, device: str):
                         palette=sd.get("palette", True),
                         local_rank=sd.get("local_rank", 0))
     dim = cspec.dim
-    policy = nn.Sequential(nn.Linear(dim + 5, 256), nn.SiLU(),
+    feat_dim = int(ck.get("feat_dim", dim))
+    policy = nn.Sequential(nn.Linear(feat_dim + 5, 256), nn.SiLU(),
                            nn.Linear(256, dim)).to(device).eval()
     policy.load_state_dict(ck["policy"])
     for p in policy.parameters():
@@ -161,12 +170,14 @@ def _load_policy(ckpt_path: str, device: str):
     return policy, cspec
 
 
-def _policy_u0(policy, cspec, tid, device):
+def _policy_u0(policy, cspec, tid, device, feat=None):
     b = tid.shape[0]
-    noise = torch.zeros(b, cspec.dim, device=device)
+    in_dim = policy[0].in_features - 5
+    if feat is None:
+        feat = torch.zeros(b, in_dim, device=device)
     oh = F.one_hot(tid.long(), 5).float()
     with torch.no_grad():
-        return policy(torch.cat([noise, oh], 1))
+        return policy(torch.cat([feat.to(device), oh], 1))
 
 
 @register("oracle")
@@ -268,7 +279,9 @@ def _control(spec, device):
     def gen_fn(z, sid, tid, tasks):
         with torch.enable_grad():
             c = canon(z.float(), mode=spec.canon_mode, augment=False)
-            u0 = _policy_u0(policy, cspec, tid, device) if policy is not None \
+            feat = _content_feat(c) if policy is not None else None
+            u0 = _policy_u0(policy, cspec, tid, device, feat=feat) \
+                if policy is not None \
                 else torch.zeros(z.shape[0], cspec.dim, device=device)
             u = u0.detach().clone().requires_grad_(True)
             with torch.no_grad():
@@ -349,10 +362,76 @@ def _spd_edit(spec, device):
         p.requires_grad_(False)
 
     def gen_fn(z, sid, tid, tasks):
-        u0 = _policy_u0(policy, cspec, tid, device) if policy is not None else None
+        feat = None
+        if policy is not None:
+            with torch.no_grad():
+                c = canon(z.float(), mode="c1_gentle", augment=False)
+            feat = _content_feat(c)
+        u0 = _policy_u0(policy, cspec, tid, device, feat=feat) \
+            if policy is not None else None
         return generate_control_edit(critic, head, base, canon, cspec, z, tid,
                                      steps=spec.steps, step_rms=spec.step_rms,
                                      rho=spec.rho, u0=u0, device=device)
+    return gen_fn
+
+
+@register("actuated")
+def _actuated(spec, device):
+    """F: trainable style actuation — ctrl = A_phi(u, feat(c), t) through the
+    frozen B4 control space, with per-instance u optimised by the same inner
+    R1-margin loop used in training (steps from spec)."""
+    from exp.v8.actuation import StyleActuator
+    from exp.v8.controls import ControlSpec, Controls, wrap
+    from exp.v8.guidance import target_margin
+    base_path = spec.ckpt or (REPO / "runs/v6/Q2a_embed_style/Q2a_embed_style.pt")
+    base, _ = load_c3unet(base_path, device)
+    canon = canonicalizer(device)
+    critic = _critic_for(spec, device)
+
+    ck_path = spec.extra.get("act_ckpt")
+    if not ck_path:
+        raise ValueError("actuated requires extra['act_ckpt']")
+    ck = torch.load(ck_path, map_location="cpu", weights_only=False)
+    sd = ck["spec"]
+    cspec = ControlSpec(global_dim=sd.get("global_dim", 32),
+                        per_scale_dim=sd.get("per_scale_dim", 32),
+                        scales=tuple(sd.get("scales", ("64", "32", "16", "out"))),
+                        palette=sd.get("palette", True),
+                        local_rank=sd.get("local_rank", 0))
+    actuator = StyleActuator(int(ck["u_dim"]), int(ck["feat_dim"]),
+                             cspec.dim).to(device).eval()
+    actuator.load_state_dict(ck["actuator"])
+    for p in actuator.parameters():
+        p.requires_grad_(False)
+    gen_w = wrap(base, cspec, device)
+    u_dim = int(ck["u_dim"])
+    eta = float(spec.extra.get("eta", 0.05))
+
+    def gen_fn(z, sid, tid, tasks):
+        with torch.enable_grad():
+            c = canon(z.float(), mode=spec.canon_mode, augment=False)
+            with torch.no_grad():
+                z0 = base(c, 0.0, c, tid)
+                feat = _content_feat(c)
+            u = torch.zeros(z.shape[0], u_dim, device=device,
+                            requires_grad=True)
+            ctrl = None
+            for _ in range(spec.steps):
+                ctrl = actuator(u, feat, tid)
+                out = gen_w(c, 0.0, c, tid,
+                            controls=Controls.from_tensor(ctrl, cspec))
+                m = target_margin(critic, out, tid)
+                g = torch.autograd.grad(m.sum(), u)[0]
+                gr = g / g.flatten(1).pow(2).mean(1).sqrt() \
+                    .clamp_min(1e-12).view(-1, 1)
+                u = (u + eta * gr).detach().requires_grad_(True)
+            with torch.no_grad():
+                ctrl = actuator(u, feat, tid)
+                final = gen_w(c, 0.0, c, tid,
+                              controls=Controls.from_tensor(ctrl, cspec))
+        return {"z0": z0, "final": final, "u": ctrl,
+                "trace": [{"actuator": True, "u_dim": u_dim,
+                           "steps": spec.steps}]}
     return gen_fn
 
 
@@ -382,6 +461,10 @@ def _spd_latent(spec, device):
         ug = (u * g.unsqueeze(1)).sum(2)
         return dg + (u * ug.unsqueeze(2)).sum(1)
 
+    eta_search = bool(spec.extra.get("eta_search", False))
+    budget_eps = float(spec.extra.get("budget_eps", 0.15))
+    etas = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
+
     def gen_fn(z, sid, tid, tasks):
         with torch.no_grad():
             c = canon(z.float(), mode=spec.canon_mode, augment=False)
@@ -394,8 +477,32 @@ def _spd_latent(spec, device):
                     target_margin(critic, zr.float(), tid).sum(), zr)[0].detach()
                 diag, u = head(c, cur, tid, g)
                 delta = spd_apply(diag, u, g)
-            cur = project_rms(cur + spec.step_rms * normalize(delta),
-                              z0, spec.rho).detach()
+            step = normalize(delta)
+            if eta_search:
+                # eta* = largest step whose edit stays inside the per-sample
+                # content budget AND actually raises the R1 margin.
+                d_gen = (z0 - z).square().flatten(1).mean(1).clamp_min(1e-8)
+                m_cur = target_margin(critic, cur.float(), tid)
+                chosen = cur.clone()
+                remaining = torch.ones(cur.shape[0], dtype=torch.bool,
+                                       device=cur.device)
+                for mult in sorted(etas, reverse=True):
+                    cand = project_rms(
+                        cur + spec.step_rms * mult * step, z0, spec.rho)
+                    cost = (cand - z0).square().flatten(1).mean(1) / d_gen
+                    with torch.no_grad():
+                        m_cand = target_margin(critic, cand.float(), tid)
+                    ok = ((cost <= budget_eps) & (m_cand > m_cur)
+                          & remaining)
+                    if ok.any():
+                        chosen = torch.where(ok[:, None, None, None], cand, chosen)
+                        remaining &= ~ok
+                    if not remaining.any():
+                        break
+                cur = chosen.detach()
+            else:
+                cur = project_rms(cur + spec.step_rms * step,
+                                  z0, spec.rho).detach()
         return {"z0": z0, "final": cur, "trace": []}
     return gen_fn
 
