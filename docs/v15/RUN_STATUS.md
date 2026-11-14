@@ -49,6 +49,27 @@
 - `runs/v15/logs/W_*.log` — 每臂 stdout/stderr
 - `runs/v15/W_*/train_curves.jsonl` — 每 200 opt step 一行
 
-## 预计
+## 用时表（12k updates/臂，3060 实测锚点 + 外推）
 
-16 臂（seed 0）串行约 **12–18h**。完成后跑统一诊断（Where Probe + 内容干预 + 750 评测）再决定 seed 1 复跑与 Group B/C/D。
+**双锚点实测**：dim16_conv_base @128/1 = 0.0785 s/upd（15.7 min ✓done）；dim96_conv_base @128/1 = 0.328 s/upd（66 min，99% util）。外推模型：fixed ~65ms/update + ~7.3ms·ch²，att +20%，where ×~3 计算量（bf16 加速后）。
+
+| # | 臂 | micro/acc | s/upd | 用时 | 状态 |
+|---|---|---|---|---|---|
+| 1 | dim96_conv_base | 128/1 | 0.328 实测 | 66 min | 🏃 |
+| 2 | dim96_conv_where | 32/4 | ~0.9 | ~3.0h | 首个 where 臂，将校准全部 where 估计 |
+| 3 | dim96_att_base | 128/1 | ~0.39 | ~78 min | |
+| 4 | dim96_att_where | 16/8 | ~1.8 | ~6h ⚠️ | 最重臂，超时 8h 兜底 |
+| 5 | dim64_conv_base | 128/1 | ~0.19 | ~38 min | |
+| 6 | dim64_conv_where | 32/4 | ~0.5 | ~1.7h | |
+| 7 | dim64_att_base | 128/1 | ~0.23 | ~46 min | |
+| 8 | dim64_att_where | 32/4 | ~0.55 | ~1.8h | |
+| 9 | dim32_conv_base | 128/1 | ~0.105 | ~21 min | |
+| 10 | dim32_conv_where | 64/2 | ~0.16 | ~32 min | |
+| 11 | dim32_att_base | 128/1 | ~0.115 | ~23 min | |
+| 12 | dim32_att_where | 64/2 | ~0.19 | ~38 min | |
+| 13 | dim16_conv_base | 128/1 | 0.0785 实测 | 15.7 min | ✅ done |
+| 14 | dim16_conv_where | 128/1 | ~0.10 | ~20 min | |
+| 15 | dim16_att_base | 128/1 | ~0.085 | ~17 min | |
+| 16 | dim16_att_where | 128/1 | ~0.11 | ~22 min | |
+
+**总计 seed 0 ≈ 18–20h**（跑序：大→小；where 臂合计 ~12h 是大头）。where 臂数字为外推（±30%），每臂完成后 `group_a_status.json` 记录 elapsed_min 自动校准。seed 1 需再一个等长 run（可另一台机或错峰）。
