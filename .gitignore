@@ -122,3 +122,6 @@ docs/best/
 
 # historical doc archives (not part of active work)
 docs/archive/
+
+# large latent archive kept locally only (LFS threshold)
+runs/v8/N2C.e/gen_latents.tgz
