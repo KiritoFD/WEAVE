@@ -49,27 +49,20 @@
 - `runs/v15/logs/W_*.log` — 每臂 stdout/stderr
 - `runs/v15/W_*/train_curves.jsonl` — 每 200 opt step 一行
 
-## 用时表（12k updates/臂，3060 实测锚点 + 外推）
+## 用时表（2026-11-15 用户决断：4k updates/臂、两阶段跑序、朴素训练）
 
-**双锚点实测**：dim16_conv_base @128/1 = 0.0785 s/upd（15.7 min ✓done）；dim96_conv_base @128/1 = 0.328 s/upd（66 min，99% util）。外推模型：fixed ~65ms/update + ~7.3ms·ch²，att +20%，where ×~3 计算量（bf16 加速后）。
+**变更记录**：12k→6k→4k（loss 拐点 ~1–2k 步，12k=110 epochs 过度）；跑序改为先全部 base 臂（大→小）再全部 where 臂（大→小）；pool cache 与 `cudnn.benchmark` 已回退——后者与 CFG drop（p_drop=0.15，unc 前向 batch 1..20 随机）交互导致每新 shape 全量 autotune，nvidia-smi 呈突发-停顿循环，去除后恢复线性 0.328 s/upd·98% util。
 
-| # | 臂 | micro/acc | s/upd | 用时 | 状态 |
-|---|---|---|---|---|---|
-| 1 | dim96_conv_base | 128/1 | 0.328 实测 | 66 min | 🏃 |
-| 2 | dim96_conv_where | 32/4 | ~0.9 | ~3.0h | 首个 where 臂，将校准全部 where 估计 |
-| 3 | dim96_att_base | 128/1 | ~0.39 | ~78 min | |
-| 4 | dim96_att_where | 16/8 | ~1.8 | ~6h ⚠️ | 最重臂，超时 8h 兜底 |
-| 5 | dim64_conv_base | 128/1 | ~0.19 | ~38 min | |
-| 6 | dim64_conv_where | 32/4 | ~0.5 | ~1.7h | |
-| 7 | dim64_att_base | 128/1 | ~0.23 | ~46 min | |
-| 8 | dim64_att_where | 32/4 | ~0.55 | ~1.8h | |
-| 9 | dim32_conv_base | 128/1 | ~0.105 | ~21 min | |
-| 10 | dim32_conv_where | 64/2 | ~0.16 | ~32 min | |
-| 11 | dim32_att_base | 128/1 | ~0.115 | ~23 min | |
-| 12 | dim32_att_where | 64/2 | ~0.19 | ~38 min | |
-| 13 | dim16_conv_base | 128/1 | 0.0785 实测 | 15.7 min | ✅ done |
-| 14 | dim16_conv_where | 128/1 | ~0.10 | ~20 min | |
-| 15 | dim16_att_base | 128/1 | ~0.085 | ~17 min | |
-| 16 | dim16_att_where | 128/1 | ~0.11 | ~22 min | |
+| 阶段 | 臂 | 配置 | 用时/臂 |
+|---|---|---|---|
+| 1 朴素 | dim96 conv/att base | 128/1 | 22 / 26 min（**实测 0.328 s/upd**）|
+| 1 朴素 | dim64 conv/att base | 128/1 | ~13 / ~15 min |
+| 1 朴素 | dim32 conv/att base | 128/1 | ~7 / ~8 min |
+| 1 朴素 | dim16 conv/att base | 128/1 | ~5 / ~6 min |
+| 2 where | dim96 conv_where | 32/4 | ~60–70 min |
+| 2 where | dim96 att_where | 16/8 | ~110–130 min |
+| 2 where | dim64 conv/att where | 32/4 | ~35 / ~37 min |
+| 2 where | dim32 conv/att where | 64/2 | ~11 / ~13 min |
+| 2 where | dim16 conv/att where | 128/1 | ~7 / ~8 min |
 
-**总计 seed 0 ≈ 18–20h**（跑序：大→小；where 臂合计 ~12h 是大头）。where 臂数字为外推（±30%），每臂完成后 `group_a_status.json` 记录 elapsed_min 自动校准。seed 1 需再一个等长 run（可另一台机或错峰）。
+**seed 0 总计 ≈ 7.5h**（每臂 +~3 min 冷启动 pool 加载）。不足则从 ckpt_3000/ckpt_4000（含 opt+sched 状态）resume 延长。
