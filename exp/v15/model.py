@@ -248,7 +248,7 @@ class V15UNet(nn.Module):
         skips = [self.enc_in(z_tau)]
         h = skips[0]
         for i, d in enumerate(self.down):
-            h = self.enc[i](d(h))
+            h = self.enc[i](d(h), cond)
             skips.append(h)
             # attention at 32×32 (after first down) and 16×16 (after second down)
             if self.win_att is not None and i == 0:
