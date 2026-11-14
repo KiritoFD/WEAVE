@@ -1,6 +1,8 @@
 # V15 Work Group A — 运行状态
 
-**2026-11-15 起跑于 3060**（tmux session `v15`，bash 启动脚本 `_tmp/run_v15_tmux.sh`）。
+**2026-11-15 起跑于 3060**（tmux session `v15`，pane 内 **cmd 直跑** `_tmp/run_v15_tmux.bat`，无重定向、pane 即进度）。
+
+> **infra 教训**：3060 的 tmux pane 里 **MSYS bash 会静默挂死**（进程不启动、无输出、无退出）——首跑假成功即由此而来。tmux 里一律用 `cmd /c ...bat` 跑 Windows 原生进程。另：`schtasks` 遗留任务（`v15pipeline`）会造成幽灵进程/撞车，起跑前必须 `schtasks /Query` 清点并删除同名任务。
 
 ## 起跑前验证（全部通过）
 
@@ -23,9 +25,21 @@
 
 ## 首臂实测（W_dim16_conv_base）
 
-- 0.155s/update → 12k updates ≈ **31 分钟/臂**（dim16 base；where/dim96 臂按 2–4× 估计）。
-- loss 1.60 → 0.98 @ 1800 steps，下降正常。
-- GPU 689MiB / 45%。
+- **micro 表提速后：0.075s/update → 12k updates ≈ 15 分钟/臂**（base 臂；where 臂按 2–4× 估计）。
+- loss 1.60 → 0.946 @2600 steps，与 micro=32 逐点重合（梯度等价验证）。
+- GPU 1606MiB / 73% / 121W（micro=32 时 689MiB / 45% / 85W）。
+
+## micro 表（有效 batch 恒为 128，协议不变）
+
+| 臂 | micro/accum | 依据（冒烟每样本激活） |
+|---|---|---|
+| 全部 base 臂（10 条）| 128 / 1 | 激活 <25MB/样本 |
+| dim32 × where（2 条）| 64 / 2 | ~80MB/样本 |
+| dim64 × where（2 条）| 32 / 4 | ~150–180MB/样本 |
+| dim96 conv where | 32 / 4 | ~242MB/样本 |
+| dim96 att where | 16 / 8 | ~290MB/样本 |
+
+**协议约束**：micro ≤ 有效 batch。要填到 ~10GB 显存需将有效 batch 提到 512+，属预注册协议变更（需重标定 lr、噪声水平改变）——除非用户明示，否则不做。
 
 ## 查看
 
