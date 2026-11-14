@@ -37,16 +37,23 @@ def masked_reconstruction_loss(model, z_src, style_id, tau, mask_fraction=0.15):
     return diff.sum() / (mask.sum() * z_src.shape[1] + 1e-8)
 
 
-def region_affinity_loss(feats, edge_map, tau=0.07):
+def region_affinity_loss(feats, edge_map, tau=0.07, n_sample=256):
     """Weak region affinity: nearby tokens with similar edge magnitude should
     have similar features; edge discontinuities should separate features.
 
     feats: (B, D, H, W) spatial features
     edge_map: (B, 1, H, W) sobel magnitude of LL
+    Subsamples n_sample tokens so the affinity matrix stays small
+    ((B, 256, 256) instead of (B, 4096, 4096) = ~2GB at B=32).
     """
     B, D, H, W = feats.shape
     tokens = feats.flatten(2).transpose(1, 2)              # (B, HW, D)
     e_flat = edge_map.flatten(2).transpose(1, 2)            # (B, HW, 1)
+    HW = tokens.shape[1]
+    if HW > n_sample:
+        idx = torch.randperm(HW, device=feats.device)[:n_sample]
+        tokens = tokens[:, idx]
+        e_flat = e_flat[:, idx]
     tokens_n = Fn.normalize(tokens, dim=2)
     # affinity prediction: dot product between token pairs
     aff = tokens_n @ tokens_n.transpose(1, 2)               # (B, HW, HW)
