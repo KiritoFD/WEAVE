@@ -24,7 +24,7 @@ PYTHON = sys.executable
 TIMEOUT_S = 6 * 3600
 
 ARMS_A = []
-for dim in (16, 32, 64, 96):
+for dim in (96, 64, 32, 16):   # largest first: heavy/risky arms hit problems early
     for att in (False, True):
         for where in (False, True):
             ARMS_A.append({
