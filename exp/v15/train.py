@@ -31,8 +31,16 @@ def _h10(pid):
 
 
 def load_training_latents(pool_dir, device="cpu", n_per_style=None):
-    """Load all train-split latents with balanced style sampling."""
+    """Load all train-split latents with balanced style sampling.
+
+    First call builds and caches the concatenated train split next to the
+    pool (single .pt, fp16) so each arm skips re-reading the 5 pool files.
+    """
     pool = Path(pool_dir)
+    cache = pool.parent / "v15_train_split_cache.pt"
+    if cache.exists() and n_per_style is None:
+        d = torch.load(cache, map_location="cpu", weights_only=False)
+        return d["z"].float(), d["y"].long(), d["counts"]
     latents, labels = [], []
     g = torch.Generator().manual_seed(0)
     counts = {}
@@ -46,9 +54,11 @@ def load_training_latents(pool_dir, device="cpu", n_per_style=None):
         latents.append(d["latents"][torch.tensor(tr, dtype=torch.long)])
         labels.extend([si] * len(tr))
         counts[s] = len(tr)
-    z = torch.cat(latents).float()
+    z = torch.cat(latents)
     y = torch.tensor(labels)
-    return z, y, counts
+    if n_per_style is None:
+        torch.save({"z": z.half(), "y": y, "counts": counts}, cache)
+    return z.float(), y, counts
 
 
 def fm_loss(model, z_real, style_id, tau, p_drop=0.15):
@@ -97,6 +107,7 @@ def main():
     device = args.device
 
     torch.manual_seed(args.seed)
+    torch.backends.cudnn.benchmark = True   # fixed shapes: autotune once, benefit all arms
 
     # arm naming
     att_tag = "att" if args.use_attention else "conv"

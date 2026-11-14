@@ -2,13 +2,14 @@
 
 Run on the 3060 inside tmux:
   tmux new-session -d -s v15 'python -m exp.v15.run_group_a'
-Each arm: 12k optimizer updates (effective batch 128 = micro × accum).
+Each arm: 6k optimizer updates (eff. batch 128 = micro × accum; 55 epochs —
+loss knee is at ~1-2k steps, 12k=110 epochs was past the point of return).
+2026-11-15 amendment, applies uniformly to all arms.
 Status: runs/v15/group_a_status.json, per-arm logs: runs/v15/logs/<tag>.log
 
-Memory plan (no allocator flags, plain PyTorch): the two dim96 where arms
-peak ~10-11.5GB at micro=32, so they pre-emptively run micro=16/accum=8;
-any residual OOM retries once with micro halved / accum doubled (effective
-batch unchanged, protocol-safe).
+Memory plan (no allocator flags, plain PyTorch): per-arm micro table sized
+from smoke-matrix peaks; any residual OOM retries once with micro halved /
+accum doubled (effective batch unchanged, protocol-safe).
 """
 import json
 import subprocess
@@ -97,7 +98,7 @@ def main():
         status, micro_used = "done", micro
         for attempt in range(2):
             micro_used = micro
-            args = arm_cmd(cfg, out_dir, 12000, 0, micro, accum)
+            args = arm_cmd(cfg, out_dir, 6000, 0, micro, accum)
             try:
                 with open(log_path, "w") as lf:
                     r = subprocess.run(args, cwd=str(REPO), timeout=TIMEOUT_S,
