@@ -1,13 +1,16 @@
 """V15 Work Group A sequencer: 16 arms × seed 0, sequential execution.
 
-Run on the 3060: python -m exp.v15.run_group_a
-Each arm: 12k optimizer updates. Status: runs/v15/group_a_status.json,
-per-arm stdout/stderr: runs/v15/logs/<tag>.log
-OOM safety net: expandable_segments allocator + on OutOfMemoryError retry the
-arm with micro halved / accum doubled (effective batch 128 unchanged).
+Run on the 3060 inside tmux:
+  tmux new-session -d -s v15 'python -m exp.v15.run_group_a'
+Each arm: 12k optimizer updates (effective batch 128 = micro × accum).
+Status: runs/v15/group_a_status.json, per-arm logs: runs/v15/logs/<tag>.log
+
+Memory plan (no allocator flags, plain PyTorch): the two dim96 where arms
+peak ~10-11.5GB at micro=32, so they pre-emptively run micro=16/accum=8;
+any residual OOM retries once with micro halved / accum doubled (effective
+batch unchanged, protocol-safe).
 """
 import json
-import os
 import subprocess
 import sys
 import time
@@ -19,7 +22,6 @@ OUT = REPO / "runs/v15"
 LOGS = OUT / "logs"
 PYTHON = sys.executable
 TIMEOUT_S = 6 * 3600
-ENV = {**os.environ, "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"}
 
 ARMS_A = []
 for dim in (16, 32, 64, 96):
@@ -35,6 +37,12 @@ def arm_tag(cfg):
     att = "att" if cfg["use_attention"] else "conv"
     wh = "where" if cfg["use_where"] else "base"
     return f"W_dim{cfg['base_dim']}_{att}_{wh}"
+
+def arm_micro(cfg):
+    """micro/accum per arm; effective batch stays 128."""
+    if cfg["base_dim"] >= 96 and cfg["use_where"]:
+        return 16, 8      # dim96_*_where peak ~10-11.5GB at micro=32
+    return 32, 4
 
 def arm_cmd(cfg, out_dir, updates, seed, micro, accum):
     args = [
@@ -72,15 +80,15 @@ def main():
         out_dir = OUT / tag
         log_path = LOGS / f"{tag}.log"
         t_arm = time.time()
-        status, micro_used = "done", 32
-        for attempt, (micro, accum) in enumerate(((32, 4), (16, 8), (8, 16))):
+        micro, accum = arm_micro(cfg)
+        status, micro_used = "done", micro
+        for attempt in range(2):
             micro_used = micro
             args = arm_cmd(cfg, out_dir, 12000, 0, micro, accum)
             try:
                 with open(log_path, "w") as lf:
                     r = subprocess.run(args, cwd=str(REPO), timeout=TIMEOUT_S,
-                                       stdout=lf, stderr=subprocess.STDOUT,
-                                       env=ENV)
+                                       stdout=lf, stderr=subprocess.STDOUT)
                 if r.returncode == 0:
                     status = "done"
                     break
@@ -88,12 +96,14 @@ def main():
             except subprocess.TimeoutExpired:
                 status = "timeout"
                 break
-            tail = log_path.read_text(errors="replace")
-            if "OutOfMemoryError" not in tail and attempt < 2:
-                break  # non-OOM failure: retrying won't help
-            print(f"  OOM at micro={micro}, retrying with {micro//2}/"
-                  f"{accum*2}", flush=True)
-        results[tag] = {"status": status, "micro": micro_used if status == "done" else None,
+            if attempt == 0 and "OutOfMemoryError" in log_path.read_text(errors="replace"):
+                micro, accum = micro // 2, accum * 2   # eff. batch 128 kept
+                print(f"  OOM at micro={micro*2}, retrying micro={micro} "
+                      f"accum={accum}", flush=True)
+                continue
+            break
+        results[tag] = {"status": status,
+                        "micro": micro_used if status == "done" else None,
                         "elapsed_min": round((time.time() - t_arm) / 60, 1)}
         status_file.write_text(json.dumps(results, indent=1))
         if status != "done":
