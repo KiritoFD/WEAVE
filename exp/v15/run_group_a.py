@@ -2,9 +2,9 @@
 
 Run on the 3060 inside tmux:
   tmux new-session -d -s v15 'python -m exp.v15.run_group_a'
-Each arm: 6k optimizer updates (eff. batch 128 = micro × accum; 55 epochs —
-loss knee is at ~1-2k steps, 12k=110 epochs was past the point of return).
-2026-11-15 amendment, applies uniformly to all arms.
+Each arm: 4k optimizer updates (eff. batch 128 = micro × accum; ~37 epochs —
+loss knee at ~1-2k steps. 2026-11-15 decision: run 4k first, resume/extend
+later if diagnostics show under-convergence).
 Status: runs/v15/group_a_status.json, per-arm logs: runs/v15/logs/<tag>.log
 
 Memory plan (no allocator flags, plain PyTorch): per-arm micro table sized
@@ -25,14 +25,16 @@ PYTHON = sys.executable
 TIMEOUT_S = 8 * 3600
 
 ARMS_A = []
-for dim in (96, 64, 32, 16):   # largest first: heavy/risky arms hit problems early
+# Phase 1: plain (base) arms, largest first — fast sweep of capacity/context
+for dim in (96, 64, 32, 16):
     for att in (False, True):
-        for where in (False, True):
-            ARMS_A.append({
-                "base_dim": dim,
-                "use_attention": att,
-                "use_where": where,
-            })
+        ARMS_A.append({"base_dim": dim, "use_attention": att,
+                       "use_where": False})
+# Phase 2: where arms, largest first — the expensive batch comes second
+for dim in (96, 64, 32, 16):
+    for att in (False, True):
+        ARMS_A.append({"base_dim": dim, "use_attention": att,
+                       "use_where": True})
 
 def arm_tag(cfg):
     att = "att" if cfg["use_attention"] else "conv"
@@ -98,7 +100,7 @@ def main():
         status, micro_used = "done", micro
         for attempt in range(2):
             micro_used = micro
-            args = arm_cmd(cfg, out_dir, 6000, 0, micro, accum)
+            args = arm_cmd(cfg, out_dir, 4000, 0, micro, accum)
             try:
                 with open(log_path, "w") as lf:
                     r = subprocess.run(args, cwd=str(REPO), timeout=TIMEOUT_S,
