@@ -39,10 +39,21 @@ def arm_tag(cfg):
     return f"W_dim{cfg['base_dim']}_{att}_{wh}"
 
 def arm_micro(cfg):
-    """micro/accum per arm; effective batch stays 128."""
-    if cfg["base_dim"] >= 96 and cfg["use_where"]:
-        return 16, 8      # dim96_*_where peak ~10-11.5GB at micro=32
-    return 32, 4
+    """micro/accum per arm; effective batch ALWAYS 128 (registered protocol).
+
+    Sized from smoke-matrix peaks (per-sample activation GB ≈ (peak−1.4)/32),
+    target ≤ ~8GB per micro-batch, micro must divide 128.
+    """
+    tag = arm_tag(cfg)
+    if not cfg["use_where"]:
+        return 128, 1          # all base arms: tiny activations
+    if tag.startswith("W_dim32"):
+        return 64, 2           # dim32 where ~81MB/sample
+    if tag.startswith("W_dim64"):
+        return 32, 4           # dim64 where ~146-183MB/sample
+    if tag == "W_dim96_conv_where":
+        return 32, 4           # ~242MB/sample -> ~8GB at micro 32
+    return 16, 8               # dim96_att_where ~290MB/sample
 
 def arm_cmd(cfg, out_dir, updates, seed, micro, accum):
     args = [
