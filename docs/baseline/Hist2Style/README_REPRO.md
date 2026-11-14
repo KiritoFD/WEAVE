@@ -53,3 +53,30 @@ python3 run.py --content <test图> --style <train参考图> --output-dir outputs
 - `eval.py`（EvaluationSet 2584 对基准）依赖下载外部数据集与 FID inception 权重，
   本次复现目标是 WEAVE Test750，不跑 eval.py。
 - `train.py` 需 ~54GB 训练数据，仅当需要验证训练复现时才考虑（本任务不需要）。
+
+## Speed measurement (idle RTX 3060, 2026-11-14)
+
+Official `run.py` single-image invocation, 10 manifest pairs spread across the 750:
+
+- per-call wall times (s): 19.87, 13.34, 13.63, 13.99, 13.28, 13.64, 24.67, 18.56, 13.65, 13.15
+- **mean 15.78 s/img, median 13.64 s/img** (includes Python+torch startup and model load each call)
+- Resident-runner steady state (`batch_h2s_750.py`, model kept in memory): `infer_wall_s` mean 0.361 s, median 0.229 s over all 750 — WEAVE-side engineering saving, not the baseline's native speed.
+
+Paper table/figure uses the official-script number (15.8 s/img); the paper's own 3 ms figure is pure kernel time excluding load/IO and is not comparable to end-to-end wall time.
+
+## Correction: official batch-mode speed (idle RTX 3060)
+
+The 15.8 s/img figure above is `run.py` **per-invocation** wall time — ~95% of it is
+Python/torch startup + checkpoint load, not inference. `run.py` natively supports a
+folder mode (`--content dir --style dir`, pairs matched by filename), which is the
+authors' intended batch path:
+
+- 50 manifest pairs (hardlinked content + symlinked style refs), one process:
+  **wall 55.41 s total → 1.108 s/img** including the one-time model load.
+- Steady-state per-image inside that mode ≈ 0.85 s (load ≈ 13 s amortized over 50).
+- Resident-runner `infer_wall_s` (750 imgs): mean 0.361 s, median 0.229 s — our
+  engineering saving on top of the official path.
+
+The paper figure uses **1108 ms/img** (official folder-mode throughput). Extrapolated
+to 750 tasks: ~13 s load + ~640 s inference ≈ 11 min, consistent with the observed
+full-batch runtime.

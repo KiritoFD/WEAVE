@@ -38,6 +38,13 @@ EXTERNAL = [
     ('SD-Turbo',    0.9998, 0.4894,   400.0),
     ('SaMST',       0.1628, 0.4288,   800.0),   # hidden: dino_c < 0.34
     ('WCT',         0.0232, 0.3658,   293.6),   # hidden: dino_c < 0.34
+    # reproduced on WEAVE 750 (Cross600), eval identical to src.eval.measure.
+    # Speed = OUR measured resident-runner throughput on RTX 3060:
+    # H2S batch_h2s_750.py infer_wall_s median 0.23 s -> ~5 img/s
+    # (mean 0.36 s -> 2.8 img/s; we plot the 5 img/s operating point).
+    # SG official per-image subprocess runner, 19-task mean 76.0 s.
+    ('Hist2Style',  0.9083, 0.5069,   200.0),
+    ('StyleGallery',0.6113, 0.6432, 76000.0),
 ]
 WEAVE = ('WEAVE (published)', 0.8079, 0.5367, 97.60)
 
@@ -57,6 +64,8 @@ EXT_LABELS = {
     'SaMAM':        (0.885, 0.558, 'left'),
     'CUT':          (0.90, 0.528, 'left'),
     'SD-Turbo':     (1.015, 0.468, 'right'),
+    'Hist2Style':   (0.945, 0.545, 'left'),
+    'StyleGallery': (0.60, 0.665, 'right'),
 }
 V8_LABELS = {
     'L1.b4.r15': (0.80, 0.566, 'left'),
@@ -261,7 +270,12 @@ def main():
 
     fig.text(.085, .10,
              'V8 ms/img = gen wall time incl. model+edit (750 tasks, batch 8, RTX 3060). '
-             'External times from paper.tex. WCT/SaMST dropped (DINO-C < 0.34).',
+             'External times from paper.tex; H2S/SG reproduced on the same 750 tasks, '
+             'Speed = our measured runner on idle RTX 3060: H2S resident batch '
+             '~5 img/s (median 0.23 s/img, mean 0.36 s/img); SG official '
+             'per-image subprocess mean 76.0 s over 19 tasks (SG fast-runner '
+             '~33 s/img not counted). '
+             'WCT/SaMST dropped (DINO-C < 0.34).',
              fontsize=9.3, color=muted)
 
     out = HERE / f'style_content_speed_v8{a.suffix}'
