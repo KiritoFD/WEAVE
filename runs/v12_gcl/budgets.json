@@ -1,0 +1,109 @@
+{
+ "created": "2026-11-14T15:54:30",
+ "n_train_paintings": 60,
+ "haar": {
+  "B_Q": 0.006363,
+  "appearance": {
+   "mean": 0.003121,
+   "p50": 0.002436,
+   "p90": 0.006363
+  },
+  "geometric": {
+   "mean": 0.165323,
+   "p10": 0.118025
+  },
+  "sensitivity_ratio_geo_over_app_mean": 52.972,
+  "n_paintings": 48,
+  "quantile": 0.9,
+  "strength": 1.0
+ },
+ "rel_tau0.25": {
+  "B_Q": 0.01764,
+  "appearance": {
+   "mean": 0.00776,
+   "p50": 0.005517,
+   "p90": 0.01764
+  },
+  "geometric": {
+   "mean": 0.765073,
+   "p10": 0.415216
+  },
+  "sensitivity_ratio_geo_over_app_mean": 98.594,
+  "n_paintings": 48,
+  "quantile": 0.9,
+  "strength": 1.0
+ },
+ "rel_tau0.5": {
+  "B_Q": 0.006621,
+  "appearance": {
+   "mean": 0.002994,
+   "p50": 0.001866,
+   "p90": 0.006621
+  },
+  "geometric": {
+   "mean": 0.255637,
+   "p10": 0.124758
+  },
+  "sensitivity_ratio_geo_over_app_mean": 85.394,
+  "n_paintings": 48,
+  "quantile": 0.9,
+  "strength": 1.0
+ },
+ "rel_tau1.0": {
+  "B_Q": 0.001879,
+  "appearance": {
+   "mean": 0.000925,
+   "p50": 0.000555,
+   "p90": 0.001879
+  },
+  "geometric": {
+   "mean": 0.074111,
+   "p10": 0.033753
+  },
+  "sensitivity_ratio_geo_over_app_mean": 80.127,
+  "n_paintings": 48,
+  "quantile": 0.9,
+  "strength": 1.0
+ },
+ "rel_tau2.0": {
+  "B_Q": 0.000497,
+  "appearance": {
+   "mean": 0.000253,
+   "p50": 0.000153,
+   "p90": 0.000497
+  },
+  "geometric": {
+   "mean": 0.019808,
+   "p10": 0.008774
+  },
+  "sensitivity_ratio_geo_over_app_mean": 78.365,
+  "n_paintings": 48,
+  "quantile": 0.9,
+  "strength": 1.0
+ },
+ "g2o": {
+  "B_Q": 0.133118,
+  "appearance": {
+   "mean": 0.073166,
+   "p50": 0.064003,
+   "p90": 0.133118
+  },
+  "geometric": {
+   "mean": 0.401075,
+   "p10": 0.208715
+  },
+  "sensitivity_ratio_geo_over_app_mean": 5.482,
+  "n_paintings": 48,
+  "quantile": 0.9,
+  "strength": 1.0
+ },
+ "chosen_tau": 2.0,
+ "tau_rule_note": "largest tau with geo>=3x app; {\"0.25\": 98.594, \"0.5\": 85.394, \"1.0\": 80.127, \"2.0\": 78.365}",
+ "budgets": {
+  "haar": 0.027404,
+  "rel": 0.002088,
+  "g2o": 0.166685,
+  "chosen_tau": 2.0,
+  "rule": "log-midpoint(app p90, geo p10); pre-registration amendment logged"
+ }
+}

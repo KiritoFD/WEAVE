@@ -1,0 +1,16 @@
+{
+ "identity_haar": 0.0,
+ "identity_rel": 0.0,
+ "identity_g2o": 0.0,
+ "identity_pass": true,
+ "rowsum_max_dev": 1.1920928955078125e-07,
+ "rowsum_pass": true,
+ "gate_pass": true,
+ "jvp_fd_norm": 0.087,
+ "jvp_fd_consistency": 0.119182,
+ "jvp_pass": true,
+ "extreme_haar_finite": true,
+ "extreme_rel_finite": true,
+ "appearance_finite": true,
+ "all_pass": true
+}
