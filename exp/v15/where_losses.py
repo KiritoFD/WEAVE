@@ -12,16 +12,20 @@ import torch.nn.functional as Fn
 
 
 def random_region_mask(B, H, W, device, min_size=4, max_size=16, n_masks=3):
-    """Irregular region masks (not just random squares)."""
-    masks = torch.zeros(B, 1, H, W, device=device)
+    """Irregular region masks (not just random squares).
+
+    Built on CPU: per-box .item() calls on CUDA tensors would sync the
+    device ~300x per step.
+    """
+    masks = torch.zeros(B, 1, H, W)
     for b in range(B):
         for _ in range(n_masks):
-            h = torch.randint(min_size, max_size, (1,), device=device).item()
-            w = torch.randint(min_size, max_size, (1,), device=device).item()
-            y = torch.randint(0, H - h, (1,), device=device).item()
-            x = torch.randint(0, W - w, (1,), device=device).item()
+            h = torch.randint(min_size, max_size, (1,)).item()
+            w = torch.randint(min_size, max_size, (1,)).item()
+            y = torch.randint(0, H - h, (1,)).item()
+            x = torch.randint(0, W - w, (1,)).item()
             masks[b, 0, y:y + h, x:x + w] = 1.0
-    return masks
+    return masks.to(device)
 
 
 def masked_reconstruction_loss(model, z_src, style_id, tau, mask_fraction=0.15):
@@ -31,9 +35,10 @@ def masked_reconstruction_loss(model, z_src, style_id, tau, mask_fraction=0.15):
     mask = random_region_mask(B, H, W, z_src.device,
                               n_masks=max(1, int(mask_fraction * 4)))
     z_masked = z_src * (1 - mask) + torch.randn_like(z_src) * 0.1 * mask
-    pred = model(z_masked, style_id, tau)
+    with torch.autocast("cuda", dtype=torch.bfloat16, enabled=z_src.is_cuda):
+        pred = model(z_masked, style_id, tau)
     # only compute loss in masked regions (forces context usage)
-    diff = (pred - z_src).abs() * mask
+    diff = (pred.float() - z_src).abs() * mask
     return diff.sum() / (mask.sum() * z_src.shape[1] + 1e-8)
 
 
@@ -90,8 +95,13 @@ def appearance_perturb(z: torch.Tensor, strength: float = 1.0, seed: int = 0):
 
 def where_losses(model, z_src, style_id, tau, lambda_m=0.1, lambda_a=0.05,
                  lambda_i=0.05):
-    """Compute all Where self-supervision losses for a training step."""
+    """Compute all Where self-supervision losses for a training step.
+
+    Model forwards run under bf16 autocast — same precision policy as the
+    flow-matching loss; loss math itself stays fp32.
+    """
     B = z_src.shape[0]
+    ac = dict(dtype=torch.bfloat16, enabled=z_src.is_cuda)
     losses = {}
 
     # 1. Masked reconstruction
@@ -99,8 +109,9 @@ def where_losses(model, z_src, style_id, tau, lambda_m=0.1, lambda_a=0.05,
     losses["masked"] = masked_reconstruction_loss(model, pert_z, style_id, tau)
 
     # 2. Region affinity (on intermediate features — needs a hook or forward pass)
-    # For simplicity, apply to the model output features
-    pred = model(z_src, style_id, tau)
+    with torch.autocast("cuda", **ac):
+        pred = model(z_src, style_id, tau)
+    pred = pred.float()
     # Use edge map from the latent as weak structural signal
     gx = pred[:, :, :, 1:] - pred[:, :, :, :-1]          # (B,C,H,W-1)
     gy = pred[:, :, 1:, :] - pred[:, :, :-1, :]          # (B,C,H-1,W)
@@ -108,17 +119,16 @@ def where_losses(model, z_src, style_id, tau, lambda_m=0.1, lambda_a=0.05,
     gy = Fn.pad(gy, (0, 0, 0, 1))                        # -> (B,C,H,W)
     edge = (gx.square().mean(1) + gy.square().mean(1)).sqrt()  # (B,H,W)
     edge = edge.unsqueeze(1)                                     # (B,1,H,W)
-    # Use the predicted latent as a proxy for features
-    feats = pred.flatten(2).transpose(1, 2)                      # (B, HW, 4)
     losses["affinity"] = region_affinity_loss(pred, edge)
 
     # 3. Content invariance: two appearance-perturbed versions should give
     #    consistent structure features
     pert1 = appearance_perturb(z_src, strength=0.3, seed=42)
     pert2 = appearance_perturb(z_src, strength=0.3, seed=43)
-    pred1 = model(pert1, style_id, tau)
-    pred2 = model(pert2, style_id, tau)
-    losses["invariance"] = content_invariance_loss(pred1, pred2)
+    with torch.autocast("cuda", **ac):
+        pred1 = model(pert1, style_id, tau)
+        pred2 = model(pert2, style_id, tau)
+    losses["invariance"] = content_invariance_loss(pred1.float(), pred2.float())
 
     total = (lambda_m * losses["masked"] + lambda_a * losses["affinity"] +
              lambda_i * losses["invariance"])

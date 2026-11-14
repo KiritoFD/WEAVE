@@ -21,7 +21,7 @@ POOL = "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
 OUT = REPO / "runs/v15"
 LOGS = OUT / "logs"
 PYTHON = sys.executable
-TIMEOUT_S = 6 * 3600
+TIMEOUT_S = 8 * 3600
 
 ARMS_A = []
 for dim in (96, 64, 32, 16):   # largest first: heavy/risky arms hit problems early
