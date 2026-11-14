@@ -50,6 +50,7 @@ exp/*
 !exp/v9_local/
 !exp/v10/
 !exp/v11b/
+!exp/v13/
 experiments/
 state/
 archives/

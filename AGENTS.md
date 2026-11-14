@@ -46,7 +46,9 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 - **V10 已收尾**（2026-11-14）：真实画作条件 KDE score 路线——score 级验证全过（方向 .302 vs r1 .054），750 口径最优臂 E4（cross600 Top-1 .3400 vs LD0 .3283，dino_s .4415/affinity .5616 全场最高）但未超 LD4；DSM < KDE（保留闭式）。主表与结论 `docs/v10/V10_RESULTS.md`；代码 `exp/v10/`，产物 `runs/v10_local_4070/`（untracked）。
 - **V10.1 局部匹配已判负**（2026-11-14）：StyleGallery 式"内容条件检索目标 + 距离损失"在恢复代理上反向对齐（q 检索 −0.25~−0.53 vs KDE +0.30）——处方式目标形态错误，KDE 密度梯度才是对的形态；详见 `docs/v10_1/V10_1_RESULTS.md`。
 - **V10.2 特异性验证已收尾**（2026-11-14）：**恢复对齐收益是通用的，不是画派的**——混合画派 KDE 拿到目标 KDE 的 95%（特异性 5%）；q 条件均值拉动 +.49 但特异性 0.9%；LD4 机制换装差异 Score（C-TM/C-TS）Top-1 +0.67~0.84pp vs LD0，未达 LD4。**v11 重启门槛四项全未达标**；latent 统计特征空间的画派特异信号已近枯竭，下一步要么学习式编码器（v11，密度目标）要么换特征空间。详见 `docs/v10_2/V10_2_RESULTS.md`。方法论新增：**Recovery Alignment ≠ Style Specificity**（score 路线必须同时报告 A1/A2/A3 三控制）。
-- **V11 已延期**（底稿 `docs/v11/WEAVE_V11_LOCAL_STROKE_MEMORY_PLAN.md`）：P0–P2 已被 v10.1 吸收并判负；P3–P5（学习式 Attention 分支）重启前提 = v10.2 门槛，未达标；若重启，监督用密度提升而非距离回归。
+- **V10 / V10.1 / V10.2 / V11 / V12 / V13 全线关闭**（2026-11-14）：六条风格路线（手工统计 Score、检索目标、DINO 密度 Score、GCL 内容闸门 ×5、DWT 域对比学习 E_s）全部判负。三条方法论铁律：**Reference Retrieval ≠ Style Distribution Gradient**；**Recovery Alignment ≠ Style Specificity**；**Separation Margin ≠ Generative Direction**；**DWT Token ≠ Style Carrier**。完整证据链见各自 RESULTS 文档（docs/v10/ v10_1/ v10_2/ v11/ v12/ v13/）。
+- **当前可交付最优不变**：LD4（Top-1 .3517 / LPIPS .4872）+ E4（DINO-S .4415 / Affinity .5616）。风格研究需要全新思路（RGB 域判别式、RGB 残差分支等），不是当前管线的增量改进。
+- V11b（波let Flow）代码/修复版在 `exp/v13/`（8 bug 修复，sigma √2 精确验证），3060 上有远程重建脚本。
 - **评测口径（2026-11-14 用户决定）**：任务级评测/决策一律用完整 test750（读数 cross600），不用 dev 预览集；LD 基线 = v9 dev+test eval 行合并重算。
 - 3060 被他人占用做 StyleGallery 复现，**不要碰**。
 
