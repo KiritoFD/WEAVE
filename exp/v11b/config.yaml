@@ -1,0 +1,30 @@
+# V11-B Wavelet Stroke Flow — registered hyperparameters
+model:
+  width: 40            # UNet base width per band head
+  cond_dim: 64
+  levels: 3
+  params_target: "0.5-1.5M"
+train:
+  crop: 128
+  micro: 4             # starting microbatch; sweep 1/2/4 in P0
+  accum: 8             # effective batch = micro*accum = 32
+  lr: 2.0e-4
+  optimizer: adamw
+  weight_decay: 0.01
+  schedule: onecycle
+  p_drop_style: 0.15   # classifier-free dropout
+  bands: [H1, H2]      # B1=H1 only, B2=H2 only, B3=joint (train both)
+  dtype: bf16_autocast_fp32_bands
+sampling:
+  tau0: [0.35, 0.6, 0.8]
+  K: [2, 4, 8]
+  cfg_w: [1.0, 1.5, 2.0]
+  alpha: [0.25, 0.5, 0.75]
+  edge_decay: 0.5
+  rms_clip_mult: 1.5
+eval:
+  protocol: tasks_750   # cross600 + same150; NO dev subset (user rule 2026-11-14)
+  baseline_arm: LD4     # merged-750 reference point
+gates:
+  G1: "holdout correct-style wavelet velocity MSE beats wrong/uncond by >=2% stable, 4/5 styles"
+  G2: "DINO-S >= LD4+.005, DINO-C >= LD4-.006, LPIPS <= LD4+.008 on 750"

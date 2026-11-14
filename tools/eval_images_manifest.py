@@ -74,6 +74,24 @@ def main() -> None:
     tasks = json.loads((REPO / "eval_protocol/tasks_750.json")
                        .read_text(encoding="utf-8"))["tasks"]
     by_id = {t["task_id"]: t for t in tasks}
+    # manifests produced on Windows/WSL can carry mojibake task_ids that
+    # differ byte-wise from tasks_750.json (e.g. 'joaquín'). The manifest
+    # preserves task order, so fall back to a normalized lookup, then to
+    # positional alignment.
+    import unicodedata
+    by_id_nfc = {unicodedata.normalize("NFC", k): v
+                 for k, v in by_id.items()}
+
+    def _lookup(i: int, task_id: str):
+        t = by_id.get(task_id)
+        if t is not None:
+            return t
+        t = by_id_nfc.get(unicodedata.normalize("NFC", task_id))
+        if t is not None:
+            return t
+        if 0 <= i < len(tasks):
+            return tasks[i]
+        raise KeyError(task_id)
     src = torch.load(REPO / "runs/v6_r2/cache/tasks750_source_features.pt",
                      map_location="cpu", weights_only=False)
     ref_manifest = json.loads(
@@ -91,8 +109,14 @@ def main() -> None:
     pending = []
     missing = []
     for i, row in enumerate(rows_in):
-        t = by_id[row["task_id"]]
-        png = args.images / f"{safe_id(i, row['task_id'])}.png"
+        t = _lookup(i, row["task_id"])
+        # v11b generators hash the protocol task_id; remote baseline
+        # runners hash the manifest task_id (may be mojibake). Try both.
+        png = args.images / f"{safe_id(i, t['task_id'])}.png"
+        if not png.is_file():
+            alt = args.images / f"{safe_id(i, row['task_id'])}.png"
+            if alt.is_file():
+                png = alt
         if png.is_file():
             pending.append((i, row, t, png))
         else:
@@ -127,7 +151,7 @@ def main() -> None:
         print(f"[resume] {len(rows)} rows / {len(done_ids)} tasks loaded")
 
     pending = [p for p in pending
-               if p[1]["task_id"] not in done_ids]
+               if p[2]["task_id"] not in done_ids]
     if done_ids:
         print(f"[resume] {len(pending)} tasks remaining")
 

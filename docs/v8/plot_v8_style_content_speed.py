@@ -74,6 +74,7 @@ V8_LABELS = {
     'L2.e':      (0.84, 0.560, 'left'),
     'I2':        (0.875, 0.556, 'right'),
     'A2b':       (0.665, 0.545, 'left'),
+    'V11B.H2.t035': (0.72, 0.585, 'left'),
 }
 
 
@@ -275,6 +276,9 @@ def main():
              '~5 img/s (median 0.23 s/img, mean 0.36 s/img); SG official '
              'per-image subprocess mean 76.0 s over 19 tasks (SG fast-runner '
              '~33 s/img not counted). '
+             'V11B.H2.t035 = wavelet stroke flow post-edit on LD4 outputs '
+             '(RTX 4070, 121 ms/img end-to-end incl. model load, 750 tasks); '
+             'Cross600 dino_c .7770 / affinity .5666 — new combined-front point. '
              'WCT/SaMST dropped (DINO-C < 0.34).',
              fontsize=9.3, color=muted)
 

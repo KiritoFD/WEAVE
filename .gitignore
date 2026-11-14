@@ -41,6 +41,7 @@ runs/*
 !runs/v7/
 !runs/v8/
 !runs/blog_sbflow/
+!runs/v8_speed.json
 data/
 datasets/
 results/
@@ -48,6 +49,7 @@ exp/*
 !exp/v8/
 !exp/v9_local/
 !exp/v10/
+!exp/v11b/
 experiments/
 state/
 archives/
