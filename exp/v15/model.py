@@ -116,10 +116,10 @@ class GlobalAttention(nn.Module):
 class SpatialFiLM(nn.Module):
     """R1: spatial-conditioned modulation (gamma/beta depend on local + global)."""
 
-    def __init__(self, ch, cond_dim, spatial_dim):
+    def __init__(self, ch, cond_dim):
         super().__init__()
         self.local_fc = nn.Conv2d(ch, ch * 2, 1)
-        self.global_fc = nn.Linear(cond_dim + spatial_dim, ch * 2)
+        self.global_fc = nn.Linear(ch + cond_dim, ch * 2)
         self.norm = nn.GroupNorm(min(8, ch), ch)
 
     def forward(self, x, global_cond):
@@ -141,20 +141,18 @@ class SpatialRouter(nn.Module):
         super().__init__()
         self.k = k_experts
         self.experts = nn.ModuleList([DSConv(ch, ch) for _ in range(k_experts)])
-        self.router = nn.Sequential(
-            nn.Conv2d(ch, ch // 4, 1), nn.SiLU(True),
-            nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(),
-            nn.Linear(ch // 4 + cond_dim, k_experts))
+        self.router_conv = nn.Conv2d(ch, ch // 4, 1)
+        self.router_fc = nn.Linear(ch // 4 + cond_dim, k_experts)
         self.norm = nn.GroupNorm(min(8, ch), ch)
 
     def forward(self, x, global_cond):
         xn = self.norm(x)
         expert_outs = torch.stack([e(xn) for e in self.experts], dim=1)  # (B,K,C,H,W)
-        g = Fn.adaptive_avg_pool2d(x, 1).flatten(1)
+        rg = self.router_conv(xn)                                        # (B,ch/4,H,W)
+        g = Fn.adaptive_avg_pool2d(rg, 1).flatten(1)                     # (B,ch/4)
         if global_cond is not None:
             g = torch.cat([g, global_cond], dim=1)
-        pi = torch.softmax(self.router(g), dim=-1)                      # (B,K)
+        pi = torch.softmax(self.router_fc(g), dim=-1)                    # (B,K)
         pi = pi[:, :, None, None, None]
         return (expert_outs * pi).sum(dim=1)
 
@@ -211,7 +209,7 @@ class V15UNet(nn.Module):
                                               bias=False))
             self.dec.append(DSConv(ws[i - 1] * 2, ws[i - 1]))
             if style_mode == "spatial_film":
-                self.res_dec.append(SpatialFiLM(ws[i - 1], cond_ch, cond_dim))
+                self.res_dec.append(SpatialFiLM(ws[i - 1], cond_ch))
             elif style_mode == "router":
                 self.res_dec.append(SpatialRouter(ws[i - 1], cond_ch, n_experts))
             else:

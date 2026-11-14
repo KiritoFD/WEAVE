@@ -102,10 +102,12 @@ def where_losses(model, z_src, style_id, tau, lambda_m=0.1, lambda_a=0.05,
     # For simplicity, apply to the model output features
     pred = model(z_src, style_id, tau)
     # Use edge map from the latent as weak structural signal
-    gx = pred[:, :, :, 1:] - pred[:, :, :, :-1]
-    gy = pred[:, :, 1:, :] - pred[:, :, :-1, :]
-    edge = (gx.square().mean(1) + gy.square().mean(1)).sqrt()  # (B,H,W-1)
-    edge = Fn.pad(edge, (0, 1, 0, 1)).unsqueeze(1)               # (B,1,H,W)
+    gx = pred[:, :, :, 1:] - pred[:, :, :, :-1]          # (B,C,H,W-1)
+    gy = pred[:, :, 1:, :] - pred[:, :, :-1, :]          # (B,C,H-1,W)
+    gx = Fn.pad(gx, (0, 1, 0, 0))                        # -> (B,C,H,W)
+    gy = Fn.pad(gy, (0, 0, 0, 1))                        # -> (B,C,H,W)
+    edge = (gx.square().mean(1) + gy.square().mean(1)).sqrt()  # (B,H,W)
+    edge = edge.unsqueeze(1)                                     # (B,1,H,W)
     # Use the predicted latent as a proxy for features
     feats = pred.flatten(2).transpose(1, 2)                      # (B, HW, 4)
     losses["affinity"] = region_affinity_loss(pred, edge)
