@@ -47,6 +47,8 @@ def arm_micro(cfg):
     tag = arm_tag(cfg)
     if not cfg["use_where"]:
         return 128, 1          # all base arms: tiny activations
+    if tag.startswith("W_dim16"):
+        return 128, 1          # dim16 where ~52MB/sample -> ~6.7GB at 128
     if tag.startswith("W_dim32"):
         return 64, 2           # dim32 where ~81MB/sample
     if tag.startswith("W_dim64"):
