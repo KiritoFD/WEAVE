@@ -72,9 +72,12 @@ def main():
     s10 = load_s10_decoder(dev)
     RAW.mkdir(parents=True, exist_ok=True)
 
-    arm_dirs = ([RUNS / t for t in a.arms.split(",")] if a.arms else
-                sorted(p for p in RUNS.iterdir() if p.is_dir() and
-                       (p / "final.pt").exists()))
+    arm_dirs = sorted(
+        list(RUNS.glob("*/final.pt")) + list(RUNS.glob("scaling/*/final.pt")))
+    if a.arms:
+        keep = set(a.arms.split(","))
+        arm_dirs = [p for p in arm_dirs if p.parent.name in keep]
+    arm_dirs = [p.parent for p in arm_dirs]
     print(f"eval arms: {[p.name for p in arm_dirs]} levels={levels}", flush=True)
 
     eps_by_level = {t0: torch.randn(len(tasks), 4, 64, 64,
@@ -94,6 +97,7 @@ def main():
         model.eval()
         tag = adir.name
         rows = []
+        t_sample = t_decode = t_save = 0.0
         t0w = time.time()
         with torch.inference_mode():
             for lev in levels:
@@ -108,6 +112,7 @@ def main():
                     sid = torch.tensor([t["target_style_id"] for t in group],
                                        device=dev)
                     span = (1 - lev) / K_STEPS
+                    ts = time.time()
                     for j in range(K_STEPS):
                         t = lev + span * j
                         tt = torch.full((len(idx),), t, device=dev)
@@ -115,8 +120,14 @@ def main():
                                             enabled=dev == "cuda"):
                             v = model(z, sid, tt).float()
                         z = z + v * span
+                    torch.cuda.synchronize()
+                    t_sample += time.time() - ts
+                    ts = time.time()
                     rgb = decode_s10(s10, z, batch=8)
                     u8 = rgb.mul(255).round().clamp_(0, 255).byte().cpu()
+                    torch.cuda.synchronize()
+                    t_decode += time.time() - ts
+                    ts = time.time()
                     payload = {"ids": [t["task_id"] for t in group],
                                "rgb_u8": u8,
                                "z_final": z.detach().half().cpu()}
@@ -124,6 +135,7 @@ def main():
                     tmp = ldir / (name + ".tmp")
                     torch.save(payload, tmp)
                     tmp.replace(ldir / name)
+                    t_save += time.time() - ts
                     meta_batches.append({"offset": bi, "ids": payload["ids"],
                                          "file": name})
                     if a.dino_quick:
@@ -160,6 +172,21 @@ def main():
                     {"kind": "v15_probe", "arm": tag, "level": lev,
                      "k_steps": K_STEPS, "n_tasks": len(tasks),
                      "batches": meta_batches}, indent=1))
+        timing = {}
+        tpath = EVAL / "timing.json"
+        if tpath.exists():
+            timing = json.loads(tpath.read_text())
+        timing[tag] = {"n_images": len(levels) * len(tasks),
+                       "sample_s": round(t_sample, 1),
+                       "decode_s": round(t_decode, 1),
+                       "save_s": round(t_save, 1),
+                       "wall_s": round(time.time() - t0w, 1),
+                       "n_params_m": round(
+                           sum(p.numel() for p in model.parameters()) / 1e6, 2)}
+        tpath.write_text(json.dumps(timing, indent=1))
+        print(f"{tag} timing: unet(sample)={t_sample:.0f}s "
+              f"vae(decode)={t_decode:.0f}s io(save)={t_save:.0f}s "
+              f"wall={time.time()-t0w:.0f}s", flush=True)
         if a.dino_quick:
             rec = {}
             for lev in levels:
