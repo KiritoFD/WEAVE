@@ -1,15 +1,14 @@
-"""V15 arm-level DINO eval: partial-noise style editing on the 750 tasks.
+"""V15 arm-level eval: sample + S10-decode the 750 tasks, save raw payloads.
 
-For each arm: z_tau0 = (1-t0)*eps + t0*z_src, integrate tau0 -> 1 conditioned
-on the task's target style (k Euler steps), decode via S10, score with the
-frozen DINO referee (CSD skipped on the 3060):
-  dino_s = max over target-style reference bank (source-self refs masked)
-  dino_c = cosine(gen_dino, source raw_dino)
-Levels t0 (data fraction at ODE start): 0.0 = pure style generation,
-0.4 / 0.7 = local-editing regime.  eps fixed per (task, level) across arms.
+The 3060 only GENERATES: partial-noise editing z_tau0 = (1-t0)*eps + t0*z_src
+integrated to tau=1 (target-style conditioning), decoded via S10, stored as
+measure()-compatible batch payloads:
+  runs/v15/eval/raw/<arm>/t0_<level>/batch_XXXXX.pt  {"ids", "rgb_u8", "z_final"}
+  ... + meta.json in src.eval.measure format.
+The authoritative referee (DINO+CSD+CLIP+LPIPS) runs LOCALLY via
+src.eval.measure on these dirs.  Quick DINO scoring here is provisional only.
 
-Run on the 3060: python -m exp.v15.eval_arms [--levels 0,0.4,0.7]
-Output: runs/v15/eval/<arm>.json + eval/summary.json
+eps fixed per (task, level) across arms (seed 20261115+level*100).
 """
 from __future__ import annotations
 
@@ -24,6 +23,7 @@ import torch
 REPO = Path(__file__).resolve().parents[2]
 RUNS = REPO / "runs/v15"
 EVAL = RUNS / "eval"
+RAW = EVAL / "raw"
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 K_STEPS = 20
 BATCH = 64
@@ -44,36 +44,39 @@ def main():
     ap.add_argument("--levels", default="0,0.4,0.7")
     ap.add_argument("--arms", default="")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--dino-quick", action="store_true",
+                    help="also run provisional DINO scoring on the 3060")
     a = ap.parse_args()
     dev = a.device
     levels = [float(x) for x in a.levels.split(",")]
 
     from src.utils import decode_s10, load_s10_decoder
-    from src.utils._local_eval_refs import encode_dino, load_dino_model
     from PIL import Image
     from .model import V15UNet
 
     tasks = json.loads((REPO / "eval_protocol/tasks_750.json")
                        .read_text(encoding="utf-8"))["tasks"]
-    src = torch.load(REPO / "runs/v6_r2/cache/tasks750_source_features.pt",
-                     map_location="cpu", weights_only=False)
     cache = torch.load(RUNS.parent / "v9_local_4070/cache/n2c_z.pt",
                        map_location="cpu", weights_only=False)
-    z_src_all = cache["z_src"]                            # (750, 4, 64, 64)
+    z_src_all = cache["z_src"]
     assert len(tasks) == len(z_src_all), (len(tasks), len(z_src_all))
-    src_dino = {s: torch.as_tensor(v, dtype=torch.float32)
-                for s, v in src["raw_dino"].items()}
-    rd, ref_stems = load_refs(dev)
-    dino_model = load_dino_model(device=dev)
+
+    if a.dino_quick:
+        from src.utils._local_eval_refs import encode_dino, load_dino_model
+        src = torch.load(REPO / "runs/v6_r2/cache/tasks750_source_features.pt",
+                         map_location="cpu", weights_only=False)
+        src_dino = {s: torch.as_tensor(v, dtype=torch.float32)
+                    for s, v in src["raw_dino"].items()}
+        rd, ref_stems = load_refs(dev)
+        dino_model = load_dino_model(device=dev)
     s10 = load_s10_decoder(dev)
-    EVAL.mkdir(parents=True, exist_ok=True)
+    RAW.mkdir(parents=True, exist_ok=True)
 
     arm_dirs = ([RUNS / t for t in a.arms.split(",")] if a.arms else
                 sorted(p for p in RUNS.iterdir() if p.is_dir() and
                        (p / "final.pt").exists()))
     print(f"eval arms: {[p.name for p in arm_dirs]} levels={levels}", flush=True)
 
-    # fixed noise per (task, level), identical across arms
     eps_by_level = {t0: torch.randn(len(tasks), 4, 64, 64,
                                     generator=torch.Generator().manual_seed(
                                         20261115 + int(t0 * 100)))
@@ -94,6 +97,9 @@ def main():
         t0w = time.time()
         with torch.inference_mode():
             for lev in levels:
+                ldir = RAW / tag / f"t0_{lev}"
+                ldir.mkdir(parents=True, exist_ok=True)
+                meta_batches = []
                 eps = eps_by_level[lev]
                 for bi in range(0, len(tasks), BATCH):
                     idx = list(range(bi, min(bi + BATCH, len(tasks))))
@@ -110,53 +116,70 @@ def main():
                             v = model(z, sid, tt).float()
                         z = z + v * span
                     rgb = decode_s10(s10, z, batch=8)
-                    u8 = rgb.mul(255).round().clamp_(0, 255).byte()
-                    imgs = [Image.fromarray(x) for x in
-                            u8.permute(0, 2, 3, 1).cpu().numpy()]
-                    df, _ = encode_dino(dino_model, imgs, batch=16, device=dev)
-                    df = torch.nn.functional.normalize(df.float(), dim=-1)
-                    gen = df.cpu()
-                    sd = torch.stack([src_dino[t["source_stem"]] for t in group])
-                    dc = (gen * sd).sum(-1).numpy()
-                    sc = np.stack([(gen.to(dev) @ p.T).cpu().numpy()
-                                   for p in rd], axis=1)     # (B, 5, N)
-                    for i, t in enumerate(group):
-                        stems = ref_stems[t["target_style"]]
-                        sim = sc[i, t["target_style_id"]].copy()
-                        for r, stem in enumerate(stems):
-                            if stem == t["source_stem"]:
-                                sim[r] = -1e9
-                        rows.append({
-                            "level": lev, "task_id": t["task_id"],
-                            "tgt": int(t["target_style_id"]),
-                            "cross": int(t["source_style_id"] !=
-                                         t["target_style_id"]),
-                            "dino_s": float(sim.max()),
-                            "dino_c": float(dc[i]),
-                            "style_top1": int(int(np.argmax(
-                                sc[i].max(axis=1))) ==
-                                int(t["target_style_id"]))})
-                    print(f"  {tag} L{lev} {len(rows)} "
+                    u8 = rgb.mul(255).round().clamp_(0, 255).byte().cpu()
+                    payload = {"ids": [t["task_id"] for t in group],
+                               "rgb_u8": u8,
+                               "z_final": z.detach().half().cpu()}
+                    name = f"batch_{bi:05d}.pt"
+                    tmp = ldir / (name + ".tmp")
+                    torch.save(payload, tmp)
+                    tmp.replace(ldir / name)
+                    meta_batches.append({"offset": bi, "ids": payload["ids"],
+                                         "file": name})
+                    if a.dino_quick:
+                        imgs = [Image.fromarray(x) for x in
+                                u8.permute(0, 2, 3, 1).numpy()]
+                        df, _ = encode_dino(dino_model, imgs, batch=16,
+                                            device=dev)
+                        df = torch.nn.functional.normalize(df.float(), dim=-1)
+                        gen = df.cpu().numpy()
+                        sd = torch.stack([src_dino[t["source_stem"]]
+                                          for t in group])
+                        dc = (gen * sd.numpy()).sum(-1)
+                        sc = np.stack([(torch.as_tensor(gen).to(dev) @ p.T
+                                        ).cpu().numpy() for p in rd], axis=1)
+                        for i, t in enumerate(group):
+                            stems = ref_stems[t["target_style"]]
+                            sim = sc[i, t["target_style_id"]].copy()
+                            for r, stem in enumerate(stems):
+                                if stem == t["source_stem"]:
+                                    sim[r] = -1e9
+                            rows.append({
+                                "level": lev, "task_id": t["task_id"],
+                                "tgt": int(t["target_style_id"]),
+                                "cross": int(t["source_style_id"] !=
+                                             t["target_style_id"]),
+                                "dino_s": float(sim.max()),
+                                "dino_c": float(dc[i]),
+                                "style_top1": int(int(np.argmax(
+                                    sc[i].max(axis=1))) ==
+                                    int(t["target_style_id"]))})
+                    print(f"  {tag} L{lev} {bi+len(idx)}/{len(tasks)} "
                           f"{time.time()-t0w:.0f}s", flush=True)
-        rec = {}
-        for lev in levels:
-            rr = [r for r in rows if r["level"] == lev]
-            cr = [r for r in rr if r["cross"]]
-            sr = [r for r in rr if not r["cross"]]
-            rec[f"t0={lev}"] = {
-                "dino_s": round(float(np.mean([r["dino_s"] for r in rr])), 4),
-                "dino_s_cross": round(float(np.mean([r["dino_s"] for r in cr])), 4),
-                "dino_c": round(float(np.mean([r["dino_c"] for r in rr])), 4),
-                "style_top1": round(float(np.mean([r["style_top1"] for r in rr])), 4),
-                "n": len(rr), "n_cross": len(cr)}
-        (EVAL / f"{tag}.json").write_text(json.dumps(
-            {"rows_n": len(rows), "k_steps": K_STEPS, "levels": rec},
-            indent=1))
-        summary[tag] = rec
-        print(f"{tag}: " + " | ".join(
-            f"L{k}: s={v['dino_s']}(x{v['dino_s_cross']}) "
-            f"c={v['dino_c']} top1={v['style_top1']}"
-            for k, v in rec.items()), flush=True)
+                (ldir / "meta.json").write_text(json.dumps(
+                    {"kind": "v15_probe", "arm": tag, "level": lev,
+                     "k_steps": K_STEPS, "n_tasks": len(tasks),
+                     "batches": meta_batches}, indent=1))
+        if a.dino_quick:
+            rec = {}
+            for lev in levels:
+                rr = [r for r in rows if r["level"] == lev]
+                cr = [r for r in rr if r["cross"]]
+                rec[f"t0={lev}"] = {
+                    "dino_s": round(float(np.mean([r["dino_s"] for r in rr])), 4),
+                    "dino_s_cross": round(float(np.mean([r["dino_s"] for r in cr])), 4),
+                    "dino_c": round(float(np.mean([r["dino_c"] for r in rr])), 4),
+                    "style_top1": round(float(np.mean([r["style_top1"] for r in rr])), 4),
+                    "style_top1_cross": round(float(np.mean(
+                        [r["style_top1"] for r in cr])), 4),
+                    "n": len(rr)}
+            (EVAL / f"{tag}.json").write_text(json.dumps(
+                {"rows": rows, "k_steps": K_STEPS, "levels": rec}, indent=1))
+            summary[tag] = rec
+            print(f"{tag}: " + " | ".join(
+                f"L{k}: s={v['dino_s']}(x{v['dino_s_cross']}) "
+                f"c={v['dino_c']} top1={v['style_top1']}"
+                for k, v in rec.items()), flush=True)
         del model
         torch.cuda.empty_cache()
     (EVAL / "summary.json").write_text(json.dumps(summary, indent=1))
