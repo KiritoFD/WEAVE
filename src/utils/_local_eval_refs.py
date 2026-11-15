@@ -26,7 +26,10 @@ import torch.nn.functional as F  # noqa: E402
 
 import csd_model  # noqa: E402  (tools/12h/csd_model.py)
 from tools.pseudo_gt.matching import encode_dino, load_dino_model  # noqa: E402
-from tools.legacy_utils.run_evaluation import to_lpips_input  # noqa: E402
+try:
+    from tools.legacy_utils.run_evaluation import to_lpips_input  # noqa: E402
+except ImportError:  # pre-reorg layouts keep the old root utils/ package
+    from utils.run_evaluation import to_lpips_input  # noqa: E402
 
 import paths  # noqa: E402
 
