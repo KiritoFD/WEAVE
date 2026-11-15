@@ -23,6 +23,14 @@ STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--device", default="cuda")
+    ap.add_argument("--arms", default="",
+                    help="comma-separated arm names; default = all")
+    a = ap.parse_args()
+    dev = a.device
+
     from src.utils._local_eval_refs import encode_dino, load_dino_model
     from PIL import Image
 
@@ -38,12 +46,13 @@ def main():
     bank = torch.load(REPO / "eval_protocol/cache/references_v1_features.pt",
                       map_location="cpu", weights_only=False)
     rd = [torch.nn.functional.normalize(
-        bank["styles"][s]["dino_cls"].float(), dim=-1).cuda() for s in STYLES]
+        bank["styles"][s]["dino_cls"].float(), dim=-1).to(dev) for s in STYLES]
     ref_stems = {s: [r["stem"] for r in refs[s]] for s in STYLES}
-    dino_model = load_dino_model(device="cuda")
+    dino_model = load_dino_model(device=dev)
 
-    arm_dirs = sorted(p for p in RAW.iterdir() if p.is_dir())
-    print(f"scoring arms: {[p.name for p in arm_dirs]}", flush=True)
+    arm_dirs = sorted(p for p in RAW.iterdir() if p.is_dir() and
+                      (not a.arms or p.name in a.arms.split(",")))
+    print(f"scoring arms ({dev}): {[p.name for p in arm_dirs]}", flush=True)
     for adir in arm_dirs:
         tag = adir.name
         rows = []
@@ -51,6 +60,9 @@ def main():
         with torch.inference_mode():
             for ldir in sorted(lev_dir for lev_dir in adir.iterdir()
                                if lev_dir.is_dir()):
+                if not (ldir / "meta.json").exists():
+                    print(f"  {tag} {ldir.name} SKIP (incomplete)", flush=True)
+                    continue
                 lev = float(ldir.name.split("_", 1)[1])
                 batches = sorted(ldir.glob("batch_*.pt"))
                 for bp in batches:
@@ -60,14 +72,14 @@ def main():
                     imgs = [Image.fromarray(x) for x in
                             u8.permute(0, 2, 3, 1).numpy()]
                     df, _ = encode_dino(dino_model, imgs, batch=16,
-                                        device="cuda")
+                                        device=dev)
                     df = torch.nn.functional.normalize(df.float(), dim=-1)
                     gen = df.cpu().numpy()
                     group = [tasks[tid] for tid in payload["ids"]]
                     sd = torch.stack([src_dino[t["source_stem"]]
                                       for t in group])
                     dc = (gen * sd.numpy()).sum(-1)
-                    sc = np.stack([(torch.as_tensor(gen).cuda() @ p.T
+                    sc = np.stack([(torch.as_tensor(gen).to(dev) @ p.T
                                     ).cpu().numpy() for p in rd], axis=1)
                     for i, t in enumerate(group):
                         stems = ref_stems[t["target_style"]]
