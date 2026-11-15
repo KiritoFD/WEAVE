@@ -16,9 +16,17 @@ PNG = REPO / "runs/v15/eval/png"
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--arms", default="",
+                    help="comma-separated arm names; default = all")
+    a = ap.parse_args()
+    keep = set(a.arms.split(",")) if a.arms else None
+
     n = 0
     t0 = time.time()
-    metas = sorted(RAW.glob("*/*/meta.json"))
+    metas = sorted(m for m in RAW.glob("*/*/meta.json")
+                   if keep is None or m.parent.parent.name in keep)
     print(f"encoding payloads under {RAW} ({len(metas)} level-dirs)", flush=True)
     for meta in metas:
         ldir = meta.parent
