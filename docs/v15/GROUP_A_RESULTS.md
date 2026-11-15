@@ -144,3 +144,22 @@
 - 评测 rows 未持久化（聚合已全量收录本文件 + `runs/v15/eval/summary.json`）；需 bootstrap CI 时重跑评测（~1.7h）。
 
 产物：3060 `runs/v15/{W_*/final.pt+ckpt_3000/4000, eval/*.json, group_a_status.json}`。
+
+## 6. 推理与打分速度（并发影响实测，2026-11-15）
+
+**问题**：dim96 生成期间与 DINO 打分进程并发共享 GPU（score_raw 占 ~1.5GB + 评测生成 ~7GB，12GB 卡共存），推理是否明显变慢？
+
+**实测（eval_run.log 每 batch 累计时间 ÷ 12 batch/水平）**：
+
+| 臂（同架构 dim96 conv_where 系） | 运行条件 | s/batch |
+|---|---|---|
+| dim96_att_base L0.0/0.4/0.7 | 与打分并发 | 6.2 / 6.2 / 6.2 |
+| dim96_conv_where L0.0/0.4/**0.7** | **L0.7 独占**（打分已结束） | 6.1 / 6.1 / **6.2** |
+| dim64_att_where（参照，轻载期） | 独占 | ~6.0 |
+| dim16_conv_base（参照） | 独占 | ~5.1 |
+
+**结论：并发打分对大模型推理零可测影响**（6.1 vs 6.2 s/batch，±2% 内）——DINO-S 负载轻、GPU 时间片切分干净、两进程显存合计 ~8.5GB < 12GB。
+
+- **推理速度随容量的增长非常平缓**：dim16→dim96 每 batch 仅 5.1→6.2s（+22%），因为 batch 64 的采样（20 Euler 前向 ~1.5s）远小于 S10 解码（64×512px ~1s）+ payload 落盘（~1s）的固定开销——**推理端瓶颈在解码与 I/O，不在模型容量**。
+- **打分吞吐**：~90–120s /（臂 × 水平）= ~0.15s/图（DINO-S 前向 + payload 读入，共享 GPU）。
+- **孤立异常 1 例**：dim64_conv_where L0.7 = 202s（同架构预期 ~75s 的 2.7×），时间窗与打分进程 payload 读入（I: 盘 29GB 读）+ 评测 payload 写入的磁盘争用重合；单次孤立事件、非系统性，不影响任何指标（payload 内容与 timing 无关）。
