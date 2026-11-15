@@ -11,7 +11,8 @@ import torch
 from .model import V15UNet
 from .train import fm_loss, load_training_latents
 
-CONFIGS = [(128, 64, 2), (160, 32, 4), (192, 16, 8), (256, 8, 16), (320, 4, 32)]
+CONFIGS = [(128, 128, 1), (160, 128, 1), (192, 64, 2), (256, 64, 2),
+           (320, 64, 2), (384, 32, 4), (512, 32, 4)]
 
 
 def main():
@@ -47,7 +48,7 @@ def main():
             print(f"dim{dim:3d} micro{micro:3d}/accum{accum:2d} "
                   f"params={model.n_params()/1e6:6.2f}M loss={loss.item():.4f} "
                   f"s/update={dt:6.3f} peak={peak:5.2f}GB "
-                  f"-> 4k ETA {dt*4000/3600:5.1f}h", flush=True)
+                  f"-> 8k ETA {dt*8000/3600:5.1f}h", flush=True)
             del model, opt
             torch.cuda.empty_cache()
         except Exception as e:

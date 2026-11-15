@@ -1,9 +1,11 @@
-"""V15 scaling sequencer: S1-S5 (4k updates) + 8k-update controls, serial.
+r"""V15 scaling sequencer v2: 7 tiers (dim128-512) + dim96 8k control, serial.
 
 Run on the 3060 inside tmux:
   tmux new-session -d -s scaling cmd /c I:\Latent_Style\WEAVE\_tmp\run_v15_scaling.bat
-Configs follow the 2026-11-15 scaling protocol (user-issued): pure conv,
-no attention, no where, global AdaLN, effective batch 128, seed 0.
+2026-11-15 user revision: ALL arms 8k updates; micro re-tuned to fill memory
+toward ~10GB (capped by micro<=128 divisor constraint of eff. batch 128);
+two new tiers dim384/dim512.  Pure conv, no attention, no where, global
+AdaLN, effective batch 128, seed 0.
 Status: runs/v15/scaling_status.json, logs: runs/v15/logs/<tag>.log
 OOM backstop: retry once with micro halved / accum doubled (eff. batch kept).
 """
@@ -18,18 +20,18 @@ POOL = "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
 OUT = REPO / "runs/v15"
 LOGS = OUT / "logs"
 PYTHON = sys.executable
-TIMEOUT_S = 12 * 3600   # dim320 at micro=4 is GPU-starved; generous ceiling
+TIMEOUT_S = 24 * 3600   # dim512 at 8k is the whale; generous ceiling
 
-# (tag, base_dim, updates, micro, accum)
+# (tag, base_dim, updates, micro, accum) — micro chosen for ~10GB fill
 ARMS = [
-    ("S1_dim128", 128, 4000, 64, 2),
-    ("S2_dim160", 160, 4000, 32, 4),
-    ("S3_dim192", 192, 4000, 16, 8),
-    ("S4_dim256", 256, 4000, 8, 16),
-    ("S5_dim320", 320, 4000, 4, 32),
-    ("B8k_dim96", 96, 8000, 128, 1),
-    ("B8k_dim192", 192, 8000, 16, 8),
-    ("B8k_dim320", 320, 8000, 4, 32),
+    ("S1_dim128", 128, 8000, 128, 1),
+    ("S2_dim160", 160, 8000, 128, 1),
+    ("S3_dim192", 192, 8000, 64, 2),
+    ("S4_dim256", 256, 8000, 64, 2),
+    ("S5_dim320", 320, 8000, 64, 2),
+    ("S6_dim384", 384, 8000, 32, 4),
+    ("S7_dim512", 512, 8000, 32, 4),
+    ("B8k_dim96", 96, 8000, 128, 1),   # vs Group A dim96 4k: training-length axis
 ]
 
 

@@ -5,23 +5,27 @@
 (b) 容量能否改善目标画派迁移（Target Top-1/Margin）。
 Group A 证据：dim96 尚未明确容量饱和（dino_s 0.46→0.56 未平台），但 (b) 全线随机——本轮分辨"拟合容量"与"编辑能力"。
 
-## 配置（全部：纯 Conv、无 attention、无 where、全局 AdaLN、eff. batch 128、seed 0）
+## 配置 v2（2026-11-15 用户修订：全部 8k updates、显存统一顶到 ~10GB、上探两档）
 
-| 实验 | base_dim | 预计参数 | micro/accum | updates | out |
-|---|---|---|---|---|---|
-| 基线 | 96 | 3.16M（已测） | 128/1 | 4000 | Group A 已有 |
-| S1 | 128 | ~5.6M | 64/2 | 4000 | runs/v15/scaling/S1_dim128 |
-| S2 | 160 | ~8.8M | 32/4 | 4000 | runs/v15/scaling/S2_dim160 |
-| S3 | 192 | ~12.6M | 16/8 | 4000 | runs/v15/scaling/S3_dim192 |
-| S4 | 256 | ~22.5M | 8/16 | 4000 | runs/v15/scaling/S4_dim256 |
-| S5 | 320 | ~35.1M | 4/32 | 4000 | runs/v15/scaling/S5_dim320 |
-| B8k-96 | 96 | 3.16M | 128/1 | 8000 | runs/v15/scaling/B8k_dim96 |
-| B8k-192 | 192 | ~12.6M | 16/8 | 8000 | runs/v15/scaling/B8k_dim192 |
-| B8k-320 | 320 | ~35.1M | 4/32 | 8000 | runs/v15/scaling/B8k_dim320 |
+全部：纯 Conv、无 attention、无 where、全局 AdaLN、eff. batch 128、seed 0。
+micro 受"eff. batch 128 ⇒ micro 必须整除 128"约束，10GB 目标按实测线性显存模型（peak ≈ 1517MB + 0.409MB×dim×micro）逐档逼近；@128 会越限的档位取安全上限并标注。
 
-- micro 为保守初值；OOM 时减半 micro / 加倍 accum（eff. batch 128 不变）。
-- 参数量以实测 `n_params()` 为准（冒烟脚本 `exp/v15/smoke_scaling.py`）。
-- **五组全跑，不做中途判停。** 8k 对照为全新训练（非 resume：`train.py` 未实现优化器/调度器/RNG 状态恢复，旧权重续训不构成严格续训）。
+| 实验 | base_dim | 预计参数* | micro/accum | 预测峰值 | updates | out |
+|---|---|---|---|---|---|---|
+| 基线（4k 对照）| 96 | 3.16M（实测）| 128/1 | 6.5GB | 4000 | Group A 已有 |
+| **B8k-96** | 96 | 3.16M | 128/1 | 6.5GB | 8000 | scaling/B8k_dim96 |
+| S1 | 128 | 4.13M（实测）| 128/1 | 8.2GB | 8000 | scaling/S1_dim128 |
+| S2 | 160 | 6.30M（实测）| 128/1 | **9.9GB** | 8000 | scaling/S2_dim160 |
+| S3 | 192 | 8.92M（实测）| 64/2 | 6.5GB（@128=11.6GB 越限）| 8000 | scaling/S3_dim192 |
+| S4 | 256 | 15.52M（实测）| 64/2 | 8.2GB | 8000 | scaling/S4_dim256 |
+| S5 | 320 | 23.95M（实测）| 64/2 | **10.0GB** | 8000 | scaling/S5_dim320 |
+| S6 | 384 | ~33M | 32/4 | 6.5GB（@64=11.6GB 越限）| 8000 | scaling/S6_dim384 |
+| S7 | 512 | ~53M | 32/4 | 8.2GB（@64=14.9GB 越限）| 8000 | scaling/S7_dim512 |
+
+*参数量以实测 `n_params()` 为准；实测呈次二次（幂律指数 ~1.68），dim384/512 待冒烟实测。
+**8k 对照只保留 dim96**（与 Group A 4k 构成训练长度轴）；原 B8k_dim192/320 在 v2 下与 S3/S5 配置完全相同，冗余，删除。
+**五组+两档全跑，不做中途判停。** 8k 对照为全新训练（非 resume：`train.py` 未实现优化器/调度器/RNG 状态恢复，旧权重续训不构成严格续训）。
+**ETA 注意**：v2 下大档位是计算受限（非 v1 的 Python 开销受限），dim320≈数小时、dim384/512 可能 5–20h/臂；以实跑曲线为准（train_curves.jsonl 每 200 步回传）。
 
 ## 评测协议
 
