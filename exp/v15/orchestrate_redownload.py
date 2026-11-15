@@ -36,13 +36,13 @@ def main():
     # 1. wait for EVAL_ALL_DONE (poll 5 min, up to 4h)
     for _ in range(48):
         r = subprocess.run(
-            'ssh -o BatchMode=yes 3060 "findstr /c:EVAL_ALL_DONE '
-            'I:\\\\Latent_Style\\\\WEAVE\\\\runs\\\\v15\\\\eval_run.log"',
+            'ssh -o BatchMode=yes 3060 '
+            '"type I:/Latent_Style/WEAVE/runs/v15/eval_run.log"',
             shell=True, capture_output=True, text=True)
         if "EVAL_ALL_DONE" in r.stdout:
             log("eval complete on 3060")
             break
-        log(f"eval not done yet ({r.stdout.strip()[:60]})")
+        log(f"eval not done yet (tail: ...{r.stdout.strip()[-60:]})")
         time.sleep(300)
     else:
         log("TIMEOUT waiting for eval; aborting")
