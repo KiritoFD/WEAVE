@@ -22,16 +22,17 @@ LOGS = OUT / "logs"
 PYTHON = sys.executable
 TIMEOUT_S = 24 * 3600   # dim512 at 8k is the whale; generous ceiling
 
-# (tag, base_dim, updates, micro, accum) — micro chosen for ~10GB fill
+# (tag, base_dim, updates, micro, accum) — micros re-tuned to SMOKE-MEASURED
+# peaks (activation memory grows super-linearly in dim): all arms <= ~10GB.
 ARMS = [
-    ("S1_dim128", 128, 8000, 128, 1),
-    ("S2_dim160", 160, 8000, 128, 1),
-    ("S3_dim192", 192, 8000, 64, 2),
-    ("S4_dim256", 256, 8000, 64, 2),
-    ("S5_dim320", 320, 8000, 64, 2),
-    ("S6_dim384", 384, 8000, 32, 4),
-    ("S7_dim512", 512, 8000, 32, 4),
-    ("B8k_dim96", 96, 8000, 128, 1),   # vs Group A dim96 4k: training-length axis
+    ("S1_dim128", 128, 8000, 128, 1),   # 9.48GB measured @128
+    ("S2_dim160", 160, 8000, 64, 2),    # @128=11.63GB unsafe -> 64
+    ("S3_dim192", 192, 8000, 64, 2),    # 7.59GB measured
+    ("S4_dim256", 256, 8000, 64, 2),    # 9.82GB measured
+    ("S5_dim320", 320, 8000, 32, 4),    # @64=12.08GB unsafe -> 32
+    ("S6_dim384", 384, 8000, 32, 4),    # 8.30GB measured
+    ("S7_dim512", 512, 8000, 16, 8),    # @32=11.02GB unsafe -> 16
+    ("B8k_dim96", 96, 8000, 128, 1),    # 6.5GB; vs Group A 4k: length axis
 ]
 
 
