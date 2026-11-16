@@ -150,9 +150,8 @@ def corruption_batch(rgb: torch.Tensor, tid: torch.Tensor,
                                  generator=gen).to(tid.device)) % 5
     tgt = torch.stack([
         torch.tensor([stats[STYLES[int(w)]]['h2_rms_per_direction'][d]
-                      for d in range(3)], device=device)
+                      for d in range(9)], device=device)
         for w in wrong.tolist()])
-    scale = (tgt / rms).clamp(.25, 4.).repeat_interleave(3, dim=1) \
-        .view(-1, 9, 1, 1)
-    h2_corrupt = h2 * scale
+    scale = (tgt / rms).clamp(.25, 4.)
+    h2_corrupt = h2 * scale.view(-1, 9, 1, 1)
     return h2, h2_corrupt, bands
