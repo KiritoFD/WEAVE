@@ -61,8 +61,7 @@ def arm_cfg(cfg, out: Path, seed: int, dry: bool):
         sched = lambda t: 3. if t > .35 else 1.         # noqa: E731
     name = cfg['arm_id']
     tasks, source = tasks_and_sources()
-    from .eval750 import evaluate_arm
-    from .probe import _cfg_sample
+    from .eval750 import evaluate_arm, _cfg_sample
     from exp.v16 import load_base
 
     def op(group, z, sid, tid, eps):
