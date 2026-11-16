@@ -78,11 +78,11 @@ def fm_residual_loss(net, base_model, z_real, sid, tid, mode, gen,
             return None, {'blocked_invalid_supervision': True}
         # bridge supervision on [t0,1] with t0=.7 pairs
         n_b = len(bridge['base'])
-        idx = torch.randint(0, n_b, (len(z_real),), generator=gen,
-                            device=z_real.device)
+        idx = torch.randint(0, n_b, (len(z_real),),
+                            generator=gen).to(z_real.device)
         z_init = bridge['base'][idx].to(z_real.device)
         z_teach = z_init + bridge['delta'][idx].to(z_real.device)
-        eps_b = torch.randn(z_init.shape, generator=gen, device=z_init.device)
+        eps_b = torch.randn(z_init.shape, generator=gen).to(z_init.device)
         tau0 = .7
         zt_b = tau0 * z_init + (1 - tau0) * eps_b
         v_star_b = (z_teach - zt_b) / (1 - tau0)

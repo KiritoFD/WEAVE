@@ -247,7 +247,7 @@ def arm_h2(cfg, out: Path, seed: int, dry: bool):
         lat = signed_gain(rgb, tid, torch.rand(5, 3).cuda().abs())
         assert torch.isfinite(lat).all()
         return {'ok': True}
-    from .h2 import H2Head, h1_stats, corruption_batch, signed_gain, h1_load
+    from .h2 import H2Head, h1_stats, corruption_batch, signed_gain
     sp, _manifest = _split(_pool(cfg), cfg)
     stats = h1_stats(pool_split=sp)
     torch.save(sp, OUT / 'h2' / 'pool_split.pt') if not \
