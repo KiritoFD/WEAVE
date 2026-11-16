@@ -182,8 +182,6 @@ def train_fm(mode: str, pool_split: dict, out_dir: Path, *,
             heartbeat(out_dir, 'training', {'step': step})
     save(out_dir / 'train.jsonl', curves)
     torch.save({'model': net.cpu().state_dict(), 'mode': mode,
-                'updates': updates, 'seed': seed,
-                'pool_sha': sha(Path(list(pool_split['train']['ids'])[0]).name
-                                and (OUT / '..' / '..'))},
+                'updates': updates, 'seed': seed},
                out_dir / 'residual.pt')
     return out_dir
