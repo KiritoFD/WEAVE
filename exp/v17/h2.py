@@ -48,7 +48,7 @@ def h1_stats(pool_rgb_dir: Path | None = None, pool_split=None,
         pool_split['train']['z']
     sid = pool_split['train']['sid']
     for st in range(0, len(z), 8):
-        rgb = decode_s10(dec, z[st:st + 8].to(device), batch=8).clamp(0, 1)
+        rgb = decode_s10(dec, z[st:st + 8].to(device), batch=8).to(device).clamp(0, 1)
         sids = sid[st:st + 8].to(device)
         bands = dwt2(rgb)
         h2 = bands['H2']                              # (B,9,128,128)
