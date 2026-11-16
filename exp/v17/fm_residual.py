@@ -95,14 +95,14 @@ def fm_residual_loss(net, base_model, z_real, sid, tid, mode, gen,
                                   tau_b).float()
         return F.mse_loss(v_base_b + u, v_star_b), {'bridge_mse': 1.}
     n = len(z_real)
-    eps = torch.randn(z_real.shape, generator=gen, device=z_real.device)
+    eps = torch.randn(z_real.shape, generator=gen).to(z_real.device)
     if mode == 'F3' and torch.rand(1, generator=gen).item() < p_early:
-        tau = torch.rand(n, generator=gen, device=z_real.device) * .4
+        tau = torch.rand(n, generator=gen).to(z_real.device) * .4
     else:
-        tau = torch.rand(n, generator=gen, device=z_real.device)
+        tau = torch.rand(n, generator=gen).to(z_real.device)
     zt = tau.view(-1, 1, 1, 1) * z_real + (1 - tau.view(-1, 1, 1, 1)) * eps
     v_star = z_real - eps
-    drop_mask = torch.rand(n, generator=gen, device=z_real.device) < drop
+    drop_mask = torch.rand(n, generator=gen).to(z_real.device) < drop
     label = tid.clone()
     with autocast():
         v_base = base_model(zt, label, tau).float()

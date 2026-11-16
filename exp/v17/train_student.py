@@ -30,6 +30,7 @@ def train_student(kind: str, pairs_path: Path, out_dir: Path, *,
                   dino_tokens_path=None, lr=3e-4):
     from .checkpoint import find_resume, load_ckpt
     out_dir.mkdir(parents=True, exist_ok=True)
+    tokens = tok_map = ho_tokens = ho_map = None
     pairs = torch.load(pairs_path, map_location='cpu', weights_only=False)
     torch.manual_seed(seed)
     net = build_student(kind).cuda()
