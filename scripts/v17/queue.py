@@ -40,16 +40,24 @@ def save(path, value):
 
 
 def done_ok(arm_dir: Path) -> bool:
+    """Eval arms: valid DONE.json (750/600/150).  Other arms: result.json
+    with ok=True written by run.py's verifier path."""
     d = arm_dir / 'DONE.json'
-    if not d.exists():
-        return False
-    try:
-        payload = read(d)
-        assert payload.get('n_tasks') == 750
-        assert payload.get('n_cross') == 600 and payload.get('n_same') == 150
-        return True
-    except Exception:
-        return False
+    if d.exists():
+        try:
+            payload = read(d)
+            assert payload.get('n_tasks') == 750
+            assert payload.get('n_cross') == 600 and payload.get('n_same') == 150
+            return True
+        except Exception:
+            return False
+    r = arm_dir / 'result.json'
+    if r.exists():
+        try:
+            return bool(read(r).get('ok'))
+        except Exception:
+            return False
+    return False
 
 
 def run_arm(arm_id: str, cfg: dict, seed: int, out_dir: Path, log_fh,
@@ -157,10 +165,12 @@ def main():
         code = run_arm(arm_id, cfg, seed, out_dir, log_fh,
                        dry=a.dry_run_first and arm_id == state.get(
                            'first_arm', arm_id))
-        minutes = (time.time() - time.mktime(time.strptime(
-            state['arms'][arm_id]['utc_start'][:19],
-            '%Y-%m-%dT%H:%M:%S'))) / 60. if 'utc_start' in \
-            state['arms'][arm_id] else 0.
+        minutes = 0.
+        if 'utc_start' in state['arms'][arm_id]:
+            t_start = datetime.datetime.fromisoformat(
+                state['arms'][arm_id]['utc_start'])
+            minutes = (datetime.datetime.now(datetime.timezone.utc) -
+                       t_start).total_seconds() / 60.
         if code == 0 and done_ok(out_dir):
             mark(arm_id, state='complete', exit_code=0, minutes=minutes)
         else:
