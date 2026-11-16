@@ -167,7 +167,7 @@ def arm_student(cfg, out: Path, seed: int, dry: bool):
 def arm_student_eval(cfg, out: Path, seed: int, dry: bool):
     """Full-750 evaluation of a trained student (+ optional wrong-label)."""
     from .eval750 import evaluate_arm
-    from .adapter import build_student
+    from .adapter import build_student, call_student
     from .dino_cache import cache_tokens
     from exp.v16 import tasks_and_sources
     kind = cfg['kind']
@@ -194,8 +194,9 @@ def arm_student_eval(cfg, out: Path, seed: int, dry: bool):
             tok = student_tokens(tasks[sl] if False else group, z)
             dtok = tok
         with torch.no_grad(), autocast():
-            delta, scale, mask_logits = net(z, torch.zeros_like(z), tid,
-                                            dtok, sid)
+            delta, scale, mask_logits = call_student(net, kind, z,
+                                                     torch.zeros_like(z), tid,
+                                                     dtok, sid)
             if scale is not None:
                 delta = delta * scale.view(-1, 1, 1, 1).clamp(0, 2)
         return z + delta
@@ -226,8 +227,9 @@ def arm_student_eval(cfg, out: Path, seed: int, dry: bool):
                     .mul(255).round().clamp(0, 255).byte().numpy()]
             dtok = encode_tokens_for_images(imgs)
             with torch.no_grad(), autocast():
-                delta, scale, _ = net(z, torch.zeros_like(z),
-                                      (tid + 2) % 5, dtok, sid)
+                delta, scale, _ = call_student(net, kind, z,
+                                               torch.zeros_like(z),
+                                               (tid + 2) % 5, dtok, sid)
                 if scale is not None:
                     delta = delta * scale.view(-1, 1, 1, 1).clamp(0, 2)
             return z + delta
@@ -439,7 +441,7 @@ def arm_fm_eval(cfg, out: Path, seed: int, dry: bool):
 def arm_combo(cfg, out: Path, seed: int, dry: bool):
     """S-adapter then decode then H4 head on RGB (P5 preregistered combos)."""
     from .eval750 import evaluate_arm
-    from .adapter import build_student
+    from .adapter import build_student, call_student
     from .h2 import H2Head
     from exp.v11b.bands import dwt2, idwt2, sobel_mag
     from exp.v16 import tasks_and_sources
