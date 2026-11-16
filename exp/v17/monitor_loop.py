@@ -34,7 +34,9 @@ def ssh(cmd: str, timeout: int = 120) -> str:
 
 
 def pull_state() -> dict | None:
-    out = ssh("type I:/Latent_Style/WEAVE/runs/v17/queue_state.json")
+    out = ssh('powershell -NoProfile -Command "Get-Content '
+              'I:\Latent_Style\WEAVE\runs\v17\queue_state.json '
+              '-Raw"')
     try:
         return json.loads(out)
     except Exception:
@@ -46,6 +48,10 @@ def pull_measured():
         f'scp -q -r "3060:I:/Latent_Style/WEAVE/runs/v17/measured" '
         f'"{REPO}/runs/v17/"', shell=True, capture_output=True, text=True,
         encoding='utf-8', errors='replace')
+    subprocess.run(
+        f'scp -q -r "3060:I:/Latent_Style/WEAVE/runs/v17/_canary/S0eval" '
+        f'"{REPO}/runs/v17/_canary/"', shell=True, capture_output=True,
+        text=True, encoding='utf-8', errors='replace')
 
 
 def rebuild_metrics():
