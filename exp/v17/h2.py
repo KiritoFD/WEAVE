@@ -140,7 +140,8 @@ class H2Head(nn.Module):
 
 
 def corruption_batch(rgb: torch.Tensor, tid: torch.Tensor,
-                     stats: dict, device='cuda', gen=None):
+                     stats: dict, device=None, gen=None):
+    device = device or rgb.device
     """Synthesise five-style spectral corruption: resample H2 band energies to
     a WRONG style's statistics -> H2_corrupt; ground truth stays H2_real."""
     bands = dwt2(rgb)
