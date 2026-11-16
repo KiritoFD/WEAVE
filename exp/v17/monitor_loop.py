@@ -29,7 +29,8 @@ def log(msg: str):
 
 def ssh(cmd: str, timeout: int = 120) -> str:
     return subprocess.run(f'ssh -o BatchMode=yes 3060 "{cmd}"', shell=True,
-                          capture_output=True, text=True, timeout=timeout).stdout
+                          capture_output=True, text=True, timeout=timeout,
+                          encoding='utf-8', errors='replace').stdout
 
 
 def pull_state() -> dict | None:
@@ -43,7 +44,8 @@ def pull_state() -> dict | None:
 def pull_measured():
     subprocess.run(
         f'scp -q -r "3060:I:/Latent_Style/WEAVE/runs/v17/measured" '
-        f'"{REPO}/runs/v17/"', shell=True, capture_output=True, text=True)
+        f'"{REPO}/runs/v17/"', shell=True, capture_output=True, text=True,
+        encoding='utf-8', errors='replace')
 
 
 def rebuild_metrics():
