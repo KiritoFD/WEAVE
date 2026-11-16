@@ -42,3 +42,16 @@ V16_C_h2_strong_wrong,WEAVE-V16,q2a_oracle_cross600,S10,True,0.46546,0.74154,0.1
 V16_C_project_strong,WEAVE-V16,q2a_oracle_cross600,S10,False,0.46069,0.74915,0.10667,,0.27201,0.67867,,,runs/v16/measured/C_project_strong/eval.json
 V10_LD4,WEAVE-V10,q2a_750_merged,S10,False,,,0.3517,,0.4872,,,,docs/v10/V10_RESULTS.md
 V10_E4,WEAVE-V10,q2a_750_merged,S10,False,0.4415,,,,,,0.5616,,docs/v10/V10_RESULTS.md
+V17__canary_S0_eval,WEAVE-V17,q2a_oracle_cross600,S10,True,0.37462,0.95934,0.00833,,0.09021,0.63084,,,runs/v17/measured/_canary_S0_eval/eval.json
+V17__canary_S0_eval_wrong,WEAVE-V17,q2a_oracle_cross600,S10,False,0.37459,0.9593,0.00833,,0.09021,0.63089,,,runs/v17/measured/_canary_S0_eval_wrong/eval.json
+V17_P0_cfg2,WEAVE-V17,q2a_oracle_cross600,S10,True,0.4606,0.75074,0.11,,0.27057,0.67786,,,runs/v17/measured/P0_cfg2/eval.json
+V17_P0_cfg4,WEAVE-V17,q2a_oracle_cross600,S10,False,0.46026,0.75013,0.11167,,0.27322,0.67818,,,runs/v17/measured/P0_cfg4/eval.json
+V17_P0_cfg_early,WEAVE-V17,q2a_oracle_cross600,S10,True,0.46065,0.75065,0.105,,0.27,0.67781,,,runs/v17/measured/P0_cfg_early/eval.json
+V17_P0_swap_t07_label0,WEAVE-V17,q2a_oracle_cross600,S10,False,0.46063,0.75031,0.10333,,0.27002,0.67795,,,runs/v17/measured/P0_swap_t07_label0/eval.json
+V17_P0_swap_t07_label1,WEAVE-V17,q2a_oracle_cross600,S10,True,0.46067,0.74961,0.10333,,0.27133,0.67809,,,runs/v17/measured/P0_swap_t07_label1/eval.json
+V17_P0_swap_t07_label2,WEAVE-V17,q2a_oracle_cross600,S10,True,0.46035,0.75185,0.105,,0.2666,0.67744,,,runs/v17/measured/P0_swap_t07_label2/eval.json
+V17_P0_swap_t0_label0,WEAVE-V17,q2a_oracle_cross600,S10,False,0.54921,0.30207,0.2,,0.83143,0.70322,,,runs/v17/measured/P0_swap_t0_label0/eval.json
+V17_P0_swap_t0_label1,WEAVE-V17,q2a_oracle_cross600,S10,False,0.54441,0.29777,0.2,,0.85964,0.7058,,,runs/v17/measured/P0_swap_t0_label1/eval.json
+V17_P0_swap_t0_label2,WEAVE-V17,q2a_oracle_cross600,S10,False,0.54599,0.30682,0.21,,0.8097,0.70419,,,runs/v17/measured/P0_swap_t0_label2/eval.json
+V17_P0_swap_t0_label3,WEAVE-V17,q2a_oracle_cross600,S10,False,0.54905,0.30088,0.215,,0.83874,0.69953,,,runs/v17/measured/P0_swap_t0_label3/eval.json
+V17_P0_swap_t0_label4,WEAVE-V17,q2a_oracle_cross600,S10,False,0.55288,0.30607,0.2,,0.82121,0.70878,,,runs/v17/measured/P0_swap_t0_label4/eval.json
