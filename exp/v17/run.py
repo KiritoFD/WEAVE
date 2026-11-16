@@ -18,7 +18,8 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
-from .common import EVAL_SEED, OUT, STYLES, heartbeat, save, seed_all, sha, utc
+from .common import (EVAL_SEED, OUT, STYLES, TAU_EVAL, autocast,
+                     heartbeat, save, seed_all, sha, utc)
 
 
 def _pool(cfg):
