@@ -14,7 +14,7 @@ from pathlib import Path
 
 import torch
 
-from .adapter import build_student
+from .adapter import build_student, call_student
 from .checkpoint import save_ckpt
 from .common import OUT, autocast, cosine_lr, heartbeat, save, sha
 from .losses import student_loss
@@ -79,8 +79,8 @@ def train_student(kind: str, pairs_path: Path, out_dir: Path, *,
                                         for i in (idx // 5).tolist()])
                 dtok = tokens[row_src].cuda()
             with autocast():
-                delta, norm_scale, mask_logits = net(base, content, tid,
-                                                     dtok, slabel)
+                delta, norm_scale, mask_logits = call_student(
+                    net, kind, base, content, tid, dtok, slabel)
             delta = delta.float()
             rho = None
             a_target = None
@@ -152,7 +152,8 @@ def holdout_fit(net, ho, kind, ho_tokens=None, ho_map=None, batch=16):
                     (rows // 5).tolist()])
                 dtok = ho_tokens[row_src].cuda()
             with autocast():
-                delta, _, _ = net(base, content, tid, dtok, slabel)
+                delta, _, _ = call_student(net, kind, base, content, tid,
+                                           dtok, slabel)
             p, t = delta.flatten(1), dt.flatten(1)
             sqerr += float((p - t).square().sum())
             energy += float(t.square().sum())

@@ -114,3 +114,12 @@ def build_student(kind: str):
         mode = 'centered' if kind == 'S5' else 'target_source'
         return ContextAdapter(mode=mode, amplitude=True)
     raise ValueError(kind)
+
+
+def call_student(net, kind: str, base, content, tid, dino_tokens=None,
+                 src_label=None):
+    """Uniform 5-arg call across student families; returns (delta, scale,
+    mask_logits).  S0's V16 adapter takes (base, content, tid) only."""
+    if kind == 'S0':
+        return net(base, content, tid), None, None
+    return net(base, content, tid, dino_tokens, src_label)

@@ -135,7 +135,7 @@ def arm_teacher(cfg, out: Path, seed: int, dry: bool):
 def arm_student(cfg, out: Path, seed: int, dry: bool):
     from .train_student import train_student
     from .dino_cache import cache_tokens
-    from .adapter import build_student
+    from .adapter import build_student, call_student
     kind = cfg['kind']
     if dry:
         net = build_student(kind).cuda()
@@ -143,9 +143,8 @@ def arm_student(cfg, out: Path, seed: int, dry: bool):
         c = torch.randn(2, 4, 64, 64).cuda()
         tid = torch.tensor([0, 1]).cuda()
         tok = torch.randn(2, 384, 16, 16).cuda() if kind != 'S0' else None
-        delta, scale, mask = net(b, c, tid, tok,
-                                 torch.tensor([1, 2]).cuda()
-                                 if kind in ('S4', 'S6', 'S7', 'S8') else None)
+        delta, scale, mask = call_student(net, kind, b, c, tid, tok,
+                                          torch.tensor([1, 2]).cuda())
         assert torch.isfinite(delta).all()
         if kind == 'S0':
             assert delta.abs().max() == 0, 'S0 must be identity at init'

@@ -20,9 +20,9 @@ def t_curve(pool_z: torch.Tensor, pool_sid: torch.Tensor, device='cuda',
             n_per_class=20, seed=20261117):
     """R_style(t), correct/wrong FM MSE, supervised-direction cosine vs t."""
     g = torch.Generator().manual_seed(seed)
-    idx = torch.cat([torch.randperm((pool_sid == s).nonzero(as_tuple=True)[0],
-                                    generator=g)[:n_per_class]
-                     for s in range(5)])
+    idx = torch.cat([(pool_sid == s).nonzero(as_tuple=True)[0][
+                        torch.randperm(int((pool_sid == s).sum()), generator=g)
+                        [:n_per_class]] for s in range(5)])
     z_real = pool_z[idx].to(device)
     sid = pool_sid[idx].to(device)
     eps = torch.randn(z_real.shape, generator=g).to(device)
