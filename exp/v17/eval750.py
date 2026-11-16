@@ -24,8 +24,9 @@ def _cfg_sample(model, z, sid, tid, eps, tau0, steps=20, w=1.0,
     zt = tau0 * z + (1 - tau0) * eps
     dt = (1 - tau0) / steps
     for k in range(steps):
-        tau = torch.full((len(zt),), tau0 + k * dt, device=zt.device)
-        weight = w if w_schedule is None else w_schedule(float(tau))
+        tau_s = tau0 + k * dt
+        tau = torch.full((len(zt),), tau_s, device=zt.device)
+        weight = w if w_schedule is None else w_schedule(tau_s)
         with autocast(zt.device):
             vc = model(zt, tid, tau).float()
             if weight != 1.0:
