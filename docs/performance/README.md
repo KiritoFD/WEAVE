@@ -28,13 +28,17 @@
 
 非支配成员（`pareto=true`）由脚本实时计算——含 StyleShot/StyleID/AesPA 等外部基线与 WEAVE 系 V16_B_adapter / V16_B_teacher / V16_C_h2_strong 等；V15 Group A 各容量臂均被支配（容量不换风格特异的定量证据）。重复运行脚本时前沿随 V17 臂落地自动更新。
 
-## 图像库存（images/）
+## 图像库存（images/，2026-11-17 起全量）
 
-| 方法 | 张数 | 来源 |
+| 目录 | 张数 | 说明 |
 |---|---:|---|
+| `baselines_D5_512/jpg/<方法>/` | 17 方法 × 750 | 全部基线/历史臂 750 输出（styleshot/styleid/stytr2/seedream/adain/aespa/cut/wct/samst/samam/sdturbo/stylealigned/identity/zstar + 我们的 weave/weave_oriented_e4/weave_yfix），自 `docs/baseline/D5-512/jpg` 整体挪入 |
+| `WEAVE_published_reval/` | 750 | WEAVE published 原版 paper 重评图（自 archives 710_baseline_weave_paper_reval 挪入）|
 | `V15_W_dim96_conv_base/` | 2250（t0=0/0.4/0.7 × 750）| 3060 payload → PNG（无损）|
 | `B_adapter/`（V16 学生，0.2565M）| 750 | 3060 runs/v16/raw → PNG（无损）|
-| 其余前沿臂 | 待补 | 3060 `runs/v16/raw/` 按 `exp.v17.encode_v16_png --arms <名>` 编码后 tar 拉回 |
+| 其余前沿臂 | 待补 | 3060 `runs/v16/raw/` 按 `exp.v17.encode_v16_png --arms <名>` 编码后 tar 拉回；V17 臂随队列落地同样入库 |
+
+注意：`baselines_D5_512` 为 paper_rgb_v1 时代（evaluator_v2/TRT 口径）的 750 输出，与 `images/V15_*`（S10 口径）分属不同协议，仅供人工对照与重算，不跨协议混排。
 
 ## 重建
 
