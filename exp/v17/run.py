@@ -259,7 +259,7 @@ def arm_h2(cfg, out: Path, seed: int, dry: bool):
         from exp.v16 import tasks_and_sources
         tasks, source = tasks_and_sources()
         target_rms = torch.tensor([[stats[STYLES[s]]['h2_rms_per_direction'][d]
-                                    for d in range(3)] for s in range(5)])
+                                    for d in range(9)] for s in range(5)])
 
         def op(group, z, sid, tid, eps):
             from src.utils import load_s10_decoder, decode_s10

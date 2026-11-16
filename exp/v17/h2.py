@@ -30,10 +30,10 @@ def h1_stats(pool_rgb_dir: Path | None = None, pool_split=None,
     from src.utils import load_s10_decoder, decode_s10
     if dec is None:
         dec = load_s10_decoder(device)
-    stats = {s: {'n': 0, 'sum': torch.zeros(3, device=device),
-                 'sumsq': torch.zeros(3, device=device),
-                 'edge_sum': torch.zeros(3, device=device),
-                 'flat_sum': torch.zeros(3, device=device)} for s in range(5)}
+    stats = {s: {'n': 0, 'sum': torch.zeros(9, device=device),
+                 'sumsq': torch.zeros(9, device=device),
+                 'edge_sum': torch.zeros(9, device=device),
+                 'flat_sum': torch.zeros(9, device=device)} for s in range(5)}
     store = {}
     if pool_split is None:
         from .common import read
