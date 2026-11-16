@@ -35,8 +35,7 @@ def ssh(cmd: str, timeout: int = 120) -> str:
 
 def pull_state() -> dict | None:
     out = ssh('powershell -NoProfile -Command "Get-Content '
-              'I:\Latent_Style\WEAVE\runs\v17\queue_state.json '
-              '-Raw"')
+              'I:/Latent_Style/WEAVE/runs/v17/queue_state.json -Raw"')
     try:
         return json.loads(out)
     except Exception:
