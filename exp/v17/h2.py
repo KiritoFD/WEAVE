@@ -127,6 +127,8 @@ class H2Head(nn.Module):
             .expand(-1, 5, h2.shape[2], h2.shape[3])
         if beta_trust is None:
             beta_trust = torch.ones(h2.shape[0], device=h2.device)
+        edge = edge.to(h2.device)
+        onehot = onehot.to(h2.device)
         x = torch.cat([h2, edge, onehot], 1)
         o = self.net(x)
         gamma = .5 * torch.tanh(o[:, :9])

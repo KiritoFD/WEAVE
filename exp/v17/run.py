@@ -296,7 +296,7 @@ def train_h2_head(kind, sp, stats, out: Path, seed=20261117, updates=4000):
         st = load_ckpt(out / 'ckpt_latest.pt', model=net, optimizer=opt)
         start = st['step']
     for step in range(start + 1, updates + 1):
-        idx = torch.randint(0, len(z), (4,), generator=gen)
+        idx = torch.randint(0, len(z), (4,), generator=gen).to(z.device)
         rgb = s10_decode_latents(z[idx])
         tid = sid[idx]
         h2_real, h2_corrupt, bands = corruption_batch(rgb, tid, stats, gen=gen)
