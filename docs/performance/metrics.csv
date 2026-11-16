@@ -1,0 +1,44 @@
+﻿method,family,protocol,decoder,pareto,dino_s,dino_c,csd_top1,csd_margin,lpips,clip_s,style_affinity,rank,provenance
+StyleShot,Baseline,q2a_oracle_cross600,native / free,True,0.575,0.3569,0.9259999999999999,,0.7697,0.8148,0.6949,1,deliver/q2a_oracle_scores_baseline_protocol.json
+StyleID,Baseline,q2a_oracle_cross600,native / free,True,0.5143,0.3885,0.732,,0.5554,0.7795,0.6469,2,deliver/q2a_oracle_scores_baseline_protocol.json
+AesPA,Baseline,q2a_oracle_cross600,native / free,True,0.4661,0.6075,0.31,,0.6247,0.6906,0.5784,3,deliver/q2a_oracle_scores_baseline_protocol.json
+Q2a + R1 Oracle (1 step) + S10,Ours,q2a_oracle_cross600,"S10 剪枝 Decoder (10.7M, 2.86×加速)",True,0.436,0.7345,0.363,,0.5014,0.6814,0.5587,4,deliver/q2a_oracle_scores_baseline_protocol.json
+Q2a + R1 Oracle (1 step) + SDVAE,Ours,q2a_oracle_cross600,A0 SD-VAE (标准 49.5M),False,0.4282,0.7307,0.348,,0.5222,0.6814,0.5548,5,deliver/q2a_oracle_scores_baseline_protocol.json
+V6 ScoreDiff N=24 + CEDIT,Ours,q2a_oracle_cross600,C_edit 联合重训 VAE,False,0.4317,0.6384,0.245,,0.5714,0.6766,0.5541,6,deliver/q2a_oracle_scores_baseline_protocol.json
+V6 ScoreDiff N=12 strong + CEDIT,Ours,q2a_oracle_cross600,C_edit 联合重训 VAE,False,0.4288,0.6845,0.187,,0.5185,0.6739,0.5513,7,deliver/q2a_oracle_scores_baseline_protocol.json
+Q2a + R1 Oracle (1 step) + CEDIT,Ours,q2a_oracle_cross600,C_edit 联合重训 VAE,True,0.4424,0.7138,0.19,,0.6758,0.6558,0.5491,8,deliver/q2a_oracle_scores_baseline_protocol.json
+P1_B4_distill50 (218K) + SDVAE,Ours,q2a_oracle_cross600,A0 SD-VAE (标准 49.5M),True,0.4217,0.8199,0.213,,0.4523,0.6749,0.5483,9,deliver/q2a_oracle_scores_baseline_protocol.json
+P1_B4_distill50 (218K) + S10,Ours,q2a_oracle_cross600,"S10 剪枝 Decoder (10.7M, 2.86×加速)",True,0.4242,0.8152,0.222,,0.4396,0.6725,0.5483,10,deliver/q2a_oracle_scores_baseline_protocol.json
+V6 ScoreDiff N=24 + S10,Ours,q2a_oracle_cross600,"S10 剪枝 Decoder (10.7M, 2.86×加速)",False,0.4172,0.6369,0.285,,0.5217,0.6746,0.5459,11,deliver/q2a_oracle_scores_baseline_protocol.json
+P1_B3_distill20 (218K) + SDVAE,Ours,q2a_oracle_cross600,A0 SD-VAE (标准 49.5M),True,0.4186,0.8325,0.175,,0.4397,0.6724,0.5455,12,deliver/q2a_oracle_scores_baseline_protocol.json
+P1_B3_distill20 (218K) + S10,Ours,q2a_oracle_cross600,"S10 剪枝 Decoder (10.7M, 2.86×加速)",True,0.4207,0.827,0.188,,0.4282,0.6702,0.5454,13,deliver/q2a_oracle_scores_baseline_protocol.json
+V6 ScoreDiff N=12 strong + S10,Ours,q2a_oracle_cross600,"S10 剪枝 Decoder (10.7M, 2.86×加速)",True,0.4165,0.6797,0.228,,0.4738,0.6741,0.5453,14,deliver/q2a_oracle_scores_baseline_protocol.json
+V6 ScoreDiff N=12 strong + SDVAE,Ours,q2a_oracle_cross600,A0 SD-VAE (标准 49.5M),False,0.4109,0.6776,0.275,,0.5219,0.669,0.54,15,deliver/q2a_oracle_scores_baseline_protocol.json
+V6 ScoreDiff N=24 + SDVAE,Ours,q2a_oracle_cross600,A0 SD-VAE (标准 49.5M),False,0.4105,0.6308,0.32,,0.5751,0.6678,0.5392,16,deliver/q2a_oracle_scores_baseline_protocol.json
+P1_B4_distill50 (218K) + CEDIT,Ours,q2a_oracle_cross600,C_edit 联合重训 VAE,True,0.4262,0.7843,0.13,,0.6535,0.6518,0.539,17,deliver/q2a_oracle_scores_baseline_protocol.json
+P1_B3_distill20 (218K) + CEDIT,Ours,q2a_oracle_cross600,C_edit 联合重训 VAE,False,0.4231,0.7947,0.12300000000000001,,0.6504,0.6507,0.5369,18,deliver/q2a_oracle_scores_baseline_protocol.json
+WEAVE (Published),Baseline,q2a_oracle_cross600,native / free,False,0.4003,0.8079,0.16699999999999998,,0.4974,0.6731,0.5367,19,deliver/q2a_oracle_scores_baseline_protocol.json
+StyTr2,Baseline,q2a_oracle_cross600,native / free,True,0.4074,0.7023,0.395,,0.7386,0.656,0.5317,20,deliver/q2a_oracle_scores_baseline_protocol.json
+Seedream 4.5,Baseline,q2a_oracle_cross600,native / free,True,0.3885,0.7343,0.373,,0.5202,0.6744,0.5314,21,deliver/q2a_oracle_scores_baseline_protocol.json
+SaMAM,Baseline,q2a_oracle_cross600,native / free,True,0.3832,0.8239,0.025,,0.3882,0.6565,0.5199,22,deliver/q2a_oracle_scores_baseline_protocol.json
+V6 D1 Gentle (s42),Baseline,q2a_oracle_cross600,native / free,True,0.3829,0.8994,0.032,,0.3639,0.6474,0.5152,23,deliver/q2a_oracle_scores_baseline_protocol.json
+"V6 ScoreDiff (lr0.055, s42)",Baseline,q2a_oracle_cross600,native / free,True,0.3808,0.9024,0.05,,0.237,0.6483,0.5146,24,deliver/q2a_oracle_scores_baseline_protocol.json
+"V6 ScoreDiff (lr0.048, s42)",Baseline,q2a_oracle_cross600,native / free,True,0.3781,0.9188,0.04,,0.2079,0.6449,0.5115,25,deliver/q2a_oracle_scores_baseline_protocol.json
+CUT,Baseline,q2a_oracle_cross600,native / free,True,0.3755,0.8435,0.057,,0.6193,0.6432,0.5093,26,deliver/q2a_oracle_scores_baseline_protocol.json
+"V6 D1 Calibrated (a0.70, s42)",Baseline,q2a_oracle_cross600,native / free,True,0.3759,0.9345,0.02,,0.2508,0.6389,0.5074,27,deliver/q2a_oracle_scores_baseline_protocol.json
+Identity,Baseline,q2a_oracle_cross600,native / free,True,0.3633,1.0,0.005,,0.0,0.617,0.4902,28,deliver/q2a_oracle_scores_baseline_protocol.json
+SD-Turbo,Baseline,q2a_oracle_cross600,native / free,False,0.3633,0.9998,0.005,,0.0048,0.6155,0.4894,29,deliver/q2a_oracle_scores_baseline_protocol.json
+AdaIN,Baseline,q2a_oracle_cross600,native / free,False,0.3426,0.2271,0.34299999999999997,,0.7641,0.6279,0.4853,30,deliver/q2a_oracle_scores_baseline_protocol.json
+SaMST,Baseline,q2a_oracle_cross600,native / free,False,0.2738,0.1628,0.2,,0.8496,0.5838,0.4288,31,deliver/q2a_oracle_scores_baseline_protocol.json
+WCT,Baseline,q2a_oracle_cross600,native / free,False,0.1542,0.0232,0.2,,1.001,0.5774,0.3658,32,deliver/q2a_oracle_scores_baseline_protocol.json
+V16_B_adapter,WEAVE-V16,q2a_oracle_cross600,S10,True,0.46159,0.74931,0.10667,,0.27119,0.67905,,,runs/v16/measured/B_adapter/eval.json
+V16_B_adapter_wrong,WEAVE-V16,q2a_oracle_cross600,S10,True,0.46084,0.74956,0.10833,,0.27092,0.67838,,,runs/v16/measured/B_adapter_wrong/eval.json
+V16_B_base,WEAVE-V16,q2a_oracle_cross600,S10,True,0.46064,0.75061,0.10667,,0.27,0.67781,,,runs/v16/measured/B_base/eval.json
+V16_B_teacher,WEAVE-V16,q2a_oracle_cross600,S10,True,0.46705,0.73786,0.11833,,0.28241,0.68128,,,runs/v16/measured/B_teacher/eval.json
+V16_C_base,WEAVE-V16,q2a_oracle_cross600,S10,True,0.46063,0.75065,0.10667,,0.27,0.6778,,,runs/v16/measured/C_base/eval.json
+V16_C_h2_default,WEAVE-V16,q2a_oracle_cross600,S10,True,0.4603,0.75037,0.11167,,0.27235,0.67821,,,runs/v16/measured/C_h2_default/eval.json
+V16_C_h2_strong,WEAVE-V16,q2a_oracle_cross600,S10,True,0.4656,0.7417,0.12333,,0.30403,0.67875,,,runs/v16/measured/C_h2_strong/eval.json
+V16_C_h2_strong_wrong,WEAVE-V16,q2a_oracle_cross600,S10,True,0.46546,0.74154,0.13,,0.30793,0.67881,,,runs/v16/measured/C_h2_strong_wrong/eval.json
+V16_C_project_strong,WEAVE-V16,q2a_oracle_cross600,S10,False,0.46069,0.74915,0.10667,,0.27201,0.67867,,,runs/v16/measured/C_project_strong/eval.json
+V10_LD4,WEAVE-V10,q2a_750_merged,S10,False,,,0.3517,,0.4872,,,,docs/v10/V10_RESULTS.md
+V10_E4,WEAVE-V10,q2a_750_merged,S10,False,0.4415,,,,,,0.5616,,docs/v10/V10_RESULTS.md
