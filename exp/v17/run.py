@@ -327,7 +327,7 @@ def train_h2_head(kind, sp, stats, out: Path, seed=20261117, updates=4000):
 def s10_decode_latents(z):
     from src.utils import load_s10_decoder, decode_s10
     dec = load_s10_decoder('cuda')
-    return decode_s10(dec, z, batch=len(z)).clamp(0, 1)
+    return decode_s10(dec, z, batch=len(z)).to(z.device).clamp(0, 1)
 
 
 def sobel_edge(rgb):
