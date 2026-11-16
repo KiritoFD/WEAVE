@@ -1,0 +1,695 @@
+{
+ "version": "2026-11-16",
+ "hours": {
+  "min_valid": 24,
+  "target": 36
+ },
+ "main_arms": [
+  {
+   "arm_id": "P0_tcurve",
+   "family": "probe_tcurve",
+   "seed": 0,
+   "config": {
+    "arm_id": "P0_tcurve",
+    "family": "probe_tcurve",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P0_cfg2",
+   "family": "cfg",
+   "seed": 0,
+   "config": {
+    "w": 2,
+    "arm_id": "P0_cfg2",
+    "family": "cfg",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P0_cfg4",
+   "family": "cfg",
+   "seed": 0,
+   "config": {
+    "w": 4,
+    "arm_id": "P0_cfg4",
+    "family": "cfg",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P0_cfg_early",
+   "family": "cfg",
+   "seed": 0,
+   "config": {
+    "w": 3,
+    "cfg_schedule": "early",
+    "arm_id": "P0_cfg_early",
+    "family": "cfg",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P0_cfg_late",
+   "family": "cfg",
+   "seed": 0,
+   "config": {
+    "w": 3,
+    "cfg_schedule": "late",
+    "arm_id": "P0_cfg_late",
+    "family": "cfg",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P0_swap_t0",
+   "family": "labelswap",
+   "seed": 0,
+   "config": {
+    "tau0": 0.0,
+    "arm_id": "P0_swap_t0",
+    "family": "labelswap",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P0_swap_t07",
+   "family": "labelswap",
+   "seed": 0,
+   "config": {
+    "tau0": 0.7,
+    "arm_id": "P0_swap_t07",
+    "family": "labelswap",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P1_T0",
+   "family": "teacher",
+   "seed": 0,
+   "config": {
+    "variant": "T0",
+    "calibrate_r1": false,
+    "arm_id": "P1_T0",
+    "family": "teacher",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P1_T1",
+   "family": "teacher",
+   "seed": 0,
+   "config": {
+    "variant": "T1",
+    "calibrate_r1": true,
+    "arm_id": "P1_T1",
+    "family": "teacher",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P1_T2",
+   "family": "teacher",
+   "seed": 0,
+   "config": {
+    "variant": "T2",
+    "calibrate_r1": false,
+    "arm_id": "P1_T2",
+    "family": "teacher",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P1_T3",
+   "family": "teacher",
+   "seed": 0,
+   "config": {
+    "variant": "T3",
+    "calibrate_r1": false,
+    "arm_id": "P1_T3",
+    "family": "teacher",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P1_T4",
+   "family": "teacher",
+   "seed": 0,
+   "config": {
+    "variant": "T4",
+    "calibrate_r1": false,
+    "arm_id": "P1_T4",
+    "family": "teacher",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S0_train",
+   "family": "student",
+   "seed": 0,
+   "config": {
+    "kind": "S0",
+    "arm_id": "P2_S0_train",
+    "family": "student",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S1_train",
+   "family": "student",
+   "seed": 0,
+   "config": {
+    "kind": "S1",
+    "arm_id": "P2_S1_train",
+    "family": "student",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S2_train",
+   "family": "student",
+   "seed": 0,
+   "config": {
+    "kind": "S2",
+    "arm_id": "P2_S2_train",
+    "family": "student",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S3_train",
+   "family": "student",
+   "seed": 0,
+   "config": {
+    "kind": "S3",
+    "arm_id": "P2_S3_train",
+    "family": "student",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S4_train",
+   "family": "student",
+   "seed": 0,
+   "config": {
+    "kind": "S4",
+    "arm_id": "P2_S4_train",
+    "family": "student",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S5_train",
+   "family": "student",
+   "seed": 0,
+   "config": {
+    "kind": "S5",
+    "arm_id": "P2_S5_train",
+    "family": "student",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S6_train",
+   "family": "student",
+   "seed": 0,
+   "config": {
+    "kind": "S6",
+    "arm_id": "P2_S6_train",
+    "family": "student",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S8_train",
+   "family": "student",
+   "seed": 0,
+   "config": {
+    "kind": "S8",
+    "arm_id": "P2_S8_train",
+    "family": "student",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S0_eval",
+   "family": "student_eval",
+   "seed": 0,
+   "config": {
+    "kind": "S0",
+    "wrong_label": true,
+    "arm_id": "P2_S0_eval",
+    "family": "student_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S1_eval",
+   "family": "student_eval",
+   "seed": 0,
+   "config": {
+    "kind": "S1",
+    "wrong_label": false,
+    "arm_id": "P2_S1_eval",
+    "family": "student_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S2_eval",
+   "family": "student_eval",
+   "seed": 0,
+   "config": {
+    "kind": "S2",
+    "wrong_label": false,
+    "arm_id": "P2_S2_eval",
+    "family": "student_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S3_eval",
+   "family": "student_eval",
+   "seed": 0,
+   "config": {
+    "kind": "S3",
+    "wrong_label": false,
+    "arm_id": "P2_S3_eval",
+    "family": "student_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S4_eval",
+   "family": "student_eval",
+   "seed": 0,
+   "config": {
+    "kind": "S4",
+    "wrong_label": false,
+    "arm_id": "P2_S4_eval",
+    "family": "student_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S5_eval",
+   "family": "student_eval",
+   "seed": 0,
+   "config": {
+    "kind": "S5",
+    "wrong_label": false,
+    "arm_id": "P2_S5_eval",
+    "family": "student_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S6_eval",
+   "family": "student_eval",
+   "seed": 0,
+   "config": {
+    "kind": "S6",
+    "wrong_label": true,
+    "arm_id": "P2_S6_eval",
+    "family": "student_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S8_eval",
+   "family": "student_eval",
+   "seed": 0,
+   "config": {
+    "kind": "S8",
+    "wrong_label": false,
+    "arm_id": "P2_S8_eval",
+    "family": "student_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S7_train",
+   "family": "student",
+   "seed": 0,
+   "config": {
+    "kind": "S7",
+    "arm_id": "P2_S7_train",
+    "family": "student",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P2_S7_eval",
+   "family": "student_eval",
+   "seed": 0,
+   "config": {
+    "kind": "S7",
+    "arm_id": "P2_S7_eval",
+    "family": "student_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H1_stats",
+   "family": "h2",
+   "seed": 0,
+   "config": {
+    "kind": "H1",
+    "arm_id": "P3_H1_stats",
+    "family": "h2",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H2arm_eval",
+   "family": "h2",
+   "seed": 0,
+   "config": {
+    "kind": "H2arm",
+    "arm_id": "P3_H2arm_eval",
+    "family": "h2",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H3_train",
+   "family": "h2",
+   "seed": 0,
+   "config": {
+    "kind": "H3",
+    "arm_id": "P3_H3_train",
+    "family": "h2",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H4_train",
+   "family": "h2",
+   "seed": 0,
+   "config": {
+    "kind": "H4",
+    "arm_id": "P3_H4_train",
+    "family": "h2",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H3_full_eval",
+   "family": "h2_eval",
+   "seed": 0,
+   "config": {
+    "kind": "H3",
+    "variant": "full",
+    "H3_dir": "runs/v17/P3_H3_train",
+    "arm_id": "P3_H3_full_eval",
+    "family": "h2_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H3_nomask_eval",
+   "family": "h2_eval",
+   "seed": 0,
+   "config": {
+    "kind": "H3",
+    "variant": "nomask",
+    "H3_dir": "runs/v17/P3_H3_train",
+    "arm_id": "P3_H3_nomask_eval",
+    "family": "h2_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H3_wronglabel_eval",
+   "family": "h2_eval",
+   "seed": 0,
+   "config": {
+    "kind": "H3",
+    "variant": "wronglabel",
+    "H3_dir": "runs/v17/P3_H3_train",
+    "arm_id": "P3_H3_wronglabel_eval",
+    "family": "h2_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H4_full_eval",
+   "family": "h2_eval",
+   "seed": 0,
+   "config": {
+    "kind": "H4",
+    "variant": "full",
+    "H4_dir": "runs/v17/P3_H4_train",
+    "arm_id": "P3_H4_full_eval",
+    "family": "h2_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H4_nomask_eval",
+   "family": "h2_eval",
+   "seed": 0,
+   "config": {
+    "kind": "H4",
+    "variant": "nomask",
+    "H4_dir": "runs/v17/P3_H4_train",
+    "arm_id": "P3_H4_nomask_eval",
+    "family": "h2_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H4_wronglabel_eval",
+   "family": "h2_eval",
+   "seed": 0,
+   "config": {
+    "kind": "H4",
+    "variant": "wronglabel",
+    "H4_dir": "runs/v17/P3_H4_train",
+    "arm_id": "P3_H4_wronglabel_eval",
+    "family": "h2_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P3_H4_srctgt_eval",
+   "family": "h2_eval",
+   "seed": 0,
+   "config": {
+    "kind": "H4",
+    "variant": "src_tgt",
+    "H4_dir": "runs/v17/P3_H4_train",
+    "arm_id": "P3_H4_srctgt_eval",
+    "family": "h2_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P4_F0_train",
+   "family": "fm",
+   "seed": 0,
+   "config": {
+    "mode": "F0",
+    "arm_id": "P4_F0_train",
+    "family": "fm",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P4_F1_train",
+   "family": "fm",
+   "seed": 0,
+   "config": {
+    "mode": "F1",
+    "arm_id": "P4_F1_train",
+    "family": "fm",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P4_F2_train",
+   "family": "fm",
+   "seed": 0,
+   "config": {
+    "mode": "F2",
+    "arm_id": "P4_F2_train",
+    "family": "fm",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P4_F3_train",
+   "family": "fm",
+   "seed": 0,
+   "config": {
+    "mode": "F3",
+    "arm_id": "P4_F3_train",
+    "family": "fm",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P4_F0_eval",
+   "family": "fm_eval",
+   "seed": 0,
+   "config": {
+    "mode": "F0",
+    "residual_dir": "runs/v17/P4_F0_train",
+    "arm_id": "P4_F0_eval",
+    "family": "fm_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P4_F1_eval",
+   "family": "fm_eval",
+   "seed": 0,
+   "config": {
+    "mode": "F1",
+    "residual_dir": "runs/v17/P4_F1_train",
+    "arm_id": "P4_F1_eval",
+    "family": "fm_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P4_F2_eval",
+   "family": "fm_eval",
+   "seed": 0,
+   "config": {
+    "mode": "F2",
+    "residual_dir": "runs/v17/P4_F2_train",
+    "arm_id": "P4_F2_eval",
+    "family": "fm_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P4_F3_eval",
+   "family": "fm_eval",
+   "seed": 0,
+   "config": {
+    "mode": "F3",
+    "residual_dir": "runs/v17/P4_F3_train",
+    "arm_id": "P4_F3_eval",
+    "family": "fm_eval",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P5_S6_H4",
+   "family": "combo",
+   "seed": 0,
+   "config": {
+    "parts": [
+     "student:S6",
+     "h2:H4"
+    ],
+    "S6_dir": "runs/v17/P2_runs/v17/P2_S6_train",
+    "H4_dir": "runs/v17/P3_H4_train",
+    "arm_id": "P5_S6_H4",
+    "family": "combo",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P5_S5_H4",
+   "family": "combo",
+   "seed": 0,
+   "config": {
+    "parts": [
+     "student:S5",
+     "h2:H4"
+    ],
+    "S5_dir": "runs/v17/P2_runs/v17/P2_S5_train",
+    "H4_dir": "runs/v17/P3_H4_train",
+    "arm_id": "P5_S5_H4",
+    "family": "combo",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  },
+  {
+   "arm_id": "P5_F1_H4",
+   "family": "combo",
+   "seed": 0,
+   "config": {
+    "parts": [
+     "fm:F1",
+     "h2:H4"
+    ],
+    "F1_dir": "runs/v17/P4_F1_train",
+    "H4_dir": "runs/v17/P3_H4_train",
+    "arm_id": "P5_F1_H4",
+    "family": "combo",
+    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+   }
+  }
+ ],
+ "repeat_pool": {
+  "arms": [
+   "S5",
+   "S6",
+   "H4",
+   "F1"
+  ],
+  "seeds": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32
+  ],
+  "order": "round-robin arms then seeds",
+  "train_updates": {
+   "S5": 12000,
+   "S6": 12000,
+   "F1": 8000
+  },
+  "note": "S5/S6 are students (T0 pairs); H4 is the H2 head; F1 the flow residual.  Each repeat trains + evals full 750."
+ },
+ "long_run": {
+  "arms": [
+   "S5",
+   "S6",
+   "H4",
+   "F1"
+  ],
+  "updates": [
+   24000,
+   48000
+  ],
+  "seeds": [
+   0,
+   1,
+   2
+  ]
+ },
+ "stop_rules": "no new repeat launches at 36h; in-flight arm finishes; never stop before 24h valid task time unless infrastructure failure"
+}
