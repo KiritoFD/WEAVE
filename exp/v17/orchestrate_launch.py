@@ -12,6 +12,7 @@ from pathlib import Path
 
 REPO = Path("G:/WEAVE")
 LOG = REPO / "runs/v17/orchestrate.log"
+LOG.parent.mkdir(parents=True, exist_ok=True)
 LOG_FH = open(LOG, "a", encoding="utf-8")
 
 
