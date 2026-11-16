@@ -1,0 +1,32 @@
+{
+ "protocol": "eval_arms.py + src.eval.measure on 3060; tasks_750 cross600/same150; paired eps seed 20261115+level*100; S10 decode; K=20",
+ "baseline": "W_dim96_conv_base (dim96, 4000 upd, eff batch 128, lr 2e-4, pool pseudo_gt_24h/orig_mean_fp16)",
+ "scaling_arms": "S1-S6 dim128-384 conv_base, 8000 upd, eff batch 128, same pool/lr; S7_dim512 killed at ~6000/8000",
+ "cross600": {
+  "W_dim96_conv_base": {"t0_0.0": {"dino_s":0.5633,"dino_c":0.3038,"lpips":0.8399,"top1":0.3633,"margin":-0.0726,"G":0.0174,"affinity":0.6370,"clip":0.7107},
+                        "t0_0.4": {"dino_s":0.5237,"dino_c":0.4421,"lpips":0.4960,"top1":0.1533,"margin":-0.1768,"G":-0.0250,"affinity":0.6143,"clip":0.7048},
+                        "t0_0.7": {"dino_s":0.4606,"dino_c":0.7506,"lpips":0.2700,"top1":0.1067,"margin":-0.2361,"G":-0.0437,"affinity":0.5692,"clip":0.6778}},
+  "S1_dim128": {"t0_0.0": {"dino_s":0.5824,"dino_c":0.3099,"lpips":0.8297,"top1":0.4267,"margin":-0.0433,"G":0.0389,"affinity":0.6547,"clip":0.7270},
+                "t0_0.4": {"dino_s":0.5197,"dino_c":0.4885,"lpips":0.4558,"top1":0.1450,"margin":-0.1964,"G":-0.0244,"affinity":0.6113,"clip":0.7030},
+                "t0_0.7": {"dino_s":0.4553,"dino_c":0.7767,"lpips":0.2421,"top1":0.0950,"margin":-0.2553,"G":-0.0448,"affinity":0.5633,"clip":0.6713}},
+  "S2_dim160": {"t0_0.0": {"dino_s":0.5801,"dino_c":0.3100,"lpips":0.8331,"top1":0.4250,"margin":-0.0389,"G":0.0418,"affinity":0.6528,"clip":0.7255},
+                "t0_0.4": {"dino_s":0.5146,"dino_c":0.4991,"lpips":0.4472,"top1":0.1567,"margin":-0.1985,"G":-0.0245,"affinity":0.6088,"clip":0.7031},
+                "t0_0.7": {"dino_s":0.4522,"dino_c":0.7862,"lpips":0.2348,"top1":0.0950,"margin":-0.2608,"G":-0.0459,"affinity":0.5607,"clip":0.6692}},
+  "S3_dim192": {"t0_0.0": {"dino_s":0.5857,"dino_c":0.3141,"lpips":0.8304,"top1":0.4500,"margin":-0.0265,"G":0.0451,"affinity":0.6589,"clip":0.7320},
+                "t0_0.4": {"dino_s":0.5097,"dino_c":0.5082,"lpips":0.4414,"top1":0.1500,"margin":-0.2026,"G":-0.0260,"affinity":0.6070,"clip":0.7042},
+                "t0_0.7": {"dino_s":0.4496,"dino_c":0.7920,"lpips":0.2314,"top1":0.0800,"margin":-0.2664,"G":-0.0465,"affinity":0.5584,"clip":0.6673}},
+  "S4_dim256": {"t0_0.0": {"dino_s":0.5981,"dino_c":0.3166,"lpips":0.8283,"top1":0.4500,"margin":-0.0221,"G":0.0530,"affinity":0.6654,"clip":0.7327},
+                "t0_0.4": {"dino_s":0.5118,"dino_c":0.5127,"lpips":0.4386,"top1":0.1467,"margin":-0.2051,"G":-0.0254,"affinity":0.6072,"clip":0.7026},
+                "t0_0.7": {"dino_s":0.4487,"dino_c":0.7962,"lpips":0.2285,"top1":0.0833,"margin":-0.2679,"G":-0.0464,"affinity":0.5571,"clip":0.6656}},
+  "S5_dim320": {"t0_0.0": {"dino_s":0.5651,"dino_c":0.2957,"lpips":0.8287,"top1":0.4467,"margin":-0.0187,"G":0.0555,"affinity":0.6417,"clip":0.7182},
+                "t0_0.4": {"dino_s":0.4979,"dino_c":0.5120,"lpips":0.4372,"top1":0.1533,"margin":-0.2015,"G":-0.0258,"affinity":0.5995,"clip":0.7011},
+                "t0_0.7": {"dino_s":0.4443,"dino_c":0.8001,"lpips":0.2252,"top1":0.0817,"margin":-0.2727,"G":-0.0473,"affinity":0.5546,"clip":0.6650}},
+  "S6_dim384": {"t0_0.0": {"dino_s":0.5912,"dino_c":0.3081,"lpips":0.8327,"top1":0.4933,"margin":-0.0009,"G":0.0606,"affinity":0.6650,"clip":0.7387},
+                "t0_0.4": {"dino_s":0.5090,"dino_c":0.5314,"lpips":0.4284,"top1":0.1567,"margin":-0.2081,"G":-0.0255,"affinity":0.6064,"clip":0.7038},
+                "t0_0.7": {"dino_s":0.4445,"dino_c":0.8083,"lpips":0.2210,"top1":0.0667,"margin":-0.2761,"G":-0.0475,"affinity":0.5541,"clip":0.6638}}
+ },
+ "same150_key": {"W_dim96_conv_base": {"t0_0.0":0.3800,"t0_0.4":0.4333,"t0_0.7":0.5667},
+                 "S6_dim384": {"t0_0.0":0.4933,"t0_0.4":0.4733,"t0_0.7":0.7067}},
+ "artifacts_remote": "3060:I:/Latent_Style/WEAVE/runs/v15/eval/raw/S*/ + eval_measure/S*_t0_*/eval.json",
+ "notes": "S5_dim320 underperforms neighbors (single-seed variance). S7_dim512 stopped ~6000/8000."
+}
