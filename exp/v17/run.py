@@ -34,7 +34,7 @@ def _split(pool, cfg):
 # ---------------------------------------------------------------- P0
 def arm_probe_tcurve(cfg, out: Path, seed: int, dry: bool):
     from .probe import t_curve
-    sp = _split(_pool(cfg), cfg)
+    sp, _manifest = _split(_pool(cfg), cfg)
     if dry:
         t_curve(sp['train']['z'][:40], sp['train']['sid'][:40],
                 n_per_class=8, seed=seed)
@@ -135,6 +135,7 @@ def arm_teacher(cfg, out: Path, seed: int, dry: bool):
 def arm_student(cfg, out: Path, seed: int, dry: bool):
     from .train_student import train_student
     from .dino_cache import cache_tokens
+    from .adapter import build_student
     kind = cfg['kind']
     if dry:
         net = build_student(kind).cuda()
@@ -151,7 +152,7 @@ def arm_student(cfg, out: Path, seed: int, dry: bool):
         if kind in ('S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'):
             assert delta.abs().max() == 0, 'custom students must be identity'
         return {'ok': True}
-    sp = _split(_pool(cfg), cfg)
+    sp, _manifest = _split(_pool(cfg), cfg)
     if kind in ('S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'):
         cache_tokens(sp)
     pairs_variant = cfg.get('pairs', 'T0' if kind != 'S7' else 'T4')
@@ -248,7 +249,7 @@ def arm_h2(cfg, out: Path, seed: int, dry: bool):
         assert torch.isfinite(lat).all()
         return {'ok': True}
     from .h2 import H2Head, h1_stats, corruption_batch, signed_gain, h1_load
-    sp = _split(_pool(cfg), cfg)
+    sp, _manifest = _split(_pool(cfg), cfg)
     stats = h1_stats(pool_split=sp)
     torch.save(sp, OUT / 'h2' / 'pool_split.pt') if not \
         (OUT / 'h2' / 'pool_split.pt').exists() else None
@@ -385,7 +386,7 @@ def arm_h2_eval(cfg, out: Path, seed: int, dry: bool):
 
 # ---------------------------------------------------------------- P4
 def arm_fm(cfg, out: Path, seed: int, dry: bool):
-    from .fm_residual import train_fm
+    from .fm_residual import VelocityResidual, train_fm
     mode = cfg['mode']
     if dry:
         net = VelocityResidual().cuda()
@@ -394,7 +395,7 @@ def arm_fm(cfg, out: Path, seed: int, dry: bool):
         u = net(z, torch.tensor([0, 1]).cuda(), tau)
         assert torch.isfinite(u).all() and u.abs().max() == 0
         return {'ok': True}
-    sp = _split(_pool(cfg), cfg)
+    sp, _manifest = _split(_pool(cfg), cfg)
     out_dir = train_fm(mode, sp, out, seed=seed,
                        updates=cfg.get('updates', 8000))
     return {'ok': True, 'dir': str(out_dir)}
