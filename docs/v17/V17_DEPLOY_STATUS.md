@@ -30,7 +30,13 @@
 ## 环境决策
 
 - **Windows 原生 Python + psmux**（非计划的 WSL2）：理由——V16 全部基线在此环境产生，消除 §6.1 的跨 OS 复现风险；CSD/DINO/资产全部在此环境验证可用。
-- scaling v2（8 臂 8k）仍在 3060 GPU 上收尾（S1-S6 done，S7+B8k_dim96 约 3-4h）；**V17 队列由 orchestrate_launch 自动接棒**（轮询 scaling_status → tmux session `weave-v17`）。
+
+## 队列启动（2026-11-17 01:05，用户决断：停 scaling，直接拉起 V17）
+
+- scaling v2 终止于 S6（S1-S6 数据保留，S7_dim512 / B8k_dim96 按用户决断放弃——"已没收益"）。
+- 队列首个真实臂 **P0_cfg2 在 5.7 分钟完整落地**（750 生成 + CSD 全裁判 + DONE 准入），queue_state 的 valid_minutes 修复后正确计数。
+- 修复记录：`_cfg_sample` 导入位置；队列准入扩展到非评测臂（result.json ok）；分钟数 UTC 解析（此前 mktime 伪 480 分钟触发假 36h 停止）。
+- 36h 时钟自 2026-11-16T17:05 UTC 起算；监控：queue_console.log / queue.log / queue_state.json / 每臂 progress.json。
 
 ## 监控
 
