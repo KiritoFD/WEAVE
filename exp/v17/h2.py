@@ -65,9 +65,8 @@ def h1_stats(pool_rgb_dir: Path | None = None, pool_split=None,
             stats[s]['n'] += int(m.sum())
             stats[s]['sum'] += per_dir.sum(0)
             stats[s]['sumsq'] += per_dir.square().sum(0)
-            stats[s]['edge_sum'] += (h.square().mean((2, 3)) * e).sum(0)
-            stats[s]['flat_sum'] += (h.square().mean((2, 3)) *
-                                     (1 - e)).sum(0)
+            stats[s]['edge_sum'] += (h.square() * e).mean((2, 3)).sum(0)
+            stats[s]['flat_sum'] += (h.square() * (1 - e))                 .mean((2, 3)).sum(0)
     out = {}
     for s in range(5):
         n = max(stats[s]['n'], 1)
