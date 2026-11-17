@@ -46,13 +46,18 @@ data/
 datasets/
 results/
 exp/*
+!exp/README.md
 !exp/v8/
 !exp/v9_local/
 !exp/v10/
 !exp/v11b/
+!exp/v12_gcl/
 !exp/v13/
 !exp/v14/
 !exp/v15/
+!exp/v16/
+!exp/v17/
+!exp/v18/
 experiments/
 state/
 archives/
@@ -116,6 +121,8 @@ _ref/
 docs/baseline/images/
 docs/baseline/sheets/
 docs/baseline/*.tar.gz
+docs/performance/images/
+nul
 
 # ============ Local scratch (commit messages, one-off helpers) ============
 _tmp/

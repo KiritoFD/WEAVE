@@ -91,18 +91,24 @@ def s10_scaling_factor() -> float:
 
 
 def decode_s10(model, z: torch.Tensor, batch: int = DEFAULT_BATCH,
-               dtype=torch.float16) -> torch.Tensor:
-    """Decode VAE-scaled latents via S10 -> [0,1] float, same contract as decode()."""
+               dtype=torch.float16, *, enable_grad: bool = False,
+               output_cpu: bool = True) -> torch.Tensor:
+    """Decode scaled latents; opt-in input gradients support frozen-S10 inversion.
+
+    Existing calls remain inference-only and return CPU RGB. ``enable_grad``
+    retains the exact scaling/pqc path; it does not unfreeze decoder weights.
+    """
     n = z.shape[0]
     if n == 0:
         side = z.shape[-1] * 8
         return z.new_zeros((0, 3, side, side))
     sf = s10_scaling_factor()
     outs = []
-    with torch.inference_mode():
+    with torch.enable_grad() if enable_grad else torch.inference_mode():
         for s in range(0, n, batch):
             x = model(((z[s:s + batch] / sf).to(dtype)))
-            outs.append(x.float().mul(0.5).add(0.5).clamp(0.0, 1.0).cpu())
+            rgb = x.float().mul(0.5).add(0.5).clamp(0.0, 1.0)
+            outs.append(rgb.cpu() if output_cpu else rgb)
     return torch.cat(outs, 0)
 
 

@@ -5,6 +5,7 @@ Weights: tomg-group-umd/CSD-ViT-L @ 5bc26a6fb0487f3f00a2a7313135103a005b1b67 (HF
 """
 import copy
 import json
+import os
 import time
 from pathlib import Path
 
@@ -70,12 +71,25 @@ def weights_path():
 
 
 def load_csd(device="cuda"):
-    model = CSD_CLIP("vit_large", "default")
-    ck = torch.load(str(weights_path()), map_location="cpu", weights_only=False)
+    # Build on meta so no CPU storage is ever committed for the ~2.4GB
+    # checkpoint: load_state_dict(assign=True) then points each parameter
+    # at the mmap'd (file-backed) storage, and .to(device) materializes
+    # only on the target device. Avoids commit-charge OOM/AV on
+    # memory-tight Windows hosts.
+    with torch.device("meta"):
+        model = CSD_CLIP("vit_large", "default")
+    ck = torch.load(str(weights_path()), map_location="cpu",
+                    weights_only=False, mmap=True)
     sd = ck["model_state_dict"] if "model_state_dict" in ck else ck
     sd = {k[len("module."):] if k.startswith("module.") else k: v for k, v in sd.items()}
-    msg = model.load_state_dict(sd, strict=False)
-    model = model.to(device).eval()
+    msg = model.load_state_dict(sd, strict=False, assign=True)
+    # fp16 on CUDA only when WEAVE_CSD_FP16=1 (memory-tight hosts).
+    # Default stays fp32 weights + autocast, matching existing protocol runs.
+    dtype = (torch.float16
+             if str(device).startswith("cuda")
+             and os.environ.get("WEAVE_CSD_FP16") == "1"
+             else torch.float32)
+    model = model.to(device=device, dtype=dtype).eval()
     return model, ck, msg
 
 
@@ -85,8 +99,10 @@ def feats_pils(model, pils, batch=32, device="cuda"):
     with torch.inference_mode():
         for s in range(0, len(pils), batch):
             x = torch.stack([PREPROCESS(im) for im in pils[s:s + batch]])
-            x = x.to(device=device, dtype=torch.float16)
-            with torch.cuda.amp.autocast():
+            wdt = model.backbone.conv1.weight.dtype
+            is_cuda = str(device).startswith("cuda")
+            x = x.to(device=device, dtype=wdt)
+            with torch.autocast(device_type="cuda", enabled=is_cuda):
                 _, _, sty = model(x)
             out.append(sty.float().cpu())
     return torch.cat(out, 0).numpy()

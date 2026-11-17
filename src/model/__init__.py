@@ -12,6 +12,7 @@ from .unet import C3UNet, ConditionalScoreNet
 from .critic import LatentStyleNet
 from .canon import ContentCanonicalizer, canonicalizer
 from .transport import SingleStepTransportNet
+from .edit_adapter import EditResidualAdapter
 
 __all__ = [
     "C3UNet",
@@ -20,4 +21,5 @@ __all__ = [
     "ContentCanonicalizer",
     "canonicalizer",
     "SingleStepTransportNet",
+    "EditResidualAdapter",
 ]
