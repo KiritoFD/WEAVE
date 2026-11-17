@@ -103,7 +103,8 @@ def run_canary(pool_dir: str, device: str = "cuda"):
     print("V18_CANARY_ALL_OK", flush=True)
 
 
-def run_stage(stage: str, pool_dir: str, ccf_updates: int = 8000, device: str = "cuda"):
+def run_stage(stage: str, pool_dir: str, ccf_updates: int = 8000,
+              ccf_micro: int = 64, ccf_accum: int = 2, device: str = "cuda"):
     from .ccf_model import generate_ccf_arm_750, train_ccf
     from .ld4_plus import run_ccf_plus_ld4, run_track_a_and_amortize
     from .structure import audit_leakage
@@ -117,7 +118,7 @@ def run_stage(stage: str, pool_dir: str, ccf_updates: int = 8000, device: str = 
         run_track_a_and_amortize(cache_dict, test_struct, device=device)
     elif stage == "ccf_train":
         cache_dict, _ = build_or_load_ccf_cache(pool_dir, device=device)
-        train_ccf(cache_dict, updates=ccf_updates, device=device)
+        train_ccf(cache_dict, updates=ccf_updates, micro=ccf_micro, accum=ccf_accum, device=device)
     elif stage == "ccf_gen":
         _, test_struct = build_or_load_ccf_cache(pool_dir, device=device)
         ckpt = OUT / "ccf_main/ccf_final.pt"
@@ -208,19 +209,24 @@ def build_v18_report():
     print("V18_REPORT_DONE", flush=True)
 
 
-def run_all_subprocess_pipeline(pool_dir: str, ccf_updates: int = 8000):
+def run_all_subprocess_pipeline(pool_dir: str, ccf_updates: int = 5000,
+                                  ccf_micro: int = 64, ccf_accum: int = 2,
+                                  skip_track_a: bool = False):
     OUT.mkdir(parents=True, exist_ok=True)
     status_path = OUT / "pipeline_status.json"
     status = read_json(status_path) if status_path.exists() else {}
 
-    stages = [
-        "cache_and_gate0",
-        "track_a_gen",
-        "measure:V18_A0_LD4_repro",
-        "measure:V18_A1_LD4plus_e10",
-        "measure:V18_A1b_LD4plus_e18",
-        "measure:V18_A2_FastStudent",
-        "measure:V18_A2_FastStudent_wrong",
+    stages = ["cache_and_gate0"]
+    if not skip_track_a:
+        stages += [
+            "track_a_gen",
+            "measure:V18_A0_LD4_repro",
+            "measure:V18_A1_LD4plus_e10",
+            "measure:V18_A1b_LD4plus_e18",
+            "measure:V18_A2_FastStudent",
+            "measure:V18_A2_FastStudent_wrong",
+        ]
+    stages += [
         "ccf_train",
         "ccf_gen",
         "measure:V18_B1_CCF_w20",
@@ -248,6 +254,8 @@ def run_all_subprocess_pipeline(pool_dir: str, ccf_updates: int = 8000):
             "--stage", stg,
             "--pool", pool_dir,
             "--ccf-updates", str(ccf_updates),
+            "--ccf-micro", str(ccf_micro),
+            "--ccf-accum", str(ccf_accum),
         ]
         r = subprocess.run(cmd, cwd=ROOT)
         elapsed = round((time.time() - t0) / 60.0, 2)
@@ -267,6 +275,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pool", default=DEFAULT_POOL)
     ap.add_argument("--ccf-updates", type=int, default=5000)
+    ap.add_argument("--ccf-micro", type=int, default=64)
+    ap.add_argument("--ccf-accum", type=int, default=2)
+    ap.add_argument("--skip-track-a", action="store_true")
     ap.add_argument("--canary", action="store_true")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--stage", default="")
@@ -276,9 +287,12 @@ def main():
     if a.canary:
         run_canary(a.pool, device=a.device)
     elif a.stage:
-        run_stage(a.stage, a.pool, ccf_updates=a.ccf_updates, device=a.device)
+        run_stage(a.stage, a.pool, ccf_updates=a.ccf_updates,
+                  ccf_micro=a.ccf_micro, ccf_accum=a.ccf_accum, device=a.device)
     elif a.all:
-        run_all_subprocess_pipeline(a.pool, ccf_updates=a.ccf_updates)
+        run_all_subprocess_pipeline(a.pool, ccf_updates=a.ccf_updates,
+                                    ccf_micro=a.ccf_micro, ccf_accum=a.ccf_accum,
+                                    skip_track_a=a.skip_track_a)
     else:
         ap.error("Specify --canary, --stage <name>, or --all")
 
