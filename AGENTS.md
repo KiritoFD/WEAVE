@@ -32,7 +32,8 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 
 ## 仓库布局（2026-11-14 重组后）
 
-- **活跃代码**：`src/`（唯一门面层：model/infer/eval/utils）+ `exp/v8`、`exp/v9_local`、`exp/v10`（实验包，`python -m exp.*` 从仓库根运行）。均已 git 跟踪。
+- **活跃代码**：`src/`（唯一门面层：model/infer/eval/utils）+ `exp/v8`、`exp/v9_local`、`exp/v10`、`exp/v11b`、`exp/v12_gcl`、`exp/v13`–`exp/v18`（实验包，`python -m exp.*` 从仓库根运行，索引见 `exp/README.md`）。均已 git 跟踪且受 `tests/test_no_absolute_paths.py` 保护。
+- **性能与总台账中心**：`docs/performance/`（唯一权威数据台账 `metrics.{csv,json}` 含 200+ 实验臂与外部基线、结论与全量数据台账 `MASTER_LEDGER.md`、多维矢量图表 `figures/*.svg`、750 生成图库 `images/`）。
 - **tools/** = 历史代码归档，但内含**钉住子包**（`vae_suite/decoder_prune.py`、`v6*`、`v7*`、`pseudo_gt`、`12h/csd_model.py` 等）被 src 依赖，**不要移动/重构**——清单见 `tools/README.md`。
 - `tools/legacy_root/` = 论文期根目录平铺模块（model.py/trainer.py/run.py…）+ 一次性脚本；自举包，flat import 仍可用；根 `__init__.py`/`__main__.py` 是兼容 shim。
 - `tools/legacy_utils/` = 原 `utils/` 包，全仓以 `tools.legacy_utils.*` 引用。
@@ -50,7 +51,11 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 - **当前可交付最优不变**：LD4（Top-1 .3517 / LPIPS .4872）+ E4（DINO-S .4415 / Affinity .5616）。风格研究需要全新思路（RGB 域判别式、RGB 残差分支等），不是当前管线的增量改进。
 - V11b（波let Flow）代码/修复版在 `exp/v13/`（8 bug 修复，sigma √2 精确验证），3060 上有远程重建脚本。
 - **评测口径（2026-11-14 用户决定）**：任务级评测/决策一律用完整 test750（读数 cross600），不用 dev 预览集；LD 基线 = v9 dev+test eval 行合并重算。
-- 3060 被他人占用做 StyleGallery 复现，**不要碰**。
+- **V15 / V16 / V17 全线定论（2026-11-15～17）**：
+  - V14 多尺度扫描确认 224px DINOv2 16×16 patch（NCM `.793` >> DWT `.544`）为最佳语义载体（`docs/v14/V14_RESULTS.md`）。
+  - V15 Group A（16 臂）+ Scaling（`dim96→384`, 34.2M）+ V16 `A_strict` 证实：**Self-Paired Generative Capacity ≠ Cross-Style Editing**——扩容使 $\tau_0=0$ 生成 Top-1 升至 `49.3%`，但在 $\tau_0=0.7$ SDEdit 编辑点因保源增强使 Cross600 Top-1 从 `10.67%` 跌至 `6.67%`；57.8% Impressionism 不平衡使底座在 `ER` 与 `Ukiyo-e` 上先验坍缩为 `0%`；唯 `Style-Bridge FM`（`PT2_P2`）在无额外推理开销下拉升了目标判别。
+  - V16 B/C 与 V17 P0–P4 证实：CFG（`w=2,4`）、Signed RGB-H2（`H4` `11.00%`）、五类均衡自配对 FM 残差（`F1` `11.33%`）均受困于 $\tau_0=0.7$ 的 59% 源画派锁定；但 **V17 `P2_S4`（12k 步 + DINO patch 上下文 + `u_tgt − u_src` 无压缩差分）达 `13.33%`，反超 `B_teacher`（`11.83%`）+1.50pp**，解决了单步学生拟合难题。
+- **V18 当前主线（2026-11-18，3060 `tmux weave-v18` 运行中）**：抛弃 $\tau_0=0.7$ SDEdit，双轨推进 ① **Track A**（校准 `LD4+` + `B4` 上的 0.44M 纯单步 `FastDINOStudent` 摊销）与 ② **Track B (`CCF-UNet`)**（零色相亮度局部对比度结构 `C_64` + 空间白化灰度 DINO 布局 `P_16`［Gate 0 全局泄漏 `22.3%` 随机水平］+ SPADE + $K=8$ 子模态 AdaLN，从 $\tau_0=0.0$ 纯高斯噪声起步）；详见 `docs/v18/WEAVE_V18_BREAKTHROUGH_PLAN.md` 与 `docs/WEAVE_COMPREHENSIVE_SUMMARY_AND_NEXT_PLAN_20261117.md`。
 
 ## 环境备忘
 
@@ -60,3 +65,11 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 - **图像数据已全部本地化**：`datasets/wikiart_new_512/`（10,545 张，从原图重建，sha256 校验 7,678 字节级一致 + 2,867 jpeg 编码器版本漂移——像素相同，逐文件状态在 `weights_local/wikiart_new_512/rebuild_status.jsonl`）；`datasets/distinct5_512/train/`（5,000 张，hardlink 自 `G:\GitHub\WEAVE\train_512clean`）；`data/test/` 150 源图 + 150 参考图已就位。
 - **J 盘原图**：`J:\WEAVE_data\{train,test}` 是 wikiart dump 原图（数字 id 命名，8100+2445=10,545 张，与 `weights_local/wikiart_new_512/manifest.jsonl` 的 id 一一对应）。已通过 junction 挂到仓库：`datasets/wikiart_raw/train`、`datasets/wikiart_raw/test`（NTFS junction，删了链接不影响 J 盘数据；`datasets/` 整个目录 gitignore）。另有 `J:\WEAVE_data\wikiart_new_512_images.tgz`（6.1GB 原始打包，与解压后内容重复，一般不用）。
 - 已知偏差：本地曾用 VAE fallback 解码（~8.6/255 MAE vs TRT），**现已全部改 S10**；S10 vs 原版 decoder 的差异是协议级选择，不是误差。
+
+## V15 4070 后训练（2026-11-16 完成）
+
+- 方案/结果：`docs/v15/WEAVE_V15_POSTTRAIN_4070LP.md` → `docs/v15/WEAVE_V15_POSTTRAIN_4070LP_RESULTS.md`
+- 基线 `W_dim96_conv_base` 本地复现**像素级验证通过**（z_final/rgb 与 3060 差 ≤2/255）；quick dino_s 残差 ±0.003 是本地 DINO 裁判权重版本差，非协议错误。
+- 代码：`exp/v15/eval_4070lp.py`（评测+cfg/shift 控制）、`exp/v15/posttrain_4070lp.py`（balance/band/guided）、`exp/v15/h2_apply_4070lp.py`、`exp/v15/h2_train_4070lp.py`。
+- 结论：balance/band/小批量对照三种后训练全部中性（±噪声内）；R1-guided 微调**崩坏模型**（dino_c .75→.26，判 FAILED）；V11b 旧 ckpt 与 RGB 重训 H2 在当前 edit_bands 强度下都是无操作（像素改动 <1/255）。
+- 显存：训练峰值 ≤58MB，评测 ~3.7GB；**同卡并发 GPU 任务 ≤2 个**（>3 个会 OOM）。

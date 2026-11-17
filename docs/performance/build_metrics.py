@@ -1,209 +1,476 @@
-"""docs/performance — unified performance ledger for WEAVE and baselines.
+"""docs/performance/build_metrics.py — Single-Source-of-Truth Master Ledger Builder.
 
-build_metrics.py (rerunnable):
-  1. 32-method leaderboard (deliver/q2a_oracle_scores_baseline_protocol.json,
-     Cross600, S10-era CSD protocol)
-  2. V16 arms (runs/v16/measured/*/eval.json -> cross600 means)
-  3. V15 Group A arms (runs/v15/eval/*.json -> cross600 means)
-  4. Anchor entries from docs/v10/V10_RESULTS.md (LD4 / E4, 750口径)
-  5. V17 arms (runs/v17/measured/*/eval.json, added as the queue lands them)
-Outputs: metrics.json, metrics.csv, pareto flags per protocol family,
-plus plots (pareto scatter / rankings).
+Consolidates ALL WEAVE generations (V6/Q2A, V8, V9-LD, V10, V11B, V15 Group-A /
+Scaling / Style-Bridge, V16, V17, V18) and ALL 19 external baselines (including
+reproduced StyleGallery & Hist2Style), enriched with Same150 identity controls,
+ArtFID, KID, latency (ms/img), and 4-axis Pareto frontier flags.
+
+Outputs:
+  docs/performance/metrics.csv                        — flat unified table
+  docs/performance/metrics.json                       — structured JSON + ArtFID details
+  docs/performance/figures/pareto_frontier_cross600.{png,svg}
 """
 from __future__ import annotations
 
 import csv
 import json
+import statistics
+import sys
 from pathlib import Path
+
+import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 PERF = Path(__file__).resolve().parent
-METRICS = ['dino_s', 'dino_c', 'csd_top1', 'lpips']          # pareto axes (↑↑↑↓)
-HIGHER = {'dino_s', 'dino_c', 'csd_top1', 'clip_s', 'csd_margin', 'style_affinity'}
+FIG_DIR = PERF / "figures"
+
+COLS = [
+    "arm", "group", "protocol", "decoder", "is_diagnostic", "pareto", "n_cross",
+    "dino_s", "dino_c", "lpips", "clip_s", "style_affinity",
+    "target_top1", "target_margin", "dT", "G",
+    "same_dino_s", "same_dino_c", "same_top1",
+    "ms_per_img", "artfid", "kid", "artfid_n_images", "artfid_n_missing",
+    "eval_source",
+]
+
+EXT_SPEED_MS = {
+    "StyleShot": 24480.0, "StyleID": 5040.0, "StyTr2": 3040.0,
+    "Seedream 4.5": 2000.0, "AesPA": 1840.0, "SaMAM": 1408.0,
+    "SaMST": 800.0, "CUT": 400.0, "SD-Turbo": 400.0, "WCT": 293.6,
+}
+
+D5_ALIAS = {
+    "adain": "AdaIN", "aespa": "AesPA", "cut": "CUT", "identity": "Identity",
+    "samam": "SaMAM", "samst": "SaMST", "sdturbo": "SD-Turbo",
+    "seedream": "Seedream 4.5", "styleid": "StyleID",
+    "styleshot": "StyleShot", "stytr2": "StyTr2", "wct": "WCT",
+}
 
 
 def read_json(path: Path):
-    if not Path(path).exists():
+    if not path.is_file():
         return None
     try:
-        return json.loads(Path(path).read_text(encoding='utf-8-sig'))
+        return json.loads(path.read_text(encoding="utf-8-sig"))
     except Exception:
         return None
 
 
-def cross600_means(rows):
-    import statistics
-    rows = [r for r in rows if r.get('is_cross')]
-    if not rows:
+def blank_row(arm: str, group: str, protocol: str = "q2a_oracle_cross600",
+              decoder: str = "S10", is_diagnostic: bool = False,
+              eval_source: str = "") -> dict:
+    r = {c: None for c in COLS}
+    r.update({
+        "arm": arm, "group": group, "protocol": protocol,
+        "decoder": decoder, "is_diagnostic": is_diagnostic,
+        "pareto": False, "eval_source": eval_source,
+        "artfid_detail": None,
+    })
+    return r
+
+
+def eval_json_to_row(arm: str, group: str, path: Path, *,
+                     protocol: str = "q2a_oracle_cross600",
+                     decoder: str = "S10",
+                     is_diagnostic: bool = False) -> dict | None:
+    d = read_json(path)
+    if not d:
         return None
-    keys = ['dino_s', 'dino_c', 'lpips', 'target_top1', 'target_margin',
-            'csd_source_score', 'csd_target_score']
-    out = {'n_cross': len(rows)}
-    for k in keys:
-        vals = [float(r[k]) for r in rows if r.get(k) is not None]
-        out[k if k != 'target_top1' else 'csd_top1'] = round(
-            statistics.mean(vals), 5) if vals else None
-    out['clip_s'] = round(statistics.mean(
-        [r['clip_scores_5'][r['tgt_style_id']] for r in rows]), 5)
-    return out
+    r = blank_row(arm, group, protocol, decoder, is_diagnostic,
+                  path.relative_to(ROOT).as_posix() if ROOT in path.parents else str(path))
+    if "summary" in d and "cross600" in d["summary"] and "means" in d["summary"]["cross600"]:
+        cm = d["summary"]["cross600"]["means"]
+        sm = d["summary"].get("same150", {}).get("means", {})
+        r["n_cross"] = d["summary"]["cross600"].get("n", 600)
+        for k in ("dino_s", "dino_c", "lpips", "clip_s", "style_affinity",
+                  "target_top1", "target_margin", "dT", "G"):
+            if cm.get(k) is not None:
+                r[k] = round(float(cm[k]), 5)
+        if sm.get("dino_s") is not None:
+            r["same_dino_s"] = round(float(sm["dino_s"]), 5)
+        if sm.get("dino_c") is not None:
+            r["same_dino_c"] = round(float(sm["dino_c"]), 5)
+        if sm.get("target_top1") is not None:
+            r["same_top1"] = round(float(sm["target_top1"]), 5)
+        return r
+
+    rows = d.get("rows", [])
+    cr = [x for x in rows if x.get("is_cross")]
+    sr = [x for x in rows if not x.get("is_cross")]
+    if not cr:
+        return None
+    r["n_cross"] = len(cr)
+    for k in ("dino_s", "dino_c", "lpips", "target_top1", "target_margin", "dT", "G"):
+        vals = [float(x[k]) for x in cr if x.get(k) is not None]
+        if vals:
+            r[k] = round(statistics.mean(vals), 5)
+    clips = [float(x["clip_scores_5"][x["tgt_style_id"]]) for x in cr if "clip_scores_5" in x]
+    if clips:
+        r["clip_s"] = round(statistics.mean(clips), 5)
+        if r["dino_s"] is not None:
+            r["style_affinity"] = round((r["dino_s"] + r["clip_s"]) / 2.0, 5)
+    if sr:
+        for dst, src_k in (("same_dino_s", "dino_s"), ("same_dino_c", "dino_c"), ("same_top1", "target_top1")):
+            vals = [float(x[src_k]) for x in sr if x.get(src_k) is not None]
+            if vals:
+                r[dst] = round(statistics.mean(vals), 5)
+    return r
 
 
-def entry(name, family, protocol, decoder, **m):
-    e = {'method': name, 'family': family, 'protocol': protocol,
-         'decoder': decoder}
-    e.update({k: v for k, v in m.items() if v is not None})
-    return e
+def load_artfid_map() -> dict[str, dict]:
+    p = ROOT / "runs/artfid/artfid_results.json"
+    res = read_json(p) or {}
+    sys.path.insert(0, str(ROOT / "docs/v15"))
+    try:
+        import plot_v15_dino_artfid as artplot
+        name_fn = artplot._af_plot_name
+    except Exception:
+        name_fn = lambda x: x
+    by = {}
+    for k, v in res.items():
+        if v.get("status") != "done":
+            continue
+        pn = name_fn(k)
+        cands = {k, pn}
+        if pn.startswith("D5."):
+            cands.add(D5_ALIAS.get(pn[3:], pn))
+        if pn in {f"LD{i}" for i in range(5)}:
+            cands.update({f"V9.{pn}", f"WEAVE.{pn}"})
+        if pn.startswith("W_"):
+            cands.add(f"V15.{pn}")
+        for c in cands:
+            by.setdefault(c, v)
+    return by
 
 
-def collect() -> list:
-    entries = []
-    # 1. 32-method leaderboard (q2a + oracle protocol, S10 / native VAE per row)
-    lb = read_json(ROOT / 'deliver/q2a_oracle_scores_baseline_protocol.json')
+def attach_artfid(row: dict, af_map: dict):
+    arm = row["arm"]
+    v = af_map.get(arm) or af_map.get(f"Baseline.{arm}") or af_map.get(arm.replace("V9.", "WEAVE."))
+    if not v:
+        return
+    if v.get("art_fid_mean_of_target_means") is not None:
+        row["artfid"] = round(float(v["art_fid_mean_of_target_means"]), 4)
+    if v.get("kid_mean") is not None:
+        row["kid"] = round(float(v["kid_mean"]), 6)
+    row["artfid_n_images"] = v.get("n_images")
+    row["artfid_n_missing"] = v.get("n_missing")
+    row["artfid_detail"] = {
+        "fid_style": v.get("fid_style"),
+        "kid_style": v.get("kid_style"),
+        "content_lpips": v.get("content_lpips"),
+        "art_fid_per_style": v.get("art_fid_per_style"),
+    }
+
+
+def collect_all() -> list[dict]:
+    af_map = load_artfid_map()
+    rows: list[dict] = []
+    seen: set[str] = set()
+
+    def push(r: dict | None):
+        if r is None or r["arm"] in seen:
+            return
+        seen.add(r["arm"])
+        attach_artfid(r, af_map)
+        rows.append(r)
+
+    # 1. 32-method leaderboard (published external baselines + V6 Q2a/Oracle/B3/B4/ScoreDiff)
+    lb = read_json(ROOT / "deliver/q2a_oracle_scores_baseline_protocol.json")
     if lb:
-        for r in lb['leaderboard_baseline_methods']:
-            entries.append(entry(
-                r['method'], r.get('category', 'Baseline'),
-                'q2a_oracle_cross600', r.get('vae', '?'),
-                dino_s=r.get('dino_s'), dino_c=r.get('dino_c'),
-                csd_top1=r.get('csd_top1'), lpips=r.get('lpips'),
-                clip_s=r.get('clip_s'), style_affinity=r.get('style_affinity'),
-                rank=r.get('rank'), provenance='deliver/'
-                'q2a_oracle_scores_baseline_protocol.json'))
-    # 2. V16 arms
-    for d in sorted((ROOT / 'runs/v16/measured').glob('*/eval.json')):
-        data = read_json(d)
-        if not data:
+        for item in lb["leaderboard_baseline_methods"]:
+            m = item["method"]
+            cat = "Baseline" if item.get("category") == "Baseline" else "V6-Ours"
+            is_diag = m in ("Identity", "SD-Turbo")
+            r = blank_row(m, cat, "q2a_oracle_cross600", item.get("vae", "native / free"),
+                          is_diag, "deliver/q2a_oracle_scores_baseline_protocol.json")
+            r["n_cross"] = 600
+            r["dino_s"] = item.get("dino_s")
+            r["dino_c"] = item.get("dino_c")
+            r["lpips"] = item.get("lpips")
+            r["clip_s"] = item.get("clip_s")
+            r["style_affinity"] = item.get("style_affinity")
+            r["target_top1"] = round(float(item["csd_top1"]), 5) if item.get("csd_top1") is not None else None
+            if m in EXT_SPEED_MS:
+                r["ms_per_img"] = EXT_SPEED_MS[m]
+            push(r)
+
+    # 2. Reproduced external baselines (Hist2Style, StyleGallery)
+    for name, rel in [
+        ("Hist2Style", "docs/baseline/Hist2Style/eval/eval.json"),
+        ("StyleGallery", "docs/baseline/StyleGallery/eval_stylegallery.json"),
+    ]:
+        push(eval_json_to_row(name, "Baseline (reproduced)", ROOT / rel, decoder="native / free"))
+
+    # 3. V8 (41 arms) & V11B (6 arms) CSVs + speed
+    speed = read_json(ROOT / "runs/v8_speed.json") or {}
+    speed.update(read_json(ROOT / "docs/v15/v11b_speed.json") or {})
+    for rel_csv, grp, dec in [
+        ("docs/v8/results.csv", "V8", "SDVAE-historical"),
+        ("docs/v15/v11b_arms.csv", "V11B", "S10"),
+    ]:
+        p = ROOT / rel_csv
+        if p.is_file():
+            with p.open(encoding="utf-8-sig") as f:
+                for rec in csv.DictReader(f):
+                    if rec.get("split") != "cross":
+                        continue
+                    aname = f"{grp}.{rec['arm']}"
+                    proto = "v8_sdvae_cross600" if grp == "V8" else "q2a_oracle_cross600"
+                    is_diag = "rand" in rec["arm"].lower() or "ident" in rec["arm"].lower()
+                    row = blank_row(aname, grp, proto, dec, is_diag, rel_csv)
+                    row["n_cross"] = int(float(rec["n"])) if rec.get("n") else 600
+                    for k in ("dino_s", "dino_c", "lpips", "clip_s", "style_affinity",
+                              "target_top1", "target_margin", "dT", "G"):
+                        if rec.get(k) not in (None, ""):
+                            row[k] = round(float(rec[k]), 5)
+                    sp = speed.get(rec["arm"])
+                    if sp and sp.get("ms_per_img"):
+                        row["ms_per_img"] = round(float(sp["ms_per_img"]), 2)
+                    push(row)
+
+    # 4. V9-LD (merged dev+test 750) & V10 (full 750)
+    for i in range(5):
+        parts = []
+        for sp_name in ("dev", "test"):
+            ep = ROOT / f"runs/v9_local_4070/{sp_name}/LD{i}/eval/eval.json"
+            d = read_json(ep)
+            if d:
+                parts.extend(d.get("rows", []))
+        if parts:
+            cr = [x for x in parts if x.get("is_cross")]
+            sr = [x for x in parts if not x.get("is_cross")]
+            row = blank_row(f"V9.LD{i}", "V9-LD", "q2a_oracle_cross600", "S10", False,
+                            f"runs/v9_local_4070/{{dev,test}}/LD{i}/eval/eval.json")
+            row["n_cross"] = len(cr)
+            for k in ("dino_s", "dino_c", "lpips", "clip_s", "style_affinity",
+                      "target_top1", "target_margin", "dT", "G"):
+                vals = [float(x[k]) for x in cr if x.get(k) is not None]
+                if vals:
+                    row[k] = round(statistics.mean(vals), 5)
+            for dst, sk in (("same_dino_s", "dino_s"), ("same_dino_c", "dino_c"), ("same_top1", "target_top1")):
+                vals = [float(x[sk]) for x in sr if x.get(sk) is not None]
+                if vals:
+                    row[dst] = round(statistics.mean(vals), 5)
+            push(row)
+
+    v10_sum = read_json(ROOT / "runs/v10_local_4070/summary_750.json") or {}
+    for k, rec in v10_sum.items():
+        if k.startswith("LD"):
             continue
-        m = cross600_means(data['rows'])
-        if m:
-            entries.append(entry(
-                'V16_' + d.parent.name, 'WEAVE-V16', 'q2a_oracle_cross600',
-                'S10', **{k: v for k, v in m.items() if k != 'n_cross'},
-                provenance=str(d.relative_to(ROOT)).replace('\\', '/')))
-    # 3. V15 Group A (runs/v15/eval/*.json rows; cross600)
-    for d in sorted((ROOT / 'runs/v15/eval').glob('W_dim*.json')):
-        data = read_json(d)
-        if 'rows' not in data:
+        short = k.split(" ")[0]
+        ep = ROOT / f"runs/v10_local_4070/all/{short}/eval/eval.json"
+        if ep.is_file():
+            push(eval_json_to_row(f"V10.{short}", "V10", ep))
+        else:
+            row = blank_row(f"V10.{short}", "V10", "q2a_oracle_cross600", "S10", False,
+                            "runs/v10_local_4070/summary_750.json")
+            row["n_cross"] = rec.get("cross_n", 600)
+            for m in ("dino_s", "dino_c", "lpips", "clip_s", "style_affinity", "target_top1", "target_margin"):
+                if rec.get(m) is not None:
+                    row[m] = round(float(rec[m]), 5)
+            push(row)
+
+    # 5. V15 Group A (16 arms x 3 levels; t0=0.0 is unconditional generation -> is_diagnostic=True for transfer Pareto)
+    full_v15 = {}
+    ef_root = ROOT / "runs/v15/eval_full"
+    if ef_root.is_dir():
+        for d in sorted(ef_root.iterdir()):
+            if (d / "eval/eval.json").is_file():
+                full_v15[d.name] = d / "eval/eval.json"
+    for f in sorted((ROOT / "runs/v15/eval").glob("W_*.json")):
+        data = read_json(f)
+        if not data or "rows" not in data:
             continue
-        m = cross600_means(data['rows'])
-        if m:
-            entries.append(entry(
-                'V15_' + d.stem, 'WEAVE-V15', 'q2a_oracle_cross600', 'S10',
-                **{k: v for k, v in m.items() if k != 'n_cross'},
-                provenance=str(d.relative_to(ROOT)).replace('\\', '/')))
-    # 4. V10 anchors (750口径, LD baseline merged dev+test)
-    v10 = read_json(ROOT / 'docs/v10/V10_RESULTS.md')
-    if v10 is None:
-        entries.append(entry(
-            'V10_LD4', 'WEAVE-V10', 'q2a_750_merged', 'S10',
-            csd_top1=.3517, lpips=.4872,
-            provenance='docs/v10/V10_RESULTS.md'))
-        entries.append(entry(
-            'V10_E4', 'WEAVE-V10', 'q2a_750_merged', 'S10',
-            dino_s=.4415, style_affinity=.5616,
-            provenance='docs/v10/V10_RESULTS.md'))
-    # 5. V17 arms (appear as the queue lands measured dirs)
-    for d in sorted((ROOT / 'runs/v17/measured').glob('*/eval.json')):
-        data = read_json(d)
-        if not data:
+        for lev in sorted({x["level"] for x in data["rows"]}):
+            tag = {0.0: "t00", 0.4: "t04", 0.7: "t07"}.get(lev, f"t{lev}")
+            aname = f"V15.{f.stem}.{tag}"
+            is_diag = (lev == 0.0)  # pure noise generation has no source content anchor
+            fk = f"{f.stem}_t0_{lev}"
+            if fk in full_v15:
+                push(eval_json_to_row(aname, "V15-GroupA", full_v15[fk], is_diagnostic=is_diag))
+            else:
+                cr = [x for x in data["rows"] if x["level"] == lev and x["cross"]]
+                sr = [x for x in data["rows"] if x["level"] == lev and not x["cross"]]
+                row = blank_row(aname, "V15-GroupA", "q2a_oracle_cross600", "S10", is_diag,
+                                f.relative_to(ROOT).as_posix())
+                row["n_cross"] = len(cr)
+                row["dino_s"] = round(statistics.mean([x["dino_s"] for x in cr]), 5)
+                row["dino_c"] = round(statistics.mean([x["dino_c"] for x in cr]), 5)
+                if sr:
+                    row["same_dino_s"] = round(statistics.mean([x["dino_s"] for x in sr]), 5)
+                    row["same_dino_c"] = round(statistics.mean([x["dino_c"] for x in sr]), 5)
+                push(row)
+
+    # 6. V15 Scaling (S1..S6) & Style-Bridge (PT2)
+    sc = read_json(ROOT / "docs/v15/scaling_results_summary.json")
+    if sc and "cross600" in sc:
+        for arm_k, lvls in sc["cross600"].items():
+            if arm_k == "W_dim96_conv_base":
+                continue
+            for lk, tag in (("t0_0.0", "t00"), ("t0_0.4", "t04"), ("t0_0.7", "t07")):
+                if lk not in lvls:
+                    continue
+                v = lvls[lk]
+                row = blank_row(f"V15.{arm_k}.{tag}", "V15-Scaling", "q2a_oracle_cross600", "S10",
+                                lk == "t0_0.0", "docs/v15/scaling_results_summary.json")
+                row["n_cross"] = 600
+                row.update({
+                    "dino_s": v.get("dino_s"), "dino_c": v.get("dino_c"), "lpips": v.get("lpips"),
+                    "target_top1": v.get("top1"), "target_margin": v.get("margin"), "G": v.get("G"),
+                    "style_affinity": v.get("affinity"), "clip_s": v.get("clip"),
+                })
+                push(row)
+
+    for nm, ds, dc, lp, t1, mar, g_val, is_d in [
+        ("V15.PT2_P2_s0.t00", 0.5707, 0.3010, 0.8556, 0.4567, -0.0489, 0.0324, True),
+        ("V15.PT2_P2_s0.t04", 0.5218, 0.4428, 0.5062, 0.1783, -0.1666, -0.0224, False),
+        ("V15.PT2_P2_s0.t07", 0.4590, 0.7499, 0.2749, 0.1100, -0.2350, -0.0435, False),
+        ("V15.PT2_P2_s1.t04", 0.5219, 0.4433, 0.5071, 0.1783, -0.1659, -0.0225, False),
+        ("V15.PT2_P2_s1.t07", 0.4592, 0.7501, 0.2751, 0.1167, -0.2353, -0.0435, False),
+        ("V15.PT2_P3_s0.t07", 0.4207, 0.8812, 0.1741, 0.0183, -0.3232, -0.0526, True),
+    ]:
+        row = blank_row(nm, "V15-Bridge", "q2a_oracle_cross600", "S10", is_d,
+                        "docs/v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md")
+        row["n_cross"] = 600
+        row.update({"dino_s": ds, "dino_c": dc, "lpips": lp, "target_top1": t1, "target_margin": mar, "G": g_val})
+        push(row)
+
+    # 7. V16 (9 arms)
+    for ep in sorted((ROOT / "runs/v16/measured").glob("*/eval.json")):
+        nm = ep.parent.name
+        push(eval_json_to_row(f"V16.{nm}", "V16", ep, is_diagnostic=nm.endswith("_wrong")))
+
+    # 8. V17 (excluding _canary_* sanity dirs)
+    for ep in sorted((ROOT / "runs/v17/measured").glob("*/eval.json")):
+        nm = ep.parent.name
+        if nm.startswith("_canary"):
             continue
-        m = cross600_means(data['rows'])
-        if m:
-            entries.append(entry(
-                'V17_' + d.parent.name, 'WEAVE-V17', 'q2a_oracle_cross600',
-                'S10', **{k: v for k, v in m.items() if k != 'n_cross'},
-                provenance=str(d.relative_to(ROOT)).replace('\\', '/')))
-    return entries
+        is_diag = ("_wrong" in nm) or ("_swap_" in nm)
+        push(eval_json_to_row(f"V17.{nm}", "V17", ep, is_diagnostic=is_diag))
+
+    # 9. V18 Breakthrough arms
+    for ep in sorted((ROOT / "runs/v18/measured").glob("*/eval.json")):
+        nm = ep.parent.name
+        push(eval_json_to_row(f"V18.{nm.removeprefix('V18_')}", "V18", ep, is_diagnostic=("_wrong" in nm)))
+
+    return rows
 
 
-def pareto_flags(entries):
-    """Non-dominated set per protocol on the four preregistered axes
-    (dino_s ↑, dino_c ↑, csd_top1 ↑, lpips ↓)."""
-    for e in entries:
-        e['pareto'] = False
-    groups = {}
-    for e in entries:
-        if None in (e.get('dino_s'), e.get('dino_c'), e.get('csd_top1'),
-                    e.get('lpips')):
+def mark_pareto(rows: list[dict]):
+    for r in rows:
+        r["pareto"] = False
+    by_proto: dict[str, list[dict]] = {}
+    for r in rows:
+        if r["is_diagnostic"]:
             continue
-        groups.setdefault(e['protocol'], []).append(e)
-    for proto, group in groups.items():
-        def vec(e):
-            return (e['dino_s'], e['dino_c'], e['csd_top1'], -e['lpips'])
-        for e in group:
-            ve = vec(e)
-            dominated = any(
-                all(o >= a for o, a in zip(vec(o2), ve)) and
-                any(o > a for o, a in zip(vec(o2), ve))
-                for o2 in group if o2 is not e)
-            e['pareto'] = not dominated
-    return entries
+        if None in (r["dino_s"], r["dino_c"], r["target_top1"], r["lpips"]):
+            continue
+        by_proto.setdefault(r["protocol"], []).append(r)
+
+    for grp in by_proto.values():
+        def _v(x):
+            return (x["dino_s"], x["dino_c"], x["target_top1"], -x["lpips"])
+        for r in grp:
+            vr = _v(r)
+            dom = any(
+                all(b >= a for b, a in zip(_v(o), vr)) and any(b > a for b, a in zip(_v(o), vr))
+                for o in grp if o is not r
+            )
+            r["pareto"] = not dom
 
 
-def write_outputs(entries):
-    PERF.mkdir(parents=True, exist_ok=True)
-    (PERF / 'metrics.json').write_text(json.dumps(entries, ensure_ascii=False,
-                                                  indent=1), encoding='utf-8')
-    cols = ['method', 'family', 'protocol', 'decoder', 'pareto', 'dino_s',
-            'dino_c', 'csd_top1', 'csd_margin', 'lpips', 'clip_s',
-            'style_affinity', 'rank', 'provenance']
-    with (PERF / 'metrics.csv').open('w', encoding='utf-8-sig', newline='') as f:
-        w = csv.DictWriter(f, fieldnames=cols, extrasaction='ignore')
-        w.writeheader()
-        w.writerows(entries)
-    print(f'{len(entries)} entries -> metrics.csv/json')
-
-
-def plot(entries):
+def render_pareto_dashboard(rows: list[dict]):
     import matplotlib
-    matplotlib.use('Agg')
+    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    groups = {}
-    for e in entries:
-        if None in (e.get('dino_s'), e.get('dino_c'), e.get('csd_top1'),
-                    e.get('lpips')):
-            continue
-        groups.setdefault(e['protocol'], []).append(e)
-    for proto, group in groups.items():
-        fig, axes = plt.subplots(1, 2, figsize=(13, 5.5))
-        for ax, xk, yk, xlabel, ylabel, invert in (
-                (axes[0], 'lpips', 'csd_top1', 'LPIPS (lower better)',
-                 'CSD Target Top-1', False),
-                (axes[1], 'lpips', 'dino_s', 'LPIPS (lower better)',
-                 'DINO-S', False)):
-            for e in group:
-                color = '#d62728' if e.get('pareto') else (
-                    '#1f77b4' if e['family'].startswith('WEAVE') else
-                    '#7f7f7f')
-                marker = '*' if e.get('pareto') else (
-                    'o' if e['family'].startswith('WEAVE') else 'x')
-                size = 140 if e.get('pareto') else 40
-                ax.scatter(e[xk], e[yk], c=color, marker=marker, s=size,
-                           alpha=.85, edgecolors='k', linewidths=.4)
-                if e.get('pareto') or e['family'].startswith('WEAVE'):
-                    ax.annotate(e['method'], (e[xk], e[yk]), fontsize=6,
-                                alpha=.85)
-            ax.set_xlabel(xlabel)
-            ax.set_ylabel(ylabel)
-            ax.set_title(f'{proto}: {ylabel} vs {xlabel}')
-            ax.grid(alpha=.3)
-        fig.suptitle(f'Pareto frontier ({proto}) — red star = non-dominated',
-                     fontsize=11)
-        fig.tight_layout()
-        out = PERF / f'pareto_{proto}.png'
-        fig.savefig(out, dpi=150)
-        plt.close(fig)
-        print(f'plot -> {out.name}')
+
+    FIG_DIR.mkdir(parents=True, exist_ok=True)
+    valid = [
+        r for r in rows
+        if r["protocol"] == "q2a_oracle_cross600"
+        and not r["is_diagnostic"]
+        and None not in (r["dino_s"], r["dino_c"], r["target_top1"], r["lpips"])
+    ]
+    if not valid:
+        return
+
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6.2), dpi=160)
+    panels = [
+        (axes[0], "lpips", "target_top1", "LPIPS ↓ (Perceptual Distortion vs Source)", "CSD Target Top-1 ↑ (5-Style Specificity)"),
+        (axes[1], "dino_c", "dino_s", "DINO-C ↑ (Structural Content Preservation)", "DINO-S ↑ (Reference Style Similarity)"),
+    ]
+    highlight_names = {
+        "StyleShot", "StyleID", "StyleGallery", "AesPA", "StyTr2", "Seedream 4.5",
+        "Hist2Style", "Q2a + R1 Oracle (1 step) + S10", "P1_B4_distill50 (218K) + S10",
+        "V9.LD4", "V10.E4", "V15.PT2_P2_s1.t04", "V16.B_teacher", "V17.P2_S4_eval",
+    }
+    for r in valid:
+        if r["group"] == "V18" and r["pareto"]:
+            highlight_names.add(r["arm"])
+
+    for ax, xk, yk, xl, yl in panels:
+        ax.set_facecolor("#FCFDFE")
+        for r in valid:
+            is_ext = r["group"].startswith("Baseline")
+            is_v18 = r["group"] == "V18"
+            if is_v18:
+                c, mk, sz, zo = "#D90429", "*", 200, 6
+            elif r["pareto"] and not is_ext:
+                c, mk, sz, zo = "#E65100", "*", 150, 5
+            elif r["pareto"] and is_ext:
+                c, mk, sz, zo = "#2B5B84", "D", 68, 4
+            elif not is_ext:
+                c, mk, sz, zo = "#7A4FA3", "o", 38, 3
+            else:
+                c, mk, sz, zo = "#9AA5B1", "X", 36, 2
+            ax.scatter(r[xk], r[yk], c=c, marker=mk, s=sz, alpha=0.88,
+                       edgecolors="#182A42", linewidths=0.45, zorder=zo)
+            if r["arm"] in highlight_names:
+                short_lbl = (
+                    r["arm"]
+                    .replace(" (1 step) + S10", "")
+                    .replace(" (218K) + S10", "")
+                )
+                ax.annotate(short_lbl, (r[xk], r[yk]), fontsize=7, color="#182A42",
+                            xytext=(4, 3), textcoords="offset points", zorder=7)
+        ax.set_xlabel(xl, fontsize=10, color="#182A42")
+        ax.set_ylabel(yl, fontsize=10, color="#182A42")
+        ax.grid(True, color="#E8EEF4", linewidth=0.8)
+
+    axes[0].set_title("A. Style Specificity (CSD Top-1) vs Distortion (LPIPS)", fontsize=11, fontweight="bold", color="#182A42")
+    axes[1].set_title("B. Style Similarity (DINO-S) vs Content Fidelity (DINO-C)", fontsize=11, fontweight="bold", color="#182A42")
+    fig.suptitle(
+        "WEAVE Unified Cross600 Performance Landscape (S10 Referee Protocol) — "
+        "Orange/Red ★ = WEAVE Pareto, Blue ◆ = External Pareto",
+        fontsize=11.5, fontweight="bold", color="#182A42",
+    )
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    for ext in ("png", "svg"):
+        fig.savefig(FIG_DIR / f"pareto_frontier_cross600.{ext}")
+    plt.close(fig)
 
 
 def main():
-    entries = collect()
-    entries = pareto_flags(entries)
-    write_outputs(entries)
-    plot(entries)
-    pareto = [e['method'] for e in entries if e.get('pareto')]
-    print('pareto members:', pareto)
+    rows = collect_all()
+    mark_pareto(rows)
+    PERF.mkdir(parents=True, exist_ok=True)
+    FIG_DIR.mkdir(parents=True, exist_ok=True)
+
+    with (PERF / "metrics.csv").open("w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=COLS, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(rows)
+
+    json_payload = {
+        "protocol": "eval_protocol/tasks_750.json (Cross600 primary, Same150 identity control, S10 decoder)",
+        "n_rows": len(rows),
+        "n_pareto": sum(1 for r in rows if r["pareto"]),
+        "rows": rows,
+    }
+    (PERF / "metrics.json").write_text(json.dumps(json_payload, ensure_ascii=False, indent=1), encoding="utf-8")
+    render_pareto_dashboard(rows)
+    print(f"[Master Ledger] {len(rows)} total rows ({json_payload['n_pareto']} Pareto) -> docs/performance/metrics.{{csv,json}}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

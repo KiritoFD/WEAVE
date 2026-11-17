@@ -6,11 +6,15 @@
 
 | 顺序 | 文档 | 内容 |
 |---|---|---|
-| 1 | [AGENTS.md](<../AGENTS.md>)（仓库根） | **决策协议（2026-11-14）**：解码一律 S10 + 使用契约 + 证据；覆盖一切历史文档的相反约定 |
-| 2 | [HIGHLIGHTS.md](<HIGHLIGHTS.md>) | **两大进展一页纸**：S10 剪枝 decoder、Q2A+Oracle 协议（数字+出处+链接） |
-| 3 | [v9/V9_LD_RESULTS.md](<v9/V9_LD_RESULTS.md>) | 最新完成的工作：V9-LD latent 消融（LD4 唯一净胜臂） |
-| 4 | [WEAVE_RESEARCH_SYNTHESIS_20261112.md](<WEAVE_RESEARCH_SYNTHESIS_20261112.md>) | 全研究线"什么存活下来了"的综合叙事 |
-| 5 | [1111/README.md](<1111/README.md>) | WEAVE/Art-VAE 全路线回顾（时间线、协议族谱、54 路线索引、证伪账本） |
+| 1 | [AGENTS.md](<../AGENTS.md>)（仓库根） | **决策协议（2026-11-14～18）**：解码一律 S10 + 使用契约 + 仓库布局 + 当前主线 |
+| 2 | [**performance/MASTER_LEDGER.md**](<performance/MASTER_LEDGER.md>) | **全仓总台账与核心结论（最新必读，2026-11-18）**：V6→V18 共 **207 条**统一实测数据（含 **V18 Track A 突破：`LD4+` `38.00%` 超越 Seedream 4.5；纯单步前馈 `FastStudent` `33.83%`**）、六条铁律与帕累托前沿图表 |
+| 3 | [WEAVE_COMPREHENSIVE_SUMMARY_AND_NEXT_PLAN_20261117.md](<WEAVE_COMPREHENSIVE_SUMMARY_AND_NEXT_PLAN_20261117.md>) | **V6→V17 全局归因与下一步研究分析**：SDEdit 保源锁与先验坍缩机理、V17 审计与路线演进 |
+| 4 | [v18/WEAVE_V18_BREAKTHROUGH_PLAN.md](<v18/WEAVE_V18_BREAKTHROUGH_PLAN.md>) | **V18 双轨突破预注册方案**：Track A 校准 `LD4+` & 单步摊销 + Track B 去风格纯噪声生成流 `CCF-UNet` |
+| 5 | [performance/README.md](<performance/README.md>) | **统一数据与图表中心**：`metrics.{csv,json}`、`figures/*.svg`、750 输出图库与重建脚本 |
+| 6 | [HIGHLIGHTS.md](<HIGHLIGHTS.md>) | **两大基石成果一页纸**：S10 剪枝 decoder（10.66M）、Q2A+Oracle 750 任务协议 |
+| 7 | [v9/V9_LD_RESULTS.md](<v9/V9_LD_RESULTS.md>) · [v10/V10_RESULTS.md](<v10/V10_RESULTS.md>) | 谱系 A 前置基石：`LD4`（Top-1 `35.17%`）与 `E4`（DINO-S `0.4415`） |
+| 8 | [v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md](<v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md>) · [v16/RESULTS.md](<v16/RESULTS.md>) · [v17/V17_RESULTS_EVAL.md](<v17/V17_RESULTS_EVAL.md>) | 谱系 B 完整排雷实证：V15 容量/Scaling/Style-Bridge、V16 A/B/C、V17 条件探针与 DINO 学生 |
+| 9 | [WEAVE_RESEARCH_SYNTHESIS_20261112.md](<WEAVE_RESEARCH_SYNTHESIS_20261112.md>) · [1111/README.md](<1111/README.md>) | 早期全路线回顾（54 路线索引与证伪账本） |
 
 ## 两大进展的权威文档
 
