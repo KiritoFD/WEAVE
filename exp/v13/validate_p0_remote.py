@@ -13,10 +13,10 @@ import torch
 from PIL import Image
 
 import sys as _sys
-_sys.path.insert(0, "I:/Latent_Style/WEAVE")
+_sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from exp.v13.sample_fixed import load_flow_v13, make_noise, sample_band_fixed
 
-REPO = Path("I:/Latent_Style/WEAVE")
+REPO = Path(__file__).resolve().parents[2]
 CKPT = REPO / "runs/v11b/flow_v1_w56/ckpt_100.pt"
 PROFILE = REPO / "docs/v11b/P0_PROFILE.json"
 LD4 = REPO / "ld4_lat"

@@ -82,7 +82,7 @@ def evaluate_arm(name: str, op, *, tau0=TAU_EVAL, steps=20, device='cuda',
             out = op(group, source[sl].to(device), sid, tid, eps[sl].to(device))
             if output_rgb:
                 rgb = out
-                z_lat = torch.zeros(len(sl), 4, 64, 64)
+                z_lat = torch.zeros(len(out), 4, 64, 64)
             else:
                 z_lat = out
                 rgb = decode_s10(decoder, z_lat, batch=1)

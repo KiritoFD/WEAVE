@@ -89,5 +89,5 @@ def pool_channel_stats(style_idx: int) -> tuple[torch.Tensor, torch.Tensor]:
 
 
 def local_image_path(rel_file: str) -> Path:
-    """Pool 'files' are /mnt/i/... WSL paths; map to the local datasets copy."""
+    """Pool 'files' carry remote mount prefixes; map to the local datasets copy."""
     return REPO / "datasets/wikiart_new_512" / Path(rel_file).parent.name / Path(rel_file).name

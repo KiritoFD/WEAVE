@@ -27,7 +27,8 @@ from exp.v16 import load_base
 
 
 def _pool(cfg):
-    return cfg.get('pool', 'I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16')
+    import paths
+    return str(paths.resolve_config_path(cfg.get('pool', '@asset/pseudo_gt_24h/orig_mean_fp16')))
 
 
 def _split(pool, cfg):
@@ -188,33 +189,37 @@ def arm_student_eval(cfg, out: Path, seed: int, dry: bool):
     base_model, _ = load_base()          # frozen V15-96 generator
     canon = canonicalizer('cuda')
     need_dino = kind in ('S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8')
+    ctx_cache = {}
     if need_dino:
-        cache_tokens(_split(_pool(cfg), cfg))   # train/holdout only
+        from src.utils import load_s10_decoder
+        from src.utils._local_eval_refs import load_dino_model
+        ctx_cache['dec'] = load_s10_decoder('cuda')
+        ctx_cache['dino'] = load_dino_model(device='cuda')
     tasks, source = tasks_and_sources()
     name = cfg['arm_id']
 
+    def student_tokens(base):
+        from src.utils import decode_s10
+        from src.utils._local_eval_refs import encode_dino
+        from PIL import Image
+        rgb = decode_s10(ctx_cache['dec'], base, batch=8)
+        imgs = [Image.fromarray(x) for x in rgb.cpu().permute(0, 2, 3, 1)
+                .mul(255).round().clamp(0, 255).byte().numpy()]
+        _, patch = encode_dino(ctx_cache['dino'], imgs, batch=16, device='cuda')
+        tok = patch.float()
+        tok = tok / tok.norm(dim=-1, keepdim=True).clamp_min(1e-8)
+        return tok.reshape(len(imgs), 384, 16, 16)
+
     def op(group, z, sid, tid, epsl):
         # CRITICAL: students are residual-over-V15-base, NOT over raw source
-        # (matching V16 B_adapter eval).  Without this, output ≈ source image.
+        # (matching V16 B_adapter eval).  Note: ContextAdapter.amplitude was
+        # never wired into student_loss in V17, so `delta` is used directly.
         with torch.no_grad(), autocast():
             base = v16_generate(base_model, z, tid, epsl)
             content = canon(z, mode='c1_gentle', augment=False)
-            dtok = student_tokens(group, base) if need_dino else None
-            delta, scale, mask_logits = call_student(net, kind, base,
-                                                     content, tid, dtok, sid)
-            if scale is not None:
-                delta = delta * scale.view(-1, 1, 1, 1).clamp(0, 2)
+            dtok = student_tokens(base) if need_dino else None
+            delta, _, _ = call_student(net, kind, base, content, tid, dtok, sid)
         return base + delta
-
-    def student_tokens(group, base):
-        from .dino_cache import encode_tokens_for_images
-        from src.utils import load_s10_decoder, decode_s10
-        from PIL import Image
-        dec = load_s10_decoder('cuda')
-        rgb = decode_s10(dec, base, batch=len(base))
-        imgs = [Image.fromarray(x) for x in rgb.cpu().permute(0, 2, 3, 1)
-                .mul(255).round().clamp(0, 255).byte().numpy()]
-        return encode_tokens_for_images(imgs)
 
     summary, _ = evaluate_arm(name, op, tau0=.7,
                               extra_meta={'student_kind': kind,
@@ -225,16 +230,17 @@ def arm_student_eval(cfg, out: Path, seed: int, dry: bool):
             with torch.no_grad(), autocast():
                 base = v16_generate(base_model, z, tid, epsl)
                 content = canon(z, mode='c1_gentle', augment=False)
-                dtok = student_tokens(group, base) if need_dino else None
-                delta, scale, _ = call_student(net, kind, base, content,
-                                               (tid + 2) % 5, dtok, sid)
-                if scale is not None:
-                    delta = delta * scale.view(-1, 1, 1, 1).clamp(0, 2)
+                dtok = student_tokens(base) if need_dino else None
+                delta, _, _ = call_student(net, kind, base, content,
+                                           (tid + 2) % 5, dtok, sid)
             return base + delta
         summary_w, _ = evaluate_arm(name + '_wrong', opw, tau0=.7,
                                     extra_meta={'student_kind': kind,
                                                 'wrong_label': True})
         wrong = summary_w
+    ctx_cache.clear()
+    del net, base_model, canon
+    torch.cuda.empty_cache()
     return {'ok': True, 'summary': summary, 'wrong': wrong}
 
 
@@ -350,25 +356,30 @@ def arm_h2_eval(cfg, out: Path, seed: int, dry: bool):
     variant = cfg.get('variant', 'full')   # full | nomask | wronglabel | src_tgt
     if dry:
         return {'ok': True}
+    from exp.v16.distill import generate as v16_generate
     tasks, source = tasks_and_sources()
+    base_model, _ = load_base()
     head = None
     if kind in ('H3', 'H4'):
         head = H2Head(bias=(kind == 'H4')).cuda()
-        sd = torch.load(Path(cfg['head_dir']) / 'h2_head.pt',
+        hdir = cfg.get('head_dir') or cfg.get(f'{kind}_dir') or (OUT / f'P3_{kind}_train')
+        sd = torch.load(Path(hdir) / 'h2_head.pt',
                         map_location='cpu', weights_only=False)
         head.load_state_dict(sd['model'])
         head.eval()
     dec = load_s10_decoder('cuda')
 
     def op(group, z, sid, tid, epsl):
-        rgb = decode_s10(dec, z, batch=len(z)).clamp(0, 1)
+        with torch.no_grad(), autocast():
+            z_base = v16_generate(base_model, z, tid, epsl)
+        rgb = decode_s10(dec, z_base, batch=8).to(z.device).clamp(0, 1)
         bands = dwt2(rgb)
         edge = sobel_mag(bands['LL2'])
         edge = edge / edge.amax((1, 2, 3), keepdim=True).clamp_min(1e-8)
         label = (tid + 2) % 5 if variant == 'wronglabel' else tid
         if head is None:
             return rgb
-        beta_trust = bands['H2'].square().mean(1, keepdim=True).sqrt() \
+        beta_trust = bands['H2'].flatten(1).square().mean(1).sqrt() \
             if kind == 'H4' else None
         h2_out, _ = head(bands['H2'], edge, label, beta_trust)
         if variant == 'nomask':
@@ -377,13 +388,16 @@ def arm_h2_eval(cfg, out: Path, seed: int, dry: bool):
             em = (1 - .3 * edge)
             delta = (h2_out - bands['H2']) * em
         if variant == 'src_tgt':
-            delta = delta * 0.
+            same = (sid == tid).view(-1, 1, 1, 1)
+            delta = torch.where(same, torch.zeros_like(delta), delta)
         return idwt2(bands['LL2'], bands['H2'] + delta, bands['H1']) \
             .clamp(0, 1)
     summary, _ = evaluate_arm(cfg['arm_id'], op, tau0=.7,
                               output_rgb=True,
                               extra_meta={'h2_kind': kind,
                                           'variant': variant})
+    del base_model, head, dec
+    torch.cuda.empty_cache()
     return {'ok': True, 'summary': summary}
 
 

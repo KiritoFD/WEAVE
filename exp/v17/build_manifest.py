@@ -11,7 +11,7 @@ import argparse
 import json
 from pathlib import Path
 
-POOL = 'I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16'
+POOL = '@asset/pseudo_gt_24h/orig_mean_fp16'
 
 
 def arm(arm_id, family, seed=0, extra=None):

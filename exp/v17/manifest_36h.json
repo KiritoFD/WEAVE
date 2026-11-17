@@ -12,7 +12,7 @@
    "config": {
     "arm_id": "P0_tcurve",
     "family": "probe_tcurve",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -23,7 +23,7 @@
     "w": 2,
     "arm_id": "P0_cfg2",
     "family": "cfg",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -34,7 +34,7 @@
     "w": 4,
     "arm_id": "P0_cfg4",
     "family": "cfg",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -46,7 +46,7 @@
     "cfg_schedule": "early",
     "arm_id": "P0_cfg_early",
     "family": "cfg",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -58,7 +58,7 @@
     "cfg_schedule": "late",
     "arm_id": "P0_cfg_late",
     "family": "cfg",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -69,7 +69,7 @@
     "tau0": 0.0,
     "arm_id": "P0_swap_t0",
     "family": "labelswap",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -80,7 +80,7 @@
     "tau0": 0.7,
     "arm_id": "P0_swap_t07",
     "family": "labelswap",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -92,7 +92,7 @@
     "calibrate_r1": false,
     "arm_id": "P1_T0",
     "family": "teacher",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -104,7 +104,7 @@
     "calibrate_r1": true,
     "arm_id": "P1_T1",
     "family": "teacher",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -116,7 +116,7 @@
     "calibrate_r1": false,
     "arm_id": "P1_T2",
     "family": "teacher",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -128,7 +128,7 @@
     "calibrate_r1": false,
     "arm_id": "P1_T3",
     "family": "teacher",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -140,7 +140,7 @@
     "calibrate_r1": false,
     "arm_id": "P1_T4",
     "family": "teacher",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -151,7 +151,7 @@
     "kind": "S0",
     "arm_id": "P2_S0_train",
     "family": "student",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -162,7 +162,7 @@
     "kind": "S1",
     "arm_id": "P2_S1_train",
     "family": "student",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -173,7 +173,7 @@
     "kind": "S2",
     "arm_id": "P2_S2_train",
     "family": "student",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -184,7 +184,7 @@
     "kind": "S3",
     "arm_id": "P2_S3_train",
     "family": "student",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -195,7 +195,7 @@
     "kind": "S4",
     "arm_id": "P2_S4_train",
     "family": "student",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -206,7 +206,7 @@
     "kind": "S5",
     "arm_id": "P2_S5_train",
     "family": "student",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -217,7 +217,7 @@
     "kind": "S6",
     "arm_id": "P2_S6_train",
     "family": "student",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -228,7 +228,7 @@
     "kind": "S8",
     "arm_id": "P2_S8_train",
     "family": "student",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -240,7 +240,7 @@
     "wrong_label": true,
     "arm_id": "P2_S0_eval",
     "family": "student_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -252,7 +252,7 @@
     "wrong_label": false,
     "arm_id": "P2_S1_eval",
     "family": "student_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -264,7 +264,7 @@
     "wrong_label": false,
     "arm_id": "P2_S2_eval",
     "family": "student_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -276,7 +276,7 @@
     "wrong_label": false,
     "arm_id": "P2_S3_eval",
     "family": "student_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -288,7 +288,7 @@
     "wrong_label": false,
     "arm_id": "P2_S4_eval",
     "family": "student_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -300,7 +300,7 @@
     "wrong_label": false,
     "arm_id": "P2_S5_eval",
     "family": "student_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -312,7 +312,7 @@
     "wrong_label": true,
     "arm_id": "P2_S6_eval",
     "family": "student_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -324,7 +324,7 @@
     "wrong_label": false,
     "arm_id": "P2_S8_eval",
     "family": "student_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -335,7 +335,7 @@
     "kind": "S7",
     "arm_id": "P2_S7_train",
     "family": "student",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -346,7 +346,7 @@
     "kind": "S7",
     "arm_id": "P2_S7_eval",
     "family": "student_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -357,7 +357,7 @@
     "kind": "H1",
     "arm_id": "P3_H1_stats",
     "family": "h2",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -368,7 +368,7 @@
     "kind": "H2arm",
     "arm_id": "P3_H2arm_eval",
     "family": "h2",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -379,7 +379,7 @@
     "kind": "H3",
     "arm_id": "P3_H3_train",
     "family": "h2",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -390,7 +390,7 @@
     "kind": "H4",
     "arm_id": "P3_H4_train",
     "family": "h2",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -403,7 +403,7 @@
     "H3_dir": "runs/v17/P3_H3_train",
     "arm_id": "P3_H3_full_eval",
     "family": "h2_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -416,7 +416,7 @@
     "H3_dir": "runs/v17/P3_H3_train",
     "arm_id": "P3_H3_nomask_eval",
     "family": "h2_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -429,7 +429,7 @@
     "H3_dir": "runs/v17/P3_H3_train",
     "arm_id": "P3_H3_wronglabel_eval",
     "family": "h2_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -442,7 +442,7 @@
     "H4_dir": "runs/v17/P3_H4_train",
     "arm_id": "P3_H4_full_eval",
     "family": "h2_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -455,7 +455,7 @@
     "H4_dir": "runs/v17/P3_H4_train",
     "arm_id": "P3_H4_nomask_eval",
     "family": "h2_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -468,7 +468,7 @@
     "H4_dir": "runs/v17/P3_H4_train",
     "arm_id": "P3_H4_wronglabel_eval",
     "family": "h2_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -481,7 +481,7 @@
     "H4_dir": "runs/v17/P3_H4_train",
     "arm_id": "P3_H4_srctgt_eval",
     "family": "h2_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -492,7 +492,7 @@
     "mode": "F0",
     "arm_id": "P4_F0_train",
     "family": "fm",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -503,7 +503,7 @@
     "mode": "F1",
     "arm_id": "P4_F1_train",
     "family": "fm",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -514,7 +514,7 @@
     "mode": "F2",
     "arm_id": "P4_F2_train",
     "family": "fm",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -525,7 +525,7 @@
     "mode": "F3",
     "arm_id": "P4_F3_train",
     "family": "fm",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -537,7 +537,7 @@
     "residual_dir": "runs/v17/P4_F0_train",
     "arm_id": "P4_F0_eval",
     "family": "fm_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -549,7 +549,7 @@
     "residual_dir": "runs/v17/P4_F1_train",
     "arm_id": "P4_F1_eval",
     "family": "fm_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -561,7 +561,7 @@
     "residual_dir": "runs/v17/P4_F2_train",
     "arm_id": "P4_F2_eval",
     "family": "fm_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -573,7 +573,7 @@
     "residual_dir": "runs/v17/P4_F3_train",
     "arm_id": "P4_F3_eval",
     "family": "fm_eval",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -589,7 +589,7 @@
     "H4_dir": "runs/v17/P3_H4_train",
     "arm_id": "P5_S6_H4",
     "family": "combo",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -605,7 +605,7 @@
     "H4_dir": "runs/v17/P3_H4_train",
     "arm_id": "P5_S5_H4",
     "family": "combo",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   },
   {
@@ -621,7 +621,7 @@
     "H4_dir": "runs/v17/P3_H4_train",
     "arm_id": "P5_F1_H4",
     "family": "combo",
-    "pool": "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+    "pool": "@asset/pseudo_gt_24h/orig_mean_fp16"
    }
   }
  ],

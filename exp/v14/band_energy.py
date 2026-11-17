@@ -12,8 +12,8 @@ import torch.nn.functional as Fn
 import numpy as np
 from PIL import Image
 
-REPO = Path("I:/Latent_Style/WEAVE")
-DINO_SNAP = Path("I:/Latent_Style/eval_cache/hf/hub/models--facebook--dinov2-small/snapshots/ed25f3a31f01632728cabb09d1542f84ab7b0056")
+REPO = Path(__file__).resolve().parents[2]
+DINO_SNAP = REPO.parent / "eval_cache/hf/hub/models--facebook--dinov2-small/snapshots/ed25f3a31f01632728cabb09d1542f84ab7b0056"
 S10_PATH = REPO / "runs/vae_decoder_prune/s10_p5_lowlr/decoder.pt"
 OUT = REPO / "runs/v14"
 N_PER_STYLE = 10
@@ -76,8 +76,8 @@ def main():
     model_dino = _dino(device)
     model_s10 = _s10(device)
     STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
-    IMG_ROOT = Path("I:/Latent_Style/WEAVE/datasets/wikiart_new_512")
-    POOL = Path("I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16")
+    IMG_ROOT = REPO / "datasets/wikiart_new_512"
+    POOL = REPO.parent / "pseudo_gt_24h/orig_mean_fp16"
 
     import hashlib
     def _h10(pid):

@@ -17,8 +17,8 @@ import sys
 import time
 from pathlib import Path
 
-REPO = Path("I:/Latent_Style/WEAVE")
-POOL = "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+REPO = Path(__file__).resolve().parents[2]
+POOL = str(REPO.parent / "pseudo_gt_24h/orig_mean_fp16")
 OUT = REPO / "runs/v15"
 LOGS = OUT / "logs"
 PYTHON = sys.executable

@@ -1,7 +1,7 @@
 r"""V15 scaling sequencer v2: 7 tiers (dim128-512) + dim96 8k control, serial.
 
 Run on the 3060 inside tmux:
-  tmux new-session -d -s scaling cmd /c I:\Latent_Style\WEAVE\_tmp\run_v15_scaling.bat
+  tmux new-session -d -s scaling cmd /c _tmp/run_v15_scaling.bat
 2026-11-15 user revision: ALL arms 8k updates; micro re-tuned to fill memory
 toward ~10GB (capped by micro<=128 divisor constraint of eff. batch 128);
 two new tiers dim384/dim512.  Pure conv, no attention, no where, global
@@ -15,8 +15,8 @@ import sys
 import time
 from pathlib import Path
 
-REPO = Path("I:/Latent_Style/WEAVE")
-POOL = "I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16"
+REPO = Path(__file__).resolve().parents[2]
+POOL = str(REPO.parent / "pseudo_gt_24h/orig_mean_fp16")
 OUT = REPO / "runs/v15"
 LOGS = OUT / "logs"
 PYTHON = sys.executable

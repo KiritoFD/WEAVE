@@ -3,7 +3,7 @@ supervision. Supports all 16 main-matrix arms (plan §4).
 
 Usage (on the 3060):
   python train.py --base-dim 64 --use-attention --use-where --seed 0 ^
-      --pool I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16
+      --pool ../pseudo_gt_24h/orig_mean_fp16
 """
 from __future__ import annotations
 

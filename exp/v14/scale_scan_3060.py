@@ -7,10 +7,10 @@ import torch
 import torch.nn.functional as Fn
 from PIL import Image
 
-REPO = Path("I:/Latent_Style/WEAVE")
-POOL = Path("I:/Latent_Style/pseudo_gt_24h/orig_mean_fp16")
-IMG_ROOT = Path("I:/Latent_Style/WEAVE/datasets/wikiart_new_512")
-DINO_SNAP = Path("I:/Latent_Style/eval_cache/hf/hub/models--facebook--dinov2-small/snapshots/ed25f3a31f01632728cabb09d1542f84ab7b0056")
+REPO = Path(__file__).resolve().parents[2]
+POOL = REPO.parent / "pseudo_gt_24h/orig_mean_fp16"
+IMG_ROOT = REPO / "datasets/wikiart_new_512"
+DINO_SNAP = REPO.parent / "eval_cache/hf/hub/models--facebook--dinov2-small/snapshots/ed25f3a31f01632728cabb09d1542f84ab7b0056"
 OUT = REPO / "runs/v14"
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
 N_TRAIN, N_HOLD, N_BOOT = 200, 80, 1000

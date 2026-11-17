@@ -16,8 +16,8 @@ from pathlib import Path
 
 import torch
 
-sys.path.insert(0, "I:/Latent_Style/WEAVE")
-REPO = Path("I:/Latent_Style/WEAVE")
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
 OUT = REPO / "runs/v13_remote"
 
 
