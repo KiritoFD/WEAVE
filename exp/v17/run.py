@@ -171,7 +171,7 @@ def arm_student_eval(cfg, out: Path, seed: int, dry: bool):
     from exp.v16 import tasks_and_sources
     kind = cfg['kind']
     student_dir = Path(cfg.get('student_dir') or
-                       (OUT / kind / f'{kind}_s{cfg.get("load_seed", 0)}'))
+                       (OUT / f'P2_{kind}_train'))
     if dry:
         return {'ok': True}
     ck = torch.load(student_dir / 'student.pt', map_location='cpu',
@@ -270,6 +270,7 @@ def arm_h2(cfg, out: Path, seed: int, dry: bool):
             rgb = decode_s10(dec, z, batch=len(z)).clamp(0, 1)
             return signed_gain(rgb, tid, target_rms)
         summary, _ = evaluate_arm(cfg['arm_id'], op, tau0=.7,
+                                  output_rgb=True,
                                   extra_meta={'h2_kind': 'analytic_signed'})
         return {'ok': True, 'summary': summary}
     if kind in ('H3', 'H4'):
@@ -381,6 +382,7 @@ def arm_h2_eval(cfg, out: Path, seed: int, dry: bool):
         return idwt2(bands['LL2'], bands['H2'] + delta, bands['H1']) \
             .clamp(0, 1)
     summary, _ = evaluate_arm(cfg['arm_id'], op, tau0=.7,
+                              output_rgb=True,
                               extra_meta={'h2_kind': kind,
                                           'variant': variant})
     return {'ok': True, 'summary': summary}
@@ -496,6 +498,7 @@ def arm_combo(cfg, out: Path, seed: int, dry: bool):
         return m(z, tid, tau).float()
 
     summary, _ = evaluate_arm(cfg['arm_id'], op, tau0=.7,
+                              output_rgb=True,
                               extra_meta={'parts': parts})
     return {'ok': True, 'summary': summary}
 

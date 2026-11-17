@@ -25,6 +25,12 @@ def load_pairs(variant: str):
                       map_location='cpu', weights_only=False)
 
 
+def _canon_pid(pid):
+    import unicodedata as _u
+    return _u.normalize('NFC', str(pid).replace('\\', '/')
+                        .split('/')[-1].split('__')[-1]).casefold()
+
+
 def train_student(kind: str, pairs_path: Path, out_dir: Path, *,
                   updates=12000, micro=8, accum=4, seed=20261117,
                   dino_tokens_path=None, lr=3e-4):
@@ -44,8 +50,16 @@ def train_student(kind: str, pairs_path: Path, out_dir: Path, *,
         cache = torch.load(cpath, map_location='cpu', weights_only=False)
         tokens = cache['tokens']['train']['tokens'].float()
         ho_tokens = cache['tokens']['holdout']['tokens'].float()
-        tok_map = {pid: i for i, pid in enumerate(cache['tokens']['train']['ids'])}
-        ho_map = {pid: i for i, pid in enumerate(cache['tokens']['holdout']['ids'])}
+        # Always key by canonical painting id: pair sampling seeds differ
+        # across teacher variants, so literal ids may not match the cache.
+        def _canon(pid):
+            import unicodedata as _u
+            return _u.normalize('NFC', str(pid).replace('\\', '/')
+                                .split('/')[-1].split('__')[-1]).casefold()
+        tok_map = {_canon(pid): i for i, pid in
+                   enumerate(cache['tokens']['train']['ids'])}
+        ho_map = {_canon(pid): i for i, pid in
+                  enumerate(cache['tokens']['holdout']['ids'])}
 
     tr = pairs['train']
     ho = pairs.get('holdout') or pairs.get('calib')
@@ -76,8 +90,9 @@ def train_student(kind: str, pairs_path: Path, out_dir: Path, *,
             dtok = None
             if tokens is not None:
                 # pairs were built with repeat_interleave(5): row // 5 = source
-                row_src = torch.tensor([tok_map[tr['source_ids'][int(i)]]
-                                        for i in (idx // 5).tolist()])
+                row_src = torch.tensor([
+                    tok_map[_canon_pid(tr['source_ids'][int(i)])]
+                    for i in (idx // 5).tolist()])
                 dtok = tokens[row_src].cuda()
             with autocast():
                 delta, norm_scale, mask_logits = call_student(
@@ -149,7 +164,7 @@ def holdout_fit(net, ho, kind, ho_tokens=None, ho_map=None, batch=16):
             dtok = None
             if ho_tokens is not None:
                 row_src = torch.tensor([
-                    ho_map[ho['source_ids'][int(r)]] for r in
+                    ho_map[_canon_pid(ho['source_ids'][int(r)])] for r in
                     (rows // 5).tolist()])
                 dtok = ho_tokens[row_src].cuda()
             with autocast():

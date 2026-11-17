@@ -53,15 +53,17 @@ def make_latents(op, tasks, source, device='cuda', batch=32):
 
 def evaluate_arm(name: str, op, *, tau0=TAU_EVAL, steps=20, device='cuda',
                  batch=32, measured_root: Path | None = None,
-                 extra_meta: dict | None = None, out_root: Path | None = None):
-    """Generate + decode + measure one arm.  Returns (summary, done_path)."""
+                 extra_meta: dict | None = None, out_root: Path | None = None,
+                 output_rgb=False):
+    """Generate + decode + measure one arm.  Returns (summary, done_path).
+    output_rgb=True: op() returns already-decoded RGB [0,1] (e.g. H2 arms)."""
     from src.utils import load_s10_decoder, decode_s10
     from exp.v16 import load_base
     tasks, source = tasks_and_sources()
     out_root = out_root or (OUT / 'raw')
     raw = out_root / name
-    model, _ = load_base()
-    decoder = load_s10_decoder(device)
+    model, _ = load_base() if not output_rgb else (None, None)
+    decoder = load_s10_decoder(device) if not output_rgb else None
     writer = RawWriter.__new__(RawWriter)
     writer.path = raw
     writer.path.mkdir(parents=True, exist_ok=True)
@@ -75,9 +77,14 @@ def evaluate_arm(name: str, op, *, tau0=TAU_EVAL, steps=20, device='cuda',
         sid = torch.tensor([t['source_style_id'] for t in group], device=device)
         tid = torch.tensor([t['target_style_id'] for t in group], device=device)
         with torch.no_grad():
-            z = op(group, source[sl].to(device), sid, tid, eps[sl].to(device))
-            rgb = decode_s10(decoder, z, batch=1)
-        writer.append([t['task_id'] for t in group], rgb, z)
+            out = op(group, source[sl].to(device), sid, tid, eps[sl].to(device))
+            if output_rgb:
+                rgb = out
+                z_lat = torch.zeros(len(sl), 4, 64, 64)
+            else:
+                z_lat = out
+                rgb = decode_s10(decoder, z_lat, batch=1)
+        writer.append([t['task_id'] for t in group], rgb, z_lat)
     meta = {'kind': 'v17', 'arm': name, 'tau0': tau0, 'steps': steps,
             'noise_seed': EVAL_SEED, 'n_tasks': writer.n, 'batches': writer.batches,
             'wall_sec': time.time() - t0, **(extra_meta or {})}
