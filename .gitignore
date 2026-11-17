@@ -58,6 +58,7 @@ exp/*
 !exp/v16/
 !exp/v17/
 !exp/v18/
+!exp/v19/
 experiments/
 state/
 archives/
@@ -105,6 +106,8 @@ wandb/
 *.bbl
 *.synctex.gz
 *.bkp
+docs/icme2027/*.log
+docs/icme2027/*.out
 aaai2027_v4/_minted-*/
 
 # ============ Temp / scratch ============
