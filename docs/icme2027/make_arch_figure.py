@@ -102,7 +102,7 @@ def draw_thumb(ax, img_arr: np.ndarray, x: float, y: float, w: float, h: float, 
 def build_architecture():
     src_path = REPO / "data/test/Early_Renaissance/Early_Renaissance__benozzo-gozzoli_madonna-and-child-1485.jpg"
     tgt_path = REPO / "data/test/Ukiyo_e/Ukiyo_e__hiroshige_hakone-kosuizu.jpg"
-    out_path = REPO / "docs/performance/images/WEAVE_published_reval/Early_Renaissance_Early_Renaissance__benozzo-gozzoli_madonna-and-child-1485_to_Ukiyo_e.png"
+    out_path = REPO / "docs/performance/images/PRISM1_v2_750/Early_Renaissance__Early_Renaissance__benozzo-gozzoli_madonna-and-child-1485__Ukiyo_e.png"
 
     src_img = _load_crop_square(src_path, 256)
     tgt_img = _load_crop_square(tgt_path, 256)
@@ -128,16 +128,16 @@ def build_architecture():
 
     # Three cream cards inside Top Bar
     rbox(ax, 1.95, 5.31, 3.85, 0.92, fc="#FEF9E7", ec="#D4AC0D", lw=1.2, rad=0.10, zorder=4)
-    ax.text(3.875, 5.95, "Antisymmetric Style Chord", ha="center", va="center", fontsize=9.5, weight="bold", color="#182A42", zorder=5)
-    ax.text(3.875, 5.56, r"$e_{s\to t} = u_{y_t} - u_{y_s}\;\;(e_{s\to s}\equiv \mathbf{0})$", ha="center", va="center", fontsize=9.3, color="#34495E", zorder=5)
+    ax.text(3.875, 5.95, "Universal Source-Free Chord", ha="center", va="center", fontsize=9.4, weight="bold", color="#182A42", zorder=5)
+    ax.text(3.875, 5.56, r"$e(x_s\!\to\!\tau) = u_\tau - \phi(\Pi_\parallel(x_s))$", ha="center", va="center", fontsize=9.1, color="#34495E", zorder=5)
 
     rbox(ax, 6.02, 5.31, 4.10, 0.92, fc="#FEF9E7", ec="#D4AC0D", lw=1.2, rad=0.10, zorder=4)
-    ax.text(8.07, 5.95, "Holdout Prior Calibration", ha="center", va="center", fontsize=9.5, weight="bold", color="#182A42", zorder=5)
-    ax.text(8.07, 5.56, r"$\tilde{f}(z)=f_\psi(z)-\hat{b}_{\mathrm{ho}}\;\;(\mathrm{rescues\ minority\ styles})$", ha="center", va="center", fontsize=9.0, color="#34495E", zorder=5)
+    ax.text(8.07, 5.95, "Un-Normalized VGG+Oklab Critic", ha="center", va="center", fontsize=9.3, weight="bold", color="#182A42", zorder=5)
+    ax.text(8.07, 5.56, r"$\tilde{f}(\mathcal{D}_\star(z))\;\;(\mathrm{rescues\ Ukiyo\text{-}e:\ } 45.0\%)$", ha="center", va="center", fontsize=8.8, color="#34495E", zorder=5)
 
     rbox(ax, 10.34, 5.31, 3.65, 0.92, fc="#FEF9E7", ec="#D4AC0D", lw=1.2, rad=0.10, zorder=4)
-    ax.text(12.165, 5.95, "Local Patch-Energy Bank", ha="center", va="center", fontsize=9.5, weight="bold", color="#182A42", zorder=5)
-    ax.text(12.165, 5.56, r"$\mathcal{E}_{\mathrm{loc}}(z, y_t)\;\;+\;\;\mathrm{SPD\ Metric\ } H_\omega$", ha="center", va="center", fontsize=9.1, color="#34495E", zorder=5)
+    ax.text(12.165, 5.95, "Anisotropic Luma-Chroma Split", ha="center", va="center", fontsize=9.3, weight="bold", color="#182A42", zorder=5)
+    ax.text(12.165, 5.56, r"$\mathbb{R}^4 = \mathrm{span}(\hat{w}_Y)\oplus\hat{w}_Y^\perp,\;\;\rho_C\gg\rho_Y$", ha="center", va="center", fontsize=8.9, color="#34495E", zorder=5)
 
     arrow(ax, 1.33, 5.76, 1.73, 5.76, col="#1B6CA8", lw=1.5)
 
@@ -192,28 +192,28 @@ def build_architecture():
 
     # ---- Upper Sub-Container: PRISM-1 (Warm Peach/Orange) ----
     rbox(ax, 6.64, 3.26, 7.90, 1.32, fc="#FDEBD0", ec="#CA6F1E", lw=1.5, rad=0.12, zorder=3)
-    ax.text(6.78, 4.41, r"Mode A: PRISM-1 ($0.44\mathrm{M},\;28.5\,\mathrm{ms},\;1\mathrm{-step}$)",
-            ha="left", va="center", fontsize=9.2, weight="bold", color="#873600", zorder=5)
+    ax.text(6.78, 4.41, r"Mode A: PRISM-1 ($1.5\mathrm{M},\;17\,\mathrm{ms},\;44.3\%\mathrm{-}50.2\%$ Top-1)",
+            ha="left", va="center", fontsize=9.1, weight="bold", color="#873600", zorder=5)
 
     rbox(ax, 6.78, 3.40, 2.15, 0.80, fc="#FFFDF9", ec="#DC7633", lw=1.1, rad=0.08, zorder=4)
-    ax.text(7.855, 3.96, "Multi-Scale Fusion Stem", ha="center", va="center", fontsize=8.5, weight="bold", color="#182A42", zorder=5)
-    ax.text(7.855, 3.60, r"$\mathrm{Conv}([z_0,\mathcal{C}_1,C_{64}])+\mathrm{Up}(\tilde{P}_{16})$", ha="center", va="center", fontsize=8.1, color="#34495E", zorder=5)
+    ax.text(7.855, 3.96, "Semantic-Chord Router", ha="center", va="center", fontsize=8.5, weight="bold", color="#182A42", zorder=5)
+    ax.text(7.855, 3.60, r"$\tilde{P}_{16}(u)\otimes e\to(\Gamma_{64}, B_{64})$", ha="center", va="center", fontsize=8.2, color="#34495E", zorder=5)
 
     rbox(ax, 9.18, 3.40, 2.48, 0.80, fc="#FAD7A0", ec="#BA4A00", lw=1.2, rad=0.08, zorder=4)
-    ax.text(10.42, 3.96, r"$4\times$ Width-80 AdaGN Blocks", ha="center", va="center", fontsize=8.6, weight="bold", color="#6E2C00", zorder=5)
-    ax.text(10.42, 3.60, r"$h \leftarrow h + \Phi(h\cdot(1+\gamma(e))+\beta(e))$", ha="center", va="center", fontsize=8.0, color="#6E2C00", zorder=5)
+    ax.text(10.42, 3.96, r"$6\times$ Dilated Spatial Blocks", ha="center", va="center", fontsize=8.6, weight="bold", color="#6E2C00", zorder=5)
+    ax.text(10.42, 3.60, r"$h \leftarrow h + \Phi(h\cdot(1+\Gamma_{64})+B_{64})$", ha="center", va="center", fontsize=8.0, color="#6E2C00", zorder=5)
 
     rbox(ax, 11.92, 3.40, 2.46, 0.80, fc="#FDEDEC", ec="#C0392B", lw=1.25, rad=0.08, zorder=4)
-    ax.text(13.15, 3.96, "Diagonal Identity Gate", ha="center", va="center", fontsize=8.6, weight="bold", color="#922B21", zorder=5)
-    ax.text(13.15, 3.59, r"$\hat{z} = z_0 + \mathbb{I}[y_t\neq y_s]\cdot\Delta_\theta$", ha="center", va="center", fontsize=8.5, weight="bold", color="#922B21", zorder=5)
+    ax.text(13.15, 3.96, "Continuous Norm Gate", ha="center", va="center", fontsize=8.6, weight="bold", color="#922B21", zorder=5)
+    ax.text(13.15, 3.59, r"$\hat{z} = z_0^\perp + \lambda\tanh^2(\|e\|/\sigma)\Delta_\theta$", ha="center", va="center", fontsize=8.2, weight="bold", color="#922B21", zorder=5)
 
     arrow(ax, 8.93, 3.80, 9.16, 3.80, col="#873600", lw=1.3)
     arrow(ax, 11.66, 3.80, 11.90, 3.80, col="#873600", lw=1.3)
 
     # ---- Lower Sub-Container: PRISM-Pro (Sage Green) ----
     rbox(ax, 6.64, 1.76, 7.90, 1.32, fc="#E8F6EF", ec="#1E8449", lw=1.5, rad=0.12, zorder=3)
-    ax.text(6.78, 2.91, r"Mode B: PRISM-Pro (Prior-Calibrated Bidirectional SPD Solver, $M=3,\;38.0\%$ Top-1)",
-            ha="left", va="center", fontsize=9.1, weight="bold", color="#145A32", zorder=5)
+    ax.text(6.78, 2.91, r"Mode B: PRISM-Pro (Anisotropic S10-VGG Bidirectional Solver, $59.0\%$ Top-1)",
+            ha="left", va="center", fontsize=9.0, weight="bold", color="#145A32", zorder=5)
 
     rbox(ax, 6.78, 1.90, 2.52, 0.80, fc="#FFFFFF", ec="#27AE60", lw=1.1, rad=0.08, zorder=4)
     ax.text(8.04, 2.46, "Bidirectional Margin Grad", ha="center", va="center", fontsize=8.5, weight="bold", color="#182A42", zorder=5)

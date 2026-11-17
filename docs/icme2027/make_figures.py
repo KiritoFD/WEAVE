@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Generate standalone ICME 2027 figures for PRISM (centralized modular naming)."""
+"""Generate standalone ICME 2027 quantitative figures for PRISM (V19 Orthogonal Quotient-Fiber Duality)."""
 from __future__ import annotations
 
 from pathlib import Path
-import textwrap
 
 import matplotlib
 matplotlib.use("Agg")
@@ -19,6 +18,8 @@ FIG_DIR = ICME_DIR / "figures"
 METHOD = "PRISM"
 PRO_NAME = "PRISM-Pro (Ours)"
 FAST_NAME = "PRISM-1 (Ours)"
+SHOT_NAME = "PRISM-1 (1-Shot)"
+STRONG_NAME = "PRISM-1 (λ=1.3)"
 DEC_NAME = "PRISM-Dec (Pruned)"
 
 INK = "#182A42"
@@ -57,17 +58,16 @@ EXTERNAL_PTS = [
 ]
 
 OURS_PTS = [
-    (PRO_NAME,                    0.7428, 0.5674, 38.00, 0.5018, 115.0, "flagship"),
-    (FAST_NAME,                   0.7793, 0.5606, 33.83, 0.4806,  28.5, "flagship"),
-    ("Unbiased Critic (w/o Src)", 0.7718, 0.5615, 35.17, 0.4872, 105.0, "ablation"),
-    ("2-Step SPD Critic",         0.7715, 0.5605, 32.83, 0.4904,  74.0, "ablation"),
+    (PRO_NAME,                    0.6783, 0.5791, 59.00, 0.5166, 137.1, "flagship"),
+    (STRONG_NAME,                 0.7032, 0.5705, 50.17, 0.5338,  17.0, "flagship"),
+    (SHOT_NAME,                   0.7362, 0.5664, 45.50, 0.5111,  17.0, "flagship"),
+    (FAST_NAME,                   0.7440, 0.5655, 44.33, 0.5057,  17.0, "flagship"),
+    ("PRISM-1 (λ=0.75)",          0.7715, 0.5610, 37.33, 0.4848,  17.2, "ablation"),
+    ("Latent Critic (R1)",        0.7428, 0.5674, 38.00, 0.5018, 115.0, "ablation"),
     ("1-Step Canonical Base",     0.8152, 0.5483, 22.20, 0.4396,  21.0, "ablation"),
     ("De-Styled Flow (τ0=0)",     0.7222, 0.5668, 18.67, 0.4549,  44.8, "ablation"),
-    ("SDEdit+DINO Stu (τ0=0.7)",  0.7386, 0.5766, 13.33, 0.2845,  88.0, "ablation"),
     ("Self-Paired 3.2M",          0.7506, 0.5692, 10.67, 0.2700,  72.0, "scale"),
-    ("Self-Paired 4.1M",          0.7767, 0.5633,  9.50, 0.2421,  86.0, "scale"),
     ("Self-Paired 8.9M",          0.7920, 0.5584,  8.00, 0.2314, 122.0, "scale"),
-    ("Self-Paired 15.5M",         0.7962, 0.5571,  8.33, 0.2285, 165.0, "scale"),
     ("Self-Paired 34.2M",         0.8083, 0.5541,  6.67, 0.2210, 260.0, "scale"),
 ]
 
@@ -104,31 +104,30 @@ def _draw_throughput_key(ax, K: float):
     )
     ax.add_patch(rect)
     ax.text(box_x + box_w / 2, box_y + box_h - 0.018,
-            "Bubble area ∝ GPU throughput (RTX 3060)",
+            "Bubble area ∝ GPU throughput (img/s)",
             transform=ax.transAxes, ha="center", va="top",
             fontsize=8.9, weight="bold", color=INK, zorder=17)
     xs_ax = [0.612, 0.698, 0.798, 0.918]
-    sp_vals = [1, 5, 15, 35]
+    sp_vals = [1, 8, 25, 58]
     for x_pos, v in zip(xs_ax, sp_vals):
-        ax.scatter([x_pos], [box_y + 0.084], s=min(800.0, K * v),
+        ax.scatter([x_pos], [box_y + 0.084], s=min(820.0, K * v),
                    transform=ax.transAxes, marker="o",
                    fc="#DCE4EC", ec="#7F95AB", lw=1.1, zorder=17)
         ax.text(x_pos, box_y + 0.008, f"{v} img/s",
                 transform=ax.transAxes, ha="center", va="bottom",
-                fontsize=8.1, color=MUTED, zorder=18)
+                fontsize=8.0, color=MUTED, zorder=18)
 
 
 def plot_fig1_pareto_zoom():
     x0 = 0.58
     ext = [p for p in EXTERNAL_PTS if p[1] >= x0]
     ours = [p for p in OURS_PTS if p[1] >= x0]
-    K = 44.0
-    area_fn = lambda ms: max(24.0, min(1650.0, K * (1000.0 / ms)))
+    K = 15.0
+    area_fn = lambda ms: max(22.0, min(920.0, K * (1000.0 / ms)))
 
     ext_front = pareto_2d(ext, 1, 2)
     ext_front_names = {p[0] for p in ext_front}
-    comb_front = pareto_2d(ext + [p for p in ours if p[6] != "scale" and "SDEdit" not in p[0]], 1, 2)
-    comb_names = {p[0] for p in comb_front}
+    comb_front = pareto_2d(ext + [p for p in ours if p[6] != "scale"], 1, 2)
 
     fig = plt.figure(figsize=(11.5, 7.6), facecolor=BG)
     ax = fig.add_axes([0.085, 0.215, 0.880, 0.635], facecolor=BG)
@@ -155,7 +154,7 @@ def plot_fig1_pareto_zoom():
     ax.fill_between([p[1] for p in ext_front], [p[2] for p in ext_front], 0.480,
                     color=BLUE, alpha=0.045, zorder=1)
     ax.plot([p[1] for p in comb_front], [p[2] for p in comb_front],
-            color=CRIMSON, lw=2.3, ls="-", alpha=0.78, zorder=4)
+            color=CRIMSON, lw=2.3, ls="-", alpha=0.80, zorder=4)
 
     for p in ext:
         hit = p[0] in ext_front_names
@@ -165,13 +164,11 @@ def plot_fig1_pareto_zoom():
                    alpha=0.92 if hit else 0.72, zorder=6)
 
     for p in ours:
-        if "SDEdit" in p[0]:
-            continue
         is_flag = p[6] == "flagship"
         is_scale = p[6] == "scale"
         s_val = area_fn(p[5])
         if is_flag:
-            fc, ec, lw, zo = CRIMSON, "#59080C", 2.1, 11
+            fc, ec, lw, zo = CRIMSON, "#59080C", 2.0, 11
         elif is_scale:
             fc, ec, lw, zo = "#B69CE8", PURPLE, 1.0, 5
         else:
@@ -182,17 +179,17 @@ def plot_fig1_pareto_zoom():
     ax.plot([p[1] for p in sc_pts], [p[2] for p in sc_pts], color=PURPLE, lw=1.5, ls=":", zorder=6)
 
     lbls = {
-        "AesPA-Net":              (0.618, 0.595, "left", INK),
-        "StyTr2":                 (0.668, 0.519, "right", INK),
+        "AesPA-Net":              (0.605, 0.596, "left", INK),
+        "StyTr2":                 (0.665, 0.518, "right", INK),
         "Seedream 4.5":           (0.718, 0.512, "right", INK),
         "SaMam":                  (0.818, 0.503, "right", INK),
         "CUT":                    (0.858, 0.523, "left", INK),
         "Hist2Style":             (0.916, 0.522, "left", INK),
         "SD-Turbo":               (0.985, 0.483, "right", MUTED),
-        PRO_NAME:                 (0.735, 0.594, "center", CRIMSON),
-        FAST_NAME:                (0.815, 0.576, "left", CRIMSON),
+        PRO_NAME:                 (0.665, 0.603, "center", CRIMSON),
+        STRONG_NAME:              (0.708, 0.592, "left", CRIMSON),
+        FAST_NAME:                (0.790, 0.580, "left", CRIMSON),
         "1-Step Canonical Base":  (0.852, 0.556, "left", CORAL_DARK),
-        "De-Styled Flow (τ0=0)":  (0.688, 0.580, "right", CORAL_DARK),
         "Self-Paired 34.2M":      (0.835, 0.538, "left", PURPLE),
     }
     for p in ext + ours:
@@ -200,7 +197,7 @@ def plot_fig1_pareto_zoom():
             tx, ty, ha, col = lbls[p[0]]
             ann = ax.annotate(
                 p[0], xy=(p[1], p[2]), xytext=(tx, ty), ha=ha, va="center",
-                fontsize=9.4, color=col, weight="bold",
+                fontsize=9.3, color=col, weight="bold",
                 arrowprops=dict(arrowstyle="-", lw=0.95, color=col, alpha=0.65, shrinkA=2, shrinkB=4),
                 zorder=15,
             )
@@ -211,13 +208,13 @@ def plot_fig1_pareto_zoom():
     fig.text(0.085, 0.952, f"{METHOD} × STYLE × CONTENT × SPEED",
              fontsize=17.5, weight="bold", color=INK, va="top")
     fig.text(0.085, 0.900,
-             "600 Cross-Style Pairs · Unified Pruned-Decoder Referee · Bubble Area ∝ Throughput",
+             "600 Cross-Style Pairs · Source-Label-Free Universal Chord · Bubble Area ∝ Throughput",
              fontsize=9.8, color=MUTED, va="top")
-    fig.text(0.965, 0.954, "35.1 img/s", ha="right", va="top", fontsize=19.5, color=CRIMSON, weight="bold")
-    fig.text(0.965, 0.900, f"{METHOD}-1 (0.66M, 28.5 ms)", ha="right", va="top", fontsize=9.0, color=MUTED)
+    fig.text(0.965, 0.954, "58.7 img/s", ha="right", va="top", fontsize=19.5, color=CRIMSON, weight="bold")
+    fig.text(0.965, 0.900, f"{METHOD}-1 (1.5M, 17.0 ms, 44.3% Top-1)", ha="right", va="top", fontsize=8.8, color=MUTED)
 
     cat_handles = [
-        Line2D([], [], marker="o", ls="none", ms=8.8, mfc=CRIMSON, mec="#59080C", label=f"{METHOD}-Pro / {METHOD}-1 (Ours)"),
+        Line2D([], [], marker="o", ls="none", ms=8.8, mfc=CRIMSON, mec="#59080C", label=f"{METHOD}-Pro (59.0%) / {METHOD}-1 (44.3–50.2%)"),
         Line2D([], [], marker="o", ls="none", ms=8.2, mfc=CORAL, mec=CORAL_DARK, label="Controlled Transport Ablations"),
         Line2D([], [], marker="o", ls="none", ms=8.0, mfc="#B69CE8", mec=PURPLE, label="Self-Paired Scaling (3.2M→34.2M)"),
         Line2D([], [], marker="o", ls="none", ms=8.0, mfc=BLUE, mec="white", label="Published / Commercial Baselines"),
@@ -225,7 +222,7 @@ def plot_fig1_pareto_zoom():
         Line2D([], [], color=BLUE, ls=(0, (5, 3)), lw=2.0, label="External-Only Frontier"),
     ]
     fig.legend(handles=cat_handles, bbox_to_anchor=(0.085, 0.045), loc="lower left",
-               ncol=2, frameon=False, fontsize=8.9, columnspacing=1.5)
+               ncol=2, frameon=False, fontsize=8.8, columnspacing=1.4)
 
     _save(fig, "fig1_prism_pareto")
 
@@ -278,23 +275,23 @@ def plot_fig2_three_paradoxes():
 
     # (c) Counterfactual Causal Specificity Ladder
     ax = axes[2]
-    arms_c = ["Post-Hoc\nSubband", "SDEdit Stu\n(τ0=0.7)", "De-Styled\nFlow (τ0=0)", f"{METHOD}-1\n(Ours)"]
-    corr_v = [12.33, 11.67, 15.00, 33.83]
-    wrong_v = [13.00, 10.67, 5.17, 1.33]
+    arms_c = ["Post-Hoc\nSubband", "De-Styled\nFlow (τ0=0)", f"{METHOD}-1\n(17 ms)", f"{METHOD}-Pro\n(Ours)"]
+    corr_v = [12.33, 15.00, 44.33, 59.00]
+    wrong_v = [13.00, 5.17, 0.83, 0.83]
     xc = np.arange(4)
     w_c = 0.34
     b_c = ax.bar(xc - w_c/2, corr_v, w_c, color=CRIMSON, edgecolor=INK, lw=0.9, label="True Target Label")
     b_w = ax.bar(xc + w_c/2, wrong_v, w_c, color=GREY, edgecolor=INK, lw=0.9, label="Counterfactual Wrong ID")
     for bar, val in zip(b_c, corr_v):
-        ax.text(bar.get_x() + bar.get_width()*0.40, val + 0.85, f"{val:.1f}%", ha="center", va="bottom", fontsize=7.9, weight="bold", color=CRIMSON)
+        ax.text(bar.get_x() + bar.get_width()*0.40, val + 0.9, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.0, weight="bold", color=CRIMSON)
     for bar, val in zip(b_w, wrong_v):
-        ax.text(bar.get_x() + bar.get_width()*0.62, val + 0.85, f"{val:.1f}%", ha="center", va="bottom", fontsize=7.9, weight="bold", color=MUTED)
-    ax.annotate("+32.5pp Causal\nSpecificity!", xy=(3 - w_c/2 - 0.04, 31.0), xytext=(1.35, 27.5),
-                fontsize=8.8, weight="bold", color=CRIMSON, ha="center",
+        ax.text(bar.get_x() + bar.get_width()*0.62, val + 0.9, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.0, weight="bold", color=MUTED)
+    ax.annotate("+43.5pp Single-Step\nCausal Specificity!", xy=(2 - w_c/2 - 0.03, 41.0), xytext=(0.95, 36.5),
+                fontsize=8.6, weight="bold", color=CRIMSON, ha="center",
                 arrowprops=dict(arrowstyle="->", color=CRIMSON, lw=1.4))
     ax.set_xticks(xc)
     ax.set_xticklabels(arms_c, fontsize=8.6, weight="bold", color=INK)
-    ax.set_ylim(0, 43)
+    ax.set_ylim(0, 68)
     ax.set_title("(c) Counterfactual Specificity Audit", fontsize=10.6, weight="bold", color=INK, pad=10)
     ax.legend(frameon=False, fontsize=8.5, loc="upper left")
 
@@ -306,8 +303,8 @@ def plot_fig4_specificity_frontier():
     x0 = 0.58
     ext = [p for p in EXTERNAL_PTS if p[1] >= x0]
     ours = [p for p in OURS_PTS if p[1] >= x0]
-    K = 44.0
-    area_fn = lambda ms: max(24.0, min(1650.0, K * (1000.0 / ms)))
+    K = 15.0
+    area_fn = lambda ms: max(22.0, min(920.0, K * (1000.0 / ms)))
 
     ext_front = pareto_2d(ext, 1, 3)
     ext_front_names = {p[0] for p in ext_front}
@@ -317,7 +314,7 @@ def plot_fig4_specificity_frontier():
     fig = plt.figure(figsize=(11.5, 7.6), facecolor=BG)
     ax = fig.add_axes([0.085, 0.215, 0.880, 0.635], facecolor=BG)
     ax.set_xlim(x0, 1.02)
-    ax.set_ylim(-2.0, 48.0)
+    ax.set_ylim(-2.0, 66.0)
 
     ax.set_axisbelow(True)
     ax.grid(color=GRID, lw=0.95)
@@ -331,14 +328,14 @@ def plot_fig4_specificity_frontier():
                   fontsize=11.8, weight="bold", color=INK, labelpad=8)
 
     ax.axhline(20.0, color="#7F8C8D", lw=1.1, ls=":", alpha=0.75, zorder=2)
-    ax.text(1.015, 20.7, "5-class uniform chance (20%)", fontsize=8.6, color="#7F8C8D", ha="right", style="italic")
+    ax.text(1.015, 21.0, "5-class uniform chance (20%)", fontsize=8.6, color="#7F8C8D", ha="right", style="italic")
 
     ax.plot([p[1] for p in ext_front], [p[3] for p in ext_front],
             color=BLUE, lw=2.0, ls=(0, (5, 3)), zorder=3)
     ax.fill_between([p[1] for p in ext_front], [p[3] for p in ext_front], -2.0,
                     color=BLUE, alpha=0.04, zorder=1)
     ax.plot([p[1] for p in comb_front], [p[3] for p in comb_front],
-            color=CRIMSON, lw=2.3, ls="-", alpha=0.75, zorder=4)
+            color=CRIMSON, lw=2.3, ls="-", alpha=0.78, zorder=4)
 
     for p in ext:
         hit = p[0] in ext_front_names
@@ -362,39 +359,32 @@ def plot_fig4_specificity_frontier():
             fc, ec, lw, zo = CORAL_SOFT, "#D98F80", 1.0, 5
         ax.scatter(p[1], p[3], s=s_val, marker="o", fc=fc, ec=ec, lw=lw, alpha=0.92, zorder=zo)
 
-    ax.annotate("", xy=(0.7815, 33.4), xytext=(0.8135, 22.8),
-                arrowprops=dict(arrowstyle="->,head_width=0.4,head_length=0.55", lw=2.5, color=CRIMSON), zorder=12)
-    t_s = ax.text(0.832, 27.6, "+11.63pp Single-Step Leap!\n(Whitened DINO + u_t−u_s,\nwrong-ID = 1.33%)",
-                  fontsize=8.6, color=CRIMSON, weight="bold", ha="left", va="center")
+    ax.annotate("", xy=(0.746, 43.8), xytext=(0.812, 23.0),
+                arrowprops=dict(arrowstyle="->,head_width=0.4,head_length=0.55", lw=2.4, color=CRIMSON), zorder=12)
+    t_s = ax.text(0.822, 31.5, "+22.1pp Single-Step Leap!\n(Universal Chord + Spatial Router,\nwrong-ID = 0.83%)",
+                  fontsize=8.5, color=CRIMSON, weight="bold", ha="left", va="center")
     t_s.set_path_effects([pe.withStroke(linewidth=3, foreground=BG)])
 
-    ax.annotate("", xy=(0.8083, 6.67), xytext=(0.7506, 10.67),
-                arrowprops=dict(arrowstyle="->,head_width=0.35,head_length=0.5", lw=2.0, color=PURPLE, ls="--"), zorder=12)
-    t_p = ax.text(0.665, 4.8, "Self-Paired Scaling (3.2M→34.2M)\nworsens source-lock (10.7%→6.7%)",
-                  fontsize=8.4, color=PURPLE, weight="bold", ha="left", va="top")
-    t_p.set_path_effects([pe.withStroke(linewidth=3, foreground=BG)])
-
     lbls = {
-        "StyTr2":                     (0.675, 41.8, "right", INK),
-        "AesPA-Net":                  (0.608, 34.2, "left", INK),
-        "Seedream 4.5":               (0.702, 34.8, "right", INK),
+        "StyTr2":                     (0.665, 38.5, "right", INK),
+        "AesPA-Net":                  (0.605, 26.5, "left", MUTED),
+        "Seedream 4.5":               (0.700, 32.5, "right", INK),
         "SaMam":                      (0.824, -0.3, "center", MUTED),
-        "CUT":                        (0.858,  7.8, "left", MUTED),
-        "Hist2Style":                 (0.920, 14.5, "left", INK),
-        "SD-Turbo":                   (0.985,  3.2, "right", MUTED),
-        PRO_NAME:                     (0.742, 42.8, "center", CRIMSON),
-        "Unbiased Critic (w/o Src)":  (0.718, 29.5, "right", CORAL_DARK),
-        FAST_NAME:                    (0.822, 34.4, "left", CRIMSON),
-        "1-Step Canonical Base":      (0.848, 21.5, "left", CORAL_DARK),
-        "De-Styled Flow (τ0=0)":      (0.692, 20.8, "right", CORAL_DARK),
-        "SDEdit+DINO Stu (τ0=0.7)":   (0.702, 14.2, "right", CORAL_DARK),
+        "CUT":                        (0.858,  8.2, "left", MUTED),
+        "Hist2Style":                 (0.920, 15.2, "left", INK),
+        PRO_NAME:                     (0.640, 60.5, "center", CRIMSON),
+        STRONG_NAME:                  (0.665, 51.5, "right", CRIMSON),
+        SHOT_NAME:                    (0.790, 48.0, "left", CRIMSON),
+        FAST_NAME:                    (0.802, 42.5, "left", CRIMSON),
+        "1-Step Canonical Base":      (0.848, 22.0, "left", CORAL_DARK),
+        "De-Styled Flow (τ0=0)":      (0.688, 16.5, "right", CORAL_DARK),
     }
     for p in ext + ours:
         if p[0] in lbls:
             tx, ty, ha, col = lbls[p[0]]
             ann = ax.annotate(
                 p[0], xy=(p[1], p[3]), xytext=(tx, ty), ha=ha, va="center",
-                fontsize=9.1, color=col, weight="bold",
+                fontsize=9.0, color=col, weight="bold",
                 arrowprops=dict(arrowstyle="-", lw=0.9, color=col, alpha=0.6, shrinkA=2, shrinkB=4),
                 zorder=15,
             )
@@ -405,13 +395,13 @@ def plot_fig4_specificity_frontier():
     fig.text(0.085, 0.952, f"{METHOD} × SPECIFICITY (CSD TOP-1) × CONTENT × SPEED",
              fontsize=17.0, weight="bold", color=INK, va="top")
     fig.text(0.085, 0.900,
-             "5-Way Target Classification vs. Content Preservation · Breaking Past Seedream 4.5 & StyTr2",
-             fontsize=9.8, color=MUTED, va="top")
-    fig.text(0.965, 0.954, "38.0% Top-1", ha="right", va="top", fontsize=19.5, color=CRIMSON, weight="bold")
-    fig.text(0.965, 0.900, f"{METHOD}-Pro beats Seedream 4.5 & 17× faster", ha="right", va="top", fontsize=9.0, color=MUTED)
+             "5-Way Target Classification · 1-Step PRISM-1 (44.3–50.2%) Beats StyTr2 & Seedream 4.5",
+             fontsize=9.6, color=MUTED, va="top")
+    fig.text(0.965, 0.954, "59.0% Top-1", ha="right", va="top", fontsize=19.5, color=CRIMSON, weight="bold")
+    fig.text(0.965, 0.900, f"{METHOD}-Pro (+21.7pp over Seedream 4.5)", ha="right", va="top", fontsize=8.8, color=MUTED)
 
     cat_handles = [
-        Line2D([], [], marker="o", ls="none", ms=8.8, mfc=CRIMSON, mec="#59080C", label=f"{METHOD}-Pro (38.0%) / {METHOD}-1 (33.8%)"),
+        Line2D([], [], marker="o", ls="none", ms=8.8, mfc=CRIMSON, mec="#59080C", label=f"{METHOD}-Pro (59.0%) / {METHOD}-1 (44.3–50.2%)"),
         Line2D([], [], marker="o", ls="none", ms=8.2, mfc=CORAL, mec=CORAL_DARK, label="Controlled Transport Ablations"),
         Line2D([], [], marker="o", ls="none", ms=8.0, mfc="#B69CE8", mec=PURPLE, label="Self-Paired Scaling (3.2M→34.2M)"),
         Line2D([], [], marker="o", ls="none", ms=8.0, mfc=BLUE, mec="white", label="Published / Commercial Baselines"),
@@ -419,7 +409,7 @@ def plot_fig4_specificity_frontier():
         Line2D([], [], color=BLUE, ls=(0, (5, 3)), lw=2.0, label="External-Only Frontier"),
     ]
     fig.legend(handles=cat_handles, bbox_to_anchor=(0.085, 0.045), loc="lower left",
-               ncol=2, frameon=False, fontsize=8.9, columnspacing=1.5)
+               ncol=2, frameon=False, fontsize=8.8, columnspacing=1.4)
 
     _save(fig, "fig4_specificity_frontier")
 
