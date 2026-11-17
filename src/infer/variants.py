@@ -509,14 +509,18 @@ def _spd_latent(spec, device):
 
 @register("student")
 def _student(spec, device):
-    """Trained corrector checkpoint produced by exp/v8 training."""
+    """Trained single-step residual adapter checkpoint over frozen start U-Net."""
     if spec.ckpt is None:
         raise ValueError("student requires --ckpt")
-    model, _ = load_c3unet(spec.ckpt, device) if spec.extra.get("start_ckpt") else (None, None)
     canon = canonicalizer(device)
     ck = torch.load(spec.ckpt, map_location="cpu", weights_only=False)
-    from exp.v8.models import build_corrector
-    corrector = build_corrector(ck).to(device).eval()
+    state = ck.get("model", ck)
+    from src.model.edit_adapter import EditResidualAdapter
+    corrector = EditResidualAdapter(
+        width=int(ck.get("width", 64)),
+        blocks=int(ck.get("blocks", 3)),
+    ).to(device).eval()
+    corrector.load_state_dict(state)
     start_ck = spec.extra.get("start_ckpt") or spec.extra.get("b4_ckpt")
     if start_ck is None:
         raise ValueError("student requires extra['start_ckpt'] for its frozen start")
@@ -524,6 +528,8 @@ def _student(spec, device):
     def gen(z, sid, tid, tasks):
         with torch.no_grad():
             z0, c = _start(base, canon, spec.canon_mode, z, tid)
-            out = corrector(c, z0, sid, tid)
+            delta = corrector(z0, c, tid)
+            same = (sid == tid).view(-1, 1, 1, 1)
+            out = torch.where(same, z, z0 + delta)
         return {"z0": z0, "final": out, "trace": []}
     return gen

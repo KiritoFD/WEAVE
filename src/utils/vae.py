@@ -68,19 +68,43 @@ def _vae_decode(vae, z: torch.Tensor) -> torch.Tensor:
 S10_DECODER = REPO / "deliver" / "checkpoints" / "runs" / "vae_decoder_prune" / "s10_p5_lowlr" / "decoder.pt"
 
 
-def load_s10_decoder(device: str = "cuda"):
-    """S10 pruned decoder (10.6M) + its bundled post_quant_conv.
+class StudentDecoder(torch.nn.Module):
+    """Bundled post_quant_conv + pruned Decoder matching AutoencoderKL.decode()."""
 
-    Protocol (2026-11): all evaluation decoding uses S10, NOT the original
-    sd-vae-ft-ema decoder. Input contract matches AutoencoderKL.decode():
-    caller passes latents / scaling_factor; output is [-1,1] float.
+    def __init__(self, post_quant_conv: torch.nn.Module, decoder: torch.nn.Module):
+        super().__init__()
+        self.post_quant_conv = post_quant_conv
+        self.decoder = decoder
+
+    def forward(self, z: torch.Tensor) -> torch.Tensor:
+        return self.decoder(self.post_quant_conv(z))
+
+
+def _build_s10_decoder(widths: list[int], layers_per_block: int = 2, norm_groups: int = 32):
+    from diffusers.models.autoencoders.vae import Decoder
+    return Decoder(
+        in_channels=4,
+        out_channels=3,
+        up_block_types=["UpDecoderBlock2D"] * 4,
+        block_out_channels=widths,
+        layers_per_block=layers_per_block,
+        norm_num_groups=norm_groups,
+        act_fn="silu",
+        mid_block_add_attention=True,
+    )
+
+
+def load_s10_decoder(device: str = "cuda"):
+    """Load S10 pruned decoder (10.66M) + bundled post_quant_conv without legacy import side effects.
+
+    Always decode scaled latents through ``decode_s10(s10, z_scaled)``, which handles
+    division by ``s10_scaling_factor()`` (0.18215) and maps [-1, 1] -> [0, 1].
     """
     import torch.nn as nn
-    from tools.vae_suite.decoder_prune import build_decoder, StudentDecoder
     ck = torch.load(S10_DECODER, map_location="cpu", weights_only=False)
     pqc = nn.Conv2d(4, 4, 1)
     pqc.load_state_dict(ck["post_quant_conv"])
-    dec = build_decoder(ck["meta"]["widths_forward"])
+    dec = _build_s10_decoder(list(ck["meta"]["widths_forward"]))
     dec.load_state_dict(ck["state_dict"])
     return StudentDecoder(pqc, dec).to(device).eval().half()
 
@@ -127,4 +151,14 @@ def decode(trt, vae, z: torch.Tensor, batch: int = DEFAULT_BATCH) -> torch.Tenso
     return decode_trt(trt, vae, torch.cat([z, pad], 0), batch=batch)[:n]
 
 
-__all__ = ["DEFAULT_BATCH", "decode", "load_trt", "load_vae"]
+__all__ = [
+    "DEFAULT_BATCH",
+    "S10_DECODER",
+    "StudentDecoder",
+    "decode",
+    "decode_s10",
+    "load_s10_decoder",
+    "load_trt",
+    "load_vae",
+    "s10_scaling_factor",
+]

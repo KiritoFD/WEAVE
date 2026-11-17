@@ -232,7 +232,7 @@ def main():
 
     # Load config for eval params
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from config_schema import load_experiment_config
+    from tools.legacy_root.config_schema import load_experiment_config
     config = load_experiment_config(args.config)
     train_cfg = config.training
 
@@ -240,7 +240,7 @@ def main():
     test_dir = Path(args.test_dir or train_cfg.test_image_dir)
     dino_cache_dir = str(args.dino_cache_dir or train_cfg.full_eval_clip_hf_cache_dir)
     eval_subdir = args.output_subdir
-    eval_script = Path(__file__).resolve().parent.parent / "utils" / "run_evaluation.py"
+    eval_script = Path(__file__).resolve().parent.parent / "tools" / "legacy_utils" / "run_evaluation.py"
 
     # Find all checkpoints
     checkpoints = sorted(ckpt_dir.glob("epoch_*.pt"))

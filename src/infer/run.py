@@ -19,6 +19,7 @@ from pathlib import Path
 import torch
 
 from . import DEFAULT_BATCH, REPO, InferSpec, build, decode_padded, load_trt, load_vae
+from src.utils.vae import decode_s10, load_s10_decoder
 
 
 def load_tasks(path: Path, limit: int = 0):
@@ -29,15 +30,18 @@ def load_tasks(path: Path, limit: int = 0):
 
 def run(spec: InferSpec, out: Path, *, tasks_file: Path, src_cache: Path,
         batch: int = DEFAULT_BATCH, limit: int = 0, decode: bool = True,
-        device: str = "cuda", resume: bool = True) -> dict:
+        device: str = "cuda", resume: bool = True, legacy_trt_vae: bool = False) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     tasks = load_tasks(tasks_file, limit)
     src = torch.load(src_cache, map_location="cpu", weights_only=False)
     gen = build(spec, device)
-    trt = vae = None
+    s10 = trt = vae = None
     if decode:
-        vae = load_vae(device)
-        trt = load_trt(vae, device)
+        if legacy_trt_vae:
+            vae = load_vae(device)
+            trt = load_trt(vae, device)
+        else:
+            s10 = load_s10_decoder(device)
 
     batches = []
     t0 = time.time()
@@ -63,7 +67,10 @@ def run(spec: InferSpec, out: Path, *, tasks_file: Path, src_cache: Path,
             }
             if decode:
                 with torch.inference_mode():
-                    rgb = decode_padded(trt, vae, result["final"].detach(), batch)
+                    if s10 is not None:
+                        rgb = decode_s10(s10, result["final"].detach(), batch=min(batch, 8))
+                    else:
+                        rgb = decode_padded(trt, vae, result["final"].detach(), batch)
                     payload["rgb_u8"] = rgb.mul(255).round().clamp(0, 255).byte().cpu()
             tmp = path.with_suffix(".tmp")
             torch.save(payload, tmp)

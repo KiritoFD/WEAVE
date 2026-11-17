@@ -12,7 +12,6 @@ import time
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 
 REPO = Path(__file__).resolve().parents[2]
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]
@@ -23,10 +22,11 @@ def _unused_feature_models(device: str):
     raise NotImplementedError("feature loading moved to src.utils.FeatureStack")
 
 
-def measure(raw_dir: Path, out: Path, *, device: str = "cpu", write_png: bool = True,
-            limit: int = 0) -> list[dict]:
+def measure(raw_dir: Path, out: Path, *, device: str = "cuda", write_png: bool = True,
+            limit: int = 0, micro_batch: int = 8) -> list[dict]:
     from .metrics import enrich_rows, summarize_rows
     from src.utils import FeatureStack, reference_bank
+    from src.utils.raw_io import save_png_batch_fast
 
     raw_dir, out = Path(raw_dir), Path(out)
     out.mkdir(parents=True, exist_ok=True)
@@ -58,10 +58,9 @@ def measure(raw_dir: Path, out: Path, *, device: str = "cpu", write_png: bool = 
         u8 = payload["rgb_u8"]
         imgs = [Image.fromarray(a) for a in u8.permute(0, 2, 3, 1).numpy()]
         if write_png:
-            for t, im in zip(group, imgs):
-                im.save(out / "images" / (t["task_id"].replace("/", "__") + ".png"))
+            save_png_batch_fast(u8, [t["task_id"] for t in group], out / "images")
 
-        feats_out = stack.extract(imgs)
+        feats_out = stack.extract(imgs, batch=micro_batch)
         df, cf, clf = feats_out["dino"], feats_out["csd"], feats_out["clip"]
         scores_by_style = []
         for style, p in zip(STYLES, rd):
@@ -74,23 +73,25 @@ def measure(raw_dir: Path, out: Path, *, device: str = "cpu", write_png: bool = 
         scores = torch.stack(scores_by_style, 1).cpu().numpy()
         cs = cf @ proto.T
         clips = (clf @ rc.T).cpu().numpy()
-        raw_rgb = torch.stack([src["raw_rgb"][t["source_stem"]] for t in group]).to(device)
-        lr = stack.lpips_vs(u8, raw_rgb).cpu().tolist()
+        raw_rgb = torch.stack([src["raw_rgb"][t["source_stem"]] for t in group])
+        lr = stack.lpips_vs(u8, raw_rgb, batch=micro_batch).cpu().tolist()
 
         for i, t in enumerate(group):
             ss, ts = t["source_style_id"], t["target_style_id"]
+            p_cls = int(cs[i].argmax())
             rows.append({
                 "task_id": t["task_id"], "src_stem": t["source_stem"],
                 "src_style": t["source_style"], "tgt_style": t["target_style"],
                 "src_style_id": int(ss), "tgt_style_id": int(ts), "is_cross": ss != ts,
+                "pred_class": p_cls,
                 "style_scores_5": scores[i].tolist(), "clip_scores_5": clips[i].tolist(),
                 "csd_scores_5": cs[i].tolist(), "dino_s": float(scores[i, ts]),
                 "dino_c": float(df[i].cpu().numpy() @ src["raw_dino"][t["source_stem"]]),
-                "lpips": float(lr[i]), "target_top1": int(cs[i].argmax() == ts),
+                "lpips": float(lr[i]), "target_top1": int(p_cls == ts),
                 "target_margin": float(cs[i, ts] - np.delete(cs[i], ts).max()),
                 "dT": float(cs[i, ts] - src["raw_csd"][t["source_stem"]] @ proto[ts]),
             })
-        feats["dino"].append(df.cpu()); feats["csd"].append(torch.tensor(cf))
+        feats["dino"].append(df.cpu()); feats["csd"].append(torch.from_numpy(cf))
         feats["clip"].append(clf.cpu())
         print(f"  measure {len(rows)} {time.time() - t0:.1f}s", flush=True)
 
@@ -109,15 +110,17 @@ def measure(raw_dir: Path, out: Path, *, device: str = "cpu", write_png: bool = 
 
 def main():
     import argparse
+    default_dev = "cuda" if torch.cuda.is_available() else "cpu"
     ap = argparse.ArgumentParser(description="Measure metrics from stored raw outputs")
     ap.add_argument("--raw", required=True, help="directory written by src.infer.run")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--device", default="cpu")
+    ap.add_argument("--device", default=default_dev)
     ap.add_argument("--no-png", action="store_true")
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--micro-batch", type=int, default=8)
     a = ap.parse_args()
     rows = measure(Path(a.raw), Path(a.out), device=a.device,
-                   write_png=not a.no_png, limit=a.limit)
+                   write_png=not a.no_png, limit=a.limit, micro_batch=a.micro_batch)
     print(f"EVAL_DONE {len(rows)} rows", flush=True)
 
 

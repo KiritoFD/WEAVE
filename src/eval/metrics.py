@@ -12,7 +12,7 @@ import numpy as np
 
 STYLES = ("Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e")
 QUALITY = ("dino_s", "dino_c", "lpips", "target_top1", "target_margin", "dT",
-           "G", "clip_s", "style_affinity", "extra_specificity")
+           "G", "clip_s", "style_affinity", "pred_eq_src", "pred_eq_imp", "extra_specificity")
 
 
 def _styles(styles=None):
@@ -47,6 +47,11 @@ def enrich_rows(rows: Iterable[Mapping], styles=None, *, require_full=False,
         r["extra_specificity"] = [float(sv[ti] - v) for j, v in enumerate(sv) if j != ti]
         r["clip_s"] = float(cv[ti])
         r["style_affinity"] = float((r["dino_s"] + r["clip_s"]) / 2.0)
+        if "pred_class" not in r and "csd_scores_5" in r and len(r["csd_scores_5"]) == 5:
+            r["pred_class"] = int(np.argmax(r["csd_scores_5"]))
+        if "pred_class" in r and "src_style_id" in r:
+            r["pred_eq_src"] = int(int(r["pred_class"]) == int(r["src_style_id"]))
+            r["pred_eq_imp"] = int(int(r["pred_class"]) == 1)
         if abs(float(sv[ti]) - float(r["dino_s"])) > 1e-6:
             raise ValueError("dino_s must equal the requested target's style score")
         out.append(r)
@@ -130,7 +135,8 @@ def summarize_rows(rows, styles=None, *, require_full=False, n_boot: int = 4000,
                 "source_ci": {k: bootstrap_source_ci([r[k] for r in group if k in r],
                                                      [r["src_stem"] for r in group if k in r],
                                                      n_boot=n_boot, seed=seed)
-                              for k in ("G", "dino_s", "dino_c", "lpips")
+                              for k in ("target_top1", "target_margin", "dT", "G",
+                                        "dino_s", "clip_s", "style_affinity", "dino_c", "lpips")
                               if all(k in r for r in group)}}
     cross = [r for r in rows if r["is_cross"]]
     same = [r for r in rows if not r["is_cross"]]
@@ -158,3 +164,26 @@ def summarize_rows(rows, styles=None, *, require_full=False, n_boot: int = 4000,
             "visual_review": "PENDING",
             "note": "all statistics are in-development-set paired results on "
                     "tasks_750; no blind-test claim"}
+
+
+def paired_cluster_ci(
+    rows_a: Sequence[Mapping],
+    rows_b: Sequence[Mapping],
+    *,
+    metrics: Sequence[str] = ("target_top1", "target_margin", "dino_s", "style_affinity", "dino_c", "lpips"),
+    cross_only: bool = True,
+    n_boot: int = 4000,
+    seed: int = 20261118,
+) -> dict:
+    """Paired source-cluster bootstrap 95% CI for differences (A - B)."""
+    ea = enrich_rows(rows_a)
+    eb_map = {r["task_id"]: r for r in enrich_rows(rows_b)}
+    sub = [r for r in ea if (bool(r["is_cross"]) if cross_only else True)]
+    if not sub:
+        raise ValueError("no matching rows for paired_cluster_ci")
+    clusters = [str(r["src_stem"]) for r in sub]
+    out = {}
+    for m in metrics:
+        diffs = [float(r[m]) - float(eb_map[r["task_id"]][m]) for r in sub]
+        out[m] = bootstrap_source_ci(diffs, clusters, n_boot=n_boot, seed=seed)
+    return out

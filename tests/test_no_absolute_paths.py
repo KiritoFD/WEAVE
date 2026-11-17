@@ -38,13 +38,6 @@ KNOWN_DEBT = {
     "scripts/dev/register_new_style.py",
     "scripts/pull_submission_pack_remote.bat",
     "scripts/register_other5.py",
-    "scripts/scripts/_audit_stylealigned_cross.py",
-    "scripts/scripts/_print_cross_table.py",
-    "scripts/scripts/_repro_dino_eval.py",
-    "scripts/scripts/_scan_ablation_sources.py",
-    "scripts/scripts/build_submission_pack.py",
-    "scripts/scripts/pull_submission_pack_remote.bat",
-    "scripts/scripts/register_other5.py",
 }
 
 _MNT_PREFIX = "/" + "mnt/[a-z]/"

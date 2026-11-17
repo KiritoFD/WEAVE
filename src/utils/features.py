@@ -18,15 +18,10 @@ STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e
 
 
 class FeatureStack:
-    """Loads CSD (ViT-L), DINOv2-small, CLIP ViT-B/32 and LPIPS once."""
+    """Loads CSD (ViT-L), DINOv2-small, CLIP ViT-B/32 and LPIPS once (3060-safe micro-batched)."""
 
     def __init__(self, device: str = "cuda"):
-        try:
-            from tools.v6_next import r2_eval as ref
-        except Exception:
-            # tools.v6_next.r2_eval -> tools.v5.route_c -> tools.eval_fast ->
-            # `resource` (Unix-only). Fall back to identical re-exports.
-            from src.utils import _local_eval_refs as ref
+        from src.utils import _local_eval_refs as ref
         self._ref = ref
         self.device = device
         self.csd, _, _ = ref.csd_model.load_csd(device)
@@ -44,25 +39,32 @@ class FeatureStack:
         self.csd_prototypes = ref.csd_prototypes()
 
     @torch.inference_mode()
-    def extract(self, images) -> dict:
+    def extract(self, images, *, batch: int = 8) -> dict:
         ref = self._ref
-        csd = ref.csd_model.feats_pils(self.csd, images, batch=8, device=self.device)
+        csd = ref.csd_model.feats_pils(self.csd, images, batch=batch, device=self.device)
         csd = csd / np.linalg.norm(csd, axis=1, keepdims=True)
-        dino, _ = ref.encode_dino(self.dino, images, batch=8, device=self.device)
+        dino, _ = ref.encode_dino(self.dino, images, batch=batch, device=self.device)
         dino = F.normalize(dino.float(), dim=-1)
-        inputs = self.clip_proc(images=images, return_tensors="pt").to(self.device)
-        out = self.clip.get_image_features(**inputs)
-        clip = out if torch.is_tensor(out) else out.pooler_output
-        if clip.shape[-1] != 512:
-            raise ValueError("CLIP projected embedding must be 512-d")
-        clip = F.normalize(clip.float(), dim=-1)
+        clip_chunks = []
+        for s in range(0, len(images), batch):
+            inputs = self.clip_proc(images=images[s:s + batch], return_tensors="pt").to(self.device)
+            out = self.clip.get_image_features(**inputs)
+            c = out if torch.is_tensor(out) else out.pooler_output
+            if c.shape[-1] != 512:
+                raise ValueError("CLIP projected embedding must be 512-d")
+            clip_chunks.append(F.normalize(c.float(), dim=-1))
+        clip = torch.cat(clip_chunks, dim=0)
         return {"csd": csd, "dino": dino, "clip": clip}
 
     @torch.inference_mode()
-    def lpips_vs(self, generated_u8: torch.Tensor, reference_rgb: torch.Tensor) -> torch.Tensor:
+    def lpips_vs(self, generated_u8: torch.Tensor, reference_rgb: torch.Tensor, *, batch: int = 8) -> torch.Tensor:
         ref = self._ref
-        return self.lpips(ref.to_lpips_input(generated_u8.float().div(255).to(self.device)),
-                          ref.to_lpips_input(reference_rgb)).flatten()
+        outs = []
+        for s in range(0, len(generated_u8), batch):
+            g_sub = generated_u8[s:s + batch].float().div(255.0).to(self.device)
+            r_sub = reference_rgb[s:s + batch].to(self.device)
+            outs.append(self.lpips(ref.to_lpips_input(g_sub), ref.to_lpips_input(r_sub)).flatten())
+        return torch.cat(outs, dim=0)
 
 
 def reference_bank(device: str = "cuda"):

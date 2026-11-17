@@ -323,12 +323,12 @@ def sinusoidal_embedding(t: torch.Tensor, dim: int) -> torch.Tensor:
 
 
 def dwt2_haar(x):
-    from wavelet import dwt2_haar as _d
+    from tools.legacy_root.wavelet import dwt2_haar as _d
     return _d(x)
 
 
 def idwt2_haar(ll, lh, hl, hh):
-    from wavelet import idwt2_haar as _i
+    from tools.legacy_root.wavelet import idwt2_haar as _i
     return _i(ll, lh, hl, hh)
 
 
