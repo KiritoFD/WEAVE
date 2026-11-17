@@ -1,0 +1,38 @@
+{
+ "V11B.H2.t06": {
+  "ms_per_img": 62.5,
+  "wall_sec": 4.0,
+  "n": 64,
+  "note": "steady-state 64-img probe RTX4070 excl model load"
+ },
+ "V11B.H1.t035": {
+  "ms_per_img": 125.0,
+  "wall_sec": 8.0,
+  "n": 64,
+  "note": "steady-state 64-img probe RTX4070 excl model load"
+ },
+ "V11B.H1.t06": {
+  "ms_per_img": 62.5,
+  "wall_sec": 4.0,
+  "n": 64,
+  "note": "steady-state 64-img probe RTX4070 excl model load"
+ },
+ "V11B.BOTH.t035": {
+  "ms_per_img": 171.9,
+  "wall_sec": 11.0,
+  "n": 64,
+  "note": "steady-state 64-img probe RTX4070 excl model load"
+ },
+ "V11B.BOTH.t06": {
+  "ms_per_img": 78.1,
+  "wall_sec": 5.0,
+  "n": 64,
+  "note": "steady-state 64-img probe RTX4070 excl model load"
+ },
+ "V11B.H2.t035.shuffle": {
+  "ms_per_img": 93.8,
+  "wall_sec": 6.0,
+  "n": 64,
+  "note": "steady-state 64-img probe RTX4070 excl model load"
+ }
+}
