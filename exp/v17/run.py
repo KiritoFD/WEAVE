@@ -169,6 +169,8 @@ def arm_student_eval(cfg, out: Path, seed: int, dry: bool):
     from .adapter import build_student, call_student
     from .dino_cache import cache_tokens
     from exp.v16 import tasks_and_sources
+    from exp.v16.distill import generate as v16_generate
+    from src.model import canonicalizer
     kind = cfg['kind']
     student_dir = Path(cfg.get('student_dir') or
                        (OUT / f'P2_{kind}_train'))
@@ -179,34 +181,33 @@ def arm_student_eval(cfg, out: Path, seed: int, dry: bool):
     net = build_student(kind).cuda()
     net.load_state_dict(ck['model'])
     net.eval()
+    base_model, _ = load_base()          # frozen V15-96 generator
+    canon = canonicalizer('cuda')
     need_dino = kind in ('S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8')
     if need_dino:
         cache_tokens(_split(_pool(cfg), cfg))   # train/holdout only
     tasks, source = tasks_and_sources()
-    eps = torch.randn(source.shape, generator=torch.Generator()
-                      .manual_seed(EVAL_SEED))
     name = cfg['arm_id']
 
     def op(group, z, sid, tid, epsl):
-        dtok = None
-        if need_dino:
-            tok = student_tokens(tasks[sl] if False else group, z)
-            dtok = tok
+        # CRITICAL: students are residual-over-V15-base, NOT over raw source
+        # (matching V16 B_adapter eval).  Without this, output ≈ source image.
         with torch.no_grad(), autocast():
-            delta, scale, mask_logits = call_student(net, kind, z,
-                                                     torch.zeros_like(z), tid,
-                                                     dtok, sid)
+            base = v16_generate(base_model, z, tid, epsl)
+            content = canon(z, mode='c1_gentle', augment=False)
+            dtok = student_tokens(group, base) if need_dino else None
+            delta, scale, mask_logits = call_student(net, kind, base,
+                                                     content, tid, dtok, sid)
             if scale is not None:
                 delta = delta * scale.view(-1, 1, 1, 1).clamp(0, 2)
-        return z + delta
+        return base + delta
 
-    def student_tokens(group, z):
+    def student_tokens(group, base):
         from .dino_cache import encode_tokens_for_images
-        from src.utils import decode_s10
-        from src.utils import load_s10_decoder
-        dec = load_s10_decoder('cuda')
-        rgb = decode_s10(dec, z, batch=len(z))
+        from src.utils import load_s10_decoder, decode_s10
         from PIL import Image
+        dec = load_s10_decoder('cuda')
+        rgb = decode_s10(dec, base, batch=len(base))
         imgs = [Image.fromarray(x) for x in rgb.cpu().permute(0, 2, 3, 1)
                 .mul(255).round().clamp(0, 255).byte().numpy()]
         return encode_tokens_for_images(imgs)
@@ -217,21 +218,15 @@ def arm_student_eval(cfg, out: Path, seed: int, dry: bool):
     wrong = None
     if cfg.get('wrong_label'):
         def opw(group, z, sid, tid, epsl):
-            from PIL import Image
-            from src.utils import load_s10_decoder, decode_s10
-            from .dino_cache import encode_tokens_for_images
-            dec = load_s10_decoder('cuda')
-            rgb = decode_s10(dec, z, batch=len(z))
-            imgs = [Image.fromarray(x) for x in rgb.cpu().permute(0, 2, 3, 1)
-                    .mul(255).round().clamp(0, 255).byte().numpy()]
-            dtok = encode_tokens_for_images(imgs)
             with torch.no_grad(), autocast():
-                delta, scale, _ = call_student(net, kind, z,
-                                               torch.zeros_like(z),
+                base = v16_generate(base_model, z, tid, epsl)
+                content = canon(z, mode='c1_gentle', augment=False)
+                dtok = student_tokens(group, base) if need_dino else None
+                delta, scale, _ = call_student(net, kind, base, content,
                                                (tid + 2) % 5, dtok, sid)
                 if scale is not None:
                     delta = delta * scale.view(-1, 1, 1, 1).clamp(0, 2)
-            return z + delta
+            return base + delta
         summary_w, _ = evaluate_arm(name + '_wrong', opw, tau0=.7,
                                     extra_meta={'student_kind': kind,
                                                 'wrong_label': True})
