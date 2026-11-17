@@ -125,8 +125,8 @@ def arm_teacher(cfg, out: Path, seed: int, dry: bool):
     bias = None
     variant = cfg.get('variant', 'T0')
     if cfg.get('calibrate_r1'):
-        bias = torch.load(OUT / 'teacher' / 'r1_logit_bias.pt',
-                          map_location='cpu', weights_only=False)
+        from .teacher import r1_logit_bias
+        bias = r1_logit_bias()
     path = prepare_pairs(variant, _pool(cfg), batch=cfg.get('batch', 8),
                          seed=seed, calib_bias=bias)
     return {'ok': True, 'pairs': str(path)}

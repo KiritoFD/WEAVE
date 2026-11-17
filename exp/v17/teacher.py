@@ -121,21 +121,71 @@ def cap_safe(tid, lf_caps):
 
 
 def lf_caps_from_pairs(pairs_path, quantile=.75, device='cuda'):
-    """Per-target low-frequency energy quantile from the T0 calibration pairs."""
+    """Per-target low-frequency energy quantile from the T0 pairs.
+
+    Uses the HOLDOUT split as an independent calibration set (never the same
+    samples used to construct the student's training targets).  Falls back to
+    train only if holdout is absent (older pair files)."""
     d = torch.load(pairs_path, map_location='cpu', weights_only=False)
     caps = []
-    tr = d['calib']
+    tr = d.get('holdout') or d.get('calib') or d.get('train')
     for s in range(5):
         m = (tr['tid'] == s) & (tr['sid'] != tr['tid'])
         if m.sum() == 0:
             caps.append(1e9)
             continue
         lf = F.avg_pool2d(tr['delta'][m].float(), 4)
-        src_rms = (tr['base'][m].float() - tr['content']).flatten(1) \
+        n = int(m.sum())
+        src = tr['content'][m].float() if 'content' in tr else tr['base'][m].float()
+        src_rms = (tr['base'][m].float() - src).flatten(1) \
             .square().mean(1).sqrt().clamp_min(1e-8)
+        assert len(src_rms) == n, (len(src_rms), n)
         rel = lf.flatten(1).square().mean(1).sqrt() / src_rms
         caps.append(float(torch.quantile(rel, quantile)))
     return torch.tensor(caps, device=device)
+
+
+def r1_logit_bias(pairs_path=None, device='cuda', force=False):
+    """T1 calibration: per-class bias from an INDEPENDENT holdout set.
+
+    For each holdout sample compute the R1 target margin (critic logits);
+    classes with systematically HIGH margin are over-predicted -> lower their
+    bias.  Bias is stored under runs/v17/teacher/r1_logit_bias.pt.  The unit
+    test proves a constant bias does not change the linear-margin gradient
+    while it CAN flip a nonlinear max-other ranking — the only real T1
+    effect.  The critic is never the final CSD referee."""
+    from .common import OUT, save
+    path = OUT / 'teacher' / 'r1_logit_bias.pt'
+    if path.exists() and not force:
+        return torch.load(path, map_location='cpu', weights_only=False)
+    from src.infer import load_critic
+    from exp.v8.guidance import target_margin
+    d = torch.load(pairs_path or (OUT / 'pairs' / 'teacher_pairs_T0.pt'),
+                   map_location='cpu', weights_only=False)
+    ho = d.get('holdout') or d.get('train')
+    critic = load_critic(device)
+    per = {s: [] for s in range(5)}
+    with torch.no_grad():
+        for st in range(0, len(ho['tid']), 32):
+            base = ho['base'][st:st + 32].float().to(device)
+            tid = ho['tid'][st:st + 32].to(device)
+            margins = target_margin(critic, base, tid).cpu()
+            for s in range(5):
+                m = tid.cpu() == s
+                if m.any():
+                    per[s].append(margins[m].mean())
+    mean = torch.tensor([torch.stack(v).mean() if v else 0.
+                         for v in per.values()])
+    bias = -(mean - mean.mean())                    # over-predicted -> lower
+    path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(bias, path)
+    save(OUT / 'teacher' / 'r1_calibration.json',
+         {'per_class_mean_margin': mean.tolist(), 'bias': bias.tolist(),
+          'source': 'T0 holdout (independent of student training pairs)',
+          'note': 'constant bias cannot change linear-margin gradients; '
+                  'only nonlinear max-other ranking flips'})
+    print(f'R1 calibration bias: {bias.tolist()}', flush=True)
+    return bias
 
 
 def prepare_pairs(variant: str, pool: str, train_each=100, hold_each=20,
