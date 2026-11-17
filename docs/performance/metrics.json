@@ -561,7 +561,7 @@
   "target_margin": -0.23631,
   "clip_s": 0.67821,
   "provenance": "runs/v16/measured/C_h2_default/eval.json",
-  "pareto": true
+  "pareto": false
  },
  {
   "method": "V16_C_h2_strong",
@@ -696,6 +696,20 @@
   "pareto": true
  },
  {
+  "method": "V17_P0_cfg_late",
+  "family": "WEAVE-V17",
+  "protocol": "q2a_oracle_cross600",
+  "decoder": "S10",
+  "dino_s": 0.46042,
+  "dino_c": 0.75055,
+  "lpips": 0.27167,
+  "csd_top1": 0.11167,
+  "target_margin": -0.23338,
+  "clip_s": 0.67805,
+  "provenance": "runs/v17/measured/P0_cfg_late/eval.json",
+  "pareto": true
+ },
+ {
   "method": "V17_P0_swap_t07_label0",
   "family": "WEAVE-V17",
   "protocol": "q2a_oracle_cross600",
@@ -735,6 +749,34 @@
   "target_margin": -0.24034,
   "clip_s": 0.67744,
   "provenance": "runs/v17/measured/P0_swap_t07_label2/eval.json",
+  "pareto": true
+ },
+ {
+  "method": "V17_P0_swap_t07_label3",
+  "family": "WEAVE-V17",
+  "protocol": "q2a_oracle_cross600",
+  "decoder": "S10",
+  "dino_s": 0.46049,
+  "dino_c": 0.7499,
+  "lpips": 0.27175,
+  "csd_top1": 0.105,
+  "target_margin": -0.2359,
+  "clip_s": 0.6781,
+  "provenance": "runs/v17/measured/P0_swap_t07_label3/eval.json",
+  "pareto": false
+ },
+ {
+  "method": "V17_P0_swap_t07_label4",
+  "family": "WEAVE-V17",
+  "protocol": "q2a_oracle_cross600",
+  "decoder": "S10",
+  "dino_s": 0.46062,
+  "dino_c": 0.75074,
+  "lpips": 0.26867,
+  "csd_top1": 0.10333,
+  "target_margin": -0.23824,
+  "clip_s": 0.67779,
+  "provenance": "runs/v17/measured/P0_swap_t07_label4/eval.json",
   "pareto": true
  },
  {
@@ -806,5 +848,75 @@
   "clip_s": 0.70878,
   "provenance": "runs/v17/measured/P0_swap_t0_label4/eval.json",
   "pareto": false
+ },
+ {
+  "method": "V17_P2_S0_eval",
+  "family": "WEAVE-V17",
+  "protocol": "q2a_oracle_cross600",
+  "decoder": "S10",
+  "dino_s": 0.46341,
+  "dino_c": 0.74444,
+  "lpips": 0.2764,
+  "csd_top1": 0.11667,
+  "target_margin": -0.22467,
+  "clip_s": 0.68026,
+  "provenance": "runs/v17/measured/P2_S0_eval/eval.json",
+  "pareto": true
+ },
+ {
+  "method": "V17_P2_S0_eval_wrong",
+  "family": "WEAVE-V17",
+  "protocol": "q2a_oracle_cross600",
+  "decoder": "S10",
+  "dino_s": 0.46238,
+  "dino_c": 0.74517,
+  "lpips": 0.27591,
+  "csd_top1": 0.10667,
+  "target_margin": -0.22973,
+  "clip_s": 0.67922,
+  "provenance": "runs/v17/measured/P2_S0_eval_wrong/eval.json",
+  "pareto": true
+ },
+ {
+  "method": "V17_P2_S1_eval",
+  "family": "WEAVE-V17",
+  "protocol": "q2a_oracle_cross600",
+  "decoder": "S10",
+  "dino_s": 0.46332,
+  "dino_c": 0.74424,
+  "lpips": 0.27645,
+  "csd_top1": 0.11667,
+  "target_margin": -0.22481,
+  "clip_s": 0.68029,
+  "provenance": "runs/v17/measured/P2_S1_eval/eval.json",
+  "pareto": false
+ },
+ {
+  "method": "V17_P2_S2_eval",
+  "family": "WEAVE-V17",
+  "protocol": "q2a_oracle_cross600",
+  "decoder": "S10",
+  "dino_s": 0.46509,
+  "dino_c": 0.74149,
+  "lpips": 0.28007,
+  "csd_top1": 0.12333,
+  "target_margin": -0.21615,
+  "clip_s": 0.68321,
+  "provenance": "runs/v17/measured/P2_S2_eval/eval.json",
+  "pareto": true
+ },
+ {
+  "method": "V17_P2_S8_eval",
+  "family": "WEAVE-V17",
+  "protocol": "q2a_oracle_cross600",
+  "decoder": "S10",
+  "dino_s": 0.46065,
+  "dino_c": 0.75065,
+  "lpips": 0.27,
+  "csd_top1": 0.105,
+  "target_margin": -0.23612,
+  "clip_s": 0.67781,
+  "provenance": "runs/v17/measured/P2_S8_eval/eval.json",
+  "pareto": true
  }
 ]
