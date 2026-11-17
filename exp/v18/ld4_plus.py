@@ -124,6 +124,8 @@ class CalibratedLD4Plus:
         k_steps: int = 3,
         mask_frac: float = 0.30,
         src_push_alpha: float = 0.35,
+        w_r1: float = 0.35,
+        w_lse: float = 1.0,
         etas: tuple[float, ...] = (0.35, 0.65, 1.0, 1.35),
     ) -> torch.Tensor:
         """Multi-direction masked solver with RMS-normalized Target - alpha*Source R1."""
@@ -171,7 +173,7 @@ class CalibratedLD4Plus:
                 step_scale = (eps * denom).sqrt().clamp(0.05, rho).view(-1, 1, 1, 1)
 
                 def _proxy(zc, t_vec):
-                    return 0.35 * self.calibrated_margin(zc, t_vec) - self.lse.loss(zc, t_vec)
+                    return w_r1 * self.calibrated_margin(zc, t_vec) - w_lse * self.lse.loss(zc, t_vec)
 
                 best_p = _proxy(zi, ti)
                 best_z = zi.clone()

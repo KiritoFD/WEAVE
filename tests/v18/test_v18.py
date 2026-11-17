@@ -78,8 +78,29 @@ def test_ccf_unet_drop_flags_and_grads():
     assert net.in_conv.weight.grad is not None and torch.isfinite(net.in_conv.weight.grad).all()
 
 
+def test_rank_normalize_and_wrong_cross_tid():
+    from exp.v18.structure import rank_normalize_structure
+    from exp.v18.run_v18_p2 import _pick_wrong_cross_tid
+
+    c = torch.randn(2, 4, 64, 64) * 3.0 + 0.5
+    r = rank_normalize_structure(c, keep_coarse=True)
+    assert r.shape == (2, 4, 64, 64)
+    assert torch.isfinite(r).all()
+    assert float(r[:, 3].abs().max()) == 0.0
+    # Contrast-invariant on channel 1 (coarse LCN; 1-rank step is 2/4096 = 4.9e-4)
+    r2 = rank_normalize_structure(c * 10.0 - 2.0, keep_coarse=True)
+    assert torch.allclose(r[:, 1], r2[:, 1], atol=1e-3)
+
+    sid = torch.tensor([0, 1, 2, 3, 4, 0, 1])
+    tid = torch.tensor([1, 2, 3, 4, 0, 0, 0])
+    w = _pick_wrong_cross_tid(sid, tid)
+    cross = sid != tid
+    assert bool(((w[cross] != tid[cross]) & (w[cross] != sid[cross])).all())
+
+
 if __name__ == "__main__":
     test_c64_color_palette_invariance()
     test_fast_dino_student_identities()
     test_ccf_unet_drop_flags_and_grads()
-    print("V18_UNIT_TESTS_3_OF_3_PASS")
+    test_rank_normalize_and_wrong_cross_tid()
+    print("V18_UNIT_TESTS_4_OF_4_PASS")

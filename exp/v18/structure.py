@@ -130,10 +130,39 @@ def fit_latent_luma_proj(z_train: torch.Tensor, y64_train: torch.Tensor) -> tupl
     return sol[:4], sol[4]
 
 
-def project_latent_lcn(z: torch.Tensor, w_luma: torch.Tensor, b_luma: torch.Tensor) -> torch.Tensor:
-    """Differentiable map from predicted clean latent z_hat -> LCN_fine(Y_64) for consistency loss."""
+def project_latent_lcn(
+    z: torch.Tensor, w_luma: torch.Tensor, b_luma: torch.Tensor, kernel: int = 5, eps: float = 0.03
+) -> torch.Tensor:
+    """Differentiable map from predicted clean latent z_hat -> LCN(Y_64) for consistency loss."""
     y_hat = (z * w_luma.to(z.device).view(1, 4, 1, 1)).sum(dim=1, keepdim=True) + b_luma.to(z.device)
-    return local_contrast_norm(y_hat.clamp(0.0, 1.0), kernel=5, eps=0.03)
+    return local_contrast_norm(y_hat.clamp(0.0, 1.0), kernel=kernel, eps=eps)
+
+
+def rank_normalize_structure(c_64: torch.Tensor, keep_coarse: bool = True) -> torch.Tensor:
+    """Per-(image, channel) rank-to-uniform [-1, 1] normalization stripping global contrast/histogram cues.
+
+    When keep_coarse=True, replaces high-frequency brushstroke channels (0=lcn_fine, 3=laplacian)
+    with smoothed coarse layout maps so fine stroke cadence cannot leak source style.
+    """
+    x = c_64.float()
+    if keep_coarse:
+        coarse_lcn = x[:, 1:2]
+        coarse_edge = F.avg_pool2d(x[:, 2:3], 2)
+        coarse_edge = F.interpolate(coarse_edge, size=x.shape[-2:], mode="bilinear", align_corners=False)
+        fine_smooth = F.avg_pool2d(x[:, 0:1], 2)
+        fine_smooth = F.interpolate(fine_smooth, size=x.shape[-2:], mode="bilinear", align_corners=False)
+        x = torch.cat([fine_smooth, coarse_lcn, coarse_edge, torch.zeros_like(coarse_lcn)], dim=1)
+
+    B, C, H, W = x.shape
+    flat = x.reshape(B, C, -1)
+    order = flat.argsort(dim=-1)
+    ranks = torch.empty_like(flat)
+    grid = torch.linspace(-1.0, 1.0, H * W, device=x.device, dtype=x.dtype).view(1, 1, -1).expand(B, C, -1)
+    ranks.scatter_(-1, order, grid)
+    out = ranks.reshape(B, C, H, W)
+    if keep_coarse:
+        out[:, 3:4].zero_()
+    return out
 
 
 def _train_linear_mlp_probe(X_tr: torch.Tensor, y_tr: torch.Tensor, X_ho: torch.Tensor, y_ho: torch.Tensor, epochs: int = 120) -> float:
