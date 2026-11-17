@@ -20,6 +20,7 @@ import torch.nn.functional as F
 
 from .common import (EVAL_SEED, OUT, STYLES, TAU_EVAL, autocast,
                      heartbeat, save, seed_all, sha, utc)
+from exp.v16 import load_base
 
 
 def _pool(cfg):
