@@ -12,8 +12,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
 
 import torch
 import torch.nn.functional as F
@@ -534,6 +537,24 @@ def main():
     heartbeat(out, 'running', {'family': family})
     t0 = time.time()
     result = dispatch[family](cfg, out, a.seed, a.dry_run)
+    # Referee runs in a SEPARATE process: generation models are fully gone
+    # before CSD/DINO/CLIP/LPIPS load, so the 12GB card never OOMs.  Measure
+    # every raw payload produced by this arm that has no summary yet.
+    raw_root = OUT / 'raw'
+    measured_root = OUT / 'measured'
+    if not a.dry_run and raw_root.exists():
+        import subprocess as _sp
+        for raw_dir in sorted(raw_root.glob(f"{cfg['arm_id']}*")):
+            if not raw_dir.is_dir() or not (raw_dir / 'meta.json').exists():
+                continue
+            mdir = measured_root / raw_dir.name
+            if (mdir / 'summary.json').exists():
+                continue
+            print(f'MEASURE_STAGE {raw_dir.name}', flush=True)
+            r = _sp.run([sys.executable, '-u', '-m', 'exp.v17.measure_only',
+                         '--arm', raw_dir.name], cwd=REPO)
+            if r.returncode != 0:
+                print(f'MEASURE_FAIL {raw_dir.name}', flush=True)
     save(out / 'result.json', {'ok': True, 'family': family,
                                'wall_sec': time.time() - t0, **result})
     heartbeat(out, 'complete')

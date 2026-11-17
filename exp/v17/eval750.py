@@ -54,9 +54,11 @@ def make_latents(op, tasks, source, device='cuda', batch=32):
 def evaluate_arm(name: str, op, *, tau0=TAU_EVAL, steps=20, device='cuda',
                  batch=32, measured_root: Path | None = None,
                  extra_meta: dict | None = None, out_root: Path | None = None,
-                 output_rgb=False):
-    """Generate + decode + measure one arm.  Returns (summary, done_path).
-    output_rgb=True: op() returns already-decoded RGB [0,1] (e.g. H2 arms)."""
+                 output_rgb=False, skip_measure=True):
+    """Generate + save raw payloads.  By default does NOT run the referee
+    inline: generation models must fully exit before CSD/DINO/CLIP/LPIPS
+    load, or the 12GB card OOMs.  Call measure_only.py as a separate process.
+    Set skip_measure=False only for tiny debug runs on an idle GPU."""
     from src.utils import load_s10_decoder, decode_s10
     from exp.v16 import load_base
     tasks, source = tasks_and_sources()
@@ -89,8 +91,19 @@ def evaluate_arm(name: str, op, *, tau0=TAU_EVAL, steps=20, device='cuda',
             'noise_seed': EVAL_SEED, 'n_tasks': writer.n, 'batches': writer.batches,
             'wall_sec': time.time() - t0, **(extra_meta or {})}
     writer.finish(**meta)
-    del model, decoder
+    # Generation done.  Release everything; the referee runs in a SEPARATE
+    # process (measure_only.py) so its CSD/DINO/CLIP/LPIPS weights never
+    # coexist with the generator on the 12GB card.
+    del op
+    import gc
+    gc.collect()
     torch.cuda.empty_cache()
+    try:
+        torch.cuda.synchronize()
+    except Exception:
+        pass
+    if skip_measure:
+        return None, raw
     measured = (measured_root or (OUT / 'measured')) / name
     import subprocess, sys
     r = subprocess.run([sys.executable, '-u', '-m', 'src.eval.measure',
