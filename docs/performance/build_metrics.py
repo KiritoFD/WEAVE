@@ -353,6 +353,29 @@ def collect_all() -> list[dict]:
         nm = ep.parent.name
         push(eval_json_to_row(f"V18.{nm.removeprefix('V18_')}", "V18", ep, is_diagnostic=("_wrong" in nm)))
 
+    # 10. V19 / PRISM v2 arms (Orthogonal Quotient-Fiber Duality + Anisotropic S10-VGG + 1-Step Chord)
+    v19_speed = {
+        "V19_S1_global_nosid": 17.37,
+        "V19_S2_prism1_l075": 17.16,
+        "V19_S2_prism1_v2": 17.04,
+        "V19_S2_prism1_l130": 17.01,
+        "V19_S2b_prism1_blind_same": 16.81,
+        "V19_S2_prism1_wrong": 17.32,
+        "V19_S3_oneshot_exemplar": 17.03,
+        "V19_T1_aniso_r1": 55.5,
+        "V19_T2_s10_vgg_nosid": 203.3,
+        "V19_T4_sweet_vgg_nosid": 137.1,
+        "V19_T5_sweet_hybrid_nosid": 245.0,
+    }
+    for ep in sorted((ROOT / "runs/v19/measured").glob("*/eval.json")):
+        nm = ep.parent.name
+        # Mark wrong-label controls and over-strong T2/T3 (DINO-C < 0.56) appropriately
+        is_diag = ("_wrong" in nm) or (nm in ("V19_T1_aniso_r1", "V19_T2_s10_vgg_nosid", "V19_T3_hybrid_pro_nosid"))
+        row = eval_json_to_row(f"V19.{nm.removeprefix('V19_')}", "V19-PRISM", ep, is_diagnostic=is_diag)
+        if nm in v19_speed:
+            row["ms_per_img"] = v19_speed[nm]
+        push(row)
+
     return rows
 
 

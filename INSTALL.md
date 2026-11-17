@@ -193,8 +193,8 @@ delete and rebuild; nothing in `runs/` is version-controlled.
 
 ## 8. Next Steps
 
-- Configure datasets — see [DATA.md](DATA.md) (forthcoming).
-- Reproduce the paper tables — see [REPRODUCE.md](REPRODUCE.md) (forthcoming).
-- Browse experiments — see [EXPERIMENTS.md](EXPERIMENTS.md) (forthcoming).
+- Configure datasets — see [docs/legacy_root/DATA.md](docs/legacy_root/DATA.md).
+- Reproduce the paper tables — see [REPRODUCE.md](REPRODUCE.md).
+- Browse experiments — see [docs/legacy_root/EXPERIMENTS.md](docs/legacy_root/EXPERIMENTS.md).
 
 For the release history, see [CHANGELOG.md](CHANGELOG.md).

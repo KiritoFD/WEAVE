@@ -1,9 +1,10 @@
-# WEAVE 风格迁移全维度权威排行榜 (LEADERBOARD)
+# WEAVE 风格迁移历史排行榜 (V6/S10 阶段快照)
 
+> **更新提示（2026-11-18）**：本表为 2026-11-11 冻结的 32 方法 V6/S10 阶段快照；包含 V6–V19 共 **215+ 实验臂与外部基线**的最新全量权威台账请查阅 [`performance/MASTER_LEDGER.md`](performance/MASTER_LEDGER.md) 与 [`performance/metrics.csv`](performance/metrics.csv)。
 > **评测基准**：`eval_protocol/tasks_750.json` 纯跨风格 600 任务（150 源图 × 4 跨风格目标），统一 `paper_rgb_v1` 协议。
 > **风格评测体系**：严格依据原论文主表标准，包含 **DINO-S**（DINOv2-small CLS 最大参考余弦）、**CLIP-S**（CLIP ViT-B/32 原型余弦）、**Style Affinity** $((\text{DINO-S} + \text{CLIP-S})/2)$、**CSD Target Top-1** 与 **Target Margin**。
 > **VAE 硬件与加速收益**：已将 **S10 剪枝 Decoder**（10.66M 参数，较原版减少 78.5%；4090 推理 15.57ms，**加速 2.86 倍**）与原版 A0 Decoder、C_edit 联合重训 VAE 的实测下游表现完整纳入对比。
-> **测试集说明**：所有简略测试集已彻底清理，模型权重与逐任务 JSON 完整保存在 [`docs/baseline/ours/`](docs/baseline/ours/) 与 [`deliver/checkpoints/`](deliver/checkpoints/)。
+> **测试集说明**：所有简略测试集已彻底清理，模型权重与逐任务 JSON 完整保存在 [`baseline/ours/`](baseline/ours/) 与 [`../deliver/checkpoints/`](../deliver/checkpoints/)。
 
 ## 一、Style Affinity 综合风格亲和度排行榜 $((\text{DINO-S} + \text{CLIP-S})/2)$
 

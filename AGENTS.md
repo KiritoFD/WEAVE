@@ -32,8 +32,8 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 
 ## 仓库布局（2026-11-14 重组后）
 
-- **活跃代码**：`src/`（唯一门面层：model/infer/eval/utils）+ `exp/v8`、`exp/v9_local`、`exp/v10`、`exp/v11b`、`exp/v12_gcl`、`exp/v13`–`exp/v18`（实验包，`python -m exp.*` 从仓库根运行，索引见 `exp/README.md`）。均已 git 跟踪且受 `tests/test_no_absolute_paths.py` 保护。
-- **性能与总台账中心**：`docs/performance/`（唯一权威数据台账 `metrics.{csv,json}` 含 200+ 实验臂与外部基线、结论与全量数据台账 `MASTER_LEDGER.md`、多维矢量图表 `figures/*.svg`、750 生成图库 `images/`）。
+- **活跃代码**：`src/`（统一门面与基础设施层：S10 解码、3060 自适应微批分块 `tier_micro_accum`、清理 `expandable_segments` 的进程隔离裁判执行器 `src.eval.runner`、无碰撞错标签与协议辅助 `src.utils.protocol`）+ `exp/v8`、`exp/v9_local`、`exp/v10`..`exp/v19`（实验包，`python -m exp.*` 从仓库根运行，索引见 `exp/README.md`）。均已 git 跟踪且受 `tests/test_no_absolute_paths.py` 保护。
+- **性能与论文中心**：`docs/performance/`（唯一权威数据台账 `metrics.{csv,json}` 含 **232 条**实验臂与外部基线、总台账 `MASTER_LEDGER.md`、多维矢量图表 `figures/*.svg`、750 生成图库 `images/`）；`docs/icme2027/`（独立论文 `PRISM` 完整 6 页 `IEEEtran` 工程 `paper.tex/pdf`）；`docs/next1118/`（`PRISM v2 / V19` 理论与实测报告 `V19_RESULTS.md`）。
 - **tools/** = 历史代码归档，但内含**钉住子包**（`vae_suite/decoder_prune.py`、`v6*`、`v7*`、`pseudo_gt`、`12h/csd_model.py` 等）被 src 依赖，**不要移动/重构**——清单见 `tools/README.md`。
 - `tools/legacy_root/` = 论文期根目录平铺模块（model.py/trainer.py/run.py…）+ 一次性脚本；自举包，flat import 仍可用；根 `__init__.py`/`__main__.py` 是兼容 shim。
 - `tools/legacy_utils/` = 原 `utils/` 包，全仓以 `tools.legacy_utils.*` 引用。
@@ -48,18 +48,21 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 - **V10.1 局部匹配已判负**（2026-11-14）：StyleGallery 式"内容条件检索目标 + 距离损失"在恢复代理上反向对齐（q 检索 −0.25~−0.53 vs KDE +0.30）——处方式目标形态错误，KDE 密度梯度才是对的形态；详见 `docs/v10_1/V10_1_RESULTS.md`。
 - **V10.2 特异性验证已收尾**（2026-11-14）：**恢复对齐收益是通用的，不是画派的**——混合画派 KDE 拿到目标 KDE 的 95%（特异性 5%）；q 条件均值拉动 +.49 但特异性 0.9%；LD4 机制换装差异 Score（C-TM/C-TS）Top-1 +0.67~0.84pp vs LD0，未达 LD4。**v11 重启门槛四项全未达标**；latent 统计特征空间的画派特异信号已近枯竭，下一步要么学习式编码器（v11，密度目标）要么换特征空间。详见 `docs/v10_2/V10_2_RESULTS.md`。方法论新增：**Recovery Alignment ≠ Style Specificity**（score 路线必须同时报告 A1/A2/A3 三控制）。
 - **V10 / V10.1 / V10.2 / V11 / V12 / V13 全线关闭**（2026-11-14）：六条风格路线（手工统计 Score、检索目标、DINO 密度 Score、GCL 内容闸门 ×5、DWT 域对比学习 E_s）全部判负。三条方法论铁律：**Reference Retrieval ≠ Style Distribution Gradient**；**Recovery Alignment ≠ Style Specificity**；**Separation Margin ≠ Generative Direction**；**DWT Token ≠ Style Carrier**。完整证据链见各自 RESULTS 文档（docs/v10/ v10_1/ v10_2/ v11/ v12/ v13/）。
-- **当前可交付最优不变**：LD4（Top-1 .3517 / LPIPS .4872）+ E4（DINO-S .4415 / Affinity .5616）。风格研究需要全新思路（RGB 域判别式、RGB 残差分支等），不是当前管线的增量改进。
+- **当前最优交付模型（2026-11-18，V19 / `PRISM` 全量实测收官）**：
+  - **`PRISM-1` (`V19_S2_prism1_v2`, `exp/v19/`)**：`1.50M` 活跃潜参数纯单步前馈（`17.0 ms/img` = `58.7 img/s` @ 4090，`~29 ms` @ 3060），**100% 免测试期源标签 `sid`**，Cross600 **CSD Top-1 = `44.33%`**（`DINO-C = 0.7440`, `LPIPS = 0.5057`，反事实错标签 `0.83%`，全盲 Same150 `99.3%`；1-Shot 单参考图模式达 **`45.50%`**；同网络 $\lambda=1.3$ 达 **`50.17%`**），在全部五项风格与内容指标上全面严格超越商业 `Seedream 4.5`（`37.30%`）与 `StyTr2`（`39.50%`）。
+  - **`PRISM-Pro` (`V19_T4_sweet_vgg_nosid`)**：穿过可微 `S10` 的无归一化 `VGG-16+Oklab` 各向异性 2 步求解器，Cross600 **CSD Top-1 = `59.00%`**（`Margin = +0.0265`, `Affinity = 0.5791`, `Ukiyo-e = 45.0%`, `ER = 33.3%`）。
+  - 完整证据链见 `docs/next1118/V19_RESULTS.md`、`docs/performance/MASTER_LEDGER.md` 与 `docs/icme2027/paper.pdf`。
 - V11b（波let Flow）代码/修复版在 `exp/v13/`（8 bug 修复，sigma √2 精确验证），3060 上有远程重建脚本。
 - **评测口径（2026-11-14 用户决定）**：任务级评测/决策一律用完整 test750（读数 cross600），不用 dev 预览集；LD 基线 = v9 dev+test eval 行合并重算。
 - **V15 / V16 / V17 全线定论（2026-11-15～17）**：
   - V14 多尺度扫描确认 224px DINOv2 16×16 patch（NCM `.793` >> DWT `.544`）为最佳语义载体（`docs/v14/V14_RESULTS.md`）。
   - V15 Group A（16 臂）+ Scaling（`dim96→384`, 34.2M）+ V16 `A_strict` 证实：**Self-Paired Generative Capacity ≠ Cross-Style Editing**——扩容使 $\tau_0=0$ 生成 Top-1 升至 `49.3%`，但在 $\tau_0=0.7$ SDEdit 编辑点因保源增强使 Cross600 Top-1 从 `10.67%` 跌至 `6.67%`；57.8% Impressionism 不平衡使底座在 `ER` 与 `Ukiyo-e` 上先验坍缩为 `0%`；唯 `Style-Bridge FM`（`PT2_P2`）在无额外推理开销下拉升了目标判别。
   - V16 B/C 与 V17 P0–P4 证实：CFG（`w=2,4`）、Signed RGB-H2（`H4` `11.00%`）、五类均衡自配对 FM 残差（`F1` `11.33%`）均受困于 $\tau_0=0.7$ 的 59% 源画派锁定；但 **V17 `P2_S4`（12k 步 + DINO patch 上下文 + `u_tgt − u_src` 无压缩差分）达 `13.33%`，反超 `B_teacher`（`11.83%`）+1.50pp**，解决了单步学生拟合难题。
-- **V18 当前主线（2026-11-18，3060 `tmux weave-v18` 运行中）**：抛弃 $\tau_0=0.7$ SDEdit，双轨推进 ① **Track A**（校准 `LD4+` + `B4` 上的 0.44M 纯单步 `FastDINOStudent` 摊销）与 ② **Track B (`CCF-UNet`)**（零色相亮度局部对比度结构 `C_64` + 空间白化灰度 DINO 布局 `P_16`［Gate 0 全局泄漏 `22.3%` 随机水平］+ SPADE + $K=8$ 子模态 AdaLN，从 $\tau_0=0.0$ 纯高斯噪声起步）；详见 `docs/v18/WEAVE_V18_BREAKTHROUGH_PLAN.md` 与 `docs/WEAVE_COMPREHENSIVE_SUMMARY_AND_NEXT_PLAN_20261117.md`。
+- **V18 / V19 突破已完成（2026-11-18）**：V18 确立 Gate-0 去风格结构（`18.3%` 探针）与 $\tau_0=0$ 自配对控制流的 `18.67%` 几何天花板（`docs/v18/V18_RESULTS.md`）；V19 建立正交商—纤维对偶 $(\Pi_\perp, \Pi_\parallel)$ 与各向异性 `S10-VGG` 谱传输（`exp/v19/`，`docs/next1118/`），750 全量评测与输出图库已归档至 `docs/performance/`。
 
 ## 环境备忘
 
-- 本地 GPU：RTX 4070 Laptop 8GB（实际可用 ~6GB）；评测解码/指标需分进程，勿同时驻留多模型。
+- **远程主力算力**：`ssh 4090`（RTX 4090 24GB，`/root/Workspace/WEAVE`）与 `ssh 3060`（RTX 3060 12GB Windows Server，禁用 `expandable_segments`，微批由 `src.utils.tier_micro_accum` 自动限幅至 $\le 6\text{GB}$）；**本地 GPU**：RTX 4070 Laptop 8GB（仅轻载，重训练/评测一律上远程并严格分进程运行 `src.eval.measure`）。
 - 评测指标管线：`src/eval/measure.py`（DINOv2-small/CSD-ViT-L/CLIP/LPIPS，冻结 referee）。
 - tasks：`eval_protocol/tasks_750.json`（750=Cross600+Same150，5 画派）；V9 dev/test 按 md5(source_stem)%5 划分（dev=170/test=580，互补并集=750）。
 - **图像数据已全部本地化**：`datasets/wikiart_new_512/`（10,545 张，从原图重建，sha256 校验 7,678 字节级一致 + 2,867 jpeg 编码器版本漂移——像素相同，逐文件状态在 `weights_local/wikiart_new_512/rebuild_status.jsonl`）；`datasets/distinct5_512/train/`（5,000 张，hardlink 自 `G:\GitHub\WEAVE\train_512clean`）；`data/test/` 150 源图 + 150 参考图已就位。

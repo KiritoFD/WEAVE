@@ -47,4 +47,4 @@ B 没改模型任何一个参数，只换了喂它的 Encoder。独立包只是�
 
 **不要再为兼容 SD0 重训 10.66M Decoder。** 旧 S10 拿原版 SD0 latent 直接跑，零成本、零额外推理开销，且是当前最好的 Ours 配置（Affinity 0.5616，高于榜单第 4 名的 0.5587 与本轮新 C0/C1 的 0.5575/0.5576）。
 
-详见：[S10_SD0_ADAPT_REPORT.md](S10_SD0_ADAPT_REPORT.md) · [S10B_FINAL.md](S10B_FINAL.md) · [NOV11_12_WORK_SUMMARY.md](NOV11_12_WORK_SUMMARY.md)
+详见：[09_S10B_DECISION.md](09_S10B_DECISION.md) · [10_S10B_FINAL.md](10_S10B_FINAL.md) · [00_OVERVIEW.md](00_OVERVIEW.md)

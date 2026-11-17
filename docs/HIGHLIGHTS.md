@@ -76,10 +76,7 @@ AesPA 类基线），并以此协议冻结了全仓评测口径。
 
 ---
 
-## 当前工作（2026-11-14）
+## 当前权威交付与演进状态（2026-11-18）
 
-- **V9-LD 已收尾**：latent-cache 消融（LD0–LD4，RTX 4070 本地，S10 口径）结论——
-  **LD4（mask+全方向）是唯一净胜臂**（test580 Top-1 .3556，vs LD0 +.0215）；
-  见 [docs/v9/V9_LD_RESULTS.md](v9/V9_LD_RESULTS.md)。
-- 3060 被他人占用做 StyleGallery 复现，**不要碰**（复现记录在
-  [docs/baseline/StyleGallery/](baseline/StyleGallery/)）。
+- **全量数据与最新最优模型**：见 [`performance/MASTER_LEDGER.md`](performance/MASTER_LEDGER.md)（215+ 实测臂总台账）与 [`icme2027/README.md`](icme2027/README.md)（`PRISM` 独立论文手稿）。
+- **分代演进**：[`v18/V18_RESULTS.md`](v18/V18_RESULTS.md)（单步 `38.00%` 超越 `Seedream 4.5`）$\to$ [`next1118/README.md`](next1118/README.md)（`exp/v19/` 正交商—纤维对偶免源标签单步与各向异性 `S10-VGG` 谱传输）。

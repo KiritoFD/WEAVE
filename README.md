@@ -22,17 +22,21 @@
 > live in `tools/legacy_root/` (root `__init__.py`/`__main__.py` are thin
 > compatibility shims). For the current research state, read in order:
 >
-> 1. [`AGENTS.md`](AGENTS.md) — decision protocol (2026-11-14): **all decoding uses the
->    S10 pruned VAE decoder** (10.66M params, −78.5%, 2.86× faster; measurably better
->    than the original decoder under the same protocol).
-> 2. [`docs/HIGHLIGHTS.md`](docs/HIGHLIGHTS.md) — the two headline results: the S10
->    decoder and the **Q2A + Oracle** route/protocol (32-method leaderboard, Affinity
->    0.5587, CSD Top-1 36.3%, rank #4).
-> 3. [`docs/README.md`](docs/README.md) — full documentation index (per-phase docs,
->    retrospective `docs/1111/`, leaderboards, negative results).
+> 1. [`AGENTS.md`](AGENTS.md) — active engineering protocol: **all decoding uses the
+>    S10 pruned VAE decoder** (10.66M params, −78.5%, 2.86× faster; +3.17pp Cross600
+>    CSD Top-1 over full SD-VAE under paired cluster bootstrap), with strict subprocess
+>    referee isolation and automatic 12GB/24GB VRAM tiering.
+> 2. [`docs/performance/MASTER_LEDGER.md`](docs/performance/MASTER_LEDGER.md) — single
+>    authoritative ledger across **215+ evaluated arms & external baselines** on the
+>    750-task benchmark, six validated laws, and publication vector figures.
+> 3. [`docs/icme2027/README.md`](docs/icme2027/README.md) & [`docs/next1118/README.md`](docs/next1118/README.md) —
+>    standalone `PRISM` manuscript (`paper.tex` / `paper.pdf`) and `PRISM v2 / V19`
+>    orthogonal quotient–fiber duality blueprint.
+> 4. [`docs/README.md`](docs/README.md) — unified master documentation index.
 >
-> Active code now lives in `src/` (facade) + `exp/v8`, `exp/v9_local` (experiment
-> packages); historical code is archived under `tools/` and `archives/`.
+> Active code lives in `src/` (unified facade, S10 decoding, 3060-safe evaluation
+> runner, and protocol helpers) + `exp/v8`..`exp/v19` (modular experiment packages,
+> indexed in [`exp/README.md`](exp/README.md)); historical code is archived under `tools/` and `archives/`.
 
 ## 📖 Introduction
 
