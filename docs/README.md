@@ -21,7 +21,7 @@
 
 | 目录 / 文档 | 状态 | 核心结论摘要 |
 |---|---|---|
-| [`next1118/`](next1118/README.md) · [`04_V20`](next1118/04_V20_SUBMODE_SLF_THEORY.md) | **当前活跃 (`exp/v19`–`v20`)** | `V19` 建立 $(\Pi_\perp, \Pi_\parallel)$ 正交对偶与 `S10-VGG` 各向异性求解器（`59.0%` Top-1）；`V20` 引入鲜明子流派 `Patch-SWD` 与仅 $16\times 16$ 瓶颈注入结构的粗布局生成流 `SLFUNet` 冲刺超越 `StyleGallery` |
+| [`next1118/`](next1118/README.md) · [`V20_RESULTS`](next1118/V20_RESULTS.md) | **最新收官 (`exp/v19`–`v20`)** | `V19` 建立 $(\Pi_\perp, \Pi_\parallel)$ 正交对偶（单步 `17ms` `44.3%–50.2%`）；`V20` 引入训练集 `Core-kNN` 核心流形与 Coarse-16 `SLFUNet`（`DINO-S = 0.5789`, `Affinity = 0.6683`, `Top-1 = 64.0%–64.5%`），正面全面超越 `StyleGallery` |
 | [`v18/V18_RESULTS.md`](v18/V18_RESULTS.md) | 已完成突破 | Gate-0 去风格结构（泄漏 `72.3%→18.3%`）；Track A `LD4+`（`38.0%–42.2%`）与纯单步 `FastStudent`（`33.8%–38.0%`）；Track B 确立 $\tau_0=0$ 自配对控制流 `18.67%` 天花板 |
 | [`v17/V17_RESULTS_EVAL.md`](v17/V17_RESULTS_EVAL.md) | 已收尾 | 揭示 SDEdit 59% 源锁定与 Impressionism 先验坍缩；`P2_S4`（DINO 上下文 + `u_tgt−u_src`）解决单步残差拟合 |
 | [`v16/RESULTS.md`](v16/RESULTS.md) · [`v15/`](v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md) | 已收尾 | 确立 **260× 自配对扩容悖论**（$0.13\text{M}\to 34.2\text{M}$ 纯生成升至 `49.3%`，$\tau_0=0.7$ 编辑退化至 `6.67%`） |

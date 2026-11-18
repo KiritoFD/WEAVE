@@ -32,8 +32,8 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 
 ## 仓库布局（2026-11-14 重组后）
 
-- **活跃代码**：`src/`（统一门面与基础设施层：S10 解码、3060 自适应微批分块 `tier_micro_accum`、清理 `expandable_segments` 的进程隔离裁判执行器 `src.eval.runner`、无碰撞错标签与协议辅助 `src.utils.protocol`）+ `exp/v8`、`exp/v9_local`、`exp/v10`..`exp/v19`（实验包，`python -m exp.*` 从仓库根运行，索引见 `exp/README.md`）。均已 git 跟踪且受 `tests/test_no_absolute_paths.py` 保护。
-- **性能与论文中心**：`docs/performance/`（唯一权威数据台账 `metrics.{csv,json}` 含 **232 条**实验臂与外部基线、总台账 `MASTER_LEDGER.md`、多维矢量图表 `figures/*.svg`、750 生成图库 `images/`）；`docs/icme2027/`（独立论文 `PRISM` 完整 6 页 `IEEEtran` 工程 `paper.tex/pdf`）；`docs/next1118/`（`PRISM v2 / V19` 理论与实测报告 `V19_RESULTS.md`）。
+- **活跃代码**：`src/`（统一门面与基础设施层：S10 解码、自包含 Haar/LCN/Oklab 结构层 `src.utils.structure`、3060 自适应微批分块 `tier_micro_accum`、清理 `expandable_segments` 的进程隔离裁判执行器 `src.eval.runner`、无碰撞错标签与协议辅助 `src.utils.protocol`）+ `exp/v8`、`exp/v9_local`、`exp/v10`..`exp/v20`（实验包，`python -m exp.*` 从仓库根运行，索引见 `exp/README.md`）。全仓活跃代码受 `tests/test_no_absolute_paths.py`（`KNOWN_DEBT = set()`）与 `tests/test_markdown_links.py` 保护。
+- **性能与论文中心**：`docs/performance/`（唯一权威数据台账 `metrics.{csv,json}` 含 **257 条**实验臂与外部基线 / **98 个帕累托点**、总台账 `MASTER_LEDGER.md`、多维矢量图表 `figures/*.svg`、750 生成图库 `images/`）；`docs/icme2027/`（独立论文 `PRISM` 完整 6 页 `IEEEtran` 工程 `paper.tex/pdf`）；`docs/next1118/`（`PRISM v2 / V19` 与 `PRISM-Flow / V20` 理论与实测报告 `V19_RESULTS.md`、`V20_RESULTS.md`）。
 - **tools/** = 历史代码归档，但内含**钉住子包**（`vae_suite/decoder_prune.py`、`v6*`、`v7*`、`pseudo_gt`、`12h/csd_model.py` 等）被 src 依赖，**不要移动/重构**——清单见 `tools/README.md`。
 - `tools/legacy_root/` = 论文期根目录平铺模块（model.py/trainer.py/run.py…）+ 一次性脚本；自举包，flat import 仍可用；根 `__init__.py`/`__main__.py` 是兼容 shim。
 - `tools/legacy_utils/` = 原 `utils/` 包，全仓以 `tools.legacy_utils.*` 引用。
@@ -48,10 +48,11 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 - **V10.1 局部匹配已判负**（2026-11-14）：StyleGallery 式"内容条件检索目标 + 距离损失"在恢复代理上反向对齐（q 检索 −0.25~−0.53 vs KDE +0.30）——处方式目标形态错误，KDE 密度梯度才是对的形态；详见 `docs/v10_1/V10_1_RESULTS.md`。
 - **V10.2 特异性验证已收尾**（2026-11-14）：**恢复对齐收益是通用的，不是画派的**——混合画派 KDE 拿到目标 KDE 的 95%（特异性 5%）；q 条件均值拉动 +.49 但特异性 0.9%；LD4 机制换装差异 Score（C-TM/C-TS）Top-1 +0.67~0.84pp vs LD0，未达 LD4。**v11 重启门槛四项全未达标**；latent 统计特征空间的画派特异信号已近枯竭，下一步要么学习式编码器（v11，密度目标）要么换特征空间。详见 `docs/v10_2/V10_2_RESULTS.md`。方法论新增：**Recovery Alignment ≠ Style Specificity**（score 路线必须同时报告 A1/A2/A3 三控制）。
 - **V10 / V10.1 / V10.2 / V11 / V12 / V13 全线关闭**（2026-11-14）：六条风格路线（手工统计 Score、检索目标、DINO 密度 Score、GCL 内容闸门 ×5、DWT 域对比学习 E_s）全部判负。三条方法论铁律：**Reference Retrieval ≠ Style Distribution Gradient**；**Recovery Alignment ≠ Style Specificity**；**Separation Margin ≠ Generative Direction**；**DWT Token ≠ Style Carrier**。完整证据链见各自 RESULTS 文档（docs/v10/ v10_1/ v10_2/ v11/ v12/ v13/）。
-- **当前最优交付模型（2026-11-18，V19 / `PRISM` 全量实测收官）**：
-  - **`PRISM-1` (`V19_S2_prism1_v2`, `exp/v19/`)**：`1.50M` 活跃潜参数纯单步前馈（`17.0 ms/img` = `58.7 img/s` @ 4090，`~29 ms` @ 3060），**100% 免测试期源标签 `sid`**，Cross600 **CSD Top-1 = `44.33%`**（`DINO-C = 0.7440`, `LPIPS = 0.5057`，反事实错标签 `0.83%`，全盲 Same150 `99.3%`；1-Shot 单参考图模式达 **`45.50%`**；同网络 $\lambda=1.3$ 达 **`50.17%`**），在全部五项风格与内容指标上全面严格超越商业 `Seedream 4.5`（`37.30%`）与 `StyTr2`（`39.50%`）。
-  - **`PRISM-Pro` (`V19_T4_sweet_vgg_nosid`)**：穿过可微 `S10` 的无归一化 `VGG-16+Oklab` 各向异性 2 步求解器，Cross600 **CSD Top-1 = `59.00%`**（`Margin = +0.0265`, `Affinity = 0.5791`, `Ukiyo-e = 45.0%`, `ER = 33.3%`）。
-  - 完整证据链见 `docs/next1118/V19_RESULTS.md`、`docs/performance/MASTER_LEDGER.md` 与 `docs/icme2027/paper.pdf`。
+- **当前最优交付模型族（2026-11-18，V19–V20 / `PRISM` 全量实测收官）**：
+  - **`PRISM-1` (`V19_S2_prism1_v2`, `exp/v19/`)**：`1.50M` 活跃潜参数纯单步前馈（`17.0 ms/img` = `58.7 img/s` @ 4090，`~29 ms` @ 3060），**100% 免测试期源标签 `sid`**，Cross600 **CSD Top-1 = `44.33%`**（`DINO-C = 0.7440`, `LPIPS = 0.5057`，反事实错标签 `0.83%`，全盲 Same150 `99.3%`；1-Shot 单参考图达 **`45.50%`**；$\lambda=1.3$ 达 **`50.17%`**），在全部五项风格与内容指标上严格支配商业 `Seedream 4.5`（`37.30%`）与 `StyTr2`（`39.50%`）。
+  - **`PRISM-Pro` / `PRISM-Pro+` (`V19_T4` / `V20_A1_t4_patchswd`)**：穿过可微 `S10` 的无归一化 `VGG-16+Oklab` + 多尺度 `ConvNeXt+RGB Patch-SWD` 各向异性求解器，Cross600 **CSD Top-1 = `59.00%` → `64.33%`**（`DINO-C = 0.6783` / `0.6392`, `LPIPS = 0.5166` / `0.5332`）。
+  - **`PRISM-Flow` (`V20_D1..D7`, `exp/v20/`)**：纯训练集内部 `kNN-30` 核心流形原型 + 仅 $16\times 16$ 瓶颈层注入结构语义的 Coarse-16 `SLFUNet` 分段视界流（`76.6–134.1 ms/img`，12GB 3060 训练峰值仅 `4.06 GB`），全面超越扩散跨注意力强基线 **`StyleGallery`**（`DINO-S = 0.5604`, `Affinity = 0.6432`, `Top-1 = 52.50%`）：`V20_D1` 达 **`DINO-S = 0.5789`、`CLIP-S = 0.7576`、`Style Affinity = 0.6683`、`CSD Top-1 = 64.00%`**（`Minimalism = 100.0%`）；`V20_D2` 达 **`DINO-S = 0.5672`、`Affinity = 0.6584`、`Top-1 = 60.50%`**（错标签控制 `2.33%`，因果差 `+58.17pp`）。
+  - 完整证据链见 `docs/next1118/V20_RESULTS.md`、`docs/next1118/V19_RESULTS.md`、`docs/performance/MASTER_LEDGER.md` 与 `docs/icme2027/paper.pdf`。
 - V11b（波let Flow）代码/修复版在 `exp/v13/`（8 bug 修复，sigma √2 精确验证），3060 上有远程重建脚本。
 - **评测口径（2026-11-14 用户决定）**：任务级评测/决策一律用完整 test750（读数 cross600），不用 dev 预览集；LD 基线 = v9 dev+test eval 行合并重算。
 - **V15 / V16 / V17 全线定论（2026-11-15～17）**：

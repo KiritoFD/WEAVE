@@ -17,7 +17,8 @@
 | `exp/v16/` | 已收尾 | 严格留出容量诊断（`A_strict`）、V15 锚点局部教师蒸馏（`B`）、RGB-H2 有限步 S10 反演（`C`，吸收率 `16.7%`） | `python -m exp.v16.run` | [`docs/v16/RESULTS.md`](../docs/v16/RESULTS.md) |
 | `exp/v17/` | 已收尾 | 条件探针/CFG/五标签互换（`P0`，揭示 ER/Uki 先验坍缩与 59% 源锁定）、DINO 上下文 `u_tgt−u_src` 学生（`P2_S4` 达 `13.33%` 反超教师）、Signed RGB-H2（`P3`）、均衡 FM 残差（`P4`） | `python -m exp.v17.run` | [`docs/v17/V17_RESULTS_EVAL.md`](../docs/v17/V17_RESULTS_EVAL.md) |
 | `exp/v18/` | 已完成突破 | ① `Gate 0` 零色相亮度对比度 + 空间白化灰度 DINO（泄漏降至 `18.3%`）；② **Track A** 校准 `LD4+`（`38.0%–42.2%`）与纯单步 `FastDINOStudent`（`33.8%–38.0%`）；③ **Track B (`CCF`)** 确立 $\tau_0=0$ 自配对控制流的 `18.67%` 笔触几何天花板 | `python -m exp.v18.run_v18` | [`docs/v18/V18_RESULTS.md`](../docs/v18/V18_RESULTS.md) |
-| **`exp/v19/`** | **当前主线** | **`PRISM v2` 正交商—纤维对偶 $(\Pi_\perp,\Pi_\parallel)$**：免源标签连续弦 $e(x_s\to\tau)$ + 潜色度正交分裂各向异性信任域 + 穿过可微 `S10` 的无归一化 `VGG-16+Oklab` 均衡教师（救活 `Ukiyo-e 45%` / `ER 42%`）+ 语义路由空间弦单步网络 | `python -m exp.v19.run_v19` | [`docs/next1118/README.md`](../docs/next1118/README.md) |
+| `exp/v19/` | 已收官 | **`PRISM v2` 正交商—纤维对偶 $(\Pi_\perp,\Pi_\parallel)$**：免源标签连续弦 $e(x_s\to\tau)$ + 潜色度正交分裂各向异性信任域 + 穿过可微 `S10` 的无归一化 `VGG-16+Oklab` 均衡教师（`T4` `59.00%` Top-1，救活 `Ukiyo-e 45%` / `ER 33.3%`）+ 语义路由单步网络（`PRISM-1` `44.33%–50.17%` @ `17.0 ms`） | `python -m exp.v19.run_v19` | [`docs/next1118/V19_RESULTS.md`](../docs/next1118/V19_RESULTS.md) |
+| **`exp/v20/`** | **最新收官** | **突破 `DINO-S` / `StyleGallery` 帕累托前沿**：纯训练集 `kNN-30` 核心流形原型（剔除 WikiArt 3D 展厅离群点）+ 仅 $16\times 16$ 瓶颈层注入结构的 **Coarse-16 `SLFUNet` 分段视界流**（`DINO-S = 0.5789`, `Affinity = 0.6683`, `Top-1 = 64.00%`）+ 多尺度 `Patch-SWD`（`64.33%` Top-1）+ 零 DINO `PRISM-Flash` 消融 | `python -m exp.v20.run_v20` | [`docs/next1118/V20_RESULTS.md`](../docs/next1118/V20_RESULTS.md) |
 
 ## 依赖约定
 

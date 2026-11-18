@@ -1,10 +1,17 @@
-# WEAVE / PRISM 全局实验结论与全量数据总台账（Master Ledger · V6 → V19）
+# WEAVE / PRISM 全局实验结论与全量数据总台账（Master Ledger · V6 → V20）
 
-**更新日期**：2026-11-18 · **统一基准**：`eval_protocol/tasks_750.json`（Cross600 主读数 + Same150 恒等控制）· **解码口径**：`S10` 剪枝解码器（10.66M，全仓唯一正式口径）· **机读数据**：[`metrics.csv`](metrics.csv)（**232 行 × 25 列**）与 [`metrics.json`](metrics.json)（**88 个非支配帕累托点**）。
+**更新日期**：2026-11-18 · **统一基准**：`eval_protocol/tasks_750.json`（Cross600 主读数 + Same150 恒等控制）· **解码口径**：`S10` 剪枝解码器（10.66M，全仓唯一正式口径）· **机读数据**：[`metrics.csv`](metrics.csv)（**257 行 × 25 列**）与 [`metrics.json`](metrics.json)（**98 个非支配帕累托点**）。
 
 ---
 
 ## 一、全局核心结论与决定性突破（Executive Findings）
+
+### 1.0 `PRISM-Flow / V20` 突破超球面均值坍缩与 64×64 边缘枷锁：正面全面击败 `StyleGallery`（2026-11-18 最新收官）
+针对 `V19` 高 `CSD Top-1`（`59.0%`）但 `DINO-S` 停留在 `0.462` 的超球面均值坍缩瓶颈（详见 [`../next1118/04_V20_SUBMODE_SLF_THEORY.md`](../next1118/04_V20_SUBMODE_SLF_THEORY.md) 与 [`../next1118/V20_RESULTS.md`](../next1118/V20_RESULTS.md)），`V20` 通过 **纯训练集内部 `kNN-30` 核心流形原型筛选**（滤除 WikiArt `Minimalism` 中近半数 3D 展厅装置实拍照片离群点，五类原型纯度跃升 `+20pp~+29pp`）、**仅 $16\times 16$ 瓶颈层注入结构语义的 Coarse-16 `SLFUNet`（`21.95M`）+ `GroupNorm` 后连续布局衰减** 以及 **多尺度 `ConvNeXt-Tiny + RGB` 切片 Wasserstein 抛光（`Patch-SWD`）**，在严格冻结 750 任务四裁判下首次全面压倒扩散跨注意力强基线 **`StyleGallery`**（`DINO-S = 0.5604`, `CLIP-S = 0.7259`, `Affinity = 0.6432`, `Top-1 = 52.50%`, `~18s/img`）：
+- **`V20.D1_core_slf_hiS`（`PRISM-Flow hiS`, `134.1 ms/img`，提速 `>134×`）**：**`DINO-S = 0.5789`**（超 `StyleGallery` `+1.85pp`，并超越 `StyleShot` `0.5750`！）、**`CLIP-S = 0.7576`**（`+3.17pp`）、**`Style Affinity = 0.6683`**（`+2.51pp`）、**`CSD Top-1 = 64.00%`**（`+11.50pp`，其中 `Minimalism = 100.0%`、`Ukiyo-e = 50.8%`）。
+- **`V20.D2_core_slf_bal`（`PRISM-Flow bal`, `134.1 ms/img`）**：**`DINO-S = 0.5672`**、**`CLIP-S = 0.7497`**、**`Style Affinity = 0.6584`**、**`CSD Top-1 = 60.50%`**；错标签控制 `V20.D4` 跌至 **`2.33%`**（因果特异性 **`+58.17pp`**）。
+- **`V20.D7 / D5 / D6`（`76.6–92.4 ms/img` 连续桥接帕累托墙）**：覆盖 `DINO-C = 0.5892`（`Aff = 0.6433 > StyleGallery`）至 `DINO-C = 0.6287–0.6688`（`DINO-S = 0.5214–0.5107`，较 `V19_T4` 同级内容下净增 `+5pp~+6pp` `DINO-S`）。
+- **`V20.A1_t4_patchswd`（`PRISM-Pro+`）**：在 `DINO-C = 0.6392, LPIPS = 0.5332` 高保真区间将 `CSD Top-1` 进一步推升至 **`64.33%`**（`A2` 达 **`64.50%`**）。
 
 ### 1.1 `PRISM v2 / V19` 正交商—纤维对偶与各向异性谱传输（2026-11-18 实测终局）
 立足源码级病灶剖析（见 [`../next1118/01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md`](../next1118/01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md)），`V19` 通过**正交商—纤维对偶 $(\Pi_\perp, \Pi_\parallel)$**、**潜空间亮度—色度正交分裂 $\R^4 = \operatorname{span}(\hat{w}_Y)\oplus\hat{w}_Y^\perp$** 与 **穿过可微 `S10` 的无归一化 `VGG-16+Oklab` 均衡判别器**，在完全**零测试期源标签 `sid`**、**零裁判泄漏**的前提下实现了全面历史性突破：
@@ -29,6 +36,7 @@
 5. **Law 5 — Self-Paired Generative Capacity $\neq$ Cross-Style Editing（V15–V18）**：无去风格正交分裂的自配对流扩容 260×（$0.13\text{M}\to 34.2\text{M}$）使 $\tau_0=0$ 生成升至 `49.3%`，却使 $\tau_0=0.7$ 编辑退化至 `6.67%`；即便 $\tau_0=0$ 纯噪声配边缘控制流，自配对重建仍受困于二维笔触反转天花板（`18.67%`）。
 6. **Law 6 — GroupNorm Latent Critics & Isotropic Trust Balls Blind Palette Transport（V18–V19）**：`GroupNorm` 架构性抹除通道均值/方差，各向同性欧氏球把三维潜色度迁移误判为结构损伤（致 `Ukiyo-e < 1%`）；一维亮度 LCN 严锁 + 三维色度放开 + 穿过 `S10` 的无归一化 `VGG+Oklab` 均衡判别器可将 `Ukiyo-e` 直接拉升至 `45.0%`。
 7. **Law 7 — Orthogonal Quotient–Fiber Duality $(\Pi_\perp, \Pi_\parallel)$ Unlocks Label-Free 1-Step Amortization（V19）**：被结构商投影 $\Pi_\perp$（`18.3%` 风格探针）丢弃的互补统计量 $\Pi_\parallel$ 恰以 `97.3%` 精度编码源风格坐标，驱动免源标签通用弦与空间语义路由单步网络达 `44.3%–50.2%` Top-1。
+8. **Law 8 — Hyperplane Margin Outliers & $64\times 64$ Edge Injection Cap `DINO-S`; Intra-Train `Core-kNN` + Coarse-16 Bottleneck Flow Breaks It（V20）**：最大化分类器超平面边际在嘈杂艺术数据集中易选中决策边界外侧的 3D 展厅实拍离群样本，且在 $64\times 64$ 解码层注入局部边缘会锁死源画笔触；改用纯训练集内部 `kNN-30` 核心流形原型并仅在 $16\times 16$ 瓶颈层施加 `GroupNorm` 后连续布局约束，使 `DINO-S` 从 `0.462` 跃升至 `0.5789`（`Minimalism` 从 `0.245` 升至 `0.503`）。
 
 ---
 
@@ -38,7 +46,15 @@
 |---|---|---|---:|---:|---:|---:|---:|---:|
 | **StyleShot** | 外部扩散 | 2.4B Diffusion (24.5s) | 92.60% | — | 0.5750 | 0.6949 | 0.3569 | 0.7697‡ |
 | **StyleID** | 外部扩散 | 1.1B DDIM+Attn (5.0s) | 73.20% | — | 0.5143 | 0.6469 | 0.3885 | 0.5554 |
+| **`V20.A1_t4_patchswd` (`PRISM-Pro+`)** | **PRISM-V20** | **免 `sid` T4 + Patch-SWD (265ms)** | **64.33%** | **+0.0442** | **0.4640** | **0.5815** | **0.6392** | **0.5332** |
+| **`V20.D1_core_slf_hiS` (`PRISM-Flow`)** | **PRISM-V20** | **Coarse-16 Core-SLF (134ms)** | **64.00%** | **+0.0725** | **0.5789** | **0.6683** | **0.5005** | **0.6221** |
+| **`V20.D2_core_slf_bal` (`PRISM-Flow`)** | **PRISM-V20** | **Coarse-16 Core-SLF (134ms)** | **60.50%** | **+0.0528** | **0.5672** | **0.6584** | **0.5335** | **0.6022** |
 | **`V19.T4_sweet_vgg` (`PRISM-Pro`)** | **PRISM-V19** | **免 `sid` 2步 S10-VGG (137ms)** | **59.00%** | **+0.0265** | **0.4618** | **0.5791** | **0.6783** | **0.5166** |
+| **`V20.D3_core_slf_hiC` (`PRISM-Flow`)** | **PRISM-V20** | **Coarse-16 Core-SLF (120ms)** | **57.50%** | **+0.0361** | **0.5525** | **0.6471** | **0.5683** | **0.5840** |
+| **`V20.D7_core_slf_domSG` (`PRISM-Flow`)** | **PRISM-V20** | **Coarse-16 Core-SLF (92ms)** | **56.83%** | **+0.0355** | **0.5481** | **0.6433** | **0.5892** | **0.5737** |
+| **`V20.D6_core_slf_c69` (`PRISM-Flow`)** | **PRISM-V20** | **Coarse-16 Core-SLF (77ms)** | **55.67%** | **+0.0249** | **0.5107** | **0.6145** | **0.6688** | **0.5374** |
+| **`V20.D5_core_slf_c64` (`PRISM-Flow`)** | **PRISM-V20** | **Coarse-16 Core-SLF (92ms)** | **55.17%** | **+0.0238** | **0.5214** | **0.6243** | **0.6287** | **0.5529** |
+| **StyleGallery** | 外部扩散检索 | SD Cross-Attn + Bank (~18s) | 52.50% | +0.0176 | 0.5604 | 0.6432 | 0.6113 | 0.5576 |
 | **`V19.S2_prism1_l130`** | **PRISM-V19** | **免 `sid` 1步 1.5M ($\lambda=1.3$, 17ms)** | **50.17%** | **-0.0041** | **0.4504** | **0.5705** | **0.7032** | **0.5338** |
 | **`V19.S3_oneshot_exemplar`** | **PRISM-V19** | **1-Shot 单参考图 1步 (17ms)** | **45.50%** | **-0.0160** | **0.4446** | **0.5664** | **0.7362** | **0.5111** |
 | **`V19.S2_prism1_v2` (`PRISM-1`)** | **PRISM-V19** | **免 `sid` 1步 1.5M ($\lambda=1.0$, 17ms)** | **44.33%** | **-0.0219** | **0.4431** | **0.5655** | **0.7440** | **0.5057** |
