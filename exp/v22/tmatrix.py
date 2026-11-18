@@ -39,6 +39,7 @@ T_CONFIGS = {
     "T3": dict(core_frac=0.8, drop_c_prob=0.08, layout_train=True, struct_w=0.10),
     "T4": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=False, struct_w=0.10),
     "T5": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=True, struct_w=0.0),
+    "T4L": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=False, struct_w=0.10),  # 长训练臂，--updates 3600
 }
 
 

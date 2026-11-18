@@ -26,6 +26,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pool", default=str(OUT.parent.parent.parent / "pseudo_gt_24h/orig_mean_fp16"))
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--ckpt", default=str(T4_CKPT))
+    ap.add_argument("--tag", default="T4s")
+    ap.add_argument("--wcs", default="1.0,1.15,1.2,1.3,1.5")
     args = ap.parse_args()
 
     sanitize_cuda_env()
@@ -45,11 +48,12 @@ def main():
     from src.utils import load_s10_decoder
     ctx["dec"] = load_s10_decoder(args.device)
 
-    core = PrismCore(bundle, bank, T4_CKPT, device=args.device)
-    res = eval_t_ckpt(core, T4_CKPT, "T4s", ctx, device=args.device, wc_list=SWEEP_WCS)
-    save_json(OUT / "t4_wc_sweep.json", {"updated_utc": utc(), "results": res})
+    wcs = tuple((float(w), f"wc{w.replace('.', '')}") for w in args.wcs.split(","))
+    core = PrismCore(bundle, bank, Path(args.ckpt), device=args.device)
+    res = eval_t_ckpt(core, Path(args.ckpt), args.tag, ctx, device=args.device, wc_list=wcs)
+    save_json(OUT / f"{args.tag}_wc_sweep.json", {"updated_utc": utc(), "results": res})
 
-    print("\n=== T4 × wc 细扫（fixed gate; wc11/14 已测 69.00/60.67→66.00） ===", flush=True)
+    print(f"\n=== {args.tag} × wc 细扫（fixed gate） ===", flush=True)
     for r in res:
         if r.get("skipped"):
             print(f"{r['arm']}: skipped", flush=True)
