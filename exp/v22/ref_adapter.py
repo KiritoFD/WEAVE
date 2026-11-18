@@ -121,7 +121,7 @@ class RefAdapterModel(nn.Module):
 
 
 def train_ref_adapter(bundle: dict, c21: dict, updates: int = 2000,
-                      micro: int = 120, device: str = "cuda") -> Path:
+                      micro: int = 24, device: str = "cuda") -> Path:
     out_p = OUT / "ref_adapter/ref_adapter.pt"
     out_p.parent.mkdir(parents=True, exist_ok=True)
     if out_p.exists():
@@ -333,6 +333,7 @@ def main():
     ap.add_argument("--pool", default=str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16"))
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--updates", type=int, default=2000)
+    ap.add_argument("--micro", type=int, default=24)  # 3060 12GB 预算（AGENTS.md micro≤24）
     ap.add_argument("--skip-eval", action="store_true")
     args = ap.parse_args()
 
@@ -341,7 +342,7 @@ def main():
     c21_path = ROOT / "runs/v21/cache/v21_stiefel_ref_cache.pt"
     c21 = torch.load(c21_path, map_location="cpu", weights_only=False)
 
-    adapter_p = train_ref_adapter(bundle, c21, updates=args.updates, device=args.device)
+    adapter_p = train_ref_adapter(bundle, c21, updates=args.updates, micro=args.micro, device=args.device)
     if not args.skip_eval:
         res = eval_ref_adapter_1shot(bundle, c21, adapter_p, device=args.device)
         save_json(OUT / "p2a_1shot_results.json", {"updated_utc": utc(), "arms": res})
