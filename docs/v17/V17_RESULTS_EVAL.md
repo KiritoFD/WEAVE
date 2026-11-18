@@ -19,7 +19,7 @@
 | P4_F1_eval（FM 类中心化残差，8k）| 0.1133 | 0.4622 | 0.7497 | 0.2714 | 类中心化仅 +0.67pp vs base |
 | P4_F3_eval（FM 中心化+早段加权）| 0.1117 | 0.4613 | 0.7501 | 0.2706 | 早段加权无额外收益 |
 
-*代码核查修正：`S8_eval` 的 `config_resolved.json` 经核实确为 `S8`（非此前猜测的配置覆盖），其退回基线是因为 `train_student.py` 未将 `self.amplitude` 乘入损失路径导致该线性层保持零梯度随机初始化，推理时被 `scale.clamp(0, 2)` 截断；`S3/S4` 无此头，`S5/S6/S8` 屏蔽死头后主干 `delta` 完好可评。完整跨代研判与下一步 V18 计划见 [../WEAVE_COMPREHENSIVE_SUMMARY_AND_NEXT_PLAN_20261117.md](../WEAVE_COMPREHENSIVE_SUMMARY_AND_NEXT_PLAN_20261117.md)。*
+*代码核查修正：`S8_eval` 的 `config_resolved.json` 经核实确为 `S8`（非此前猜测的配置覆盖），其退回基线是因为 `train_student.py` 未将 `self.amplitude` 乘入损失路径导致该线性层保持零梯度随机初始化，推理时被 `scale.clamp(0, 2)` 截断；`S3/S4` 无此头，`S5/S6/S8` 屏蔽死头后主干 `delta` 完好可评。完整跨代总台账见 [../performance/MASTER_LEDGER.md](../performance/MASTER_LEDGER.md)，后续突破见 [../v18/V18_RESULTS.md](../v18/V18_RESULTS.md)。*
 
 ## 判读（初步，随补跑更新）
 

@@ -76,7 +76,7 @@ R2 表 D 铁证：学生与 Oracle 教师位移 cos 0.638–0.683、RMS 比 0.52
 
 ## P1：真实 latent 密度先验 + 引导编辑（已完成）
 
-> 动机：R2 表 D 表明学生没有拟合 Oracle 教师，因此进一步测试“真实数据 score 先验 + R1 引导”能否改善单步模型的风格—内容权衡。详细报告见 [W_P1_REPORT.md](docs/v6/W_P1_REPORT.md)。
+> 动机：R2 表 D 表明学生没有拟合 Oracle 教师，因此进一步测试“真实数据 score 先验 + R1 引导”能否改善单步模型的风格—内容权衡。详细报告见 [W_P1_REPORT.md](W_P1_REPORT.md)。
 
 Score prior 训练：3.27M 参数，1000 步，训练/验证 latent 数 14,545/1,000，最终 loss 0.5655，显存 7.27GB。
 

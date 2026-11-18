@@ -1,7 +1,7 @@
 # V10 结果：Content-Conditioned Local Style Score（2026-11-14）
 
 > 预注册计划 [WEAVE_V10_CC_SCORE_4070LAPTOP_12H.md](WEAVE_V10_CC_SCORE_4070LAPTOP_12H.md)；
-> 进展 [V10_PROGRESS.md](V10_PROGRESS.md)。**评测口径：完整 test750（读数取 cross600，
+> 进展日志 `V10_PROGRESS.md`（已归档至 `docs/archive/`）。**评测口径：完整 test750（读数取 cross600，
 > n=600）**——2026-11-14 用户决定弃用 dev 预览集；LD0–LD4 基线为 v9 dev+test eval 行
 > 合并重算。所有臂同 S10 解码、同 referee、同 N2C 预算（eps=0.10/rho=0.15）。
 

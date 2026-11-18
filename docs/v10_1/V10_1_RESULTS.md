@@ -1,7 +1,7 @@
 # V10.1 结果：局部匹配（检索目标形式）——score 级判负，v11 维持延期
 
 > 预注册 [WEAVE_V10_1_LOCAL_MATCH_750.md](WEAVE_V10_1_LOCAL_MATCH_750.md) · 2026-11-14
-> 来源方案：[../v11/WEAVE_V11_LOCAL_STROKE_MEMORY_PLAN.md](../v11/WEAVE_V11_LOCAL_STROKE_MEMORY_PLAN.md) §六 P0–P2。
+> 来源方案：`WEAVE_V11_LOCAL_STROKE_MEMORY_PLAN.md`（已归档至 `docs/archive/`）§六 P0–P2。
 
 ## 判定
 

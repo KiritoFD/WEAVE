@@ -15,7 +15,7 @@
 | 本次复盘判断 | 联合训练有恢复压缩后重建的证据；这是E+D联合效应，不能称为单独Decoder收益。 |
 
 
-**证据来源：** [docs/v6/STYLE_VAE_ABC_REPORT.md](../../v6/STYLE_VAE_ABC_REPORT.md)。
+**证据来源：** `docs/v6/STYLE_VAE_ABC_REPORT.md`。
 
 ## V15 · B_style：风格统计组织
 
@@ -29,7 +29,7 @@
 | 本次复盘判断 | 有微弱判别收益，未转成编辑；不能把18.8%直接与WEAVE600的B4 21.33%比较。 |
 
 
-**证据来源：** [docs/v6/STYLE_VAE_ABC_REPORT.md](../../v6/STYLE_VAE_ABC_REPORT.md)。
+**证据来源：** `docs/v6/STYLE_VAE_ABC_REPORT.md`。
 
 ## V16 · C_edit：显式编辑目标
 
@@ -43,12 +43,12 @@
 | 本次复盘判断 | 训练损失收敛没有形成泛化编辑；整套latent分布显著漂移，旧WEAVE兼容性不足，但不能把全部责任归给Encoder。 |
 
 
-**证据来源：** [docs/v6/STYLE_VAE_ABC_REPORT.md](../../v6/STYLE_VAE_ABC_REPORT.md)；[deliver/vae_ranked_eval/STYLE_ATTRIBUTION.md](../../../deliver/vae_ranked_eval/STYLE_ATTRIBUTION.md)。
+**证据来源：** `docs/v6/STYLE_VAE_ABC_REPORT.md`；[deliver/vae_ranked_eval/STYLE_ATTRIBUTION.md](../../../deliver/vae_ranked_eval/STYLE_ATTRIBUTION.md)。
 
 ## 吞吐与数值结果原表
 
 
-**证据来源：** [docs/v6/STYLE_VAE_ABC_REPORT.md](../../v6/STYLE_VAE_ABC_REPORT.md)。
+**证据来源：** `docs/v6/STYLE_VAE_ABC_REPORT.md`。
 
 ### 原报告表 1：1. 基础设施实测（方案要求的第一步）
 
@@ -128,7 +128,7 @@
 | 本次复盘判断 | 证明输入接近目标图的完整latent时可恢复目标类；t=1同时复制目标内容，不是保内容迁移，也不是FiLM/低维stylecode容量的正式验收。 |
 
 
-**证据来源：** [docs/v6/STYLE_VAE_ABC_REPORT.md](../../v6/STYLE_VAE_ABC_REPORT.md)。
+**证据来源：** `docs/v6/STYLE_VAE_ABC_REPORT.md`。
 
 | 插值t | crossTop1 | sameTop1 |
 |---|---|---|

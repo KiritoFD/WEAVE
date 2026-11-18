@@ -3,7 +3,7 @@
 **预注册计划 · 2026-11-14 · RTX 4070 Laptop（~6GB 可用）· 12h 预算**
 
 > 本文档是 V10 的预注册契约：先写死假设、协议、验收门槛与判停条件，再动手实现。
-> 进展见 [V10_PROGRESS.md](V10_PROGRESS.md)。协议级前提沿用根 `AGENTS.md`：解码一律 S10、
+> 进展日志 `V10_PROGRESS.md` 已归档至 `docs/archive/`，最终结果见 [V10_RESULTS.md](V10_RESULTS.md)。协议级前提沿用根 `AGENTS.md`：解码一律 S10、
 > 评测一律 `eval_protocol/tasks_750.json` + `src/eval/measure.py` referee。
 
 ---

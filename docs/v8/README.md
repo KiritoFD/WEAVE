@@ -6,12 +6,10 @@ V8 实际执行的是 **A/B/C/I 四路线矩阵**（生成器内控制、学习�
 
 | 顺序 | 文档 | 看什么 |
 |---|---|---|
-| 0 | [实施与运行记录](<V8_IMPLEMENTATION_AND_RUN.md>) | **当前事实源**：代码结构、接口、臂矩阵、队列状态、已知缺口 |
-| 1 | [24h 全矩阵研究计划](<../WEAVE_V8_24H_FULL_MATRIX_PLAN.md>) | 研究问题、评价协议、H0–H6 设计矩阵（设计契约，非当前队列） |
-| 2 | [实施总方案](<V8_24H_RESEARCH_PLAN.md>) | 设计阶段的工程决定、接口契约与验收原则 |
-| 3 | [模块实现清单](<V8_IMPLEMENTATION_SPEC.md>) | 设计阶段的逐模块规格（M/G/T/D 臂体系） |
-| 4 | [测试与启动验收](<V8_TEST_ACCEPTANCE.md>) | 设计阶段的测试契约 |
-| 5 | [矩阵与串行Runbook](<V8_MATRIX_AND_RUNBOOK.md>) | 设计阶段的 121 注册项矩阵与状态机 |
+| 0 | [实施与运行记录](V8_IMPLEMENTATION_AND_RUN.md) | **当前事实源**：代码结构、接口、臂矩阵、队列状态、已知缺口 |
+| 1 | [实验结果记录](exp.md) · [F2 本地复核](F2_LOCAL_EVAL.md) | `N2C` / `F2` 实测数据与对比图表 |
+
+*(注：设计阶段未落地的 121 项 H0–H6 草案 `WEAVE_V8_24H_FULL_MATRIX_PLAN.md`、`V8_24H_RESEARCH_PLAN.md`、`V8_IMPLEMENTATION_SPEC.md`、`V8_TEST_ACCEPTANCE.md`、`V8_MATRIX_AND_RUNBOOK.md` 已统一归档至 `docs/archive/`。)*
 
 ## 计划与实现的关系（重要）
 

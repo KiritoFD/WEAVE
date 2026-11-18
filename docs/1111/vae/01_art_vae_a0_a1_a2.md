@@ -18,7 +18,7 @@
 | 本次复盘判断 | 明确有重建收益，CSD 特征保真略降；没有证明风格几何或迁移收益。 |
 
 
-**证据来源：** [docs/v6/VAE_A0_A1_A2_FULL_REPORT.md](../../v6/VAE_A0_A1_A2_FULL_REPORT.md)。
+**证据来源：** `docs/v6/VAE_A0_A1_A2_FULL_REPORT.md`。
 
 ## V02 · A1：类别交叉熵监督
 
@@ -32,7 +32,7 @@
 | 本次复盘判断 | 有局部探针正结果，但不能从一个探针推广成整个 latent 风格空间改善。 |
 
 
-**证据来源：** [docs/v6/VAE_A0_A1_A2_FULL_REPORT.md](../../v6/VAE_A0_A1_A2_FULL_REPORT.md)。
+**证据来源：** `docs/v6/VAE_A0_A1_A2_FULL_REPORT.md`。
 
 ## V03 · A2：MoCo / SupCon
 
@@ -46,7 +46,7 @@
 | 本次复盘判断 | 重建维持 A0 水平；未出现足够强、跨协议一致的风格几何改善。 |
 
 
-**证据来源：** [docs/v6/VAE_A0_A1_A2_FULL_REPORT.md](../../v6/VAE_A0_A1_A2_FULL_REPORT.md)。
+**证据来源：** `docs/v6/VAE_A0_A1_A2_FULL_REPORT.md`。
 
 ## 三条路线共同说明什么
 
@@ -56,7 +56,7 @@
 ## 原始完整数值
 
 
-**证据来源：** [docs/v6/VAE_A0_A1_A2_FULL_REPORT.md](../../v6/VAE_A0_A1_A2_FULL_REPORT.md)。
+**证据来源：** `docs/v6/VAE_A0_A1_A2_FULL_REPORT.md`。
 
 ### 原报告表 1：一、综合评测对比总表
 

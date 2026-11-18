@@ -7,7 +7,7 @@
 因此“风格变差是否蒸馏导致”应拆成：压缩是否损失细节、恢复目标是否有偏、旧 WEAVE 与新 Decoder 是否兼容，以及整套 VAE 是否也换了 Encoder。
 
 
-**证据来源：** [tools/vae_suite/decoder_train.py](../../../tools/vae_suite/decoder_train.py)；[docs/v6/S10_FINAL_REPORT.md](../../v6/S10_FINAL_REPORT.md)。
+**证据来源：** [tools/vae_suite/decoder_train.py](../../tools/vae_suite/decoder_train.py)；[02_ORIGINAL_S10_REPORT.md](02_ORIGINAL_S10_REPORT.md)。
 
 ## V11 · S10 一次剪枝与 L1 容量恢复
 
@@ -21,7 +21,7 @@
 | 本次复盘判断 | 像素恢复不代表纹理和知觉恢复；这些是早期 checkpoint，不能冒充最终 S10 的 0.09264。 |
 
 
-**证据来源：** [docs/v6/DECODER_ABC_DIAGNOSIS.md](../../v6/DECODER_ABC_DIAGNOSIS.md)；[docs/v6/S10_FINAL_REPORT.md](../../v6/S10_FINAL_REPORT.md)。
+**证据来源：** [11_DECODER_ABC_DIAGNOSIS.md](11_DECODER_ABC_DIAGNOSIS.md)；[02_ORIGINAL_S10_REPORT.md](02_ORIGINAL_S10_REPORT.md)。
 
 ## V12 · LPIPS 分辨率修正与 clean 全量续训
 
@@ -35,7 +35,7 @@
 | 本次复盘判断 | 相较 L1-only 大幅恢复知觉质量，但仍未达到 A0 原 Decoder；当前预算/目标下呈现平台，不等于任何训练都无法进一步恢复。 |
 
 
-**证据来源：** [docs/v6/S10_FINAL_REPORT.md](../../v6/S10_FINAL_REPORT.md)；[docs/v6/S10_12H_EXECUTION_LOG.md](../../v6/S10_12H_EXECUTION_LOG.md)。
+**证据来源：** [02_ORIGINAL_S10_REPORT.md](02_ORIGINAL_S10_REPORT.md)；[03_S10_EXECUTION_LOG.md](03_S10_EXECUTION_LOG.md)。
 
 ## V13 · S10 效率与输入梯度代理
 
@@ -49,12 +49,12 @@
 | 本次复盘判断 | 速度收益明确；单探针梯度仅弱对齐，尚未证明可无损替换训练反传路径，也不能把这个加速倍数套到3060整条推理。 |
 
 
-**证据来源：** [docs/v6/S10_FINAL_REPORT.md](../../v6/S10_FINAL_REPORT.md)。
+**证据来源：** [02_ORIGINAL_S10_REPORT.md](02_ORIGINAL_S10_REPORT.md)。
 
 ## 原始最终报告表
 
 
-**证据来源：** [docs/v6/S10_FINAL_REPORT.md](../../v6/S10_FINAL_REPORT.md)。
+**证据来源：** [02_ORIGINAL_S10_REPORT.md](02_ORIGINAL_S10_REPORT.md)。
 
 ### 原报告表 1：重建（256 张）
 
@@ -169,7 +169,7 @@
 ## 对最终风格迁移的影响
 
 严格固定 Encoder 的 A0→S10 比较，Oracle/B3/B4 的 CSD Top-1 分别提升3.67/4.00/5.00个百分点；ScoreDiff N24/N12 则下降3.00/3.50个百分点。
-五个生成器的 DINO-S 均上升；ScoreDiff 的 DINO/CLIP margin 也上升。细表和CI见 [归因](../comparison/03_style_metrics_and_attribution.md)。
+五个生成器的 DINO-S 均上升；ScoreDiff 的 DINO/CLIP margin 也上升。细表和CI见 [归因](../1111/comparison/03_style_metrics_and_attribution.md)。
 这与“压缩伤害独立重建”并不矛盾：固定 WEAVE 输出经过不同 Decoder，形成不同平滑、纹理和判官响应。生成器与 Decoder 有明显交互，不能只用一列重建指标预测全部迁移结果。
 
 ## 目前可以保留的成果
@@ -178,4 +178,4 @@ S10 是一个有独立重建损失的快速 Decoder 选项。它不是“所有�
 是否采用应由具体生成器、关注的风格/内容指标与整条推理延迟共同决定。
 
 
-远端原始 JSON 的位置、大小、SHA256 与压缩内容保存在 [采集快照](../appendix/live_snapshot.json)。这里的“压缩”只省略逐任务大数组，不改聚合数值。
+远端原始 JSON 的位置、大小、SHA256 与压缩内容保存在 [采集快照](../1111/appendix/live_snapshot.json)。这里的“压缩”只省略逐任务大数组，不改聚合数值。

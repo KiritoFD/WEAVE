@@ -15,7 +15,7 @@
 | 本次复盘判断 | 损失存在尺度捷径，且测得的目标方向弱；在当前方案下继续降低 SWD 不构成风格成功。尺度变化没有严格解释全部距离收缩。 |
 
 
-**证据来源：** [docs/v6/V2_FAILURE_DIAGNOSIS.md](../../v6/V2_FAILURE_DIAGNOSIS.md)；[docs/WEAVE_ArtVAE_Global_Postmortem_and_V21_Plan_2026-11-08.md](../../WEAVE_ArtVAE_Global_Postmortem_and_V21_Plan_2026-11-08.md)。
+**证据来源：** [docs/v6/V2_FAILURE_DIAGNOSIS.md](../../v6/V2_FAILURE_DIAGNOSIS.md)；`docs/WEAVE_ArtVAE_Global_Postmortem_and_V21_Plan_2026-11-08.md`。
 
 ### SWD 诊断中的修正
 
@@ -285,4 +285,4 @@ StyleDecoupler 在历史工作环境中未能取得可用依赖/权重，属于�
 早期 V2.1 / 重新组织几何方案中的提议，只有在后续具体日志、checkpoint 或评测中找到对应项才计入已试路线。
 
 
-**证据来源：** [docs/WEAVE_ArtVAE_Global_Postmortem_and_V21_Plan_2026-11-08.md](../../WEAVE_ArtVAE_Global_Postmortem_and_V21_Plan_2026-11-08.md)。
+**证据来源：** `docs/WEAVE_ArtVAE_Global_Postmortem_and_V21_Plan_2026-11-08.md`。

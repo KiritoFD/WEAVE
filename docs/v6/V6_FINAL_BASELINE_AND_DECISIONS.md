@@ -262,7 +262,7 @@ Ukiyo 的绝对值从未超过 **0.004**，而噪声带是 **0.01**（VAE 往返
 
 ### 5.6 机制层面：算子是"去风格器"而非"换风格器"
 
-见 [`Negative_Results/L2_mechanism/operator_is_a_style_remover.md`](../../Negative_Results/L2_mechanism/operator_is_a_style_remover.md)。
+见 [`../negative_results/L2_mechanism/operator_is_a_style_remover.md`](../negative_results/L2_mechanism/operator_is_a_style_remover.md)。
 
 | 量 | 典型值 | 含义 |
 |---|---:|---|

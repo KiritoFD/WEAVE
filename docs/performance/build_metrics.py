@@ -376,6 +376,42 @@ def collect_all() -> list[dict]:
             row["ms_per_img"] = v19_speed[nm]
         push(row)
 
+    # 11. V20 / PRISM-Flow & Submode Patch-SWD arms (remote 4090 measured summary or local eval.json)
+    v20_done: set[str] = set()
+    for ep in sorted((ROOT / "runs/v20/measured").glob("*/eval.json")):
+        nm = ep.parent.name
+        is_diag = ("_wrong" in nm)
+        row = eval_json_to_row(f"V20.{nm.removeprefix('V20_')}", "V20-PRISM", ep, is_diagnostic=is_diag)
+        push(row)
+        v20_done.add(nm)
+
+    v20_cache = read_json(ROOT / "docs/next1118/v20_measured_cache.json")
+    if v20_cache and "arms" in v20_cache:
+        for rec in v20_cache["arms"]:
+            nm = rec["arm"]
+            if nm in v20_done:
+                continue
+            is_diag = bool(rec.get("is_diagnostic", "_wrong" in nm))
+            row = blank_row(
+                f"V20.{nm.removeprefix('V20_')}", "V20-PRISM", "q2a_oracle_cross600", "S10",
+                is_diag, "docs/next1118/v20_measured_cache.json",
+            )
+            row["n_cross"] = 600
+            row.update({
+                "dino_s": rec.get("dino_s"),
+                "clip_s": rec.get("clip_s"),
+                "style_affinity": rec.get("style_affinity"),
+                "dino_c": rec.get("dino_c"),
+                "lpips": rec.get("lpips"),
+                "target_top1": rec.get("csd_top1"),
+                "target_margin": rec.get("csd_margin"),
+                "same_top1": rec.get("same150_top1"),
+                "same_dino_s": rec.get("same150_dino_s"),
+                "same_dino_c": rec.get("same150_dino_c"),
+                "ms_per_img": rec.get("ms_per_img"),
+            })
+            push(row)
+
     return rows
 
 
@@ -428,22 +464,27 @@ def render_pareto_dashboard(rows: list[dict]):
         "V9.LD4", "V10.E4", "V15.PT2_P2_s1.t04", "V16.B_teacher", "V17.P2_S4_eval",
     }
     for r in valid:
-        if r["group"] == "V18" and r["pareto"]:
+        if r["group"] in ("V18", "V19-PRISM", "V20-PRISM") and r["pareto"]:
             highlight_names.add(r["arm"])
 
     for ax, xk, yk, xl, yl in panels:
         ax.set_facecolor("#FCFDFE")
         for r in valid:
             is_ext = r["group"].startswith("Baseline")
+            is_prism = r["group"] in ("V19-PRISM", "V20-PRISM")
             is_v18 = r["group"] == "V18"
-            if is_v18:
-                c, mk, sz, zo = "#D90429", "*", 200, 6
+            if is_prism and r["pareto"]:
+                c, mk, sz, zo = "#C81D25", "*", 230, 7
+            elif is_prism:
+                c, mk, sz, zo = "#ED553B", "o", 56, 5
+            elif is_v18:
+                c, mk, sz, zo = "#E65100", "*", 165, 6
             elif r["pareto"] and not is_ext:
-                c, mk, sz, zo = "#E65100", "*", 150, 5
+                c, mk, sz, zo = "#F59E0B", "*", 140, 5
             elif r["pareto"] and is_ext:
                 c, mk, sz, zo = "#2B5B84", "D", 68, 4
             elif not is_ext:
-                c, mk, sz, zo = "#7A4FA3", "o", 38, 3
+                c, mk, sz, zo = "#7A4FA3", "o", 36, 3
             else:
                 c, mk, sz, zo = "#9AA5B1", "X", 36, 2
             ax.scatter(r[xk], r[yk], c=c, marker=mk, s=sz, alpha=0.88,

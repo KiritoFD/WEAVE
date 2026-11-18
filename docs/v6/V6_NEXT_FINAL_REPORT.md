@@ -33,7 +33,7 @@
 | [`V6_NEXT_Q2_RESULTS.md`](V6_NEXT_Q2_RESULTS.md) | Q2 三机制 + Q3 独立评测 |
 | [`V6_NEXT_STYLE_PLAN.md`](V6_NEXT_STYLE_PLAN.md) | 执行方案 |
 | [`V6_NEXT_DECISIONS.md`](V6_NEXT_DECISIONS.md) | 决策记录 |
-| [`Negative_Results/L3_implementation/`](../../Negative_Results/L3_implementation/) | **新增两条静默失败记录（第 7、8 条）** |
+| [`../negative_results/L3_implementation/`](../negative_results/L3_implementation/) | **新增两条静默失败记录（第 7、8 条）** |
 
 **代码**：`tools/v6_next/{eval_direction,probe_style,gate,q0_verify}.py`
 **脚本**：`sbflow/scripts/{q_lib,run_v6_next_p2c,q1b_replicate,q2_mechanisms,q3_confirm}.sh` 及全部检查脚本

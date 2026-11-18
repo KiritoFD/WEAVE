@@ -84,7 +84,7 @@ R2的Identity是latent不编辑后再decode，DINO-C0.9803、LPIPS0.0745；它�
 | WCT | 0.1542 | 0.5774 | 0.0232 | 1.0010 | 20.0% |
 
 
-**证据来源：** [docs/baseline/UNIFIED_FULL_RANKING.md](../../baseline/UNIFIED_FULL_RANKING.md)。
+**证据来源：** [docs/baseline/UNIFIED_FULL_RANKING.md](../../LEADERBOARD.md)。
 
 ### 旧版重评数值为何不能覆盖新版
 
@@ -107,4 +107,4 @@ Evaluator V2中DINO-SSM整列0、VAE No-op的raw LPIPS也写0，而后来正确�
 本次不修改旧榜单，保留历史来源，在本目录给出可复核口径。
 
 
-**证据来源：** [LEADERBOARD.md](../../../LEADERBOARD.md)。
+**证据来源：** [LEADERBOARD.md](../../LEADERBOARD.md)。

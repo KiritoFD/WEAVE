@@ -61,7 +61,7 @@ WEAVE14个约33.2MB、VAE工作流4个约293.2MB，共约326MB；均是已有交
 |---|---|
 | V6 Direct/ScoreDiff与消融 | [tools/v6_24h/eval_tiers.py](../../../tools/v6_24h/eval_tiers.py) |
 | R2统一评测 | [tools/v6_next/r2_eval.py](../../../tools/v6_next/r2_eval.py) |
-| R2串行调度 | [sbflow/scripts/run_r2_12h.sh](../../../sbflow/scripts/run_r2_12h.sh) |
+| R2串行调度 | [sbflow/scripts/run_r2_12h.sh](../../../tools/sbflow/scripts/run_r2_12h.sh) |
 | 20格换VAE | [tools/vae_swap_eval/run.py](../../../tools/vae_swap_eval/run.py) |
 | DINO/CLIP补评 | [tools/vae_swap_eval/style_compare.py](../../../tools/vae_swap_eval/style_compare.py) |
 | 配对归因/全因子 | [tools/vae_swap_eval/attribute.py](../../../tools/vae_swap_eval/attribute.py) |

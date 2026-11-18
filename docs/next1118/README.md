@@ -54,6 +54,8 @@ $$\Pi_\perp(x) = \big(C_{64}(Y(x)),\; \tilde{P}_{16}(Y(x))\big), \qquad \Pi_\par
 | **01** | [`01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md`](01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md) | 当前稿件 4 大弱点拆解、4 处源码病灶行级取证、与 `Negative_Results`（L1–L4）/ `V12` / `V14` / `04_bugs` 的逐条防踩坑核对表 |
 | **02** | [`02_MATHEMATICAL_THEORY_AND_ARCHITECTURE.md`](02_MATHEMATICAL_THEORY_AND_ARCHITECTURE.md) | $(\Pi_\perp, \Pi_\parallel)$ 正交对偶定理、$\R^4 = \operatorname{span}(\hat{w}_Y)\oplus\hat{w}_Y^\perp$ 各向异性投影公式、`S10` 可微多尺度判别器与语义路由单步网络精确张量规格 |
 | **03** | [`03_4090_EXECUTION_AND_PAPER_UPGRADE_PLAN.md`](03_4090_EXECUTION_AND_PAPER_UPGRADE_PLAN.md) | `RTX 4090` 分阶段预注册实验表（Gate 审计 $\to$ Teacher 消融 $\to$ 免 `sid` 单步学生 $\to$ `P2A/R5` 零样本 $\to$ 定性大图拼版与论文回填） |
+| **04** | [`04_V20_SUBMODE_SLF_THEORY.md`](04_V20_SUBMODE_SLF_THEORY.md) | `V20 / PRISM-Flow` 突破超球面均值坍缩与 $64\times 64$ 笔触边缘枷锁（场景匹配子流派 `Patch-SWD` + Coarse-16 `SLFUNet` 超越 `StyleGallery`） |
+| **V19** | [`V19_RESULTS.md`](V19_RESULTS.md) | `V19 / PRISM v2` 14 臂全量 750 任务实测结果报告 |
 
 ### 预注册硬性突破目标（Cross600 / S10 四裁判协议）
 1. **教师端（`PRISM-Pro v2`）**：Cross600 CSD Top-1 突破 **`42.0%–48.0%+`**（无条件正面压倒 `StyTr2` `39.50%` 与 `Seedream 4.5` `37.30%`），`DINO-C >= 0.72`，`LPIPS <= 0.50`，`Src-Lock < 40%`，且 `ER` 与 `Ukiyo-e` 双双突破 **`20%–30%+`**。

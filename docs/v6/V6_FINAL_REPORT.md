@@ -175,7 +175,7 @@ DWT 统计空间无法区分这两个目标，**必须换空间**。
 | [`V6_24H_P0_AUDIT.md`](V6_24H_P0_AUDIT.md) | P0 审计（含 5 处代码修复、统计方法修正、数据泄漏审计） |
 | [`V6_24H_PLAN_COVERAGE.md`](V6_24H_PLAN_COVERAGE.md) | 计划覆盖审计 |
 | [`V6_SPACE_MISMATCH_HYPOTHESIS.md`](V6_SPACE_MISMATCH_HYPOTHESIS.md) | 空间失配假设（含可检验预测与不得断言项） |
-| [`Negative_Results/`](../../Negative_Results/) | 分层负面结果（L1 任务表述 / L2 机制 / L3 实现 / L4 消融） |
+| [`../negative_results/`](../negative_results/) | 分层负面结果（L1 任务表述 / L2 机制 / L3 实现 / L4 消融） |
 
 **代码**：`tools/v6_24h/`（21 个模块：队列、评测层级、分析工具、测试）
 **脚本**：`sbflow/scripts/`（队列启动、状态检查、回归测试、无人值守驱动）
