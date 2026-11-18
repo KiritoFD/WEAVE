@@ -1,0 +1,41 @@
+{
+  "updated_utc": "2026-11-18T16:40:20.267666+00:00",
+  "fiber_separation": {
+    "train": {
+      "same_style_mean_dist": 0.1694,
+      "cross_style_mean_dist": 1.4919,
+      "separation_ratio": 8.8044,
+      "n_same": 800,
+      "n_cross": 3200
+    },
+    "holdout": {
+      "same_style_mean_dist": 0.2541,
+      "cross_style_mean_dist": 1.4763,
+      "separation_ratio": 5.8102,
+      "n_same": 754,
+      "n_cross": 3246
+    },
+    "verdict_same_lt_cross": true
+  },
+  "rgb_encoder": {
+    "candidates": {
+      "deliver/checkpoints/runs/sd0_s10/sd0_s10_best_overall.pt": {
+        "exists": false,
+        "size_mb": null
+      },
+      "deliver/checkpoints/runs/sd0_s10/sd0_s10_best_response.pt": {
+        "exists": false,
+        "size_mb": null
+      },
+      "deliver/checkpoints/runs/a0/a0_encoder_only.pt": {
+        "exists": false,
+        "size_mb": null
+      },
+      "deliver/checkpoints/runs/vae_style_vae/C_edit_best.pt": {
+        "exists": false,
+        "size_mb": null
+      }
+    },
+    "status": "unverified：任一 encoder 能否以 0.18215 scaling 编码 SD1.5 latent 域需实际双向验证后再宣称 RGB→RGB 端到端"
+  }
+}

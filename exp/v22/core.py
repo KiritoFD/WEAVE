@@ -357,5 +357,5 @@ class PrismCore:
 
 
 def latent_change_rate(z_out: torch.Tensor, z_src: torch.Tensor) -> float:
-    dz = (z_out.float() - z_src.float()).flatten(1)
-    return float((dz.norm(dim=1) / z_src.float().flatten(1).norm(dim=1).clamp_min(1e-6)).mean())
+    dz = (z_out.detach().float().cpu() - z_src.detach().float().cpu()).flatten(1)
+    return float((dz.norm(dim=1) / z_src.detach().float().cpu().flatten(1).norm(dim=1).clamp_min(1e-6)).mean())

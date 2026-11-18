@@ -53,18 +53,38 @@
 
 ---
 
-## P1 消融队列（23 个新生成臂 + 5 个 alias 引用，4090）
+## P1 消融队列实测（滚动回填）
 
-| 组 | 臂 | 消融问题 |
-|---|---|---|
-| A 锚点 | `A0_pure_noise`, `A1_src_anchor`, `A2_prism1_anchor`（A3=D5；A4=V19_T4 官方 measured） | Flow 是真生成还是主要靠 T4？PRISM-1 能否替代 T4？ |
-| B CFG分支 | `B0_sc_only`, `B1_cs_j`, `B2_no_wp`, `B3_no_wc`, `B4_no_rescale`（B5=D5） | 四分支哪些必要？纯风格分支 wp 是内容破坏源吗？ |
-| C 门控 | `C0_fixed_median`, `C1_tau_only`, `C2_layout_only`, `C3_guidance_only`, `C5_quantile`（C4=D5） | g_fig 三重耦合各自贡献？固定 550 斜率 vs 分位数校准？ |
-| D 原型 | `D_K1_barycenter`, `D_K4_merged`, `D_K8_random`, `D_K8_core_fixedgate`（fixed gate 解耦） | Core-kNN 收益来自去离群还是原型质量？ |
-| CF 反事实 | `CF2_wrong_tgt_same_t4`, `CF4_wrong_tgt_chroma_anchor`（CF1=D5, CF3=A1） | 条件与锚点的因果隔离 |
-| Same150 | `S_blind_same150`, `S_self_ref_same150` | 旁路 vs 真 blind vs 自参考恒等 + latent 变化率 |
+### A组：锚点贡献（✅ 完成）
 
-队列纪律：统一 seed=EVAL_SEED 噪声；cfg_hash 版本绑定（配置不同不跳过）；750 唯一 id 校验；失败可续跑；每组完成后回填本文档。
+| 臂 | Top-1 ↑ | DINO-S | CLIP-S | Affinity | DINO-C | LPIPS | ms/img | 结论 |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `A0_pure_noise`（无任何锚点） | 45.83% | 0.5467 | 0.7393 | 0.6430 | 0.5550 | 0.5811 | 91.5 | 无锚点 Flow 仍有强生成能力，Aff 已追平 StyleGallery 0.6432 |
+| `A1_src_anchor`（源 latent） | 19.83% | 0.4695 | 0.6931 | 0.5813 | **0.7464** | **0.2948** | 91.2 | 源锚点严重源锁；Flow 不做"微编辑" |
+| `A2_prism1_anchor`（PRISM-1 学生） | 57.17% | 0.5163 | 0.7295 | 0.6229 | 0.6103 | 0.5640 | 91.1 | **PRISM-1 可替代 T4 教师**：-3.3pp Top-1 换取锚点成本 137ms→~5ms |
+| A3 = D5（T4 教师，基线） | 60.50% | 0.5672 | 0.7497 | 0.6584 | 0.5335 | 0.6022 | 134 | 对照 |
+| A4 = T4-only（V19 官方 measured） | 59.00% | 0.4618 | 0.6963 | 0.5791 | 0.6783 | 0.5166 | 137 | Flow 相对 T4-only：+1.5pp Top-1 / +10.5pp DINO-S |
+
+**A组结论**：① T4 教师锚点贡献 +40.7pp Top-1（60.5% vs 源锚点 19.8%），是最大单项；② Flow 的本质是"从结构化锚点继续生成"，而非编辑源图；③ PRISM-1 学生锚点以 -3.3pp Top-1 / +7.7pp DINO-C 换取锚点成本 ~27× 降低，构成新的速度-质量 Pareto 候选。
+
+### B组：CFG 分支（部分完成，🔄 B4/C组继续中）
+
+| 臂 | Top-1 | DINO-S | Affinity | DINO-C | LPIPS | ms/img | 发现 |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `B0_sc_only`（单分支，无 CFG） | 45.50% | 0.5195 | 0.6171 | 0.6518 | 0.5473 | **33.9** | 单前馈 2.7× 提速档位 |
+| `B1_cs_j`（双分支 v0c+wj(vsc-v0c)） | 42.50% | 0.4902 | 0.5937 | 0.7007 | 0.5228 | 53.6 | P2 §2.1 双分支公式：内容强、风格弱 |
+| `B2_no_wp`（去纯风格分支） | 48.83% | 0.5191 | 0.6180 | 0.6601 | 0.5436 | 91.4 | wp 贡献 +11.7pp Top-1（D5 60.5→48.8） |
+| **`B3_no_wc`（去内容引导 wc）** | **67.00%** | 0.5579 | 0.6521 | 0.5047 | 0.6101 | 91.4 | **新 SOTA**：+6.5pp vs D5，+14.5pp vs StyleGallery；Min 100% / Roc 64.2% / Uki 45.8% |
+| `B4_no_rescale` | 🔄 | | | | | 91.3 | |
+| B5 = D5（全四分支） | 60.50% | 0.5672 | 0.6584 | 0.5335 | 0.6022 | 134 | 对照 |
+
+**B组核心发现（四分支 = 风格-内容权衡拨盘）**：`wp`（纯风格方向）强推 Top-1（去掉 -11.7pp）；`wc`（内容引导）反压 Top-1（去掉 +6.5pp）但换 DINO-C（0.5047→0.5335）。这**部分反驳**了 P2 §2.1 的假设——`v_s0` 并非"内容破坏源"，而是风格特异性的主要引擎；真正需要的是 `wc/wp` 连续旋钮（P3-N3）而非直接删除。`B1`（双分支）内容最好（DINO-C 0.7007）但风格崩（0.4902），提示 P2-0 重训需配 `wp` 保留或更强参考条件。
+
+### P2 诊断（3060，✅ 完成）
+
+- **fiber 分离比**：同风格 vs 跨风格 128-D fiber 距离 = train **8.80×** / holdout **5.81×**（same 0.169/0.254 vs cross 1.49/1.48）→ StyleFiberEncoder 对留出画作具强风格分辨力，Reference Adapter（§3.2）前提成立（详见 [`p2_reference_diagnostics.json`](p2_reference_diagnostics.json)）。
+- **RGB→latent encoder**：候选权重（`sd0_s10_best_*`, `a0_encoder_only`, `C_edit_best`）在本地 `deliver/checkpoints/` 存在；3060 侧无。P2-2 需先做 0.18215 scaling 双向编码验证（未验证前不得宣称端到端 RGB→RGB）。
+- **Start-Process 教训**：3060 上 PowerShell `Start-Process` 分离进程在 ssh 会话结束后被静默清除（日志 0 字节、无错误）；改用同步 ssh + 本地后台任务托管。
 
 ---
 

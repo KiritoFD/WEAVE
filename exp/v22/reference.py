@@ -18,25 +18,30 @@ from . import OUT, ROOT, sanitize_cuda_env, save_json, utc
 from exp.v19.fiber_duality import build_or_load_v19_foundation
 
 
-def diag_fiber_separation(fnd: dict, device: str = "cuda") -> dict:
+def diag_fiber_separation(bundle: dict, device: str = "cuda") -> dict:
     """同风格内 vs 跨风格 fiber 距离（128-D StyleFiberEncoder 输出）。"""
+    from exp.v19.fiber_duality import StyleFiberEncoder
+
+    fnd = bundle["fnd"]
     res = {}
-    for split, fib_key, sid_key in (
-        ("train", "tr_fib", None), ("holdout", "ho_fib", None),
+    for split, fib_key, sid in (
+        ("train", "tr_fib", bundle["v18_cache"]["train"]["sid"].long()),
+        ("holdout", "ho_fib", bundle["v18_cache"]["holdout"]["sid"].long()),
     ):
         fib = fnd[fib_key].float().to(device)
-        sid = (fnd["v18_cache"]["train"]["sid"] if split == "train" else fnd["v18_cache"]["holdout"]["sid"]).long().to(device)
-        from exp.v19.fiber_duality import StyleFiberEncoder
+        sid = sid.to(device)
         enc = StyleFiberEncoder(in_dim=fib.shape[1], dim=128).to(device).eval()
         enc.load_state_dict(fnd["fiber_state"])
         with torch.no_grad():
             u = enc.encode(fib)
         same_d, cross_d = [], []
-        g = torch.Generator(device="cpu").manual_seed(20261202)
+        g = torch.Generator().manual_seed(20261202)
+        uc = u.detach().cpu()
+        sc = sid.detach().cpu()
         for _ in range(4000):
-            i, j = torch.randint(0, len(u), (2,), generator=g).tolist()
-            d = float(F.pairwise_distance(u[i:i+1].cpu(), u[j:j+1].cpu()))
-            (same_d if int(sid[i]) == int(sid[j]) else cross_d).append(d)
+            i, j = torch.randint(0, len(uc), (2,), generator=g).tolist()
+            d = float(F.pairwise_distance(uc[i:i+1], uc[j:j+1]))
+            (same_d if int(sc[i]) == int(sc[j]) else cross_d).append(d)
         res[split] = {
             "same_style_mean_dist": round(sum(same_d) / max(1, len(same_d)), 4),
             "cross_style_mean_dist": round(sum(cross_d) / max(1, len(cross_d)), 4),
@@ -45,8 +50,7 @@ def diag_fiber_separation(fnd: dict, device: str = "cuda") -> dict:
         }
         del enc
         torch.cuda.empty_cache()
-    verdict = all(r["separation_ratio"] > 1.10 for r in res.values())
-    res["verdict_same_lt_cross"] = bool(verdict)
+    res["verdict_same_lt_cross"] = bool(all(r["separation_ratio"] > 1.10 for r in res.values()))
     return res
 
 
@@ -148,7 +152,7 @@ def main():
 
     bundle = build_or_load_v19_foundation(args.pool, device=args.device)
     print("[V22 RefDiag] 1/3 fiber same-vs-cross separation...", flush=True)
-    res["fiber_separation"] = diag_fiber_separation(bundle["fnd"], device=args.device)
+    res["fiber_separation"] = diag_fiber_separation(bundle, device=args.device)
     print(f"  train sep={res['fiber_separation']['train']['separation_ratio']}, "
           f"holdout sep={res['fiber_separation']['holdout']['separation_ratio']}, "
           f"verdict={res['fiber_separation']['verdict_same_lt_cross']}", flush=True)
