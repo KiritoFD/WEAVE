@@ -325,6 +325,10 @@ class PrismCore:
         u_style = u_style.to(dev).float()
         dsd_ref = dsd_ref.to(dev).float()
 
+        # C5: 分位数门控缺训练分布时，自动取 Core bank 的 train sub_dsd（5×K 核心原型 token 方差）
+        if gate.mode == "quantile" and gate.quantile_ref is None:
+            gate.quantile_ref = self.bank["sub_dsd"].detach().float().flatten().clone()
+
         g_tau, g_layout, g_guid, g_rescale = effective_gate_components(
             dsd_ref, gate, float(self.bank["mid_dsd"]),
         )

@@ -99,6 +99,14 @@ def build_arms() -> dict[str, dict]:
     # ---- Same150 拆分（Fix 2）----
     add("S_blind_same150", same_mode="blind")
     add("S_self_ref_same150", same_mode="self")
+
+    # ---- W组: wc 连续旋钮扫描（B3 发现 wc 压低 Top-1；固定中位数门控 × wc 扫描）----
+    wg = {"mode": "fixed", "fixed_g": 0.5}
+    w_solver = dict(D5_SOLVER, tau_min=0.28, tau_hi=0.66)  # tau 由 fixed g 决定
+    add("W_wc00_fixedgate", gate=dg, solver=dict(w_solver, wc_fig=0.0, wc_abs=0.0))
+    add("W_wc04_fixedgate", gate=dg, solver=dict(w_solver, wc_fig=0.4, wc_abs=0.4))
+    add("W_wc09_fixedgate", gate=dg, solver=dict(w_solver, wc_fig=0.9, wc_abs=0.9))
+    add("W_wc14_fixedgate", gate=dg, solver=dict(w_solver, wc_fig=1.4, wc_abs=1.4))
     return arms
 
 
@@ -110,6 +118,7 @@ DEFAULT_GROUPS = {
     "D": ["D_K1_barycenter", "D_K4_merged", "D_K8_random", "D_K8_core_fixedgate"],
     "CF": ["CF2_wrong_tgt_same_t4", "CF4_wrong_tgt_chroma_anchor"],
     "S": ["S_blind_same150", "S_self_ref_same150"],
+    "W": ["W_wc00_fixedgate", "W_wc04_fixedgate", "W_wc09_fixedgate", "W_wc14_fixedgate"],
 }
 
 
