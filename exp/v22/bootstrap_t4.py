@@ -20,6 +20,8 @@ PAIRS = [
     ("T2_wc11", "T1_wc11"),
     ("T4_wc11", "T4s_wc100"),
     ("T4Ls_wc100", "T4s_wc100"),  # T4L 训练完成后自动补
+    ("T4Ss1500_wc1.0", "T0_slf_final_wc11"),
+    ("T4Pk_wc15", "T0_slf_final_wc14"),
 ]
 
 
