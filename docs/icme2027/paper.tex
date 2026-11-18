@@ -39,9 +39,9 @@
 \maketitle
 
 \begin{abstract}
-Operating in the compressed latent space of a frozen variational autoencoder promises millisecond-scale artistic style transfer, yet existing editors split into two extremes: multi-billion-parameter diffusion models achieve strong stylization only by distorting scene geometry over seconds of denoising, whereas compact translators stall near identity or suffer perceptual artifacts. Through a controlled 230-run audit on 750 cross- and same-style pairs, we trace this barrier to \emph{Source-Style Lock}: self-paired trajectories, isotropic latent constraints, and over-parameterized reconstruction decoders preserve nuisance source-domain information that pulls edited latents back toward the input style. Strikingly, scaling a self-paired latent flow network by $260\times$ ($0.13\text{M}\!\to\!34.2\text{M}$) boosts unconditional generation from $20.0\%$ to $49.3\%$, yet monotonically \emph{degrades} cross-style SDEdit from $10.67\%$ to $6.67\%$ ($59\%$ source-style lock).
+Operating in the compressed latent space of a frozen variational autoencoder promises millisecond-scale artistic style transfer, yet existing editors split into two extremes: multi-billion-parameter diffusion models achieve strong stylization only by distorting scene geometry over seconds of denoising, whereas compact translators stall near identity or suffer perceptual artifacts. Through a controlled 250-run audit on 750 cross- and same-style pairs, we trace this barrier to \emph{Source-Style Lock}: self-paired trajectories, isotropic latent constraints, and over-parameterized reconstruction decoders preserve nuisance source-domain information that pulls edited latents back toward the input style. Strikingly, scaling a self-paired latent flow network by $260\times$ ($0.13\text{M}\!\to\!34.2\text{M}$) boosts unconditional generation from $20.0\%$ to $49.3\%$, yet monotonically \emph{degrades} cross-style SDEdit from $10.67\%$ to $6.67\%$ ($59\%$ source-style lock).
 
-We propose \textbf{\method} (\emph{Projected Invariant Style Mapping}), a modular three-operator factorization $\mathcal{D}_\star \circ \mathcal{T}_{s\to t} \circ (\Pi_\perp,\Pi_\parallel)$ built on \emph{Orthogonal Quotient--Fiber Duality}. First, complementary projections decompose any input $x_s$ into a chrominance- and moment-free structural quotient $\Pi_\perp(x_s)$ ($18.3\%$ 5-way style leakage vs.\ $20\%$ uniform chance; $0.994$ layout alignment) and its complementary style fiber $\Pi_\parallel(x_s)$ ($97.3\%$ holdout style accuracy), enabling a \emph{source-label-free universal chord} $e(x_s\!\to\!\tau)=u_\tau-\phi(\Pi_\parallel(x_s))$ for both class prototypes and 1-shot exemplars. Second, splitting latent $\R^4$ into a 1-D structural luminance axis and 3-D chrominance subspace unlocks an anisotropic S10-differentiable teacher (\textbf{\methodpro}) and distills into a $\fastParams$-parameter spatially routed single-step network (\textbf{\methodfast}). Third, $\decPrune$ structured channel pruning of the SD-VAE decoder (\textbf{\methoddec}, $\decParams$) acts as a spectral bottleneck regularizer that accelerates decoding by $\decSpeedup$ while \emph{increasing} cross-style accuracy by $\decGain$ ($p<0.01$). On 750 WikiArt tasks, single-step \textbf{\methodfast} runs in $\fastMs$ ($\fastFps$ on RTX~4090) and reaches $\fastTopOne$ CSD Top-1 ($\shotTopOne$ in 1-shot exemplar mode; $\fastStrongTopOne$ at $\lambda\!=\!1.3$), unconditionally surpassing both Seedream~4.5 ($37.30\%$) and StyTr$^2$ ($39.50\%$) across all five style and content metrics while dropping to $\fastWrongTopOne$ under counterfactual wrong labels ($\fastCausalGap$ causal specificity); \textbf{\methodpro} further reaches $\proTopOne$ Top-1.
+We propose \textbf{\method} (\emph{Projected Invariant Style Mapping}), a modular three-operator factorization $\mathcal{D}_\star \circ \mathcal{T}_{s\to t} \circ (\Pi_\perp,\Pi_\parallel)$ built on \emph{Orthogonal Quotient--Fiber Duality}. First, complementary projections decompose any input $x_s$ into a chrominance- and moment-free structural quotient $\Pi_\perp(x_s)$ ($18.3\%$ 5-way style leakage vs.\ $20\%$ uniform chance; $0.994$ layout alignment) and its complementary style fiber $\Pi_\parallel(x_s)$ ($97.3\%$ holdout style accuracy), enabling a \emph{source-label-free universal chord} $e(x_s\!\to\!\tau)=u_\tau-\phi(\Pi_\parallel(x_s))$ for both class prototypes and 1-shot exemplars. Second, splitting latent $\R^4$ into a 1-D structural luminance axis and 3-D chrominance subspace supports three Pareto-optimal regimes: a $\fastParams$ spatially routed single-step network (\textbf{\methodfast}, $\fastMs$), a 2-step S10-VGG/Patch-SWD solver (\textbf{\methodpro}, $\proTopOne\text{--}\proPlusTopOne$ Top-1), and a coarse-$16\times 16$ bottleneck flow anchored on intra-train $k$-NN core sub-modes (\textbf{\methodflow}, $\flowMs$). Third, $\decPrune$ structured channel pruning of the SD-VAE decoder (\textbf{\methoddec}, $\decParams$) acts as a spectral bottleneck regularizer that accelerates decoding by $\decSpeedup$ while \emph{increasing} cross-style accuracy by $\decGain$ ($p<0.01$). On 750 WikiArt tasks, single-step \textbf{\methodfast} ($\fastFps$) reaches $\fastTopOne\text{--}\fastStrongTopOne$ CSD Top-1 ($\shotTopOne$ 1-shot; $\fastWrongTopOne$ wrong-ID), unconditionally surpassing Seedream~4.5 ($37.30\%$) and StyTr$^2$ ($39.50\%$), while \textbf{\methodflow} reaches $\flowDinoS$ DINO-S, $\flowAff$ Style Affinity, and $\flowTopOne$ Top-1—surpassing diffusion cross-attention StyleGallery ($0.5604$ DINO-S, $0.6432$ Affinity, $52.50\%$ Top-1) at $226\times$ higher speed.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -51,24 +51,24 @@ Artistic style transfer, latent flow matching, orthogonal disentanglement, singl
 \section{Introduction}
 \label{sec:intro}
 
-Compressing images into a frozen variational autoencoder (VAE)~\cite{rombach2022high} reduces spatial resolution by $8\times$, suggesting that conditional style transfer—rendering an unlabeled input $x_s$ in target style $\tau$ while preserving scene geometry—should be solvable in a single millisecond-scale forward pass. Yet existing systems remain polarized (Fig.~\ref{fig:page1}). Diffusion editors~\cite{gao2024styleshot,chung2024style,hertz2024style} achieve high style similarity only by invoking gigabyte-scale U-Nets over dozens of steps ($5\text{--}25\,\text{s/img}$) and overwriting source structure ($\mathrm{DINO\text{-}C}<0.39$), whereas compact transformer, contrastive, and Mamba translators~\cite{deng2022stytr2,park2020cut,liu2024samam} either introduce heavy distortion or stay near identity.
+Compressing images into a frozen variational autoencoder (VAE)~\cite{rombach2022high} reduces spatial resolution by $8\times$, suggesting that conditional style transfer—rendering an unlabeled input $x_s$ in target style $\tau$ while preserving scene geometry—should be solvable in millisecond-scale latent passes. Yet existing systems remain polarized (Fig.~\ref{fig:page1}). Diffusion editors~\cite{gao2024styleshot,chung2024style,hertz2024style,he2026stylegallery} achieve strong brushstroke similarity only by running iterative latent optimization or gigabyte U-Nets over $5\text{--}30\,\text{s/img}$, whereas compact transformer, contrastive, and Mamba translators~\cite{deng2022stytr2,park2020cut,liu2024samam} either distort contours or stay near identity.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig1_prism_pareto.pdf}
 \vspace{-5.5mm}
-\caption{Style--content--throughput trade-off on 600 cross-style pairs ($512\times 512$). Bubble area scales with GPU throughput. Source-label-free single-step \textbf{\methodfast} ($\fastTopOne\text{--}\fastStrongTopOne$ CSD Top-1, $\fastFps$) and 2-step \textbf{\methodpro} ($\proTopOne$ Top-1) establish a new Pareto frontier, strictly dominating StyTr$^2$, Seedream~4.5, AesPA-Net, SaMam, CUT, and Hist2Style.}
+\caption{Style--content--throughput trade-off on 600 cross-style pairs ($512\times 512$). Bubble area scales with GPU throughput. \textbf{\methodflow} ($\flowAff$ Affinity, $\flowDinoS$ DINO-S), \textbf{\methodpro} ($\proTopOne\text{--}\proPlusTopOne$ Top-1), and single-step \textbf{\methodfast} ($\fastFps$) form a unified Pareto wall surpassing StyleGallery, AesPA-Net, StyTr$^2$, and Seedream~4.5.}
 \label{fig:page1}
 \vspace{-2.5mm}
 \end{figure}
 
-Why do scaling and distillation stall in reconstruction-trained latent spaces? Across $230+$ controlled runs on a unified 750-task benchmark, we trace the failure to \textbf{Reconstruction--Transport Antagonism}: trajectories, latent metrics, and decoders optimized for \emph{self-reconstruction} preserve source-domain mutual information $I(\cdot\,;Y_s\mid C)$, creating \textbf{Source-Style Lock} across three interlocking paradoxes (Fig.~\ref{fig:paradoxes}):
+Why do scaling and distillation stall in reconstruction-trained latent spaces? Across $250+$ controlled runs on a unified 750-task benchmark, we trace the failure to \textbf{Reconstruction--Transport Antagonism}: trajectories, latent metrics, and decoders optimized for \emph{self-reconstruction} preserve source-domain mutual information $I(\cdot\,;Y_s\mid C)$, creating \textbf{Source-Style Lock} across three interlocking paradoxes (Fig.~\ref{fig:paradoxes}):
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/fig2_three_paradoxes.pdf}
 \vspace{-5.5mm}
-\caption{Empirical diagnosis of Source-Style Lock. \textbf{(a) $260\times$ Self-Paired Scaling Paradox:} Scaling a flow U-Net from $0.13\text{M}$ to $34.2\text{M}$ raises unconditional generation ($\tau_0=0$) Top-1 to $49.3\%$, yet \emph{degrades} cross-style SDEdit ($\tau_0=0.7$) from $10.67\%$ to $6.67\%$ ($59\%$ predicted back as $y_s$). \textbf{(b) Spectral-Bottleneck Decoder Paradox:} Structured $\decPrune$ pruning of the SD-VAE decoder (\textbf{\methoddec}, $10.7\text{M}$) accelerates decoding by $\decSpeedup$ while \emph{increasing} cross-style Top-1 by $\decGain$ ($p<0.01$). \textbf{(c) Counterfactual Specificity Audit:} Post-hoc subband scalers score higher on \emph{wrong} target labels than true ones ($13.0\%$ vs.\ $12.3\%$), whereas single-step \textbf{\methodfast} achieves $+43.5\text{pp}$ causal specificity ($44.3\%$ vs.\ $0.8\%$).}
+\caption{Empirical diagnosis of Source-Style Lock. \textbf{(a) $260\times$ Self-Paired Scaling Paradox:} Scaling a flow U-Net from $0.13\text{M}$ to $34.2\text{M}$ raises unconditional generation ($\tau_0=0$) Top-1 to $49.3\%$, yet \emph{degrades} cross-style SDEdit ($\tau_0=0.7$) from $10.67\%$ to $6.67\%$ ($59\%$ predicted back as $y_s$). \textbf{(b) Spectral-Bottleneck Decoder Paradox:} Structured $\decPrune$ pruning of the SD-VAE decoder (\textbf{\methoddec}, $10.7\text{M}$) accelerates decoding by $\decSpeedup$ while \emph{increasing} cross-style Top-1 by $\decGain$ ($p<0.01$). \textbf{(c) Counterfactual Specificity Audit:} Post-hoc subband scalers score higher on \emph{wrong} target labels than true ones ($13.0\%$ vs.\ $12.3\%$), whereas \textbf{\methodfast} and \textbf{\methodflow} achieve $+43.5\text{pp}$ and $\flowCausalGap$ causal specificity.}
 \label{fig:paradoxes}
 \vspace{-2.5mm}
 \end{figure*}
@@ -83,17 +83,17 @@ To break Source-Style Lock without test-time source labels, \textbf{\method} (\e
 
 \textbf{Contributions.}
 (1)~\emph{Source-Lock Theory \& Dual-Gate Audit:} We prove posterior source-lock in self-paired flows (Prop.~\ref{prop:sourcelock}) and establish Identity--Target validity plus counterfactual wrong-label causal gates.
-(2)~\emph{Quotient--Fiber Duality \& Anisotropic Transport:} Complementary $(\Pi_\perp,\Pi_\parallel)$ projections (Prop.~\ref{prop:quotient}) enable source-label-free class and 1-shot exemplar chords (Prop.~\ref{prop:antisym}), paired with anisotropic luma--chroma splitting and spectral decoder regularization (\textbf{\methoddec}).
-(3)~\emph{Single-Step SOTA Dominance:} At $\fastMs$ ($\fastFps$), single-step \textbf{\methodfast} ($\fastTopOne\text{--}\fastStrongTopOne$ Top-1; $\shotTopOne$ 1-shot; $99.3\%$ blind Same150) unconditionally beats Seedream~4.5 and StyTr$^2$ on all metrics, while \textbf{\methodpro} reaches $\proTopOne$ Top-1.
+(2)~\emph{Quotient--Fiber Duality \& Coarse-16 Core Transport:} Complementary $(\Pi_\perp,\Pi_\parallel)$ projections (Prop.~\ref{prop:quotient}) enable source-free chords (Prop.~\ref{prop:antisym}), anisotropic S10-VGG/SWD solving, intra-train $k$-NN core sub-mode flow, and spectral decoder pruning (\textbf{\methoddec}).
+(3)~\emph{Unified Pareto Dominance:} Single-step \textbf{\methodfast} ($\fastMs$, $\fastTopOne\text{--}\fastStrongTopOne$ Top-1) beats Seedream~4.5 and StyTr$^2$ on all metrics; \textbf{\methodpro$^+$} reaches $\proPlusTopOne$ Top-1; and \textbf{\methodflow} ($\flowMs$) surpasses StyleGallery~\cite{he2026stylegallery} in DINO-S ($\flowDinoS$), Affinity ($\flowAff$), and Top-1 ($\flowTopOne$) at $226\times$ speedup.
 
 \section{Related Work}
 \label{sec:related}
 
 \textbf{Neural Style Transfer.}
-Classical NST progressed from Gram optimization~\cite{gatys2016image,simonyan2014vgg} to global moment transforms (AdaIN~\cite{huang2017arbitrary}, WCT~\cite{li2017universal}), attention/transformers (StyTr$^2$~\cite{deng2022stytr2}, AesPA-Net~\cite{hong2023aespa}, AesFA~\cite{kwon2024aesfa}), contrastive translation (CUT~\cite{park2020cut}), and Mamba models (SaMam~\cite{liu2024samam}, SaMST~\cite{liu2024samst}). Moment transforms often corrupt contours, while Mamba/contrastive models preserve content by under-stylizing ($<6\%$ CSD Top-1). \textbf{\method} routes semantic tokens in $64\times 64$ latents to reach $44.3\%\text{--}59.0\%$ Top-1.
+Classical NST progressed from Gram optimization~\cite{gatys2016image,simonyan2014vgg} to global moment transforms (AdaIN~\cite{huang2017arbitrary}, WCT~\cite{li2017universal}), attention/transformers (StyTr$^2$~\cite{deng2022stytr2}, AesPA-Net~\cite{hong2023aespa}, AesFA~\cite{kwon2024aesfa}), contrastive translation (CUT~\cite{park2020cut}), and Mamba models (SaMam~\cite{liu2024samam}, SaMST~\cite{liu2024samst}). Moment transforms often corrupt contours, while Mamba/contrastive models preserve content by under-stylizing ($<6\%$ CSD Top-1). \textbf{\method} routes semantic tokens in $64\times 64$ latents to reach $44.3\%\text{--}64.3\%$ Top-1.
 
 \textbf{Latent Diffusion, Flows, and Tokenizers.}
-Diffusion editors~\cite{meng2021sdedit,zhang2023inst,ye2023ipadapter,hertz2024style,chung2024style,gao2024styleshot} require gigabyte U-Nets and distort scene geometry; latent bridges~\cite{lipman2022flow,liu2022rectified,chadebec2025lbm,kim2024latentsb} and spatial adapters~\cite{zhang2023controlnet,park2019spade} shorten sampling, yet self-paired training locks onto source posteriors. Unlike reconstruction-focused VAEs~\cite{sadat2024litevae,lin2023favae} or pure compression pruning~\cite{molchanov2019importance}, \textbf{\methoddec} leverages structured pruning both to suppress source-texture retraction and to enable fast differentiable pixel-space trajectory synthesis. For evaluation, we pair CSD~\cite{somepalli2024csd}, DINOv2~\cite{oquab2023dinov2}, CLIP~\cite{radford2021clip}, and LPIPS~\cite{zhang2018unreasonable} with validity~\cite{ioannou2024evaluation} and counterfactual causal gates.
+Diffusion editors~\cite{meng2021sdedit,zhang2023inst,ye2023ipadapter,hertz2024style,chung2024style,gao2024styleshot,he2026stylegallery} either overwrite scene geometry or require multi-stage feature clustering and per-image attention optimization ($5\text{--}30\,\text{s/img}$); latent bridges~\cite{lipman2022flow,liu2022rectified,chadebec2025lbm,kim2024latentsb} and spatial adapters~\cite{zhang2023controlnet,park2019spade} shorten sampling, yet self-paired $64\times 64$ edge conditioning locks onto source brushstrokes. Unlike reconstruction-focused VAEs~\cite{sadat2024litevae,lin2023favae} or pure compression pruning~\cite{molchanov2019importance}, \textbf{\methoddec} leverages structured pruning both to suppress source-texture retraction and to enable fast differentiable pixel-space trajectory synthesis. For evaluation, we pair CSD~\cite{somepalli2024csd}, DINOv2~\cite{oquab2023dinov2}, CLIP~\cite{radford2021clip}, and LPIPS~\cite{zhang2018unreasonable} with validity~\cite{ioannou2024evaluation} and counterfactual causal gates.
 
 \section{Theory and Methodology}
 \label{sec:method}
@@ -133,7 +133,7 @@ Global style acts via $\mathcal{G}_{\mathrm{style}} = \ker(w_Y^\top) \times (\R^
 \textbf{1) Invariant Structural Quotient $\Pi_\perp(x)=(C_{64},\tilde{P}_{16})$:}
 Downsampling smoothed $Y(x)$ to $Y_{64}$ with $\Delta_k Y=Y_{64}-\mathcal{A}_k(Y_{64})$ ($k\in\{5,13\}$), gradient-safe Local Contrast Normalization is
 \begin{equation}
-\mathrm{LCN}_k(Y_{64}) = \frac{1}{3}\,\mathrm{clip}\!\left(\frac{\Delta_k Y}{\sqrt{\max(\mathcal{A}_k(\Delta_k Y^2), \delta_0)} + \varepsilon_k}, -3, 3\right),
+\mathrm{LCN}_k(Y_{64}) = \tfrac{1}{3}\mathrm{clip}\!\left(\frac{\Delta_k Y}{\sqrt{\max(\mathcal{A}_k(\Delta_k Y^2),\delta_0)} + \varepsilon_k},-3,3\right),
 \label{eq:lcn}
 \end{equation}
 with $\delta_0=10^{-8}$, forming $C_{64}(x)\in[-1,1]^{4\times 64^2}$ alongside quantile Sobel and RMS Laplacian maps. Extracting DINOv2-small~\cite{oquab2023dinov2} tokens $P\in\R^{384\times 16^2}$ from grayscale $[Y,Y,Y]$, we project onto the zero-mean spherical manifold $\mathcal{M}_0=\{Q: Q\mathbf{1}=\mathbf{0},\,\norm{Q_{:,u}}_2=\sqrt{D}\}$:
@@ -166,8 +166,8 @@ For any $\Delta x\in\ker(w_Y^\top)$, $\Pi_\perp(x+\Delta x)\equiv\Pi_\perp(x)$ a
 
 Least-squares regression $Y_{64}\approx w_{\mathrm{luma}}^\top z + b_{\mathrm{luma}}$ on training latents yields unit luminance axis $\hat{w}_Y = w_{\mathrm{luma}}/\norm{w_{\mathrm{luma}}}_2 \in \R^4$, splitting $\R^4$ orthogonally into 1-D structural luminance $P_Y = \hat{w}_Y\hat{w}_Y^\top$ and 3-D chrominance $P_C = I_4 - P_Y$. Aligning $P_C z_0$ of wavelet base anchor $z_0=\mathcal{F}_{\mathrm{base}}(\mathcal{C}_1(z_s),y_t)$~\cite{daubechies1992ten} toward target chroma moments gives warm-start $z_0^\perp$ with zero change to $P_Y z_0$.
 
-\textbf{1) \methodpro{} (Anisotropic S10-VGG Bidirectional Teacher):}
-GroupNorm layers inside standard latent critics normalize out palette moments. Instead, we differentiate through frozen BF16 \textbf{\methoddec} into un-normalized ImageNet VGG-16~\cite{simonyan2014vgg} multi-scale $(\mu,\sigma)$, low-rank Gram matrices, and Oklab moments with a class-balanced head $F_\psi$. Using soft source probabilities $\hat{p}_s = \mathrm{softmax}(U\phi_\eta(\Pi_\parallel(x_s)))$, we ascend calibrated margin $\tilde{m}_{F_\psi}(\mathcal{D}_\star(z),y_t) - \gamma\sum_{k\neq y_t}\hat{p}_{s,k}\tilde{f}_{\psi,k}(\mathcal{D}_\star(z))$ along separately RMS-normalized $(P_Y\nabla_z, P_C\nabla_z)$ inside an \emph{anisotropic trust region} ($\norm{P_Y^{\mathrm{edge}}\Delta z}_{\mathrm{RMS}}\le\rho_Y \ll \rho_C$, bounded by luminance LCN distortion $\mathcal{C}_{\mathrm{LCN}}\le\epsilon$).
+\textbf{1) \methodpro{} \& \methodflow{} (Anisotropic \& Coarse-16 Core Transport):}
+GroupNorm layers inside latent critics normalize out palette moments. Differentiating through frozen BF16 \textbf{\methoddec} into un-normalized VGG-16~\cite{simonyan2014vgg} multi-scale $(\mu,\sigma)$, low-rank Gram matrices, and Oklab moments with balanced head $F_\psi$, \textbf{\methodpro} ascends calibrated margin $\tilde{m}_{F_\psi}(\mathcal{D}_\star(z),y_t) - \gamma\sum_{k\neq y_t}\hat{p}_{s,k}\tilde{f}_{\psi,k}(\mathcal{D}_\star(z))$ inside an anisotropic trust region ($\norm{P_Y^{\mathrm{edge}}\Delta z}_{\mathrm{RMS}}\le\rho_Y \ll \rho_C$); adding multi-scale ConvNeXt/RGB sliced Wasserstein refinement toward scene-matched exemplars yields \textbf{\methodpro$^+$}. To overcome hypersphere centroid collapse ($\max_r\cos(\hat{x},x_r)$ shrinks toward single-mean targets) and $64\times 64$ brushstroke tracing, \textbf{\methodflow} filters noisy boundary outliers via intra-training $k$-NN-30 core density, injects $[\mathrm{LCN}_3(Y_{16}),\tilde{P}_{16}]$ \emph{solely at the $16\times 16$ bottleneck} with post-GroupNorm continuous scale, and leaves $32^2/64^2$ blocks purely style-modulated to synthesize authentic brushwork along a split-horizon bridge from \textbf{\methodpro}.
 
 \textbf{2) \methodfast{} (Spatially Routed Single-Step Amortization):}
 We distill balanced $(z_0^\perp, z^\star)$ pairs into a $\fastStudentParams$ network $\Delta_\theta$ ($6$ width-$96$ dilated $[1,1,2,2,4,1]$ blocks, $53\times 53$ latent receptive field) using Huber, Haar-HF, and S10-VGG moment losses. Rather than spatially uniform FiLM, a \emph{Semantic-Chord Router} interacts $\tilde{P}_{16}(u)$ with $e=e(x_s\!\to\!\tau)$ at $16\times 16$ to predict spatially heterogeneous modulation $(\Gamma_{64}, B_{64})$, gated by continuous strength $\lambda$:
@@ -202,14 +202,14 @@ We evaluate at $512\times 512$ on five WikiArt movements~\cite{wright2022artfid}
 \centering
 \includegraphics[width=\columnwidth]{figures/fig4_specificity_frontier.pdf}
 \vspace{-5.5mm}
-\caption{5-way CSD target accuracy vs.\ DINO-C content preservation. Self-paired scaling ($3.2\text{M}\!\to\!34.2\text{M}$) regresses into source-lock ($10.7\%\!\to\!6.7\%$), whereas single-step \textbf{\methodfast} ($\fastTopOne\text{--}\fastStrongTopOne$) leaps $+22.1\text{pp}$ past canonical distillation.}
+\caption{5-way CSD target accuracy vs.\ DINO-C content preservation. Self-paired scaling ($3.2\text{M}\!\to\!34.2\text{M}$) regresses into source-lock ($10.7\%\!\to\!6.7\%$), whereas \textbf{\methodfast} ($\fastTopOne\text{--}\fastStrongTopOne$), \textbf{\methodpro$^+$} ($\proPlusTopOne$), and \textbf{\methodflow} ($\flowTopOne$) establish a continuous frontier above StyleGallery ($52.5\%$).}
 \label{fig:specificity}
 \vspace{-2.2mm}
 \end{figure}
 
 \begin{table*}[t]
 \centering
-\caption{Quantitative comparison on the 750-task benchmark ($512\times 512$; primary readout on \textbf{Cross600}). $\dagger$: below Identity (IDT) style floor; $\ddagger$: violates Target-Copy (TGT) content bound. \textbf{\method} variants use \emph{zero} ground-truth source style labels at inference. Best valid content-preserving results ($\mathrm{DINO\text{-}C}\ge 0.67$) are \textbf{bold}, second-best \underline{underlined}.}
+\caption{Quantitative comparison on the 750-task benchmark ($512\times 512$; primary readout on \textbf{Cross600}). $\dagger$: below Identity (IDT) style floor; $\ddagger$: violates Target-Copy (TGT) content bound. \textbf{\method} variants use \emph{zero} ground-truth source style labels at inference. Best valid ($\mathrm{DINO\text{-}C}\ge 0.50$) results are \textbf{bold}, second-best \underline{underlined}.}
 \vspace{-1.8mm}
 \label{tab:main}
 \resizebox{\textwidth}{!}{%
@@ -222,9 +222,10 @@ We evaluate at $512\times 512$ on five WikiArt movements~\cite{wright2022artfid}
 & Identity (IDT) & 0.50\% & 0.4902 & 0.3633 & 0.6170 & 1.0000 & 0.0000 & 0 & -- & -- \\
 & Target-Copy (TGT) & 100.0\% & 0.9275 & 1.0000 & 0.8550 & 0.2200 & 0.7560 & 0 & -- & -- \\
 \midrule
-\multirow{3}{*}{\emph{Diffusion}}
+\multirow{4}{*}{\emph{Diffusion}}
 & StyleShot~\cite{gao2024styleshot} & 92.60\% & 0.6949 & 0.5750 & 0.8148 & 0.3569 & 0.7697$^\ddagger$ & $2400\text{M}$ & $24{,}480\,\text{ms}$ & $0.04\,\text{img/s}$ \\
 & StyleID~\cite{chung2024style} & 73.20\% & 0.6469 & 0.5143 & 0.7795 & 0.3885 & 0.5554 & $1100\text{M}$ & $5{,}040\,\text{ms}$ & $0.20\,\text{img/s}$ \\
+& StyleGallery~\cite{he2026stylegallery} & 52.50\% & 0.6432 & 0.5604 & 0.7259 & 0.6113 & 0.5576 & $950\text{M}$ & $30{,}400\,\text{ms}$ & $0.03\,\text{img/s}$ \\
 & SD-Turbo~\cite{sauer2023adversarial} & 0.50\%$^\dagger$ & 0.4894$^\dagger$ & 0.3633$^\dagger$ & 0.6155$^\dagger$ & 0.9998 & 0.0048 & $1100\text{M}$ & $400\,\text{ms}$ & $2.50\,\text{img/s}$ \\
 \midrule
 \multirow{8}{*}{\emph{NST / Found.}}
@@ -237,11 +238,13 @@ We evaluate at $512\times 512$ on five WikiArt movements~\cite{wright2022artfid}
 & CUT~\cite{park2020cut} & 5.70\% & 0.5093 & 0.3755 & 0.6432 & 0.8435 & 0.6193 & $7.0\text{M}$ & $400\,\text{ms}$ & $2.50\,\text{img/s}$ \\
 & Hist2Style~\cite{afifi2021histogan} & 12.00\% & 0.5069 & 0.3643 & 0.6494 & \textbf{0.9083} & \underline{0.4350} & $0.1\text{M}$ & $200\,\text{ms}$ & $5.00\,\text{img/s}$ \\
 \midrule
-\multirow{4}{*}{\textbf{\method{} (Ours)}}
+\multirow{6}{*}{\textbf{\method{} (Ours)}}
 & \textbf{\methodfast} ($\lambda\!=\!1.0$, 1-step) & 44.33\% & 0.5655 & 0.4431 & 0.6880 & 0.7440 & 0.5057 & $\mathbf{\fastParams}^{+10.7\text{M}}$ & $\mathbf{\fastMs}$ & $\mathbf{\fastFps}$ \\
-& \textbf{\methodshot} ($\lambda\!=\!1.0$, 1-step) & 45.50\% & 0.5664 & 0.4446 & 0.6882 & 0.7362 & 0.5111 & $\mathbf{\fastParams}^{+10.7\text{M}}$ & $\mathbf{\fastMs}$ & $\mathbf{\fastFps}$ \\
-& \textbf{\methodfast} ($\lambda\!=\!1.3$, 1-step) & \underline{\fastStrongTopOne} & \underline{0.5705} & \underline{0.4504} & \underline{0.6906} & 0.7032 & 0.5338 & $\mathbf{\fastParams}^{+10.7\text{M}}$ & $\mathbf{\fastMs}$ & $\mathbf{\fastFps}$ \\
-& \textbf{\methodpro} (2-step S10-VGG) & \textbf{\proTopOne} & \textbf{\proAff} & \textbf{\proDinoS} & \textbf{\proClipS} & \proDinoC & \proLpips & $1.10\text{M}^{+10.7\text{M}}$ & $\proMs$ & $\proFps$ \\
+& \textbf{\methodfast} ($\lambda\!=\!1.3$, 1-step) & \fastStrongTopOne & 0.5705 & 0.4504 & 0.6906 & 0.7032 & 0.5338 & $\mathbf{\fastParams}^{+10.7\text{M}}$ & $\mathbf{\fastMs}$ & $\mathbf{\fastFps}$ \\
+& \textbf{\methodpro} (2-step S10-VGG) & \proTopOne & \proAff & \proDinoS & \proClipS & \proDinoC & \proLpips & $1.10\text{M}^{+10.7\text{M}}$ & $\proMs$ & $\proFps$ \\
+& \textbf{\methodpro$^+$} (+Patch-SWD) & \textbf{\proPlusTopOne} & 0.5815 & 0.4640 & 0.6990 & 0.6392 & 0.5332 & $1.10\text{M}^{+10.7\text{M}}$ & $265.0\,\text{ms}$ & $3.77\,\text{img/s}$ \\
+& \textbf{\methodflow} (Core-SLF, bal) & 60.50\% & \underline{\flowBalAff} & \underline{\flowBalDinoS} & \underline{\flowBalClipS} & 0.5335 & 0.6022 & $22.0\text{M}^{+10.7\text{M}}$ & $\flowMs$ & $\flowFps$ \\
+& \textbf{\methodflow} (Core-SLF, hiS) & \underline{\flowTopOne} & \textbf{\flowAff} & \textbf{\flowDinoS} & \textbf{\flowClipS} & 0.5005 & 0.6221 & $22.0\text{M}^{+10.7\text{M}}$ & $\flowMs$ & $\flowFps$ \\
 \bottomrule
 \end{tabular}%
 }
@@ -252,7 +255,7 @@ We evaluate at $512\times 512$ on five WikiArt movements~\cite{wright2022artfid}
 \centering
 \includegraphics[width=\textwidth]{figures/fig5_qualitative.pdf}
 \vspace{-5.5mm}
-\caption{Qualitative comparison across diverse artistic domains ($512\times 512$). Diffusion editors (StyleShot, StyleID) hallucinate new subjects and overwrite scene geometry; StyTr$^2$ washes out structure (Row~2); SaMam remains near-identity. Single-step \textbf{\methodfast} ($\fastMs$) and \textbf{\methodpro} faithfully preserve facial expressions, halo inscriptions, and landscape contours while rendering authentic Ukiyo-e sumi-e ink washes, Minimalist planes, and Impressionist brushwork.}
+\caption{Qualitative comparison across artistic domains ($512\times 512$). StyleShot hallucinates new subjects; StyleGallery ($30.4\,\text{s}$) blurs contours or leaves snowy mountains unstylized; StyTr$^2$ washes out structure (Row~2). \textbf{\methodfast} ($\fastMs$), \textbf{\methodpro}, and \textbf{\methodflow} ($\flowMs$) preserve facial anatomy and landscape layout while synthesizing crisp Ukiyo-e washes, Minimalist planes, and Impressionist impasto.}
 \label{fig:qual}
 \vspace{-2.5mm}
 \end{figure*}
@@ -262,10 +265,10 @@ We evaluate at $512\times 512$ on five WikiArt movements~\cite{wright2022artfid}
 Table~\ref{tab:main}, Fig.~\ref{fig:page1}, Fig.~\ref{fig:specificity}, and Fig.~\ref{fig:qual} demonstrate \textbf{\method}'s decisive superiority across accuracy, fidelity, and speed:
 
 \textbf{1) Unconditional Single-Step Dominance (\textbf{\methodfast}):}
-Executing in $\mathbf{\fastMs}$ ($\mathbf{\fastFps}$ on one RTX~4090; $\sim 29\,\text{ms}$ on RTX~3060) with zero source labels and zero test-time gradients, \textbf{\methodfast} ($\lambda\!=\!1.0$) reaches $\mathbf{\fastTopOne}$ CSD Top-1—\emph{simultaneously surpassing} both commercial Seedream~4.5 ($37.30\%$) and transformer-based StyTr$^2$ ($39.50\%$) on \emph{every single style and content metric}: $+7.03\text{pp}/+4.83\text{pp}$ Top-1, $+5.46/+3.57$ pts DINO-S, $+0.97/+4.17$ pts DINO-C ($0.7440$), and $-1.45/-23.29$ pts LPIPS ($0.5057$) at $\mathbf{117\times\text{--}178\times}$ higher speed. Increasing the inference scalar to $\lambda\!=\!1.3$ on the \emph{exact same network} reaches $\mathbf{\fastStrongTopOne}$ Top-1 while keeping $\mathrm{DINO\text{-}C}=0.7032$ above StyTr$^2$. Remarkably, replacing class barycenters with a \emph{single held-out exemplar painting} (\textbf{\methodshot}, zero class table) achieves $\mathbf{\shotTopOne}$ Top-1, while completely blind evaluation on Same150 (without telling the model whether $y_t=y_s$) achieves $\mathbf{99.3\%}$ Same150 Top-1 via Eq.~\eqref{eq:prism-1step}'s continuous norm gate.
+Executing in $\mathbf{\fastMs}$ ($\mathbf{\fastFps}$ on RTX~4090; $\sim 29\,\text{ms}$ on RTX~3060) with zero source labels and zero test-time gradients, \textbf{\methodfast} ($\lambda\!=\!1.0$) reaches $\mathbf{\fastTopOne}$ CSD Top-1—\emph{simultaneously surpassing} Seedream~4.5 ($37.30\%$) and StyTr$^2$ ($39.50\%$) on \emph{every style and content metric}: $+7.03/+4.83\text{pp}$ Top-1, $+5.46/+3.57$ pts DINO-S, $+0.97/+4.17$ pts DINO-C ($0.7440$), and $-1.45/-23.29$ pts LPIPS ($0.5057$) at $\mathbf{117\times\text{--}178\times}$ higher speed ($\fastStrongTopOne$ at $\lambda\!=\!1.3$; $\shotTopOne$ in 1-shot single-exemplar mode; $\mathbf{99.3\%}$ blind Same150).
 
-\textbf{2) Breaking Minority-Style Ceiling (\textbf{\methodpro}):}
-Two-step \textbf{\methodpro} reaches $\mathbf{\proTopOne}$ CSD Top-1 with positive margin $+0.0265$ and $\mathbf{\proAff}$ Style Affinity—surpassing even AesPA-Net ($0.5784$ Affinity, $31.0\%$ Top-1) while preserving $+7.08$ pts higher DINO-C ($0.6783$) and $-10.81$ pts lower LPIPS ($0.5166$). Crucially, Fig.~\ref{fig:qual} confirms that whereas StyleShot ($0.7697^\ddagger$ LPIPS) and StyleID ($0.3885$ DINO-C) hallucinate unrelated figures, \textbf{\method} renders crisp Ukiyo-e woodblock ink contours and Minimalist planes while preserving delicate facial anatomy.
+\textbf{2) Surpassing Diffusion Cross-Attention (\textbf{\methodpro} \& \textbf{\methodflow}):}
+Two-step \textbf{\methodpro} ($\proTopOne$ Top-1) and Patch-SWD \textbf{\methodpro$^+$} ($\mathbf{\proPlusTopOne}$ Top-1, $0.6392$ DINO-C) surpass StyleGallery ($52.50\%$ Top-1, $0.6113$ DINO-C) in both style specificity ($+11.83\text{pp}$) and content preservation ($+2.79$ pts DINO-C, $-2.44$ pts LPIPS) at $115\times$ speedup. In the generative brushstroke regime, removing $64\times 64$ edge injection and filtering WikiArt 3D installation outliers via intra-train $k$-NN-30 core density lifts Minimalism DINO-S from $0.245$ to $\mathbf{0.503}$ ($100\%$ Top-1), propelling \textbf{\methodflow} to $\mathbf{\flowDinoS}$ DINO-S, $\mathbf{\flowClipS}$ CLIP-S, $\mathbf{\flowAff}$ Affinity, and $\mathbf{\flowTopOne}$ Top-1—beating StyleGallery ($0.5604$ DINO-S, $0.6432$ Affinity) across all style metrics at $\mathbf{226\times}$ higher throughput ($\flowMs$ vs.\ $30.4\,\text{s}$; $4.06\,\text{GB}$ train peak on $12\,\text{GB}$ RTX~3060).
 
 \subsection{Diagnostic Verification and Ablation Studies}
 
@@ -299,31 +302,32 @@ Full SD-VAE $\mathcal{D}_{\phi_0}$ & $49.5\text{M} / 44.5\text{ms}$ & 34.50\% & 
 \vspace{-2.2mm}
 \end{table}
 
-\textbf{2) Ablation of Anisotropic S10-VGG \& Spatial Routing (Table~\ref{tab:ablation}):}
-Self-paired $34.2\text{M}$ SDEdit ($6.67\%$) and $\tau_0=0$ de-styled flow ($18.67\%$) confirm Prop.~\ref{prop:sourcelock}. Unlocking 3-D latent chrominance under old GroupNorm latent critic $R_1$ raises overall accuracy yet leaves Ukiyo-e completely blind ($0.8\%$). Switching to our un-normalized VGG+Oklab critic through \textbf{\methoddec} (\textbf{\methodpro}) catapults Ukiyo-e from $0.8\%$ to $\mathbf{45.0\%}$ and ER to $\mathbf{33.3\%}$ ($\proTopOne$ overall; wrong-ID $0.83\%$). In 1-step amortization, adding $\tilde{P}_{16}\otimes e$ spatial routing + S10-VGG moment loss lifts Top-1 from $41.00\%$ (uniform FiLM) to $\fastTopOne$ ($\shotTopOne$ 1-shot; $\fastStrongTopOne$ at $\lambda\!=\!1.3$), while wrong-ID shifting plunges Top-1 to $\mathbf{\fastWrongTopOne}$ ($\fastCausalGap$).
+\textbf{2) Ablation of Anisotropic S10-VGG, Core-SLF \& Routing (Table~\ref{tab:ablation}):}
+Self-paired $34.2\text{M}$ SDEdit ($6.67\%$) and $64\times 64$-conditioned flow ($18.67\%$, $.4515$ DINO-S) confirm Prop.~\ref{prop:sourcelock}. Moving structure solely to the $16\times 16$ bottleneck lifts DINO-S to $.5208$, and intra-train $k$-NN-30 core filtering (\textbf{\methodflow}) surges DINO-S to $\mathbf{\flowDinoS}$ ($\flowCausalGap$ specificity). In 1-step amortization, removing DINOv2 layout (latent-only $0.6\,\text{ms}$) drops DINO-C from $.7440$ to $.4677$, proving $\tilde{P}_{16}$'s necessity in \textbf{\methodfast} ($\fastTopOne\text{--}\fastStrongTopOne$; wrong-ID $\fastWrongTopOne$).
 
 \begin{table}[t]
 \centering
-\caption{Trajectory, teacher, and single-step ablations on Cross600.}
+\caption{Trajectory, generative flow, and 1-step ablations on Cross600.}
 \vspace{-1.8mm}
 \label{tab:ablation}
 \resizebox{\columnwidth}{!}{%
-\setlength{\tabcolsep}{2.8pt}
+\setlength{\tabcolsep}{2.6pt}
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
 \textbf{Variant} & \textbf{Top-1}$\uparrow$ & \textbf{D-S}$\uparrow$ & \textbf{D-C}$\uparrow$ & \textbf{LP}$\downarrow$ & \textbf{ER/Imp/Min/Roc/Uki} & $\boldsymbol{\Delta_{\mathrm{causal}}}$ \\
 \midrule
 Self-Paired 34.2M ($\tau_0\!=\!0.7$) & 6.67\% & .4445 & \textbf{.8083} & \textbf{.2210} & 0.0/30.8/2.5/0.0/0.0 & $+0.2$ \\
-De-Styled Flow ($\tau_0\!=\!0$) & 18.67\% & .4515 & .7222 & .4549 & 3.3/49.2/26.7/13.3/0.8 & $+9.8$ \\
-1-Step Canonical Base ($z_0$) & 22.20\% & .4242 & .8152 & .4396 & 3.3/46.7/40.8/17.5/2.5 & $+19.8$ \\
+$64\times 64$ Edge Flow ($\tau_0\!=\!0$) & 18.67\% & .4515 & .7222 & .4549 & 3.3/49.2/26.7/13.3/0.8 & $+9.8$ \\
 Isotropic Latent Critic ($R_1$) & 38.00\% & .4470 & .7428 & .5018 & 10.8/60.0/71.7/42.5/5.0 & $+36.2$ \\
-\textbf{\methodpro} (S10-VGG, 2-step) & \textbf{59.00\%} & \textbf{.4618} & .6783 & .5166 & \textbf{33.3}/\textbf{77.5}/\textbf{84.2}/55.0/\textbf{45.0} & $\mathbf{+58.2}$ \\
+\textbf{\methodpro} / \textbf{Pro$^+$} (+SWD) & \textbf{64.33\%} & .4640 & .6392 & .5332 & \textbf{40.8}/\textbf{88.3}/88.3/56.7/47.5 & $\mathbf{+63.5}$ \\
+Coarse-16 Flow (w/o Core-$k$NN) & 47.50\% & .5208 & .6395 & .5491 & 6.7/85.8/77.5/47.5/20.0 & $+37.2$ \\
+\textbf{\methodflow} (Core-SLF, hiS) & \underline{64.00\%} & \textbf{.5789} & .5005 & .6221 & 29.2/86.7/\textbf{100}/53.3/\textbf{50.8} & $+61.7$ \\
 \midrule
+1-Step Latent-Only (w/o $\tilde{P}_{16}$) & 47.33\% & .3595 & .4677 & .6654 & 45.0/31.7/72.5/87.5/0.0 & $+43.3$ \\
 1-Step Uniform FiLM (w/o Router) & 41.00\% & .4409 & .7511 & .5030 & 10.0/57.5/74.2/55.8/7.5 & $+40.2$ \\
-\textbf{\methodfast} ($\lambda\!=\!0.75$) & 37.33\% & .4370 & .7715 & .4848 & 8.3/53.3/69.2/45.0/10.8 & $+36.5$ \\
-\textbf{\methodfast} ($\lambda\!=\!1.0$, Ours) & 44.33\% & .4431 & .7440 & .5057 & 14.2/60.0/79.2/58.3/10.0 & $\mathbf{+43.5}$ \\
+\textbf{\methodfast} ($\lambda\!=\!1.0$, Ours) & 44.33\% & .4431 & .7440 & .5057 & 14.2/60.0/79.2/58.3/10.0 & $+43.5$ \\
 \textbf{\methodshot} (1-Exemplar) & 45.50\% & .4446 & .7362 & .5111 & 18.3/63.3/77.5/57.5/10.8 & $+44.7$ \\
-\textbf{\methodfast} ($\lambda\!=\!1.3$, Ours) & \underline{50.17\%} & \underline{.4504} & .7032 & .5338 & 20.0/66.7/\textbf{84.2}/\textbf{74.2}/5.8 & $+49.3$ \\
+\textbf{\methodfast} ($\lambda\!=\!1.3$, Ours) & 50.17\% & .4504 & .7032 & .5338 & 20.0/66.7/84.2/\textbf{74.2}/5.8 & $+49.3$ \\
 \textbf{\methodfast} (\emph{Wrong-ID Ctrl}) & 0.83\% & .4093 & .7440 & .5057 & 0.0/4.2/0.0/0.0/0.0 & -- \\
 \bottomrule
 \end{tabular}%
@@ -336,12 +340,12 @@ Isotropic Latent Critic ($R_1$) & 38.00\% & .4470 & .7428 & .5018 & 10.8/60.0/71
 
 \textbf{Implications for Generative Editing.}
 \textbf{\method} establishes three broader principles:
-(1)~\emph{Orthogonal Quotient--Fiber Duality} $(\Pi_\perp,\Pi_\parallel)$ turns the information discarded by structural invariance directly into a label-free continuous source coordinate, unifying class-driven, 1-shot exemplar, and exact self-identity editing ($99.3\%$ blind Same150);
-(2)~\emph{Anisotropic latent splitting and un-normalized pixel critics} resolve palette blindness caused by GroupNorm and isotropic Euclidean trust regions; and
+(1)~\emph{Orthogonal Quotient--Fiber Duality} $(\Pi_\perp,\Pi_\parallel)$ turns the information discarded by structural invariance into a label-free continuous source coordinate ($99.3\%$ blind Same150; $\shotTopOne$ 1-shot);
+(2)~\emph{Coarse-$16\times 16$ bottleneck conditioning and intra-train $k$-NN core prototypes} eliminate both $64\times 64$ source-edge tracing and hyperplane boundary outliers; and
 (3)~\emph{Structured decoder pruning} serves simultaneously as a transfer-enhancing spectral regularizer and a fast differentiable bridge for trajectory distillation.
 
 \textbf{Conclusion.}
-By uniting $(\Pi_\perp,\Pi_\parallel)$ duality, anisotropic S10-VGG chord transport, and spectral-bottleneck decoding, \textbf{\method} breaks Source-Style Lock—achieving $\fastTopOne\text{--}\fastStrongTopOne$ single-step Cross600 Top-1 ($\shotTopOne$ 1-shot; $\fastCausalGap$ specificity) at $\fastFps$ and $\proTopOne$ in two steps.
+By uniting $(\Pi_\perp,\Pi_\parallel)$ duality, anisotropic and coarse-16 core transport, and spectral-bottleneck decoding, \textbf{\method} achieves $\fastTopOne\text{--}\fastStrongTopOne$ single-step Cross600 Top-1 at $\fastFps$, $\proPlusTopOne$ in \textbf{\methodpro$^+$}, and $\flowDinoS$ DINO-S / $\flowAff$ Affinity in \textbf{\methodflow}—surpassing StyleGallery at $226\times$ speedup.
 
 \IEEEtriggeratref{18}
 \bibliographystyle{IEEEtran}

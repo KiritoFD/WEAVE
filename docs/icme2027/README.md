@@ -4,12 +4,13 @@
 
 | File | Purpose |
 |---|---|
-| `paper.tex` | Main 6-page `IEEEtran` double-column manuscript (`\mathcal{D}_\star \circ \mathcal{T}_{s\to t} \circ \Pi_\perp` factorization) |
-| `macros.tex` | **Centralized plug-and-play macros** (`\method`, `\methodfast`, `\methodpro`, `\methoddec` + headline numbers) |
-| `refs.bib` | Curated BibTeX database (with `IEEEtranBSTCTL` compact formatting) |
+| `paper.tex` | Main 6-page `IEEEtran` double-column manuscript (`\mathcal{D}_\star \circ \mathcal{T}_{s\to t} \circ (\Pi_\perp,\Pi_\parallel)` factorization) |
+| `macros.tex` | **Centralized plug-and-play macros** (`\method`, `\methodfast`, `\methodpro`, `\methodflow`, `\methoddec` + headline numbers) |
+| `refs.bib` | Curated BibTeX database (with `IEEEtranBSTCTL` compact formatting, including `StyleGallery`) |
 | `STORY.md` | Narrative, mathematical hierarchy, baseline strategy, and modular extension guide |
 | `make_figures.py` | Generates `fig1_prism_pareto`, `fig2_three_paradoxes`, `fig4_specificity_frontier` (`.pdf/.png/.svg`) |
 | `make_arch_figure.py` | Generates vector architecture diagram `fig3_prism_architecture` (`.pdf/.png/.svg`) |
+| `make_qualitative_figure.py` | Generates full-width qualitative comparison matrix `fig5_qualitative` (`.pdf/.png/.svg`) |
 | `build.sh` | One-command figure regeneration + `pdflatex`/`bibtex` build |
 | `paper.pdf` | Compiled 6-page IEEE ICME submission-ready PDF |
 
