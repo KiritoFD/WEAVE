@@ -16,13 +16,8 @@ ICME_DIR = Path(__file__).resolve().parent
 FIG_DIR = ICME_DIR / "figures"
 
 METHOD = "PRISM"
-FLOW_HIS = "PRISM-Flow (hiS)"
-FLOW_BAL = "PRISM-Flow (Ours)"
-PRO_PLUS = "PRISM-Pro+ (SWD)"
-PRO_NAME = "PRISM-Pro (Ours)"
-FAST_NAME = "PRISM-1 (Ours)"
-SHOT_NAME = "PRISM-1 (1-Shot)"
-STRONG_NAME = "PRISM-1 (λ=1.3)"
+FLOW_NAME = "PRISM-Flow (Ours)"
+FAST_NAME = "PRISM (1-Step, Ours)"
 DEC_NAME = "PRISM-Dec (Pruned)"
 
 INK = "#182A42"
@@ -31,7 +26,6 @@ BLUE = "#2E6B9E"
 GREY = "#B0BCC9"
 CORAL = "#ED553B"
 CORAL_DARK = "#9E2A1B"
-CORAL_SOFT = "#F4B8AC"
 CRIMSON = "#C81D25"
 PURPLE = "#6C4AB6"
 TEAL = "#1F8A70"
@@ -61,25 +55,10 @@ EXTERNAL_PTS = [
     ("SD-Turbo",      0.9998, 0.4894,  0.50, 0.0048,   400.0),
 ]
 
+# Only the two representative flagship regimes of PRISM (Unified Narrative)
 OURS_PTS = [
-    (FLOW_HIS,                    0.5005, 0.6683, 64.00, 0.6221, 134.1, "flagship"),
-    (FLOW_BAL,                    0.5335, 0.6584, 60.50, 0.6022, 134.1, "flagship"),
-    ("PRISM-Flow (hiC)",          0.5683, 0.6471, 57.50, 0.5840, 119.7, "flagship"),
-    ("PRISM-Flow (92ms)",         0.5892, 0.6433, 56.83, 0.5737,  92.4, "flagship"),
-    ("PRISM-Flow (c64)",          0.6287, 0.6243, 55.17, 0.5529,  91.6, "flagship"),
-    ("PRISM-Flow (77ms)",         0.6688, 0.6145, 55.67, 0.5374,  76.6, "flagship"),
-    (PRO_PLUS,                    0.6392, 0.5815, 64.33, 0.5332, 265.0, "flagship"),
-    (PRO_NAME,                    0.6783, 0.5791, 59.00, 0.5166, 137.1, "flagship"),
-    (STRONG_NAME,                 0.7032, 0.5705, 50.17, 0.5338,  17.0, "flagship"),
-    (SHOT_NAME,                   0.7362, 0.5664, 45.50, 0.5111,  17.0, "flagship"),
+    (FLOW_NAME,                   0.5335, 0.6584, 60.50, 0.6022, 134.1, "flagship"),
     (FAST_NAME,                   0.7440, 0.5655, 44.33, 0.5057,  17.0, "flagship"),
-    ("PRISM-1 (λ=0.75)",          0.7715, 0.5610, 37.33, 0.4848,  17.2, "ablation"),
-    ("Latent Critic (R1)",        0.7428, 0.5674, 38.00, 0.5018, 115.0, "ablation"),
-    ("1-Step Canonical Base",     0.8152, 0.5483, 22.20, 0.4396,  21.0, "ablation"),
-    ("De-Styled Flow (τ0=0)",     0.7222, 0.5668, 18.67, 0.4549,  44.8, "ablation"),
-    ("Self-Paired 3.2M",          0.7506, 0.5692, 10.67, 0.2700,  72.0, "scale"),
-    ("Self-Paired 8.9M",          0.7920, 0.5584,  8.00, 0.2314, 122.0, "scale"),
-    ("Self-Paired 34.2M",         0.8083, 0.5541,  6.67, 0.2210, 260.0, "scale"),
 ]
 
 IDT_AFFINITY = 0.4902
@@ -190,10 +169,9 @@ def plot_fig1_pareto_zoom():
     ax.plot([p[1] for p in sc_pts], [p[2] for p in sc_pts], color=PURPLE, lw=1.5, ls=":", zorder=6)
 
     lbls = {
-        FLOW_HIS:                 (0.502, 0.683, "left", CRIMSON),
-        FLOW_BAL:                 (0.558, 0.673, "left", CRIMSON),
-        "PRISM-Flow (77ms)":      (0.675, 0.630, "left", CRIMSON),
-        "StyleGallery":           (0.608, 0.606, "right", BLUE),
+        FLOW_NAME:                (0.535, 0.680, "center", CRIMSON),
+        FAST_NAME:                (0.745, 0.590, "center", CRIMSON),
+        "StyleGallery":           (0.615, 0.620, "left", BLUE),
         "AesPA-Net":              (0.585, 0.562, "right", MUTED),
         "StyTr2":                 (0.672, 0.517, "right", INK),
         "Seedream 4.5":           (0.722, 0.512, "right", INK),
@@ -201,17 +179,13 @@ def plot_fig1_pareto_zoom():
         "CUT":                    (0.858, 0.524, "left", MUTED),
         "Hist2Style":             (0.916, 0.523, "left", INK),
         "SD-Turbo":               (0.985, 0.483, "right", MUTED),
-        PRO_NAME:                 (0.692, 0.597, "left", CRIMSON),
-        FAST_NAME:                (0.790, 0.585, "left", CRIMSON),
-        "1-Step Canonical Base":  (0.852, 0.558, "left", CORAL_DARK),
-        "Self-Paired 34.2M":      (0.835, 0.536, "left", PURPLE),
     }
     for p in ext + ours:
         if p[0] in lbls:
             tx, ty, ha, col = lbls[p[0]]
             ann = ax.annotate(
                 p[0], xy=(p[1], p[2]), xytext=(tx, ty), ha=ha, va="center",
-                fontsize=9.1, color=col, weight="bold",
+                fontsize=9.2, color=col, weight="bold",
                 arrowprops=dict(arrowstyle="-", lw=0.95, color=col, alpha=0.65, shrinkA=2, shrinkB=4),
                 zorder=15,
             )
@@ -222,21 +196,19 @@ def plot_fig1_pareto_zoom():
     fig.text(0.085, 0.952, f"{METHOD} × STYLE × CONTENT × SPEED",
              fontsize=17.5, weight="bold", color=INK, va="top")
     fig.text(0.085, 0.900,
-             "600 Cross-Style Pairs · Surpasses StyleGallery (0.668 vs 0.643 Aff; 0.579 vs 0.560 DINO-S) at 134×–1790× Speed",
+             "600 Cross-Style Pairs · PRISM-Flow Beats StyleGallery (0.658 vs 0.643 Aff) at 226× Higher Throughput",
              fontsize=9.3, color=MUTED, va="top")
     fig.text(0.965, 0.954, "58.7 img/s", ha="right", va="top", fontsize=19.5, color=CRIMSON, weight="bold")
-    fig.text(0.965, 0.900, f"{METHOD}-1 (17 ms) · {METHOD}-Flow (0.579 DINO-S)", ha="right", va="top", fontsize=8.6, color=MUTED)
+    fig.text(0.965, 0.900, f"{METHOD} (1-Step, 17 ms) · {METHOD}-Flow (134 ms)", ha="right", va="top", fontsize=8.6, color=MUTED)
 
     cat_handles = [
-        Line2D([], [], marker="o", ls="none", ms=8.8, mfc=CRIMSON, mec="#59080C", label=f"{METHOD}-Flow (0.668 Aff) / Pro+ (64.3%) / {METHOD}-1 (17ms)"),
-        Line2D([], [], marker="o", ls="none", ms=8.2, mfc=CORAL, mec=CORAL_DARK, label="Controlled Transport Ablations"),
-        Line2D([], [], marker="o", ls="none", ms=8.0, mfc="#B69CE8", mec=PURPLE, label="Self-Paired Scaling (3.2M→34.2M)"),
+        Line2D([], [], marker="o", ls="none", ms=9.0, mfc=CRIMSON, mec="#59080C", label=f"{METHOD} (1-Step 17ms & Flow 134ms)"),
         Line2D([], [], marker="o", ls="none", ms=8.0, mfc=BLUE, mec="white", label="Published / Commercial Baselines (incl. StyleGallery)"),
-        Line2D([], [], color=CRIMSON, ls="-", lw=2.3, label=f"{METHOD} Unified Pareto Frontier"),
+        Line2D([], [], color=CRIMSON, ls="-", lw=2.3, label=f"{METHOD} Pareto Frontier"),
         Line2D([], [], color=BLUE, ls=(0, (5, 3)), lw=2.0, label="External-Only Frontier"),
     ]
     fig.legend(handles=cat_handles, bbox_to_anchor=(0.085, 0.045), loc="lower left",
-               ncol=2, frameon=False, fontsize=8.6, columnspacing=1.2)
+               ncol=2, frameon=False, fontsize=8.8, columnspacing=1.4)
 
     _save(fig, "fig1_prism_pareto")
 
@@ -380,27 +352,22 @@ def plot_fig4_specificity_frontier():
     t_s.set_path_effects([pe.withStroke(linewidth=3, foreground=BG)])
 
     lbls = {
-        FLOW_HIS:                     (0.490, 67.2, "left", CRIMSON),
-        PRO_PLUS:                     (0.618, 67.2, "center", CRIMSON),
-        PRO_NAME:                     (0.692, 61.5, "left", CRIMSON),
-        "StyleGallery":               (0.596, 48.0, "right", BLUE),
+        FLOW_NAME:                    (0.535, 63.5, "center", CRIMSON),
+        FAST_NAME:                    (0.745, 48.5, "center", CRIMSON),
+        "StyleGallery":               (0.615, 48.0, "left", BLUE),
         "StyTr2":                     (0.675, 38.0, "right", INK),
         "AesPA-Net":                  (0.592, 28.0, "right", MUTED),
         "Seedream 4.5":               (0.718, 32.0, "right", INK),
         "SaMam":                      (0.824, -0.3, "center", MUTED),
         "CUT":                        (0.858,  8.2, "left", MUTED),
         "Hist2Style":                 (0.920, 15.2, "left", INK),
-        STRONG_NAME:                  (0.688, 52.0, "right", CRIMSON),
-        FAST_NAME:                    (0.785, 49.5, "left", CRIMSON),
-        "1-Step Canonical Base":      (0.848, 21.0, "left", CORAL_DARK),
-        "De-Styled Flow (τ0=0)":      (0.708, 15.0, "right", CORAL_DARK),
     }
     for p in ext + ours:
         if p[0] in lbls:
             tx, ty, ha, col = lbls[p[0]]
             ann = ax.annotate(
                 p[0], xy=(p[1], p[3]), xytext=(tx, ty), ha=ha, va="center",
-                fontsize=8.9, color=col, weight="bold",
+                fontsize=9.0, color=col, weight="bold",
                 arrowprops=dict(arrowstyle="-", lw=0.9, color=col, alpha=0.6, shrinkA=2, shrinkB=4),
                 zorder=15,
             )
@@ -411,21 +378,19 @@ def plot_fig4_specificity_frontier():
     fig.text(0.085, 0.952, f"{METHOD} × SPECIFICITY (CSD TOP-1) × CONTENT × SPEED",
              fontsize=17.0, weight="bold", color=INK, va="top")
     fig.text(0.085, 0.900,
-             "5-Way Target Classification · Surpasses StyleGallery (64.3% vs 52.5%), StyTr2 & Seedream 4.5",
+             "5-Way Target Classification · Surpasses StyleGallery (60.5% vs 52.5%), StyTr2 & Seedream 4.5",
              fontsize=9.6, color=MUTED, va="top")
-    fig.text(0.965, 0.954, "64.3% Top-1", ha="right", va="top", fontsize=19.5, color=CRIMSON, weight="bold")
-    fig.text(0.965, 0.900, f"{METHOD}-Pro+ / {METHOD}-Flow (+11.8pp over StyleGallery)", ha="right", va="top", fontsize=8.6, color=MUTED)
+    fig.text(0.965, 0.954, "60.5% Top-1", ha="right", va="top", fontsize=19.5, color=CRIMSON, weight="bold")
+    fig.text(0.965, 0.900, f"{METHOD}-Flow (+8.0pp over StyleGallery)", ha="right", va="top", fontsize=8.6, color=MUTED)
 
     cat_handles = [
-        Line2D([], [], marker="o", ls="none", ms=8.8, mfc=CRIMSON, mec="#59080C", label=f"{METHOD}-Pro+ (64.3%) / Flow (64.0%) / {METHOD}-1 (17ms)"),
-        Line2D([], [], marker="o", ls="none", ms=8.2, mfc=CORAL, mec=CORAL_DARK, label="Controlled Transport Ablations"),
-        Line2D([], [], marker="o", ls="none", ms=8.0, mfc="#B69CE8", mec=PURPLE, label="Self-Paired Scaling (3.2M→34.2M)"),
+        Line2D([], [], marker="o", ls="none", ms=9.0, mfc=CRIMSON, mec="#59080C", label=f"{METHOD} (1-Step 17ms & Flow 134ms)"),
         Line2D([], [], marker="o", ls="none", ms=8.0, mfc=BLUE, mec="white", label="Published / Commercial Baselines (incl. StyleGallery)"),
-        Line2D([], [], color=CRIMSON, ls="-", lw=2.3, label=f"{METHOD} Combined Frontier"),
+        Line2D([], [], color=CRIMSON, ls="-", lw=2.3, label=f"{METHOD} Pareto Frontier"),
         Line2D([], [], color=BLUE, ls=(0, (5, 3)), lw=2.0, label="External-Only Frontier"),
     ]
     fig.legend(handles=cat_handles, bbox_to_anchor=(0.085, 0.045), loc="lower left",
-               ncol=2, frameon=False, fontsize=8.6, columnspacing=1.2)
+               ncol=2, frameon=False, fontsize=8.8, columnspacing=1.4)
 
     _save(fig, "fig4_specificity_frontier")
 
