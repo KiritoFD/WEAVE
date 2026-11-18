@@ -131,15 +131,9 @@ def ensure_t4_latents_750(bundle: dict, device: str = "cuda") -> torch.Tensor:
         torch.save(z_t4.half(), cache_t4)
         return z_t4.float()
 
-    from exp.v19.aniso_teacher import AnisotropicS10Teacher, run_aniso_teacher_arm
-    teacher = AnisotropicS10Teacher(bundle, device=device)
-    run_aniso_teacher_arm(
-        "V19_T4_sweet_vgg_nosid", teacher, mode="s10_vgg",
-        alpha_c=0.18, steps=2, rho_y_edge=0.09, rho_y_low=0.15, rho_c=0.22, lcn_budget=0.025,
-    )
-    del teacher
-    torch.cuda.empty_cache()
-    z_t4 = load_raw_latents_750(v19_t4)
+    # Fix 1 (V22-P0): T4 生成走 exp.v22.t4 的明确实现（带配置 hash 与四种缓存情形校验）
+    from exp.v22.t4 import ensure_t4_latents_750 as _ensure_t4
+    z_t4 = _ensure_t4(bundle, device=device)
     cache_t4.parent.mkdir(parents=True, exist_ok=True)
     torch.save(z_t4.half(), cache_t4)
     return z_t4.float()

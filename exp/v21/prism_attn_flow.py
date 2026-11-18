@@ -282,7 +282,8 @@ def train_prism_attn_flow(
             # 60% 1-Shot DISTINCT neighbor (L=256) + 40% 4-Shot DISTINCT neighbors (L=1024)!
             is_multishot = (step % 5 in (1, 3))
             n_shots = 4 if is_multishot else 1
-            perm_nbr = torch.randint(0, 12, (B, n_shots))
+            # Fix 5 (V22-P0): 4-Shot 参考无放回采样，严禁同一参考重复
+            perm_nbr = sample_without_replacement(B, pool=12, n_shots=n_shots, device=device)
             r_ids = nbr_idx[idx[:, None], perm_nbr]  # (B, n_shots), GUARANTEED r_ids != idx!
 
             # Flatten (B, n_shots, 256, ...) -> (B, n_shots*256, ...) and randomly permute token order to prevent spatial copy!
@@ -343,6 +344,13 @@ def train_prism_attn_flow(
 
 
 @torch.no_grad()
+def sample_without_replacement(batch: int, pool: int, n_shots: int, device: str = "cuda", generator=None) -> torch.Tensor:
+    """Fix 5: 从 pool 个候选中为每个样本无放回抽取 n_shots 个（topk on random scores）。"""
+    n = min(int(n_shots), int(pool))
+    scores = torch.rand(batch, pool, device=device, generator=generator)
+    return scores.topk(n, dim=1).indices
+
+
 def chroma_align_to_exemplar(z_src: torch.Tensor, z_ref: torch.Tensor, P_Y: torch.Tensor, P_C: torch.Tensor, alpha: float = 0.55) -> torch.Tensor:
     """100% class-label-free orthogonal 3D chrominance warm-start from arbitrary reference z_ref!"""
     zy_s = torch.einsum("ij,bjhw->bihw", P_Y, z_src.float())
