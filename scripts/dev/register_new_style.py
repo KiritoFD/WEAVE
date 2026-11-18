@@ -4,8 +4,8 @@ Usage:
     python register_new_style.py \
         --base_ckpt code/checkpoints/weave_epoch_0004.pt \
         --style_name Cubism \
-        --train_img_dir F:/datasets/r5/train_reg64/Cubism \
-        --output_ckpt F:/datasets/r5/registered/Cubism.pt \
+        --train_img_dir datasets/r5/train_reg64/Cubism \
+        --output_ckpt runs/r5_registered/Cubism.pt \
         --num_steps 500 \
         --batch_size 4 \
         --lr 1e-3 \

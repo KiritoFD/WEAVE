@@ -396,9 +396,8 @@ def train_and_eval_v19_students(bundle: dict, teacher_mode: str = "hybrid",
             same = sid_proto == tid_true
 
             if is_wrong:
-                tid_u = (tid_true + 1) % 5
-                tid_u = torch.where(tid_u == sid_proto, (tid_u + 1) % 5, tid_u)
-                tid_u = torch.where(same, tid_true, tid_u)
+                from src.utils.protocol import pick_wrong_cross_tid
+                tid_u = pick_wrong_cross_tid(sid_proto, tid_true)
             else:
                 tid_u = tid_true
 

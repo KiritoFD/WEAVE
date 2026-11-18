@@ -533,3 +533,26 @@ def _student(spec, device):
             out = torch.where(same, z, z0 + delta)
         return {"z0": z0, "final": out, "trace": []}
     return gen
+
+
+@register("prism_flash")
+def _prism_flash(spec, device):
+    """Zero-DINO, Zero-B4 single-pass PRISMFlashNet latent transport."""
+    if spec.ckpt is None:
+        raise ValueError("prism_flash requires --ckpt")
+    from src.model.prism import PRISMFlashNet
+    ck = torch.load(spec.ckpt, map_location="cpu", weights_only=False)
+    net = PRISMFlashNet(
+        width=int(ck.get("width", 96)),
+        chord_dim=int(ck.get("chord_dim", 128)),
+    ).to(device).eval()
+    net.load_state_dict(ck.get("model", ck))
+    strength = float(spec.extra.get("strength", 1.0))
+
+    def gen(z, sid, tid, tasks):
+        with torch.no_grad():
+            same = sid == tid
+            out = net(z, tid=tid, strength=strength, same_mask=same)
+        return {"z0": z, "final": out, "trace": []}
+    return gen
+

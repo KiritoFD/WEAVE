@@ -13,6 +13,7 @@ from .critic import LatentStyleNet
 from .canon import ContentCanonicalizer, canonicalizer
 from .transport import SingleStepTransportNet
 from .edit_adapter import EditResidualAdapter
+from .prism import LatentStyleFiberStem, PRISMFlashNet, SelfAttentiveLatentLayoutStem
 
 __all__ = [
     "C3UNet",
@@ -22,4 +23,7 @@ __all__ = [
     "canonicalizer",
     "SingleStepTransportNet",
     "EditResidualAdapter",
+    "LatentStyleFiberStem",
+    "SelfAttentiveLatentLayoutStem",
+    "PRISMFlashNet",
 ]

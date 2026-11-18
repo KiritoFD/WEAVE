@@ -33,12 +33,15 @@ from config_schema import ExperimentConfig, ModelConfig, BridgeConfig  # noqa: E
 from model import build_model_from_config  # noqa: E402
 from flow import FlowMatchingObjective  # noqa: E402
 
+import os
+from paths import ASSET_ROOT, datasets_root  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_JSON = ROOT / "config.json"
 D5_CKPT = ROOT / "archive" / "runs_submission" / "canonical_oriented_epoch4" / "epoch_0004.pt"
-WIKIART = Path(r"F:\wikiart\wikiart")
-OTHER5_TEST = Path(r"G:\GitHub\Latent_Style\Dataset\other5_512\test")
-REG_LATENT_DIR = Path(r"G:\GitHub\Latent_Style\Dataset\other5_reg_latents_ema")
+WIKIART = Path(os.environ.get("WEAVE_WIKIART_ROOT", str(datasets_root("wikiart_raw"))))
+OTHER5_TEST = ASSET_ROOT / "Dataset" / "other5_512" / "test"
+REG_LATENT_DIR = ASSET_ROOT / "Dataset" / "other5_reg_latents_ema"
 
 # Other5 styles (from other5_selection.json) and their target memory ids (5..9)
 OTHER5_STYLES = [

@@ -3,7 +3,7 @@
 Outputs to aaai_submission/final_v6/. Only copies; never deletes anything.
 
 Key fixes over final_v5:
-- All paths inside manifest/summary/configs are project-relative (no G:\\, no backslashes).
+- All paths inside manifest/summary/configs are project-relative (no Windows drive prefix, no backslashes).
 - config.json: drop the hand-filled old IDT baseline (set to null, computed live from 750 pairs).
 - Add verify_main_table.py: one command prints the paper WEAVE row of Table 1.
 - Refresh README/REPRODUCE/DATA/CHECKPOINT to reflect the canonical epoch-4 oriented-HF checkpoint.
@@ -14,9 +14,11 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from paths import WEAVE_ROOT as ROOT
 SRC_V5 = ROOT / "aaai_submission" / "final_v5"
 OUT = ROOT / "aaai_submission" / "final_v6"
 
@@ -34,7 +36,7 @@ def copy_file(src: Path, dst: Path) -> None:
 
 
 def to_rel_posix(path_str: str, base_prefix: str) -> str:
-    """Convert an absolute G:\\...\\Latent_Style\\... path to a project-relative POSIX path."""
+    """Convert an absolute host Latent_Style path to a project-relative POSIX path."""
     if not path_str:
         return path_str
     s = path_str.replace("\\", "/")
@@ -43,7 +45,7 @@ def to_rel_posix(path_str: str, base_prefix: str) -> str:
     if marker in s:
         idx = s.find(marker) + len(marker)
         s = s[idx:]
-    # Strip drive letter (e.g., G:/)
+    # Strip leading Windows drive prefix
     s = re.sub(r"^[A-Za-z]:/", "", s)
     return s
 
@@ -74,9 +76,9 @@ def fix_manifest(src: Path, dst: Path) -> None:
 
 
 def fix_summary(src: Path, dst: Path) -> None:
-    """Rewrite summary.json replacing any G:\\ absolute path with a project-relative POSIX path."""
+    """Rewrite summary.json replacing any host drive absolute path with a project-relative POSIX path."""
     content = src.read_text(encoding="utf-8")
-    # Replace any G:\...\Latent_Style\WEAVE\runs\... with runs/...
+    # Replace any <DRIVE>/.../Latent_Style/WEAVE/runs/... with runs/...
     def repl(m: re.Match) -> str:
         s = m.group(0).replace("\\", "/")
         marker = "/Latent_Style/WEAVE/"
@@ -92,9 +94,9 @@ def fix_summary(src: Path, dst: Path) -> None:
                 s = re.sub(r"^[A-Za-z]:/", "", s)
         return s
 
-    # Match any G:\... path-like token (non-quote, non-whitespace)
+    # Match any drive-prefixed path-like token (non-quote, non-whitespace)
     pattern = re.compile(r"[A-Za-z]:\\\\[^\"]*?")
-    # The JSON has escaped backslashes in strings; use a simpler approach: replace 'G:\\' token chains
+    # The JSON has escaped backslashes in strings; normalize drive-prefixed token chains
     # We do it on the raw JSON text by splitting on quotes.
     new_content = re.sub(
         r'([A-Za-z]:)(\\\\|/)+([^\"]*?)(?=\")',

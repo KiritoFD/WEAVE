@@ -1,7 +1,9 @@
+import sys
 from pathlib import Path
 import json, csv
 
-ROOT = Path(r"G:/GitHub/Latent_Style/WEAVE")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from paths import WEAVE_ROOT as ROOT
 paper = {
     "WEAVE": (0.4916, 0.7128, 0.2593, 0.8103),
     "w/o AdaIN": (0.4821, 0.7005, 0.2258, 0.8455),

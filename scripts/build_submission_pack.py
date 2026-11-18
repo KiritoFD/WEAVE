@@ -113,7 +113,7 @@ REMOTE_ABLATION_V2 = [
     "d06_steps_1",
     "d07_steps_32",
 ]
-REMOTE_ROOT = r"I:\Github\Latent_Style\WEAVE"
+REMOTE_ROOT = os.environ.get("WEAVE_REMOTE_ROOT", "~/Workspace/WEAVE")
 
 
 def count_images(d: Path) -> int:

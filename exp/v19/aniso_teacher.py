@@ -325,10 +325,8 @@ def run_sprint1_teachers(bundle: dict, device: str = "cuda"):
             tid_true = torch.tensor([t["target_style_id"] for t in grp], device=device)
             same = sid_proto == tid_true
             if is_wrong:
-                tid_used = (tid_true + 1) % 5
-                clash = tid_used == sid_proto
-                tid_used = torch.where(clash, (tid_used + 1) % 5, tid_used)
-                tid_used = torch.where(same, tid_true, tid_used)
+                from src.utils.protocol import pick_wrong_cross_tid
+                tid_used = pick_wrong_cross_tid(sid_proto, tid_true)
             else:
                 tid_used = tid_true
 

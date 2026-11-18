@@ -1,8 +1,12 @@
 import csv
+import sys
 from pathlib import Path
 from collections import defaultdict
 
-p = Path(r"G:/GitHub/Latent_Style/WEAVE/results/cross_protocol/D5-512/stylealigned_metrics.csv")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from paths import results_root
+
+p = results_root("cross_protocol", "D5-512", "stylealigned_metrics.csv")
 rows = list(csv.DictReader(p.open(encoding="utf-8-sig")))
 print("n", len(rows), "cols", list(rows[0].keys())[:15])
 

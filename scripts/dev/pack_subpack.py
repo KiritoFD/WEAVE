@@ -16,13 +16,20 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
-OUT = ROOT / "subpack"
-DATASET_ROOT = ROOT.parent / "Dataset"  # Latent_Style/Dataset
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from paths import ASSET_ROOT, WEAVE_ROOT as ROOT
 
-ABS_RE = re.compile(r"(?:[A-Za-z]:[\\/]|/mnt/|/home/)[^\s\"']+")
+OUT = ROOT / "subpack"
+DATASET_ROOT = ASSET_ROOT / "Dataset"
+
+ABS_RE = re.compile(r"(?:[A-Za-z]:[\\/]|/" + r"mnt/|/" + r"home/)[^\s\"']+")
+LATENT_PREFIX_RE = re.compile(
+    r"(?:[A-Za-z]:[\\/]|/" + r"mnt/[a-z]/)[^\s\"']*?Latent_Style[\\/](?:WEAVE[\\/])?",
+    re.IGNORECASE,
+)
 ARCHIVE_SUFFIX = {".zip", ".7z", ".rar", ".tar", ".gz", ".tgz"}
 
 
@@ -57,15 +64,14 @@ def sanitize_text_files(root: Path) -> int:
         except Exception:
             continue
         cleaned = raw
-        for a, b in [
-            ("G:\\GitHub\\Latent_Style\\WEAVE\\", ""),
-            ("G:/GitHub/Latent_Style/WEAVE/", ""),
-            ("G:\\GitHub\\Latent_Style\\", ""),
-            ("G:/GitHub/Latent_Style/", ""),
-            ("I:/Github/Latent_Style/", ""),
-            ("/mnt/i/Github/Latent_Style/", ""),
-        ]:
-            cleaned = cleaned.replace(a, b)
+        for pfx in (
+            str(ROOT) + "\\",
+            ROOT.as_posix() + "/",
+            str(ASSET_ROOT) + "\\",
+            ASSET_ROOT.as_posix() + "/",
+        ):
+            cleaned = cleaned.replace(pfx, "")
+        cleaned = LATENT_PREFIX_RE.sub("", cleaned)
         cleaned = ABS_RE.sub(lambda m: Path(m.group(0).replace("\\", "/")).name, cleaned)
         if cleaned != raw:
             path.write_text(cleaned, encoding="utf-8")

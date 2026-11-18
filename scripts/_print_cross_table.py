@@ -1,7 +1,11 @@
 import json
+import sys
 from pathlib import Path
 
-d = json.loads(Path(r"G:/GitHub/Latent_Style/WEAVE/results/cross_protocol/all_summary.json").read_text())
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from paths import results_root
+
+d = json.loads(results_root("cross_protocol", "all_summary.json").read_text(encoding="utf-8"))
 order = [
     "identity", "tgt", "sdturbo", "stylealigned", "zstar", "styleshot", "styleid",
     "cut", "samst", "samam", "stytr2", "aespa", "seedream", "wct", "weave_oriented_e4", "weave",

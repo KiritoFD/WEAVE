@@ -4,8 +4,15 @@ from __future__ import annotations
 import torch
 
 from src.eval.metrics import enrich_rows, paired_cluster_ci, summarize_rows
+from src.model.prism import PRISMFlashNet, extract_latent_multiscale_stats
 from src.utils.protocol import STYLES, canonical_pid, pick_wrong_cross_tid
 from src.utils.runtime import sanitize_cuda_env, tier_micro_accum
+from src.utils.structure import (
+    extract_color_fiber_27d,
+    latent_to_structure_64,
+    local_contrast_norm,
+    rgb_to_oklab,
+)
 
 
 def test_tier_micro_accum_3060_and_4090():
@@ -72,3 +79,38 @@ def test_enrich_and_summarize_populates_confusion_matrix_and_paired_ci():
     pci = paired_cluster_ci(rows_a, rows_b, metrics=("target_top1",), n_boot=128)
     assert pci["target_top1"]["mean"] == 1.0
     assert canonical_pid("wikiart__Rococo__Antoine-Watteau") == "antoine-watteau"
+
+
+def test_structure_and_color_fiber_differentiability():
+    rgb = torch.rand(2, 3, 64, 64, requires_grad=True)
+    lab = rgb_to_oklab(rgb)
+    fib27 = extract_color_fiber_27d(rgb)
+    assert lab.shape == (2, 3, 64, 64)
+    assert fib27.shape == (2, 27)
+    fib27.sum().backward()
+    assert rgb.grad is not None and torch.isfinite(rgb.grad).all()
+
+    z = torch.randn(2, 4, 64, 64) * 0.5
+    c64 = latent_to_structure_64(z, torch.tensor([0.25] * 4), torch.tensor(0.5))
+    assert c64.shape == (2, 4, 64, 64)
+    assert float(c64.abs().max().item()) <= 1.0 + 1e-5
+    lcn = local_contrast_norm(torch.rand(2, 1, 32, 32))
+    assert float(lcn.abs().max().item()) <= 1.0 + 1e-5
+
+
+def test_prism_flash_net_zero_chord_identity_cpu():
+    import src.infer as infer_pkg
+    import src.infer.variants  # noqa: F401
+    assert "prism_flash" in infer_pkg.MODELS
+    net = PRISMFlashNet(width=48, chord_dim=64).eval()
+    with torch.no_grad():
+        net.out_conv.weight.normal_(0, 0.02)
+        z = torch.randn(2, 4, 64, 64) * 0.4
+        st = extract_latent_multiscale_stats(z)
+        assert st.shape == (2, 86)
+        z_self = net(z, z_ref=z)
+        assert float((z_self - z).abs().max().item()) < 1e-6
+        z_cross = net(z, tid=torch.tensor([0, 4]))
+        assert z_cross.shape == (2, 4, 64, 64)
+        assert float((z_cross - z).abs().max().item()) > 0.0
+

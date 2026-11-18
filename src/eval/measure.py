@@ -8,10 +8,18 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+import sys
 import time
 
 import numpy as np
 import torch
+
+# NumPy 1.x <-> 2.x pickle unpickling compatibility for cached feature tensors
+if not hasattr(np, "_core") and hasattr(np, "core"):
+    sys.modules.setdefault("numpy._core", np.core)
+    for _sub in ("multiarray", "umath", "numeric", "_multiarray_umath"):
+        if hasattr(np.core, _sub):
+            sys.modules.setdefault(f"numpy._core.{_sub}", getattr(np.core, _sub))
 
 REPO = Path(__file__).resolve().parents[2]
 STYLES = ["Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e"]

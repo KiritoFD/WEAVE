@@ -208,13 +208,16 @@ def train_ccf(
     *,
     base_dim: int = 128,
     updates: int = 8000,
-    micro: int = 64,
-    accum: int = 2,
+    micro: int | None = None,
+    accum: int | None = None,
     lr: float = 3e-4,
     lam_struct: float = 0.12,
     seed: int = 20261118,
     device: str = "cuda",
 ) -> Path:
+    from src.utils.runtime import tier_micro_accum
+    if micro is None or accum is None:
+        micro, accum = tier_micro_accum(128, default_micro_24gb=64, max_micro_12gb=16, device=device)
     out_dir = Path(out_dir or (OUT / "ccf_main"))
     ckpt_final = out_dir / "ccf_final.pt"
     if ckpt_final.exists():

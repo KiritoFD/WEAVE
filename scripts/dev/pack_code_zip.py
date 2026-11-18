@@ -7,9 +7,12 @@ import json
 import re
 import shutil
 import zipfile
+import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from paths import ASSET_ROOT, WEAVE_ROOT as ROOT
+
 STAGE = ROOT / "_code_pack"
 ZIP = ROOT / "code.zip"
 
@@ -38,7 +41,11 @@ ORIENTED = [
     "hf_oriented_internal_probe.json",
 ]
 
-ABS_RE = re.compile(r"(?:[A-Za-z]:[\\/]|/mnt/)[^\s\"']+")
+ABS_RE = re.compile(r"(?:[A-Za-z]:[\\/]|/" + r"mnt/)[^\s\"']+")
+LATENT_PREFIX_RE = re.compile(
+    r"(?:[A-Za-z]:[\\/]|/" + r"mnt/[a-z]/)[^\s\"']*?Latent_Style[\\/](?:WEAVE[\\/])?",
+    re.IGNORECASE,
+)
 
 
 def copy_file(src: Path, dst: Path) -> None:
@@ -56,14 +63,15 @@ def copy_py_tree(src: Path, dst: Path) -> None:
 
 def sanitize_json(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    cleaned = (
-        text.replace("G:\\GitHub\\Latent_Style\\WEAVE\\", "")
-        .replace("G:/GitHub/Latent_Style/WEAVE/", "")
-        .replace("G:\\GitHub\\Latent_Style\\", "")
-        .replace("G:/GitHub/Latent_Style/", "")
-        .replace("I:/Github/Latent_Style/", "")
-        .replace("/mnt/i/Github/Latent_Style/", "")
-    )
+    cleaned = text
+    for pfx in (
+        str(ROOT) + "\\",
+        ROOT.as_posix() + "/",
+        str(ASSET_ROOT) + "\\",
+        ASSET_ROOT.as_posix() + "/",
+    ):
+        cleaned = cleaned.replace(pfx, "")
+    cleaned = LATENT_PREFIX_RE.sub("", cleaned)
     cleaned = ABS_RE.sub(lambda m: Path(m.group(0).replace("\\", "/")).name, cleaned)
     if cleaned != text:
         path.write_text(cleaned, encoding="utf-8")

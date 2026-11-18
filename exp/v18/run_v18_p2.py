@@ -45,11 +45,7 @@ P2_ARMS = [
 ]
 
 
-def _pick_wrong_cross_tid(sid: torch.Tensor, tid: torch.Tensor) -> torch.Tensor:
-    """Pick deterministic wrong target style != tid and != sid (for cross tasks)."""
-    cand = (tid + 1) % 5
-    clash = (cand == sid) & (sid != tid)
-    return torch.where(clash, (tid + 2) % 5, cand)
+from src.utils.protocol import pick_wrong_cross_tid as _pick_wrong_cross_tid
 
 
 def run_gate0b_audit(cache_dict: dict, device: str = "cuda") -> dict:

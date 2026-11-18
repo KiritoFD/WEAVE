@@ -26,19 +26,7 @@ MACHINE_LOCAL_FILES = {
     "AGENTS.md",
 }
 
-KNOWN_DEBT = {
-    "scripts/_audit_stylealigned_cross.py",
-    "scripts/_print_cross_table.py",
-    "scripts/_scan_ablation_sources.py",
-    "scripts/build_submission_pack.py",
-    "scripts/dev/BASELINE_PROGRESS.md",
-    "scripts/dev/pack_code_zip.py",
-    "scripts/dev/pack_subpack.py",
-    "scripts/dev/prepare_submission_v6.py",
-    "scripts/dev/register_new_style.py",
-    "scripts/pull_submission_pack_remote.bat",
-    "scripts/register_other5.py",
-}
+KNOWN_DEBT: set[str] = set()
 
 _MNT_PREFIX = "/" + "mnt/[a-z]/"
 _HOME_PREFIX = "/" + "home/"
