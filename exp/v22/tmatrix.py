@@ -40,6 +40,7 @@ T_CONFIGS = {
     "T4": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=False, struct_w=0.10),
     "T5": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=True, struct_w=0.0),
     "T4L": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=False, struct_w=0.10),  # 长训练臂，--updates 3600
+    "T4S": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=False, struct_w=0.10),  # 快照曲线臂，--updates 3600，每 300 步存快照
 }
 
 
@@ -148,6 +149,9 @@ def train_t_arm(bundle: dict, core_bank: dict, arm: str, updates: int = 1800,
 
         if step == 1 or step % 400 == 0 or step == updates:
             print(f"[V22 {arm}] {step:4d}/{updates} fm={loss_fm_v:.4f} y16={loss_st_v:.4f} ({time.time()-t0:.0f}s)", flush=True)
+        if arm.endswith("S") and step % 300 == 0:  # 快照臂：训练曲线定位
+            torch.save({"ema": ema.state_dict(), "updates": step, "arm": arm, "cfg": cfg},
+                       OUT / "tmatrix" / f"slf_{arm}snap{step}.pt")
 
     torch.save({"ema": ema.state_dict(), "updates": updates, "arm": arm, "cfg": cfg}, out_p)
     print(f"[V22 {arm}] Saved {out_p} in {(time.time()-t0)/60:.1f} min", flush=True)
