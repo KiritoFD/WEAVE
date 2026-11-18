@@ -124,6 +124,11 @@ def build_arms() -> dict[str, dict]:
     add("P2_dual_vsc", cfg={"branches": "sc_only"})
     add("P2_dual_cs_j", cfg={"branches": "cs_j"})
 
+    # ---- W3组: S32 架构（Coarse-16+32×32 结构）在 wc 0.9/1.1/1.4 档的内容修复验证 ----
+    add("S32_wc11", gate=dg, solver=dict(w_solver, wc_fig=1.1, wc_abs=1.1))
+    add("S32_wc14", gate=dg, solver=dict(w_solver, wc_fig=1.4, wc_abs=1.4))
+    add("S32_wc09", gate=dg, solver=dict(w_solver, wc_fig=0.9, wc_abs=0.9))
+
     # ---- N2组: P3-N2 粗结构信任域（推理期拉回粗亮度，救 wc 中档内容；无训练）----
     add("N2_wc11_b15", gate={"mode": "fixed", "fixed_g": 0.5},
         solver=dict(D5_SOLVER, tau_min=0.28, tau_hi=0.66, wc_fig=1.1, wc_abs=1.1),
@@ -147,10 +152,8 @@ DEFAULT_GROUPS = {
     "S": ["S_blind_same150", "S_self_ref_same150"],
     "W": ["W_wc00_fixedgate", "W_wc04_fixedgate", "W_wc09_fixedgate", "W_wc14_fixedgate"],
     "W2": ["X1_prism1_wc00", "X2_prism1_wc12", "X3_wc12_fixedgate", "X4_wc11_fixedgate", "X5_wc13_fixedgate", "X6_wc00_wspboost"],
-    "P2E": ["P2_dual_vsc", "P2_dual_cs_j"],
-    "W2": ["X1_prism1_wc00", "X2_prism1_wc12", "X3_wc12_fixedgate", "X4_wc11_fixedgate", "X5_wc13_fixedgate", "X6_wc00_wspboost"],
-    "P2E": ["P2_dual_vsc", "P2_dual_cs_j"],
     "N2": ["N2_wc11_b15", "N2_wc11_b30", "N2_wc14_b15"],
+    "W3": ["S32_wc11", "S32_wc14", "S32_wc09"],
 }
 
 
@@ -235,6 +238,7 @@ def run_arm(core: PrismCore, spec: dict, ctx: dict, device: str = "cuda") -> dic
         z_gen, stats = core.integrate_flow(
             eps_750[sl], anchor_b, y16_750[sl], d16_750[sl], tid_u,
             u_style=u_b, dsd_ref=dsd_b, gate=gate, cfg=cfg, solver=solver,
+            y32=ctx.get("y32_750")[sl].to(device).float() if ctx.get("y32_750") is not None else None,
         )
         for k in stats_acc:
             stats_acc[k].append(stats[k])
@@ -361,6 +365,7 @@ def main():
     ap.add_argument("--groups", default="repro,A,B,C,D,CF,S")
     ap.add_argument("--no-png", action="store_true")
     ap.add_argument("--ckpt", default=str(CKPT), help="主模型 checkpoint（3060 上指向 prism_dual_branch.pt）")
+    ap.add_argument("--arch", default="base", choices=["base", "s32"])
     args = ap.parse_args()
 
     sanitize_cuda_env()
@@ -368,7 +373,7 @@ def main():
 
     bundle = build_or_load_v19_foundation(args.pool, device=args.device)
     bank = build_or_load_core_knn_bank(bundle, k_sub=8, core_per_style=180, device=args.device)
-    core = PrismCore(bundle, bank, args.ckpt, device=args.device)
+    core = PrismCore(bundle, bank, args.ckpt, device=args.device, arch=args.arch)
 
     tasks, z_src_750, _ = tasks_and_sources()
     z_t4, t4_src = build_or_load_t4_latents_750(bundle, device=args.device)
@@ -414,6 +419,12 @@ def main():
     del stu
     torch.cuda.empty_cache()
 
+    from exp.v22.arch_s32 import build_y32_pair
+    if args.arch == "s32" and "y_64" in bundle["test_struct"]:
+        y32_750 = build_y32_pair(bundle["test_struct"]["y_64"].float()).half()
+    else:
+        y32_750 = None
+
     ctx = {
         "tasks": tasks, "z_src_750": z_src_750, "y16_750": y16_750, "d16_750": d16_750,
         "fib_750": fib_750, "eps_750": eps_750, "z_t4": z_t4, "dec": dec,
@@ -422,6 +433,7 @@ def main():
         "t4_source": t4_src,
         "w_luma": bundle["v18_cache"]["luma_proj"]["w"],
         "b_luma": bundle["v18_cache"]["luma_proj"]["b"],
+        "y32_750": y32_750,
     }
 
     groups = [g.strip() for g in args.groups.split(",") if g.strip()]

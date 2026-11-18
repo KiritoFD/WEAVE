@@ -106,7 +106,7 @@ def _guidance_curves(g_guid: torch.Tensor, solver: dict, prog: float):
 
 
 def predict_guided_velocity(
-    model: SLFUNet,
+    model,
     z_cur: torch.Tensor,
     tv: torch.Tensor,
     content: dict,
@@ -117,18 +117,21 @@ def predict_guided_velocity(
     cfg: CFGConfig,
     solver: dict,
     prog: float,
+    y32: torch.Tensor | None = None,
+    is_s32: bool = False,
 ) -> torch.Tensor:
-    """分支组合（批量前向逐位复刻 V20 的 repeat/cat 顺序）。"""
+    """分支组合（批量前向逐位复刻 V20 的 repeat/cat 顺序）。y32 仅 S32 架构使用。"""
     B = z_cur.shape[0]
     dev = z_cur.device
     f0 = torch.zeros(B, dtype=torch.bool, device=dev)
     f1 = torch.ones(B, dtype=torch.bool, device=dev)
     ls0 = torch.zeros(B, device=dev)
+    y32_kw = {"y32_struct": y32} if is_s32 else {}
 
     if cfg.branches == "sc_only":
         with autocast(str(dev)):
             return model(z_cur, content["y_in"], content["d_in"], tid, u_style, tv,
-                         drop_style=f0, drop_content=f0, layout_scale=lscale).float()
+                         drop_style=f0, drop_content=f0, layout_scale=lscale, **y32_kw).float()
 
     if cfg.branches == "cs_j":
         z2 = torch.cat([z_cur, z_cur], 0)
@@ -140,8 +143,10 @@ def predict_guided_velocity(
         ds2 = torch.cat([f0, f1], 0)
         dc2 = torch.cat([f0, f0], 0)
         l2 = torch.cat([lscale, ls0], 0)
+        y32_2 = y32.repeat(2, 1, 1, 1) if (is_s32 and y32 is not None) else None
         with autocast(str(dev)):
-            v_sc, v_0c = model(z2, y2, d2, s2, u2, t2, drop_style=ds2, drop_content=dc2, layout_scale=l2).float().chunk(2, 0)
+            v_sc, v_0c = model(z2, y2, d2, s2, u2, t2, drop_style=ds2, drop_content=dc2, layout_scale=l2,
+                               **({"y32_struct": y32_2} if is_s32 else {})).float().chunk(2, 0)
         _, ws_j, _ = _guidance_curves(g_guid, solver, prog)
         return v_0c + ws_j * (v_sc - v_0c)
 
@@ -155,9 +160,11 @@ def predict_guided_velocity(
         ds = torch.cat([f0, f0, f1, f1], 0)
         dc = torch.cat([f0, f1, f0, f1], 0)
         lsc4 = torch.cat([lscale, ls0, lscale, ls0], 0)
+        y32_4 = y32.repeat(4, 1, 1, 1) if (is_s32 and y32 is not None) else None
         with autocast(str(dev)):
             v_sc, v_s0, v_0c, v_00 = model(
                 z4, y4, d4, s4, u4, t4, drop_style=ds, drop_content=dc, layout_scale=lsc4,
+                **({"y32_struct": y32_4} if is_s32 else {}),
             ).float().chunk(4, 0)
         wc, ws_j, ws_p = _guidance_curves(g_guid, solver, prog)
         if cfg.branches == "no_wp":
@@ -197,12 +204,18 @@ class PrismCore:
 
     def __init__(self, bundle: dict | None = None, core_bank: dict | None = None,
                  ckpt_path: str | Path | None = None, device: str = "cuda",
-                 model: SLFUNet | None = None):
+                 model: SLFUNet | None = None, arch: str = "base"):
         self.device = device
         self.bank = core_bank or {}
         self.bundle = bundle
+        self.arch = arch
         if model is not None:
             self.model = model.to(device).eval()
+        elif arch == "s32":
+            from .arch_s32 import SLFUNetS32
+            self.model = SLFUNetS32(base_dim=144, u_dim=128).to(device).eval()
+            ck = torch.load(ckpt_path, map_location=device, weights_only=False)
+            self.model.load_state_dict(ck["ema"], strict=True)
         else:
             self.model = SLFUNet(base_dim=144, u_dim=128).to(device).eval()
             ck = torch.load(ckpt_path, map_location=device, weights_only=False)
@@ -310,6 +323,7 @@ class PrismCore:
         cfg: CFGConfig | None = None,
         solver: dict | None = None,
         task_index: torch.Tensor | None = None,
+        y32: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, dict]:
         """gate=original / branches=full / style=None 时与 exp.v20.integrate_slf_core_batch 逐位等价。"""
         solver = dict(D5_SOLVER if solver is None else solver)
@@ -342,9 +356,11 @@ class PrismCore:
         z = make_initial_state(eps.to(dev).float(), None if z_anchor is None else z_anchor.to(dev).float(), tau_v)
 
         steps = int(solver["steps"])
+        y32_dev = y32.to(dev).float() if (self.arch == "s32" and y32 is not None) else None
+        is_s32 = self.arch == "s32"
         vel_fn = lambda zz, prog: predict_guided_velocity(
             self.model, zz, tau_v + prog * (1.0 - tau_v), content, tid, u_style,
-            lscale, g_guid, cfg, solver, prog,
+            lscale, g_guid, cfg, solver, prog, y32=y32_dev, is_s32=is_s32,
         )
         z = rk2_integrate(vel_fn, z, tau_v, steps)
         stats = {
