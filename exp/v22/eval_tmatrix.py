@@ -23,8 +23,9 @@ from src.utils.runtime import REPO as ROOT_  # noqa: F401
 BASE_CKPT = ROOT / "runs/v20/slf_flow/slf_final.pt"
 
 
-def eval_t_ckpt(core: PrismCore, ckpt_path, tag: str, ctx: dict, device: str = "cuda") -> list[dict]:
-    """单个 T ckpt × fixed-gate wc11/wc14 两档评测。"""
+def eval_t_ckpt(core: PrismCore, ckpt_path, tag: str, ctx: dict, device: str = "cuda",
+                wc_list: tuple = ((1.1, "wc11"), (1.4, "wc14"))) -> list[dict]:
+    """单个 T ckpt × fixed-gate 指定 wc 档评测。"""
     tasks = ctx["tasks"]
     z_src_750 = ctx["z_src_750"]
     sid_all = torch.tensor([t["source_style_id"] for t in tasks])
@@ -37,7 +38,7 @@ def eval_t_ckpt(core: PrismCore, ckpt_path, tag: str, ctx: dict, device: str = "
 
     gate = GateConfig(mode="fixed", fixed_g=0.5)
     results = []
-    for wc_val, wc_tag in ((1.1, "wc11"), (1.4, "wc14")):
+    for wc_val, wc_tag in wc_list:
         name = f"{tag}_{wc_tag}"
         cfg_hash = config_hash({"tag": tag, "wc": wc_val, "gate": "fixed0.5"})
         out_dir = OUT / "raw" / name
