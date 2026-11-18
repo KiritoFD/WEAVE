@@ -46,13 +46,15 @@ def build_arms() -> dict[str, dict]:
     arms: dict[str, dict] = {}
 
     def add(name, *, solver=None, gate=None, cfg=None, style_mode=None, anchor="t4",
-            same_mode="bypass", wrong_tgt=False, alias=None, measure=True, repro_of=None):
+            same_mode="bypass", wrong_tgt=False, alias=None, measure=True, repro_of=None,
+            pullback_beta=0.0):
         arms[name] = {
             "name": name, "solver": dict(solver or D5_SOLVER),
             "gate": gate or {}, "cfg": cfg or {},
             "style_mode": style_mode, "anchor": anchor,
             "same_mode": same_mode, "wrong_tgt": wrong_tgt,
             "alias": alias, "measure": measure, "repro_of": repro_of,
+            "pullback_beta": pullback_beta,
         }
 
     # ---- P0 复现核验（不跑 measure，只逐任务比对 z_final）----
@@ -107,6 +109,31 @@ def build_arms() -> dict[str, dict]:
     add("W_wc04_fixedgate", gate=dg, solver=dict(w_solver, wc_fig=0.4, wc_abs=0.4))
     add("W_wc09_fixedgate", gate=dg, solver=dict(w_solver, wc_fig=0.9, wc_abs=0.9))
     add("W_wc14_fixedgate", gate=dg, solver=dict(w_solver, wc_fig=1.4, wc_abs=1.4))
+
+    # ---- W2组: 组合优化（W 组揭示 wc 旋钮后的下一轮）----
+    add("X1_prism1_wc00", anchor="prism1", gate={"mode": "fixed", "fixed_g": 0.5},
+        solver=dict(D5_SOLVER, tau_min=0.28, tau_hi=0.66, wc_fig=0.0, wc_abs=0.0))
+    add("X2_prism1_wc12", anchor="prism1", gate={"mode": "fixed", "fixed_g": 0.5},
+        solver=dict(D5_SOLVER, tau_min=0.28, tau_hi=0.66, wc_fig=1.2, wc_abs=1.2))
+    add("X3_wc12_fixedgate", gate=dg, solver=dict(w_solver, wc_fig=1.2, wc_abs=1.2))
+    add("X4_wc11_fixedgate", gate=dg, solver=dict(w_solver, wc_fig=1.1, wc_abs=1.1))
+    add("X5_wc13_fixedgate", gate=dg, solver=dict(w_solver, wc_fig=1.3, wc_abs=1.3))
+    add("X6_wc00_wspboost", gate=dg, solver=dict(w_solver, wc_fig=0.0, wc_abs=0.0, wsp_fig_late=4.0))
+
+    # ---- P2组: 双分支重训模型评测（3060 one-shot 旁路；ckpt 由 --ckpt 指定）----
+    add("P2_dual_vsc", cfg={"branches": "sc_only"})
+    add("P2_dual_cs_j", cfg={"branches": "cs_j"})
+
+    # ---- N2组: P3-N2 粗结构信任域（推理期拉回粗亮度，救 wc 中档内容；无训练）----
+    add("N2_wc11_b15", gate={"mode": "fixed", "fixed_g": 0.5},
+        solver=dict(D5_SOLVER, tau_min=0.28, tau_hi=0.66, wc_fig=1.1, wc_abs=1.1),
+        pullback_beta=0.15)
+    add("N2_wc11_b30", gate={"mode": "fixed", "fixed_g": 0.5},
+        solver=dict(D5_SOLVER, tau_min=0.28, tau_hi=0.66, wc_fig=1.1, wc_abs=1.1),
+        pullback_beta=0.30)
+    add("N2_wc14_b15", gate={"mode": "fixed", "fixed_g": 0.5},
+        solver=dict(D5_SOLVER, tau_min=0.28, tau_hi=0.66, wc_fig=1.4, wc_abs=1.4),
+        pullback_beta=0.15)
     return arms
 
 
@@ -119,6 +146,11 @@ DEFAULT_GROUPS = {
     "CF": ["CF2_wrong_tgt_same_t4", "CF4_wrong_tgt_chroma_anchor"],
     "S": ["S_blind_same150", "S_self_ref_same150"],
     "W": ["W_wc00_fixedgate", "W_wc04_fixedgate", "W_wc09_fixedgate", "W_wc14_fixedgate"],
+    "W2": ["X1_prism1_wc00", "X2_prism1_wc12", "X3_wc12_fixedgate", "X4_wc11_fixedgate", "X5_wc13_fixedgate", "X6_wc00_wspboost"],
+    "P2E": ["P2_dual_vsc", "P2_dual_cs_j"],
+    "W2": ["X1_prism1_wc00", "X2_prism1_wc12", "X3_wc12_fixedgate", "X4_wc11_fixedgate", "X5_wc13_fixedgate", "X6_wc00_wspboost"],
+    "P2E": ["P2_dual_vsc", "P2_dual_cs_j"],
+    "N2": ["N2_wc11_b15", "N2_wc11_b30", "N2_wc14_b15"],
 }
 
 
@@ -212,6 +244,12 @@ def run_arm(core: PrismCore, spec: dict, ctx: dict, device: str = "cuda") -> dic
             z_out = torch.where(same.view(B, 1, 1, 1), z_src_750[sl].to(device).float(), z_gen)
         else:
             z_out = z_gen
+
+        # P3-N2: 粗结构信任域（推理期一次修正，把粗亮度场向锚点拉回 beta）
+        beta_pb = float(spec.get("pullback_beta") or 0.0)
+        if beta_pb > 0.0 and anchor_b is not None:
+            from .core import coarse_luminance_pullback
+            z_out = coarse_luminance_pullback(z_out, anchor_b, ctx["w_luma"], ctx["b_luma"], beta=beta_pb)
 
         rate = latent_change_rate(z_out, z_src_750[sl])
         if bool(same.all()):
@@ -322,6 +360,7 @@ def main():
     ap.add_argument("--repro-only", action="store_true")
     ap.add_argument("--groups", default="repro,A,B,C,D,CF,S")
     ap.add_argument("--no-png", action="store_true")
+    ap.add_argument("--ckpt", default=str(CKPT), help="主模型 checkpoint（3060 上指向 prism_dual_branch.pt）")
     args = ap.parse_args()
 
     sanitize_cuda_env()
@@ -329,7 +368,7 @@ def main():
 
     bundle = build_or_load_v19_foundation(args.pool, device=args.device)
     bank = build_or_load_core_knn_bank(bundle, k_sub=8, core_per_style=180, device=args.device)
-    core = PrismCore(bundle, bank, CKPT, device=args.device)
+    core = PrismCore(bundle, bank, args.ckpt, device=args.device)
 
     tasks, z_src_750, _ = tasks_and_sources()
     z_t4, t4_src = build_or_load_t4_latents_750(bundle, device=args.device)
@@ -381,6 +420,8 @@ def main():
         "priors_cpu": priors_cpu, "prism1_anchor": prism1_anchor,
         "bank_path": ROOT / "runs/v20/cache/core_knn_bank.pt",
         "t4_source": t4_src,
+        "w_luma": bundle["v18_cache"]["luma_proj"]["w"],
+        "b_luma": bundle["v18_cache"]["luma_proj"]["b"],
     }
 
     groups = [g.strip() for g in args.groups.split(",") if g.strip()]

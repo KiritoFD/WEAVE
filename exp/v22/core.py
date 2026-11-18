@@ -363,3 +363,29 @@ class PrismCore:
 def latent_change_rate(z_out: torch.Tensor, z_src: torch.Tensor) -> float:
     dz = (z_out.detach().float().cpu() - z_src.detach().float().cpu()).flatten(1)
     return float((dz.norm(dim=1) / z_src.detach().float().cpu().flatten(1).norm(dim=1).clamp_min(1e-6)).mean())
+
+
+def coarse_luminance_pullback(
+    z: torch.Tensor,
+    z_anchor: torch.Tensor,
+    w_luma: torch.Tensor,
+    b_luma: torch.Tensor,
+    beta: float = 0.2,
+    pool: int = 8,
+) -> torch.Tensor:
+    """P3-N2 粗结构信任域（无训练、推理期一次修正）：
+    把 z 的粗尺度（pool×pool 块）亮度场向锚点拉回 beta 比例；沿潜亮度方向 ŵ_Y 作用，零色度泄漏。
+    """
+    dev = z.device
+    w = w_luma.to(dev).float().view(1, 4, 1, 1)
+    b = b_luma.to(dev).float()
+    w_norm = float(w_luma.to(dev).float().norm())
+    yz = ((z.float() * w).sum(dim=1, keepdim=True) + b).clamp(0.0, 1.0)
+    ya = ((z_anchor.float() * w).sum(dim=1, keepdim=True) + b).clamp(0.0, 1.0)
+    lpz = F.avg_pool2d(yz, pool, stride=pool)
+    lpa = F.avg_pool2d(ya, pool, stride=pool)
+    delta_y = beta * (lpa - lpz)                       # (B,1,H/p,W/p) 粗亮度差
+    delta_y = F.interpolate(delta_y, size=yz.shape[-2:], mode="bilinear", align_corners=False)
+    # 沿 ŵ_Y 方向施加: Y(z + c·ŵ) = Y(z) + c·||w|| → c = delta_y / ||w||
+    unit_w = (w / max(w_norm, 1e-6)).view(1, 4, 1, 1)
+    return (z.float() + delta_y / max(w_norm, 1e-6) * unit_w).to(z.dtype)
