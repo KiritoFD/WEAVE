@@ -256,3 +256,11 @@ V20.F4_prism_flash_wrong,V20-PRISM,q2a_oracle_cross600,S10,True,False,600,0.3398
 V20.F5_prism_flash_v2,V20-PRISM,q2a_oracle_cross600,S10,True,False,600,0.3595,0.46771,0.6654,0.67978,0.51964,0.47333,-0.02959,,,0.61174,0.95904,0.96667,13.27,,,,,docs/next1118/v20_measured_cache.json
 V20.F6_prism_flash_v2_l125,V20-PRISM,q2a_oracle_cross600,S10,True,False,600,0.35711,0.42646,0.7027,0.68019,0.51865,0.60833,-0.00375,,,0.61174,0.95904,0.96667,13.27,,,,,docs/next1118/v20_measured_cache.json
 V20.F7_prism_flash_v2_wrong,V20-PRISM,q2a_oracle_cross600,S10,True,False,600,0.33971,0.4677,0.66541,0.6637,0.50171,0.04,-0.16172,,,0.61174,0.95904,0.96667,13.27,,,,,docs/next1118/v20_measured_cache.json
+V21.1Shot_SG_exact_hiS,V21-1Shot,q2a_oracle_cross600,S10,False,False,600,0.60056,0.39702,0.67804,0.75173,0.67614,0.52833,0.05098,,,,,0.96667,135.37,,,,,docs/next1118/v21_measured_cache.json
+V21.1Shot_SG_exact_bal,V21-1Shot,q2a_oracle_cross600,S10,False,True,600,0.59278,0.44408,0.6217,0.74871,0.67075,0.45167,0.01606,,,,,0.96667,118.88,,,,,docs/next1118/v21_measured_cache.json
+V21.1Shot_Holdout_single,V21-1Shot,q2a_oracle_cross600,S10,False,True,600,0.56563,0.49762,0.5129,0.73909,0.65236,0.38333,-0.03797,,,,,0.96667,135.44,,,,,docs/next1118/v21_measured_cache.json
+V21.1Shot_Holdout_matched,V21-1Shot,q2a_oracle_cross600,S10,False,True,600,0.56647,0.50136,0.52943,0.73624,0.65136,0.37,-0.05227,,,,,0.96667,136.05,,,,,docs/next1118/v21_measured_cache.json
+V21.4Shot_Gallery_hiS,V21-1Shot,q2a_oracle_cross600,S10,False,True,600,0.60155,0.45071,0.66152,0.74726,0.67441,0.535,0.05273,,,,,0.96667,141.45,,,,,docs/next1118/v21_measured_cache.json
+V21.4Shot_Gallery_bal,V21-1Shot,q2a_oracle_cross600,S10,False,True,600,0.58517,0.4946,0.6303,0.74286,0.66402,0.52,0.04382,,,,,0.96667,124.12,,,,,docs/next1118/v21_measured_cache.json
+V21.4Shot_Gallery_hiC,V21-1Shot,q2a_oracle_cross600,S10,False,True,600,0.57121,0.54145,0.60611,0.73767,0.65444,0.52,0.03958,,,,,0.96667,106.81,,,,,docs/next1118/v21_measured_cache.json
+V21.1Shot_Holdout_wrong,V21-1Shot,q2a_oracle_cross600,S10,True,False,600,0.47582,0.49731,0.51265,0.69539,0.58561,0.06,-0.22462,,,,,0.96667,135.27,,,,,docs/next1118/v21_measured_cache.json

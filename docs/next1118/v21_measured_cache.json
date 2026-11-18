@@ -1,0 +1,242 @@
+{
+  "updated_utc": "2026-11-18T08:37:36.688247+00:00",
+  "stiefel_audit": {
+    "old_p16_gram_5way_leak": 0.9233,
+    "stiefel_q32_gram_5way_leak": 0.2,
+    "max_gram_identity_err": 0.0002206563949584961
+  },
+  "arms": [
+    {
+      "arm": "V21_1Shot_SG_exact_hiS",
+      "ref_mode": "sg5_exact",
+      "n_shots": 1,
+      "is_diagnostic": false,
+      "csd_top1": 0.52833,
+      "csd_margin": 0.05098,
+      "dino_s": 0.60056,
+      "clip_s": 0.75173,
+      "style_affinity": 0.67614,
+      "dino_c": 0.39702,
+      "lpips": 0.67804,
+      "same150_top1": 0.96667,
+      "ms_per_img": 135.37,
+      "per_target_top1": {
+        "Early_Renaissance": 0.625,
+        "Impressionism": 1.0,
+        "Minimalism": 1.0,
+        "Rococo": 0.0167,
+        "Ukiyo_e": 0.0
+      },
+      "per_target_dino_s": {
+        "Early_Renaissance": 0.5608,
+        "Impressionism": 0.7479,
+        "Minimalism": 0.5917,
+        "Rococo": 0.5675,
+        "Ukiyo_e": 0.5349
+      }
+    },
+    {
+      "arm": "V21_1Shot_SG_exact_bal",
+      "ref_mode": "sg5_exact",
+      "n_shots": 1,
+      "is_diagnostic": false,
+      "csd_top1": 0.45167,
+      "csd_margin": 0.01606,
+      "dino_s": 0.59278,
+      "clip_s": 0.74871,
+      "style_affinity": 0.67075,
+      "dino_c": 0.44408,
+      "lpips": 0.6217,
+      "same150_top1": 0.96667,
+      "ms_per_img": 118.88,
+      "per_target_top1": {
+        "Early_Renaissance": 0.25,
+        "Impressionism": 1.0,
+        "Minimalism": 1.0,
+        "Rococo": 0.0083,
+        "Ukiyo_e": 0.0
+      },
+      "per_target_dino_s": {
+        "Early_Renaissance": 0.5691,
+        "Impressionism": 0.7517,
+        "Minimalism": 0.5832,
+        "Rococo": 0.5493,
+        "Ukiyo_e": 0.5107
+      }
+    },
+    {
+      "arm": "V21_1Shot_Holdout_single",
+      "ref_mode": "ho_single",
+      "n_shots": 1,
+      "is_diagnostic": false,
+      "csd_top1": 0.38333,
+      "csd_margin": -0.03797,
+      "dino_s": 0.56563,
+      "clip_s": 0.73909,
+      "style_affinity": 0.65236,
+      "dino_c": 0.49762,
+      "lpips": 0.5129,
+      "same150_top1": 0.96667,
+      "ms_per_img": 135.44,
+      "per_target_top1": {
+        "Early_Renaissance": 0.0083,
+        "Impressionism": 0.8667,
+        "Minimalism": 0.9583,
+        "Rococo": 0.075,
+        "Ukiyo_e": 0.0083
+      },
+      "per_target_dino_s": {
+        "Early_Renaissance": 0.5764,
+        "Impressionism": 0.7094,
+        "Minimalism": 0.449,
+        "Rococo": 0.5729,
+        "Ukiyo_e": 0.5204
+      }
+    },
+    {
+      "arm": "V21_1Shot_Holdout_matched",
+      "ref_mode": "ho_matched",
+      "n_shots": 1,
+      "is_diagnostic": false,
+      "csd_top1": 0.37,
+      "csd_margin": -0.05227,
+      "dino_s": 0.56647,
+      "clip_s": 0.73624,
+      "style_affinity": 0.65136,
+      "dino_c": 0.50136,
+      "lpips": 0.52943,
+      "same150_top1": 0.96667,
+      "ms_per_img": 136.05,
+      "per_target_top1": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.8833,
+        "Minimalism": 0.8833,
+        "Rococo": 0.0833,
+        "Ukiyo_e": 0.0
+      },
+      "per_target_dino_s": {
+        "Early_Renaissance": 0.5716,
+        "Impressionism": 0.7137,
+        "Minimalism": 0.4676,
+        "Rococo": 0.5544,
+        "Ukiyo_e": 0.525
+      }
+    },
+    {
+      "arm": "V21_4Shot_Gallery_hiS",
+      "ref_mode": "core_pool",
+      "n_shots": 4,
+      "is_diagnostic": false,
+      "csd_top1": 0.535,
+      "csd_margin": 0.05273,
+      "dino_s": 0.60155,
+      "clip_s": 0.74726,
+      "style_affinity": 0.67441,
+      "dino_c": 0.45071,
+      "lpips": 0.66152,
+      "same150_top1": 0.96667,
+      "ms_per_img": 141.45,
+      "per_target_top1": {
+        "Early_Renaissance": 0.1417,
+        "Impressionism": 1.0,
+        "Minimalism": 1.0,
+        "Rococo": 0.5167,
+        "Ukiyo_e": 0.0167
+      },
+      "per_target_dino_s": {
+        "Early_Renaissance": 0.6214,
+        "Impressionism": 0.7137,
+        "Minimalism": 0.5098,
+        "Rococo": 0.6093,
+        "Ukiyo_e": 0.5536
+      }
+    },
+    {
+      "arm": "V21_4Shot_Gallery_bal",
+      "ref_mode": "core_pool",
+      "n_shots": 4,
+      "is_diagnostic": false,
+      "csd_top1": 0.52,
+      "csd_margin": 0.04382,
+      "dino_s": 0.58517,
+      "clip_s": 0.74286,
+      "style_affinity": 0.66402,
+      "dino_c": 0.4946,
+      "lpips": 0.6303,
+      "same150_top1": 0.96667,
+      "ms_per_img": 124.12,
+      "per_target_top1": {
+        "Early_Renaissance": 0.1083,
+        "Impressionism": 0.9917,
+        "Minimalism": 0.9833,
+        "Rococo": 0.4833,
+        "Ukiyo_e": 0.0333
+      },
+      "per_target_dino_s": {
+        "Early_Renaissance": 0.6037,
+        "Impressionism": 0.7045,
+        "Minimalism": 0.4782,
+        "Rococo": 0.5989,
+        "Ukiyo_e": 0.5406
+      }
+    },
+    {
+      "arm": "V21_4Shot_Gallery_hiC",
+      "ref_mode": "core_pool",
+      "n_shots": 4,
+      "is_diagnostic": false,
+      "csd_top1": 0.52,
+      "csd_margin": 0.03958,
+      "dino_s": 0.57121,
+      "clip_s": 0.73767,
+      "style_affinity": 0.65444,
+      "dino_c": 0.54145,
+      "lpips": 0.60611,
+      "same150_top1": 0.96667,
+      "ms_per_img": 106.81,
+      "per_target_top1": {
+        "Early_Renaissance": 0.1083,
+        "Impressionism": 0.9583,
+        "Minimalism": 0.9833,
+        "Rococo": 0.5,
+        "Ukiyo_e": 0.05
+      },
+      "per_target_dino_s": {
+        "Early_Renaissance": 0.5842,
+        "Impressionism": 0.6935,
+        "Minimalism": 0.4657,
+        "Rococo": 0.5884,
+        "Ukiyo_e": 0.5242
+      }
+    },
+    {
+      "arm": "V21_1Shot_Holdout_wrong",
+      "ref_mode": "ho_single",
+      "n_shots": 1,
+      "is_diagnostic": true,
+      "csd_top1": 0.06,
+      "csd_margin": -0.22462,
+      "dino_s": 0.47582,
+      "clip_s": 0.69539,
+      "style_affinity": 0.58561,
+      "dino_c": 0.49731,
+      "lpips": 0.51265,
+      "same150_top1": 0.96667,
+      "ms_per_img": 135.27,
+      "per_target_top1": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.0167,
+        "Minimalism": 0.2167,
+        "Rococo": 0.0667,
+        "Ukiyo_e": 0.0
+      },
+      "per_target_dino_s": {
+        "Early_Renaissance": 0.4879,
+        "Impressionism": 0.5671,
+        "Minimalism": 0.2951,
+        "Rococo": 0.5374,
+        "Ukiyo_e": 0.4915
+      }
+    }
+  ]
+}

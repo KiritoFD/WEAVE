@@ -412,6 +412,30 @@ def collect_all() -> list[dict]:
             })
             push(row)
 
+    # 12. V21 / PRISM 1-Shot Arbitrary-Reference & Gallery Cross-Attention arms
+    v21_cache = read_json(ROOT / "docs/next1118/v21_measured_cache.json")
+    if v21_cache and "arms" in v21_cache:
+        for rec in v21_cache["arms"]:
+            nm = rec["arm"]
+            is_diag = bool(rec.get("is_diagnostic", "_wrong" in nm))
+            row = blank_row(
+                f"V21.{nm.removeprefix('V21_')}", "V21-1Shot", "q2a_oracle_cross600", "S10",
+                is_diag, "docs/next1118/v21_measured_cache.json",
+            )
+            row["n_cross"] = 600
+            row.update({
+                "dino_s": rec.get("dino_s"),
+                "clip_s": rec.get("clip_s"),
+                "style_affinity": rec.get("style_affinity"),
+                "dino_c": rec.get("dino_c"),
+                "lpips": rec.get("lpips"),
+                "target_top1": rec.get("csd_top1"),
+                "target_margin": rec.get("csd_margin"),
+                "same_top1": rec.get("same150_top1"),
+                "ms_per_img": rec.get("ms_per_img"),
+            })
+            push(row)
+
     return rows
 
 

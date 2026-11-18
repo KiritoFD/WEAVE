@@ -9,7 +9,8 @@
 | 顺序 | 文档 | 定位与内容 |
 |---|---|---|
 | **1** | [`../AGENTS.md`](../AGENTS.md) | **工程与科学铁律协议**：一律使用 `S10` 解码、四裁判子进程隔离、12GB(3060)/24GB(4090) 显存规范、当前活跃主线 |
-| **2** | [**`performance/MASTER_LEDGER.md`**](performance/MASTER_LEDGER.md) | **全仓唯一数据与结论总台账**：V6→V19 全部 750 任务实测数据（`metrics.csv` / `metrics.json`）、六条方法论铁律与帕累托前沿矢量图 |
+| **1b** | [**`DELIVERY_20261118.md`**](DELIVERY_20261118.md) | **阶段交付总览（2026-11-18）**：最终模型产物、4090/3060 实测性能与 VRAM、复现入口与审计结论 |
+| **2** | [**`performance/MASTER_LEDGER.md`**](performance/MASTER_LEDGER.md) | **全仓唯一数据与结论总台账**：V6→V21 全部 265 条实验臂 750 任务实测数据（`metrics.csv` / `metrics.json`）与八条方法论铁律 |
 | **3** | [**`icme2027/README.md`**](icme2027/README.md) · [`STORY.md`](icme2027/STORY.md) | **ICME 2027 独立论文工程（`PRISM`）**：6 页双栏 `IEEEtran` 完整手稿（`paper.tex` / `paper.pdf`）、可插拔宏 `macros.tex` 与全套矢量生成脚本 |
 | **4** | [**`next1118/README.md`**](next1118/README.md) | **`PRISM v2 / V19` 正交商—纤维对偶与各向异性谱传输蓝图**：源码级病灶剖析、完整数学推导与 4090 执行方案 |
 | **5** | [`HIGHLIGHTS.md`](HIGHLIGHTS.md) · [`vae/README.md`](vae/README.md) | **基石设施档案**：`S10` 剪枝解码器（`10.66M`，`2.86×` 加速，`+3.17pp` Top-1）与冻结 `tasks_750` 四裁判协议 |

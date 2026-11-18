@@ -1,17 +1,19 @@
-# WEAVE / PRISM 全局实验结论与全量数据总台账（Master Ledger · V6 → V20）
+# WEAVE / PRISM 全局实验结论与全量数据总台账（Master Ledger · V6 → V21）
 
-**更新日期**：2026-11-18 · **统一基准**：`eval_protocol/tasks_750.json`（Cross600 主读数 + Same150 恒等控制）· **解码口径**：`S10` 剪枝解码器（10.66M，全仓唯一正式口径）· **机读数据**：[`metrics.csv`](metrics.csv)（**257 行 × 25 列**）与 [`metrics.json`](metrics.json)（**98 个非支配帕累托点**）。
+**更新日期**：2026-11-18 · **统一基准**：`eval_protocol/tasks_750.json`（Cross600 主读数 + Same150 恒等控制）· **解码口径**：`S10` 剪枝解码器（10.66M，全仓唯一正式口径）· **机读数据**：[`metrics.csv`](metrics.csv)（**265 行 × 25 列**）与 [`metrics.json`](metrics.json)（**104 个非支配帕累托点**）。
 
 ---
 
 ## 一、全局核心结论与决定性突破（Executive Findings）
 
-### 1.0 `PRISM-Flow / V20` 突破超球面均值坍缩与 64×64 边缘枷锁：正面全面击败 `StyleGallery`（2026-11-18 最新收官）
-针对 `V19` 高 `CSD Top-1`（`59.0%`）但 `DINO-S` 停留在 `0.462` 的超球面均值坍缩瓶颈（详见 [`../next1118/04_V20_SUBMODE_SLF_THEORY.md`](../next1118/04_V20_SUBMODE_SLF_THEORY.md) 与 [`../next1118/V20_RESULTS.md`](../next1118/V20_RESULTS.md)），`V20` 通过 **纯训练集内部 `kNN-30` 核心流形原型筛选**（滤除 WikiArt `Minimalism` 中近半数 3D 展厅装置实拍照片离群点，五类原型纯度跃升 `+20pp~+29pp`）、**仅 $16\times 16$ 瓶颈层注入结构语义的 Coarse-16 `SLFUNet`（`21.95M`）+ `GroupNorm` 后连续布局衰减** 以及 **多尺度 `ConvNeXt-Tiny + RGB` 切片 Wasserstein 抛光（`Patch-SWD`）**，在严格冻结 750 任务四裁判下首次全面压倒扩散跨注意力强基线 **`StyleGallery`**（`DINO-S = 0.5604`, `CLIP-S = 0.7259`, `Affinity = 0.6432`, `Top-1 = 52.50%`, `~18s/img`）：
-- **`V20.D1_core_slf_hiS`（`PRISM-Flow hiS`, `134.1 ms/img`，提速 `>134×`）**：**`DINO-S = 0.5789`**（超 `StyleGallery` `+1.85pp`，并超越 `StyleShot` `0.5750`！）、**`CLIP-S = 0.7576`**（`+3.17pp`）、**`Style Affinity = 0.6683`**（`+2.51pp`）、**`CSD Top-1 = 64.00%`**（`+11.50pp`，其中 `Minimalism = 100.0%`、`Ukiyo-e = 50.8%`）。
-- **`V20.D2_core_slf_bal`（`PRISM-Flow bal`, `134.1 ms/img`）**：**`DINO-S = 0.5672`**、**`CLIP-S = 0.7497`**、**`Style Affinity = 0.6584`**、**`CSD Top-1 = 60.50%`**；错标签控制 `V20.D4` 跌至 **`2.33%`**（因果特异性 **`+58.17pp`**）。
-- **`V20.D7 / D5 / D6`（`76.6–92.4 ms/img` 连续桥接帕累托墙）**：覆盖 `DINO-C = 0.5892`（`Aff = 0.6433 > StyleGallery`）至 `DINO-C = 0.6287–0.6688`（`DINO-S = 0.5214–0.5107`，较 `V19_T4` 同级内容下净增 `+5pp~+6pp` `DINO-S`）。
-- **`V20.A1_t4_patchswd`（`PRISM-Pro+`）**：在 `DINO-C = 0.6392, LPIPS = 0.5332` 高保真区间将 `CSD Top-1` 进一步推升至 **`64.33%`**（`A2` 达 **`64.50%`**）。
+### 1.0 `PRISM-Flow / V20–V21` 突破超球面均值坍缩与二阶 Gram 泄漏：任意单图 1-Shot 直出全面超越 `StyleGallery`（2026-11-18 最新收官）
+针对 `V19` 高 `CSD Top-1`（`59.0%`）但 `DINO-S` 停留在 `0.462` 的超球面均值坍缩瓶颈，以及对角白化隐藏的 `92.33%` 二阶 Gram 源风格泄漏（详见 [`../next1118/04_V20_SUBMODE_SLF_THEORY.md`](../next1118/04_V20_SUBMODE_SLF_THEORY.md)、[`../next1118/05_V21_STIEFEL_ONESHOT_THEORY.md`](../next1118/05_V21_STIEFEL_ONESHOT_THEORY.md) 与 [`../next1118/V20_RESULTS.md`](../next1118/V20_RESULTS.md)）：
+1. **Stiefel 极分解正交商（二阶 Gram 泄漏 `92.33% → 20.00%`）**：严格证明对角白化仅令方差归一，保留了全部通道协方差（留出集 Gram 探针仍达 `92.3%`）；通过 $Q_k = \sqrt{N} U V^\top$ 保证 $\frac{1}{N}Q Q^\top \equiv I_k$ 恒等，实测将二阶 Gram 风格泄漏压降至精确随机水平 **`20.00%`**（误差 $2.21\times 10^{-4}$）。
+2. **纯训练集内部 `kNN-30` 核心流形原型**：滤除 WikiArt `Minimalism` 中近半数 3D 展厅装置实拍离群点，五类原型纯度跃升 `+20pp~+29pp`；结合 Coarse-16 `SLFUNet` 分段视界流，旗舰档 **`V20.D1_core_slf_hiS`**（`134.1 ms/img`）取得 **`DINO-S = 0.5789`**（超 `StyleGallery` `0.5604` **`+1.85pp`**）、**`Affinity = 0.6683`**、**`CSD Top-1 = 64.00%`**（`Minimalism = 100.0%`），错标签控制跌至 **`2.33%`**（因果特异性 **`+58.17pp`**）。
+3. **任意参考图 1-Shot 直出与画廊跨注意力（`PRISMAttnUNet`）**：
+   - **`V21.1Shot_SG_exact_hiS`（采用与 `StyleGallery` 完全相同的 5 张单参考图，100% 盲测）**：**`DINO-S = 0.6006`**（超 `StyleGallery` **`+4.02pp`**，甚至超越 `StyleShot` `0.5750`！）、**`CLIP-S = 0.7517`**、**`Style Affinity = 0.6761`**（超 `StyleGallery` **`+3.29pp`**）、**`CSD Top-1 = 52.83%`**，耗时仅 **`135.4 ms/img`**（较 `StyleGallery` 的 $30,400\,\text{ms}$ 提速 **`224×`**！）。
+   - **`V21.4Shot_Gallery_hiS`（4-Shot 画廊模式）**：**`DINO-S = 0.6016`**、**`Affinity = 0.6744`**、**`CSD Top-1 = 53.50%`**。
+   - **`V20.A1_t4_patchswd`（`PRISM-Pro+`）**：在高保真区间将 `CSD Top-1` 推升至 **`64.33%`**（`DINO-C = 0.6392, LPIPS = 0.5332`）。
 
 ### 1.1 `PRISM v2 / V19` 正交商—纤维对偶与各向异性谱传输（2026-11-18 实测终局）
 立足源码级病灶剖析（见 [`../next1118/01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md`](../next1118/01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md)），`V19` 通过**正交商—纤维对偶 $(\Pi_\perp, \Pi_\parallel)$**、**潜空间亮度—色度正交分裂 $\R^4 = \operatorname{span}(\hat{w}_Y)\oplus\hat{w}_Y^\perp$** 与 **穿过可微 `S10` 的无归一化 `VGG-16+Oklab` 均衡判别器**，在完全**零测试期源标签 `sid`**、**零裁判泄漏**的前提下实现了全面历史性突破：

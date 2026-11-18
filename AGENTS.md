@@ -32,8 +32,8 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 
 ## 仓库布局（2026-11-14 重组后）
 
-- **活跃代码**：`src/`（统一门面与基础设施层：S10 解码、自包含 Haar/LCN/Oklab 结构层 `src.utils.structure`、3060 自适应微批分块 `tier_micro_accum`、清理 `expandable_segments` 的进程隔离裁判执行器 `src.eval.runner`、无碰撞错标签与协议辅助 `src.utils.protocol`）+ `exp/v8`、`exp/v9_local`、`exp/v10`..`exp/v20`（实验包，`python -m exp.*` 从仓库根运行，索引见 `exp/README.md`）。全仓活跃代码受 `tests/test_no_absolute_paths.py`（`KNOWN_DEBT = set()`）与 `tests/test_markdown_links.py` 保护。
-- **性能与论文中心**：`docs/performance/`（唯一权威数据台账 `metrics.{csv,json}` 含 **257 条**实验臂与外部基线 / **98 个帕累托点**、总台账 `MASTER_LEDGER.md`、多维矢量图表 `figures/*.svg`、750 生成图库 `images/`）；`docs/icme2027/`（独立论文 `PRISM` 完整 6 页 `IEEEtran` 工程 `paper.tex/pdf`）；`docs/next1118/`（`PRISM v2 / V19` 与 `PRISM-Flow / V20` 理论与实测报告 `V19_RESULTS.md`、`V20_RESULTS.md`）。
+- **活跃代码**：`src/`（统一门面与基础设施层：S10 解码、自包含 Haar/LCN/Oklab 结构层 `src.utils.structure`、3060 自适应微批分块 `tier_micro_accum`、清理 `expandable_segments` 的进程隔离裁判执行器 `src.eval.runner`、无碰撞错标签与协议辅助 `src.utils.protocol`）+ `exp/v8`、`exp/v9_local`、`exp/v10`..`exp/v21`（实验包，`python -m exp.*` 从仓库根运行，索引见 `exp/README.md`）。全仓活跃代码受 `tests/test_no_absolute_paths.py`（`KNOWN_DEBT = set()`）与 `tests/test_markdown_links.py` 保护。
+- **性能与论文中心**：`docs/performance/`（唯一权威数据台账 `metrics.{csv,json}` 含 **265 条**实验臂与外部基线 / **104 个帕累托点**、总台账 `MASTER_LEDGER.md`、多维矢量图表 `figures/*.svg`、750 生成图库 `images/`）；`docs/icme2027/`（独立论文 `PRISM` 完整 7 页 `IEEEtran` 工程 `paper.tex/pdf`，含 6 页正文 + 第 7 页 References）；`docs/next1118/`（`V19`、`V20`、`V21` 理论与实测报告）；阶段交付总览 `docs/DELIVERY_20261118.md`。
 - **tools/** = 历史代码归档，但内含**钉住子包**（`vae_suite/decoder_prune.py`、`v6*`、`v7*`、`pseudo_gt`、`12h/csd_model.py` 等）被 src 依赖，**不要移动/重构**——清单见 `tools/README.md`。
 - `tools/legacy_root/` = 论文期根目录平铺模块（model.py/trainer.py/run.py…）+ 一次性脚本；自举包，flat import 仍可用；根 `__init__.py`/`__main__.py` 是兼容 shim。
 - `tools/legacy_utils/` = 原 `utils/` 包，全仓以 `tools.legacy_utils.*` 引用。
