@@ -717,9 +717,9 @@ def export_u(args) -> None:
     enc = StyleFiberEncoder(in_dim=fnd["tr_fib"].shape[1], dim=128).to(device).eval()
     enc.load_state_dict(fnd["fiber_state"])
     with torch.no_grad():
-        u_tr = enc.encode(fnd["tr_fib"].to(device).float()).cpu().numpy()
-        u_ho = enc.encode(fnd["ho_fib"].to(device).float()).cpu().numpy()
-        u_750 = enc.encode(fnd["test750_fib"].to(device).float()).cpu().numpy()
+        u_tr = enc.encode(fnd["tr_fib"].to(device).float()).detach().cpu().numpy()
+        u_ho = enc.encode(fnd["ho_fib"].to(device).float()).detach().cpu().numpy()
+        u_750 = enc.encode(fnd["test750_fib"].to(device).float()).detach().cpu().numpy()
     tr, ho = bundle["v18_cache"]["train"], bundle["v18_cache"]["holdout"]
     payload = {
         "u_tr": u_tr.astype(np.float16), "sid_tr": tr["sid"].numpy().astype(np.int64),
@@ -728,7 +728,7 @@ def export_u(args) -> None:
         "u_750": u_750.astype(np.float16),
         "tr_fib": fnd["tr_fib"].numpy().astype(np.float16),
         "ho_fib": fnd["ho_fib"].numpy().astype(np.float16),
-        "protos": enc.class_barycenters().cpu().numpy().astype(np.float32),
+        "protos": enc.class_barycenters().detach().cpu().numpy().astype(np.float32),
     }
     sg5_cache = ROOT / "runs/v21/cache/v21_stiefel_ref_cache.pt"
     if sg5_cache.exists():
