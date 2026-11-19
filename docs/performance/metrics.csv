@@ -264,3 +264,33 @@ V21.4Shot_Gallery_hiS,V21-1Shot,q2a_oracle_cross600,S10,False,True,600,0.60155,0
 V21.4Shot_Gallery_bal,V21-1Shot,q2a_oracle_cross600,S10,False,True,600,0.58517,0.4946,0.6303,0.74286,0.66402,0.52,0.04382,,,,,0.96667,124.12,,,,,docs/next1118/v21_measured_cache.json
 V21.4Shot_Gallery_hiC,V21-1Shot,q2a_oracle_cross600,S10,False,True,600,0.57121,0.54145,0.60611,0.73767,0.65444,0.52,0.03958,,,,,0.96667,106.81,,,,,docs/next1118/v21_measured_cache.json
 V21.1Shot_Holdout_wrong,V21-1Shot,q2a_oracle_cross600,S10,True,False,600,0.47582,0.49731,0.51265,0.69539,0.58561,0.06,-0.22462,,,,,0.96667,135.27,,,,,docs/next1118/v21_measured_cache.json
+T0_slf_final_wc11,V22-T,q2a_oracle_cross600,S10,True,False,600,0.55126,0.5087,0.61609,0.74112,0.64619,0.63333,0.06606,runs/v22/measured_from4090
+T0_slf_final_wc14,V22-T,q2a_oracle_cross600,S10,True,False,600,0.54555,0.53062,0.60752,0.73625,0.6409,0.60667,0.05738,runs/v22/measured_from4090
+T1_wc11,V22-T,q2a_oracle_cross600,S10,False,False,600,0.54351,0.5878,0.57936,0.73536,0.63943,0.61,0.05531,runs/v22/measured_from4090
+T2_wc11,V22-T,q2a_oracle_cross600,S10,False,False,600,0.53858,0.59068,0.57679,0.73365,0.63612,0.60667,0.05398,runs/v22/measured_from4090
+T3_wc11,V22-T,q2a_oracle_cross600,S10,False,False,600,0.53932,0.60232,0.5735,0.7313,0.63531,0.58333,0.04407,runs/v22/measured_from4090
+T4_wc11,V22-T,q2a_oracle_cross600,S10,False,False,600,0.56532,0.51119,0.61222,0.74766,0.65649,0.69,0.08227,runs/v22/measured_from4090
+T4_wc14,V22-T,q2a_oracle_cross600,S10,False,False,600,0.55916,0.52946,0.60543,0.74384,0.6515,0.66,0.07327,runs/v22/measured_from4090
+T5_wc11,V22-T,q2a_oracle_cross600,S10,False,False,600,0.54366,0.58738,0.57986,0.73537,0.63951,0.61333,0.05526,runs/v22/measured_from4090
+T4Ss600_wc1.0,V22-Snap,q2a_oracle_cross600,S10,False,False,600,0.56826,0.4963,0.61822,0.74972,0.65899,0.70333,0.09285,runs/v22/measured_from4090
+T4Ss900_wc1.0,V22-Snap,q2a_oracle_cross600,S10,False,False,600,0.56869,0.49498,0.619,0.75063,0.65966,0.72,0.09714,runs/v22/measured_from4090
+T4Ss1200_wc1.0,V22-Snap,q2a_oracle_cross600,S10,False,False,600,0.57118,0.49522,0.61876,0.75117,0.66117,0.73667,0.10054,runs/v22/measured_from4090
+T4Ss1500_wc1.0,V22-Snap,q2a_oracle_cross600,S10,False,False,600,0.572,0.49923,0.61704,0.75152,0.66176,0.73667,0.09763,runs/v22/measured_from4090
+T4Ss2100_wc1.0,V22-Snap,q2a_oracle_cross600,S10,False,False,600,0.56859,0.50434,0.61396,0.74958,0.65908,0.7,0.0893,runs/v22/measured_from4090
+T4Ss2700_wc1.0,V22-Snap,q2a_oracle_cross600,S10,False,False,600,0.56542,0.50708,0.61365,0.74682,0.65612,0.68333,0.08232,runs/v22/measured_from4090
+T4Ss3300_wc1.0,V22-Snap,q2a_oracle_cross600,S10,False,False,600,0.56248,0.50921,0.6129,0.7451,0.65379,0.66,0.07562,runs/v22/measured_from4090
+T4Ss3600_wc1.0,V22-Snap,q2a_oracle_cross600,S10,False,False,600,0.56229,0.5108,0.61197,0.74433,0.65331,0.65667,0.0749,runs/v22/measured_from4090
+T4Pk_wc10,V22-Peak,q2a_oracle_cross600,S10,False,False,600,0.572,0.49923,0.61704,0.75152,0.66176,0.73667,0.09763,runs/v22/measured_from4090
+T4Pg35_wc10,V22-Gate,q2a_oracle_cross600,S10,True,False,600,0.58996,0.4338,0.64844,0.76564,0.6778,0.82667,0.13067,runs/v22/measured_from4090
+T4Pg42_wc10,V22-Gate,q2a_oracle_cross600,S10,False,False,600,0.58199,0.46305,0.63365,0.75868,0.67034,0.785,0.11525,runs/v22/measured_from4090
+T4Pg45_wc10,V22-Gate,q2a_oracle_cross600,S10,False,False,600,0.57806,0.47791,0.62679,0.75603,0.66705,0.76833,0.10881,runs/v22/measured_from4090
+T4Pg45_wc130,V22-Gate,q2a_oracle_cross600,S10,False,False,600,0.5713,0.49771,0.61923,0.75212,0.66171,0.745,0.09949,runs/v22/measured_from4090
+T4Pg65_wc10,V22-Gate,q2a_oracle_cross600,S10,False,False,600,0.55321,0.56351,0.58689,0.73935,0.64628,0.64167,0.07087,runs/v22/measured_from4090
+T4Pg42hi55_wc10,V22-Gate,q2a_oracle_cross600,S10,True,False,600,0.58836,0.43906,0.64764,0.76455,0.67645,0.81,0.12495,runs/v22/measured_from4090
+T4PtauHi55_wc10,V22-Tau,q2a_oracle_cross600,S10,False,False,600,0.5853,0.45012,0.64216,0.76216,0.67373,0.79167,0.12003,runs/v22/measured_from4090
+T4PtauHi60_wc10,V22-Tau,q2a_oracle_cross600,S10,False,False,600,0.58214,0.46259,0.6354,0.75926,0.6707,0.78167,0.11385,runs/v22/measured_from4090
+T4PtauHi72_wc10,V22-Tau,q2a_oracle_cross600,S10,False,False,600,0.57361,0.49396,0.61853,0.7528,0.66321,0.75333,0.10241,runs/v22/measured_from4090
+T4PtauMin24_wc10,V22-Tau,q2a_oracle_cross600,S10,False,False,600,0.58135,0.46561,0.63362,0.75861,0.66998,0.78,0.11307,runs/v22/measured_from4090
+T4PtauMin32_wc10,V22-Tau,q2a_oracle_cross600,S10,False,False,600,0.57443,0.49028,0.62041,0.75329,0.66386,0.75333,0.10344,runs/v22/measured_from4090
+P2A_1shot_vsc,V22-1Shot,q2a_oracle_cross600,S10,True,False,600,0.48112,0.63799,0.49268,0.68645,0.58379,0.12167,,3060 runs/v22/measured
+P2A_1shot_cs_j,V22-1Shot,q2a_oracle_cross600,S10,True,False,600,0.44819,0.66228,0.52951,0.7007,0.55445,0.135,,3060 runs/v22/measured
