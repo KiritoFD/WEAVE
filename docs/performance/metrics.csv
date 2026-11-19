@@ -436,3 +436,8 @@ O2_rgb_convnext_t45,V24-P0-O1O3,q2a_oracle_cross600,S10,True,False,600,0.51045,0
 O2_rgb_convnext_t55,V24-P0-O1O3,q2a_oracle_cross600,S10,True,False,600,0.49487,0.67931,0.34885,,0.59878,0.24,,,,,,0.96667,,,,,,3060 runs/v24/p0_o1_o3.json
 O3_rgb_cnx_gated_t45,V24-P0-O1O3,q2a_oracle_cross600,S10,True,False,600,0.52449,0.58453,0.42128,,0.6234,0.35333,,,,,,0.96667,,,,,,3060 runs/v24/p0_o1_o3.json
 O3_rgb_cnx_gated_t55,V24-P0-O1O3,q2a_oracle_cross600,S10,True,False,600,0.50253,0.67829,0.34936,,0.60393,0.24,,,,,,0.96667,,,,,,3060 runs/v24/p0_o1_o3.json
+M5_clean_s065,V24-P2-M5,q2a_oracle_cross600,S10,False,False,600,0.43662,0.75635,0.50187,,0.56189,0.41333,,,,,,0.96667,,,,,,4090 runs/v24/p2_m5.json
+M5_clean_s085,V24-P2-M5,q2a_oracle_cross600,S10,False,False,600,0.43587,0.74558,0.50828,,0.56125,0.40667,,,,,,0.96667,,,,,,4090 runs/v24/p2_m5.json
+M5_clean_s100,V24-P2-M5,q2a_oracle_cross600,S10,False,False,600,0.43553,0.73202,0.51526,,0.56104,0.415,,,,,,0.96667,,,,,,4090 runs/v24/p2_m5.json
+O4D_self_s100,V24-P2-O4D,q2a_oracle_cross600,S10,True,False,600,0.3854,0.9139,0.2329,,0.5139,0.015,,,,,,0.96667,,,,,,3060 runs/v24/o4d_self.log
+O4D_self_s135,V24-P2-O4D,q2a_oracle_cross600,S10,True,False,600,0.3891,0.8888,0.3032,,0.5173,0.0183,,,,,,0.96667,,,,,,3060 runs/v24/o4d_self.log
