@@ -471,3 +471,11 @@ P13_ancsrc_t040,V25-R1,q2a_oracle_cross600,S10,True,False,600,0.43742,0.83028,0.
 P13_ancsrc_t032,V25-R1,q2a_oracle_cross600,S10,True,False,600,0.44051,0.81839,0.23618,,0.55531,0.09167,,,,,,0.96667,,,,,,4090 runs/v25/r1_inference_ablation.json
 P14_d5_fixed_g50,V25-R1,q2a_oracle_cross600,S10,True,False,600,0.53163,0.61435,0.56192,,0.628,0.48833,,,,,,0.96667,,,,,,4090 runs/v25/r1_inference_ablation.json
 P14_d6h_fixed_g50,V25-R1,q2a_oracle_cross600,S10,True,False,600,0.5202,0.66328,0.53874,,0.61853,0.52333,,,,,,0.96667,,,,,,4090 runs/v25/r1_inference_ablation.json
+V25_Tr_T0_d5csj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.5403,0.61218,0.56322,,0.63467,0.54,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
+V25_Tr_T0_d6hcsj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.51753,0.6634,0.53935,,0.61751,0.55667,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
+V25_Tr_T1_d5csj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.53706,0.60862,0.56676,,0.6333,0.57167,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
+V25_Tr_T1_d6hcsj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.51618,0.66127,0.54108,,0.61679,0.56667,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
+V25_Tr_T2_d5csj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.53784,0.61459,0.56393,,0.63315,0.54333,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
+V25_Tr_T2_d6hcsj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.51603,0.66586,0.539,,0.61649,0.55167,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
+V25_Tr_T3_d5csj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.53595,0.61083,0.56743,,0.63253,0.56167,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
+V25_Tr_T3_d6hcsj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.51507,0.66315,0.54107,,0.61604,0.56833,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
