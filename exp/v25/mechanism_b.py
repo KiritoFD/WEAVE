@@ -379,7 +379,9 @@ def main():
         if args.measure:
             for rec in sweep["records"]:
                 arm = f"MechB_{scale}_g{int(round(rec['gamma']*100)):02d}"
-                m = eval_latent_v25(arm, sweep["z_by_gamma"][rec["gamma"]], ctx750["tasks"],
+                z_bp = sweep["z_by_gamma"][rec["gamma"]].clone()
+                z_bp[ctx750["same"]] = ctx750["z_src"][ctx750["same"]]  # A08 R2 修复: measure 路径传 bypass 后张量 (与 :303 残差口径一致, Same150 测 z_src 而非学生原始输出)
+                m = eval_latent_v25(arm, z_bp, ctx750["tasks"],
                                     ctx750["dec"], device=args.device)
                 rec["metrics"] = {k: v for k, v in m.items() if k != "arm"}
         results[scale] = dict(info=info, records=sweep["records"])
