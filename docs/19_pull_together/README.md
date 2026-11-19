@@ -14,7 +14,15 @@
 | [`01_convergence_plan.md`](01_convergence_plan.md) | **Minimal PRISM 收敛计划（修订版）**：Round 1–3 消融，含 τ=0.78 截断修正、非劣性等效判定修正、O3 单变量归因修正、训练配方↔CFG 分支对应规则 |
 | [`02_mechanism_plan.md`](02_mechanism_plan.md) | **V25-M 三机制详细方案**：A 空间自适应混合（优先 1）、B 多强度蒸馏进单模型（优先 2）、C One-Shot 教师校准与参考对比（3060 主线） |
 | [`03_schedule_and_eta.md`](03_schedule_and_eta.md) | **12h 双卡排程与 ETA**：时间窗口表、排队规则、种子复验规则、四个核心问题与优先级 |
+| [`04_round1_results.md`](04_round1_results.md) | **Round 1 结果（27 臂）**：全表读数 + 实测 τ 分布 + P0-1/P0-2/P1-3/P1-4 四判定点非劣性预分析 + 待办 CI 清单 |
 | [`PROGRESS.md`](PROGRESS.md) | 执行日志（实时更新） |
+
+## 执行状态（2026-11-20 更新）
+
+- **Round 1 完成**（21 新臂 + 6 复用，~28 min）：曲线 B（单模型 D6 τ_min 起点 0.66）在同内容水位风格反超 Hybrid（+0.008~+0.013 点估计）；`cs_j` ≈ `full`（CFG 可砍半）；`fixed_g=0.5` ≈ original（密度门控可删）；`z_src` 锚判负。详见 [`04_round1_results.md`](04_round1_results.md)。
+- **Round 2 训练中**（4090 tmux `v25r2q` 自动接力）：`Tr_T0–T3`。
+- **Round 3 运行中**（3060 schtasks `v25r3`）：τ 曲线补扫完成；`O3_self_only` 训练中；`O3_label_free` 盲测排队。
+- 结果入台账：`metrics.csv` 472 行（V25-R1 组）。
 
 ## 12 小时必须回答的四个问题
 
