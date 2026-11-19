@@ -294,3 +294,7 @@ T4PtauMin24_wc10,V22-Tau,q2a_oracle_cross600,S10,False,False,600,0.58135,0.46561
 T4PtauMin32_wc10,V22-Tau,q2a_oracle_cross600,S10,False,False,600,0.57443,0.49028,0.62041,0.75329,0.66386,0.75333,0.10344,runs/v22/measured_from4090
 P2A_1shot_vsc,V22-1Shot,q2a_oracle_cross600,S10,True,False,600,0.48112,0.63799,0.49268,0.68645,0.58379,0.12167,,3060 runs/v22/measured
 P2A_1shot_cs_j,V22-1Shot,q2a_oracle_cross600,S10,True,False,600,0.44819,0.66228,0.52951,0.7007,0.55445,0.135,,3060 runs/v22/measured
+T4Pk_wc115,V22-Peak,q2a_oracle_cross600,S10,False,False,600,0.56845,0.50981,0.61307,0.74964,0.65904,0.725,0.09301,runs/v22/measured_from4090
+T4Pk_wc13,V22-Peak,q2a_oracle_cross600,S10,False,False,600,0.56502,0.51982,0.60938,0.74764,0.65633,0.71333,0.08864,runs/v22/measured_from4090
+T4Pk_wc15,V22-Peak,q2a_oracle_cross600,S10,False,False,600,0.56104,0.53186,0.60487,0.74503,0.65303,0.69,0.08246,runs/v22/measured_from4090
+T4Pg45_wc115,V22-Gate,q2a_oracle_cross600,S10,False,False,600,0.57457,0.48812,0.62289,0.75414,0.66436,0.76167,0.10435,runs/v22/measured_from4090
