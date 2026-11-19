@@ -42,6 +42,26 @@ agent2.md §二 G2-2):
     R2 建议口径: --content-w all --n-cand 150 --steps 24 --fast ≈ 4.5-5.5h (三档),
     或 --n-cand 100 ≈ 3-3.7h; R3 2000 对生产 (24 步) 建议 4090 (o2 口径 ≈ 2h).
 
+结构方案 (2026-11-20, w_c/步数判负后的结构性重设计 —— 决定性事实见"结构方案"代码节):
+  方案 1 --init ref_anchor [--anchor-alpha A]   初始点 = 参考色彩锚: 以参考 latent 的 4D
+          chroma 分块统计构造逐对临时 prior, 经 apply_latent_chroma_shift 把内容色度对齐到
+          参考色度 (luma 不动) —— 优化从"从源图爬向参考"变为"在参考色度盆地里补纹理",
+          直接绕开"损失盆地极小 = 近恒等解"的失败模式. anchor 位移范数入 diag (anchor_norm).
+  方案 2 --trust-region 8,16,24                 步后投影: d = z−z_src; z ← z_src +
+          min(ρ,||d||)·d/||d|| —— 编辑半径硬约束, 内容约束从"加权拉回"变"边界约束";
+          corr(编辑幅度, 内容分)=−0.926 → ρ 网格即 mid_cos 旋钮. 注意 ρ 须 ≥ anchor
+          位移 (否则锚被收缩到 ρ, 方向保持).
+  附加   --color-guide W                        附加 W·MSE(27D Oklab fiber_hat, 参考 fiber)
+          —— 纯色彩统计引导, 不碰结构 (默认 0 关闭).
+  全关默认 = 旧行为逐位一致 (产物名亦不变, structural_tag 返回空串; 单测回归锁定).
+
+R2 结构验证推荐配置 (300 对, 4090, ≈55 min):
+  python -m exp.v25.reference_teacher_v2 --content-w 0.7 --n-cand 300 --n-keep 300 \
+      --init ref_anchor --anchor-alpha 1.0 --trust-region 8,16,24 --color-guide 0.5
+  预期: ρ 网格经 corr(编辑幅度,内容分)=−0.926 单调映射 mid_cos —— ρ=16 为主要候选
+  (kept 中位 mid_cos 预期 0.84-0.90), ρ=24 为表现型备份 (0.78-0.86), ρ=8 预计仍 >0.92 被滤.
+  若 mid_cos 仍反弹 >0.95: 下一杠杆是 content_w 降至 0.2 (ρ 边界取代拉回).
+
 无画派 ID: 优化目标、筛选条件与损失全程不读取任何画派标签/类重心 (与 o2 铁律一致);
 唯一例外是 **诊断报告** ``family_retention_report`` (A03 审计维度"不同风格的保留比例"),
 它只在包落盘后对 kept 掩码做分组统计, 永不进入优化/筛选/任何损失.
@@ -68,7 +88,11 @@ import torch
 import torch.nn.functional as F
 
 from . import OUT, ROOT, STYLES, sanitize_cuda_env, save_json, seed_all, utc
-from exp.v19.fiber_duality import build_or_load_v19_foundation, extract_color_fiber_27d
+from exp.v19.fiber_duality import (
+    apply_latent_chroma_shift,
+    build_or_load_v19_foundation,
+    extract_color_fiber_27d,
+)
 from exp.v20.submode_patchswd import MultiScalePatchSWDExtractor, sliced_wasserstein_1d
 from src.utils import decode_s10, load_s10_decoder
 
@@ -231,6 +255,99 @@ def collect_cached_features(cache: ReferenceFeatureCache, z_batch: torch.Tensor,
     return items
 
 
+# --------------------------------- 结构方案 (R2 判负后的结构性重设计) ----
+#
+# 决定性事实 (4090 实测, 2026-11-20): w_c 2.2→1.2→0.7 (24 步) mid_cos 仅 0.965→0.957→0.954;
+# 48 步 × w_c=0.7 mid_cos 反升至 0.9630 —— 预算扩容让 Adam 收得更深, **损失盆地的极小值本身
+# 是近恒等解**; corr(编辑幅度, 内容分) = −0.926. w_c/步数均排除 → 结构性改变:
+#   方案 1 ref_anchor  初始点即参考色度 (优化只补纹理, 不再从源图爬向参考);
+#   方案 2 trust-region 编辑半径硬约束 (内容约束从"加权拉回"变"边界约束", ρ 网格 = mid_cos 旋钮);
+#   附加   color-guide  27D Oklab fiber 显式色彩引导 (纯色彩统计, 不碰结构).
+
+def trust_region_project(z_opt: torch.Tensor, z_src: torch.Tensor, rho: float | None) -> torch.Tensor:
+    """信任域投影 (方案 2): d = z − z_src; z ← z_src + min(ρ,||d||)·d/||d|| (逐对 L2, 全维).
+
+    rho=None → 返回**同一对象** (逐位恒等, 开关关闭零开销零漂移); ρ 内逐位不动;
+    超域收缩保持方向 (cos=1); ρ=0 精确退回 z_src.
+    """
+    if rho is None:
+        return z_opt
+    with torch.no_grad():
+        d = z_opt.detach() - z_src
+        n = d.flatten(1).norm(dim=1).clamp_min(1e-12).view(-1, 1, 1, 1)
+        scale = (float(rho) / n).clamp(max=1.0)
+        return z_src + d * scale
+
+
+def build_ref_anchor(z_src: torch.Tensor, z_ref: torch.Tensor, priors: dict, *,
+                     alpha: float = 1.0) -> tuple[torch.Tensor, torch.Tensor]:
+    """参考色彩锚初始化 (方案 1): z_opt0 = apply_latent_chroma_shift(z_src, 参考色度统计).
+
+    priors 适配: apply_latent_chroma_shift 的目标 mu_c/std_c 按类别索引 —— 这里以**参考
+    latent 的 4D chroma 分块统计** (P_C 基下的逐对 mu/sd) 构造临时单类 prior (tid=arange(B)
+    逐对取行), 即"参考 fiber 的分块统计"的 latent 色度基实现; 27D Oklab fiber 仍作为训练期
+    色彩目标经 l_pal / color-guide 生效. P_Y/P_C 沿用 v19 priors.
+    返回 (anchor, anchor_norm (B,) = ||anchor − z_src|| 逐对).
+    α=1 注入全部参考色度 (luma 不动); α→0 退回源图; 位移幅度 ∝ α.
+    """
+    dev = z_ref.device
+    P_C = priors["P_C"].to(dev, torch.float32)
+    zc_r = torch.einsum("ij,bjhw->bihw", P_C, z_ref.float())
+    mu_r = zc_r.mean(dim=(2, 3))                          # (B,4) 参考色度分块均值
+    sd_r = zc_r.std(dim=(2, 3)).clamp_min(1e-4)           # (B,4) 参考色度分块标准差
+    pair_priors = {"P_Y": priors["P_Y"].to(dev),
+                   "P_C": P_C,
+                   "mu_c": mu_r.unsqueeze(-1).unsqueeze(-1),   # (B,4,1,1) 临时逐对 prior
+                   "std_c": sd_r.unsqueeze(-1).unsqueeze(-1)}
+    tid = torch.arange(len(z_src), device=dev)
+    anchor = apply_latent_chroma_shift(z_src, tid, pair_priors, alpha=alpha)
+    anchor = anchor.to(z_src.dtype)
+    return anchor, (anchor - z_src).flatten(1).norm(dim=1).detach()
+
+
+def structural_tag(init_mode: str, anchor_alpha: float,
+                   trust_region_rho: float | None, color_guide_w: float) -> str:
+    """结构配置 → 产物标签后缀 (默认全关 → 空串, 产物名与旧版一致; 机制 C 按名加载不冲突)."""
+    parts = []
+    if init_mode == "ref_anchor":
+        parts.append(f"anch{anchor_alpha:g}")
+    if trust_region_rho is not None:
+        parts.append(f"tr{trust_region_rho:g}")
+    if color_guide_w:
+        parts.append(f"cg{color_guide_w:g}")
+    return "_".join(parts)
+
+
+def assemble_teacher_loss(toks_hat: dict, src_n2: torch.Tensor, src_n3: torch.Tensor,
+                          toks_ref: dict, matched_s3_n: torch.Tensor, gate_loc: torch.Tensor,
+                          fiber_hat: torch.Tensor, pal_ref: torch.Tensor,
+                          z_opt: torch.Tensor, z_src: torch.Tensor, *, content_w: float,
+                          projs, color_guide_w: float = 0.0) -> torch.Tensor:
+    """o2 24 步损失的逐式装配 (开关全关时与旧式**逐位一致**, 单测回归锁定).
+
+    color_guide_w > 0 时附加 color_guide_w · MSE(fiber_hat, pal_ref) —— 27D Oklab fiber
+    为纯色彩统计 (Olab 均值/方差/协方差/分位数), 只引导颜色不碰结构.
+    projs: 提供 p_rgb/p_s1/p_s2/p_s3 的对象 (真实 MultiScalePatchSWDExtractor 或测试桩).
+    """
+    l_swd = (
+        1.0 * sliced_wasserstein_1d(toks_hat["rgb"], toks_ref["rgb"], projs.p_rgb)
+        + 0.35 * sliced_wasserstein_1d(toks_hat["s1"], toks_ref["s1"], projs.p_s1)
+        + 0.45 * sliced_wasserstein_1d(toks_hat["s2"], toks_ref["s2"], projs.p_s2)
+        + 0.55 * sliced_wasserstein_1d(toks_hat["s3"], toks_ref["s3"], projs.p_s3)
+    ).mean()
+    l_pal = F.smooth_l1_loss(fiber_hat, pal_ref)
+    l_loc = ((1.0 - (F.normalize(toks_hat["s3"], dim=-1) * matched_s3_n).sum(-1, keepdim=True)) * gate_loc).mean()
+    l_content = 0.5 * (
+        (1.0 - (F.normalize(toks_hat["s2"], dim=-1) * src_n2).sum(-1)).mean()
+        + (1.0 - (F.normalize(toks_hat["s3"], dim=-1) * src_n3).sum(-1)).mean()
+    )
+    l_reg = (z_opt - z_src).square().mean()
+    loss = (l_swd + 0.7 * l_pal + 0.25 * l_loc) + content_w * l_content + 0.15 * l_reg
+    if color_guide_w > 0:
+        loss = loss + color_guide_w * F.mse_loss(fiber_hat, pal_ref)
+    return loss
+
+
 # ---------------------------------------------------------- 纯函数指标 ----
 
 def pooled_style_cos(tokens_a: dict, tokens_b: dict, scales=("s2", "s3")) -> torch.Tensor:
@@ -354,6 +471,10 @@ def build_teacher_pairs(
     fixed_pairs: tuple[torch.Tensor, torch.Tensor] | None = None,
     ref_cache_dir: str | Path | None = None,
     force: bool = False,
+    init_mode: str = "src",
+    anchor_alpha: float = 1.0,
+    trust_region_rho: float | None = None,
+    color_guide_w: float = 0.0,
 ) -> dict:
     """生成 v2 教师包 (返回 pack dict; 落盘 runs/v25/cache/ref_teacher_pairs_v2_<tag>.pt).
 
@@ -361,10 +482,17 @@ def build_teacher_pairs(
     仅内容权重参数化 + 双指标筛选 + 参考特征缓存. 签名无任何画派 ID (B02 验收 4);
     per-family 保留率仅作为落盘诊断 (见 family_retention_report).
 
+    结构开关 (默认全关 → 与旧版逐位一致, 产物名不变; 见文件头"结构方案"):
+      init_mode="ref_anchor" + anchor_alpha   参考色彩锚初始化 (方案 1);
+      trust_region_rho                        信任域编辑半径硬约束 (方案 2, 步后投影);
+      color_guide_w                           27D Oklab fiber 显式色彩引导 (附加项).
+
     超参策略: 三档 content_w 共用同 (idx_c, idx_r) 与全部优化超参 —— C3 强度混合要求
     同对齐; 传 fixed_pairs 可显式钉死配对 (与第一档产物一致).
     """
-    tag = teacher_tag(content_w)
+    assert init_mode in ("src", "ref_anchor"), f"未知 init_mode {init_mode}"
+    s_tag = structural_tag(init_mode, anchor_alpha, trust_region_rho, color_guide_w)
+    tag = teacher_tag(content_w) + (("_" + s_tag) if s_tag else "")
     out_p = OUT / f"cache/ref_teacher_pairs_v2_{tag}.pt"
     out_p.parent.mkdir(parents=True, exist_ok=True)
     if out_p.exists() and not force:
@@ -377,6 +505,11 @@ def build_teacher_pairs(
     z_all = tr["z"].float()
     d16_all = tr["dino_16"].float()
     n_total = len(z_all)
+    if init_mode == "ref_anchor":
+        priors = bundle["fnd"]["priors"]
+        assert {"P_Y", "P_C"} <= set(priors), "ref_anchor 需要 v19 priors (P_Y/P_C)"
+    else:
+        priors = None
 
     if fixed_pairs is not None:
         idx_c, idx_r = fixed_pairs[0].long(), fixed_pairs[1].long()
@@ -396,6 +529,7 @@ def build_teacher_pairs(
     mid_scores = torch.zeros(n_cand, dtype=torch.float32)
     style_gains = torch.zeros(n_cand, dtype=torch.float32)
     edit_norms = torch.zeros(n_cand, dtype=torch.float32)
+    anchor_norms = torch.zeros(n_cand, dtype=torch.float32)
 
     t0 = time.time()
     for st in range(0, n_cand, batch):
@@ -430,28 +564,28 @@ def build_teacher_pairs(
                 f"toks_ref['s3'] 形状契约破坏: {tuple(ref_s3.shape)} (应为 (B,256,384))"
             matched_s3_n = F.normalize(torch.gather(ref_s3, 1, best_j.unsqueeze(-1).expand_as(ref_s3)), dim=-1)
 
-        z_opt = z_src.clone().detach().requires_grad_(True)
+        # ---- 初始化 (结构方案 1): src = o2 口径 | ref_anchor = 参考色彩锚 ----
+        if init_mode == "ref_anchor":
+            z_opt0, a_norm = build_ref_anchor(z_src, z_ref, priors, alpha=anchor_alpha)
+            anchor_norms[sl] = a_norm.detach().cpu()
+        else:
+            z_opt0 = z_src
+        z_opt = z_opt0.clone().detach().requires_grad_(True)
         opt = torch.optim.Adam([z_opt], lr=lr)
         for _ in range(steps):
             opt.zero_grad()
             rgb_hat = decode_s10(dec, z_opt.clamp(-5.0, 5.0), batch=batch, enable_grad=True, output_cpu=False)
             toks_hat = swd_ext.extract_tokens(rgb_hat)
-            l_swd = (
-                1.0 * sliced_wasserstein_1d(toks_hat["rgb"], toks_ref["rgb"], swd_ext.p_rgb)
-                + 0.35 * sliced_wasserstein_1d(toks_hat["s1"], toks_ref["s1"], swd_ext.p_s1)
-                + 0.45 * sliced_wasserstein_1d(toks_hat["s2"], toks_ref["s2"], swd_ext.p_s2)
-                + 0.55 * sliced_wasserstein_1d(toks_hat["s3"], toks_ref["s3"], swd_ext.p_s3)
-            ).mean()
-            l_pal = F.smooth_l1_loss(extract_color_fiber_27d(rgb_hat), pal_ref)
-            l_loc = ((1.0 - (F.normalize(toks_hat["s3"], dim=-1) * matched_s3_n).sum(-1, keepdim=True)) * gate_loc).mean()
-            l_content = 0.5 * (
-                (1.0 - (F.normalize(toks_hat["s2"], dim=-1) * src_n2).sum(-1)).mean()
-                + (1.0 - (F.normalize(toks_hat["s3"], dim=-1) * src_n3).sum(-1)).mean()
-            )
-            l_reg = (z_opt - z_src).square().mean()
-            loss = (l_swd + 0.7 * l_pal + 0.25 * l_loc) + content_w * l_content + 0.15 * l_reg
+            fiber_hat = extract_color_fiber_27d(rgb_hat)
+            loss = assemble_teacher_loss(toks_hat, src_n2, src_n3, toks_ref, matched_s3_n, gate_loc,
+                                         fiber_hat, pal_ref, z_opt, z_src,
+                                         content_w=content_w, projs=swd_ext,
+                                         color_guide_w=color_guide_w)
             loss.backward()
             opt.step()
+            if trust_region_rho is not None:
+                # 结构方案 2: 步后投影回信任域 (内容约束从"加权拉回"变"边界约束")
+                z_opt.data = trust_region_project(z_opt.detach(), z_src, trust_region_rho)
 
         with torch.no_grad():
             z_fin = z_opt.detach().clamp(-5.0, 5.0)
@@ -500,6 +634,8 @@ def build_teacher_pairs(
     # 诊断专用: 分画派保留率 (A03 审计维度; 不进入优化/筛选/损失)
     fam = family_retention_report(tr["sid"].long()[idx_c], keep, n_styles=5, style_names=STYLES)
     diag["per_family_content"] = fam
+    if init_mode == "ref_anchor":
+        diag["anchor_norm"] = _percentiles(anchor_norms)  # 供 ρ 网格校准 (ρ 须 ≥ 位移中位数)
 
     pack = {
         "kind": "ref_teacher_pairs_v2", "tag": tag, "content_w": float(content_w),
@@ -512,6 +648,9 @@ def build_teacher_pairs(
         "pair_uid_all": (idx_c.long() * 100000 + idx_r.long()).cpu(),  # n_total < 100000 (训练集 4400)
         "filter": {"mid_cos_band": list(mid_cos_band), "style_gain_min": float(style_gain_min),
                    "provenance": STYLE_GAIN_PROVENANCE},
+        "structural": {"init_mode": init_mode, "anchor_alpha": float(anchor_alpha),
+                       "trust_region_rho": (None if trust_region_rho is None else float(trust_region_rho)),
+                       "color_guide_w": float(color_guide_w)},
         "meta": {"n_cand": n_cand, "n_keep": n_keep, "n_swap": n_swap, "steps": steps, "lr": lr,
                  "optimizer": "adam(o2 结构)", "seed": seed, "batch": batch,
                  "thresholds": STYLE_GAIN_PROVENANCE, "ref_cache": cache.stats(),
@@ -552,6 +691,14 @@ def main():
     ap.add_argument("--ref-cache-dir", default=None)
     ap.add_argument("--fast", action="store_true",
                     help="cudnn.benchmark 固定形状自动调优 (步级 ~1.2-1.4×; 轨迹近似一致, 见 enable_fast_conv)")
+    ap.add_argument("--init", default="src", choices=("src", "ref_anchor"),
+                    help="结构方案 1: ref_anchor = 参考色彩锚初始化 (默认 src = o2 口径)")
+    ap.add_argument("--anchor-alpha", type=float, default=1.0,
+                    help="ref_anchor 色度注入强度 (1.0 = 全部参考色度; luma 不动)")
+    ap.add_argument("--trust-region", default=None,
+                    help="结构方案 2: 编辑半径 L2 上限 (latent 全维); 单值或逗号网格, 推荐 8,16,24; 默认关闭")
+    ap.add_argument("--color-guide", type=float, default=0.0,
+                    help="附加项: 27D Oklab fiber 显式色彩引导权重 (小值, 只引导颜色不碰结构)")
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
 
@@ -560,20 +707,28 @@ def main():
         enable_fast_conv()
         print("[V25 T-v2] --fast: cudnn.benchmark=True (固定形状卷积自动调优)", flush=True)
     ws = list(TEACHER_W_GRID) if args.content_w == "all" else [float(args.content_w)]
+    rho_list = ([float(x) for x in str(args.trust_region).split(",")]
+                if args.trust_region not in (None, "", "off") else [None])
     summary = {}
     for w in ws:
-        pack = build_teacher_pairs(
-            w, pool=args.pool, device=args.device, n_cand=args.n_cand, n_keep=args.n_keep,
-            steps=args.steps, n_swap=args.n_swap, batch=args.batch,
-            mid_cos_band=(args.mid_cos_lo, args.mid_cos_hi), style_gain_min=args.style_gain_min,
-            ref_cache_dir=args.ref_cache_dir, force=args.force)
-        summary[teacher_tag(w)] = {
-            "n_kept": int(len(pack["idx_c"])),
-            "keep_rate": round(float(pack["keep_mask_all"].float().mean()), 5),
-            "mean_mid_cos": round(float(pack["mid_cos_all"].mean()), 5),
-            "mean_style_gain": round(float(pack["style_gain_all"].mean()), 5),
-            "swap_groups_kept": int(pack["swap_groups"].shape[0]),
-        }
+        for rho in rho_list:
+            pack = build_teacher_pairs(
+                w, pool=args.pool, device=args.device, n_cand=args.n_cand, n_keep=args.n_keep,
+                steps=args.steps, n_swap=args.n_swap, batch=args.batch,
+                mid_cos_band=(args.mid_cos_lo, args.mid_cos_hi), style_gain_min=args.style_gain_min,
+                ref_cache_dir=args.ref_cache_dir, force=args.force,
+                init_mode=args.init, anchor_alpha=args.anchor_alpha,
+                trust_region_rho=rho, color_guide_w=args.color_guide)
+            s_tag = structural_tag(args.init, args.anchor_alpha, rho, args.color_guide)
+            key = teacher_tag(w) + (("_" + s_tag) if s_tag else "")
+            summary[key] = {
+                "n_kept": int(len(pack["idx_c"])),
+                "keep_rate": round(float(pack["keep_mask_all"].float().mean()), 5),
+                "mean_mid_cos": round(float(pack["mid_cos_all"].mean()), 5),
+                "median_mid_cos_kept": round(float(pack["mid_cos"].median()), 5) if len(pack["mid_cos"]) else None,
+                "mean_style_gain": round(float(pack["style_gain_all"].mean()), 5),
+                "swap_groups_kept": int(pack["swap_groups"].shape[0]),
+            }
     save_json(OUT / "reference_teacher_v2.json", {"updated_utc": utc(), "args": vars(args), "summary": summary})
     for tag, s in summary.items():
         print(f"[V25 T-v2] {tag}: {s}", flush=True)

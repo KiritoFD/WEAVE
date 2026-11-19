@@ -65,15 +65,19 @@ from exp.v25.reference_teacher_v2 import (
     TEACHER_W_GRID,
     TEACHER_W_TAGS,
     ReferenceFeatureCache,
+    assemble_teacher_loss,
     batch_cached_ref_tokens,
+    build_ref_anchor,
     build_teacher_pairs,
     bytes_sha,
     dual_metric_filter,
     family_retention_report,
     filter_diagnostics,
     pooled_style_cos,
+    structural_tag,
     tensor_sha,
     teacher_tag,
+    trust_region_project,
 )
 
 torch.manual_seed(0)
@@ -627,6 +631,167 @@ def test_enable_fast_conv_sets_cudnn_benchmark():
         torch.backends.cudnn.benchmark = old
 
 
+# ---------------- 结构方案: 信任域投影 / 参考锚初始化 / 显式色彩引导 ----------------
+
+def test_trust_region_project_math():
+    """信任域投影 (方案 2): ρ 内逐位不动 / 超域收缩到恰 ρ 且方向保持 / ρ=0 精确退回 /
+    None 逐位恒等 (返回同一对象)."""
+    g = torch.Generator().manual_seed(23)
+    z_src = torch.randn(3, 4, 8, 8, generator=g)
+    d = torch.randn(3, 4, 8, 8, generator=g)
+    d[0] *= 0.02                       # 域内 (小位移)
+    n = d.flatten(1).norm(dim=1)
+    z_opt = z_src + d
+    # rho=None → 逐位恒等 (同一对象, 零开销零漂移)
+    out_none = trust_region_project(z_opt, z_src, None)
+    assert out_none is z_opt
+    # 大 ρ → 逐位不变
+    assert torch.equal(trust_region_project(z_opt, z_src, 1e9), z_opt)
+    # ρ = 中间样本半径: 边界样本逐位不动, 域内不动, 最大样本收缩到恰 ρ 且方向保持
+    rho = float(n[1])
+    out = trust_region_project(z_opt, z_src, rho)
+    assert torch.equal(out[0], z_opt[0]) and torch.equal(out[1], z_opt[1])
+    d2p = (out[2] - z_src[2]).flatten()
+    assert abs(float(d2p.norm()) - rho) <= 1e-4
+    assert abs(float(F.cosine_similarity(d2p, d[2].flatten(), dim=0)) - 1.0) <= 1e-6
+    # ρ 小于全部半径 → 全部收缩到恰 ρ
+    rho_all = 0.5 * float(n.min())
+    out_small = trust_region_project(z_opt, z_src, rho_all)
+    norms = (out_small - z_src).flatten(1).norm(dim=1)
+    assert torch.allclose(norms, torch.full_like(norms, rho_all), atol=1e-4)
+    # ρ=0 → 精确退回 z_src
+    assert torch.equal(trust_region_project(z_opt, z_src, 0.0), z_src)
+
+
+def test_trust_region_integration_after_grad_step():
+    """步后投影集成语义: ρ 足够大 → 轨迹与无投影一致 (1 ulp 内); 小 ρ 硬性封顶半径;
+    关闭 (None) → 与无投影逐位一致 (回归: 开关关闭行为不变).
+
+    注: 参数更新用手动 SGD —— torch 2.13 的 torch.optim.Adam 在 CPU 张量上也会初始化
+    CUDA context (is_initialized()→True), 违反本文件的纯 CPU 隔离契约 (被 no_cuda 护栏
+    捕获); 投影语义只依赖"参数更新后投影", 与优化器种类无关.
+    """
+    g = torch.Generator().manual_seed(41)
+    z_src = torch.randn(1, 2, 3, 3, generator=g)
+    target = z_src + 50.0  # 远目标 → 梯度必然推出小半径域
+
+    def run(rho):
+        z = z_src.clone().requires_grad_(True)
+        traj = []
+        for _ in range(3):
+            if z.grad is not None:
+                z.grad = None
+            ((z - target) ** 2).sum().backward()
+            with torch.no_grad():
+                z -= z.grad
+            if rho is not None:
+                z.data = trust_region_project(z.detach(), z_src, rho)
+            traj.append(z.detach().clone())
+        return traj
+
+    traj_free, traj_off = run(None), run(None)
+    for a, b in zip(traj_free, traj_off):
+        assert torch.equal(a, b), "开关关闭 (None) 必须与无投影逐位一致"
+    traj_big = run(1e6)
+    for a, b in zip(traj_free, traj_big):
+        assert torch.allclose(a, b, atol=1e-6), "ρ 大于所有可达半径 → 轨迹一致 (投影为恒等)"
+    rho = 0.05
+    traj_tr = run(rho)
+    radius = float((traj_tr[-1] - z_src).flatten().norm())
+    assert radius <= rho + 1e-6, "信任域必须硬性封顶编辑半径"
+    assert radius < float((traj_free[-1] - z_src).flatten().norm())
+
+
+def test_build_ref_anchor_alpha_semantics():
+    """参考锚初始化 (方案 1): 形状/有限值; α=0 逐位恒等; α=1 色度分块统计=参考统计 且
+    luma 通道逐位保持源; 位移范数对 α 精确线性 (anchor(α)−z_src = α·(aligned−zc))."""
+    P_Y = torch.diag(torch.tensor([1.0, 0.0, 1.0, 0.0]))
+    P_C = torch.diag(torch.tensor([0.0, 1.0, 0.0, 1.0]))  # 互补投影: P_Y + P_C = I
+    priors = {"P_Y": P_Y, "P_C": P_C}
+    g = torch.Generator().manual_seed(47)
+    z_src = torch.randn(2, 4, 16, 16, generator=g)
+    z_ref = torch.randn(2, 4, 16, 16, generator=g) * 2.0 + 3.0
+
+    a0, n0 = build_ref_anchor(z_src, z_ref, priors, alpha=0.0)
+    assert torch.equal(a0, z_src) and float(n0.sum()) == 0.0, "α=0 必须退回源图 (逐位)"
+
+    a1, n1 = build_ref_anchor(z_src, z_ref, priors, alpha=1.0)
+    assert a1.shape == z_src.shape and bool(torch.isfinite(a1).all())
+    assert n1.shape == (2,) and bool((n1 > 0).all())
+    # luma 通道 (0,2) 逐位保持源 (P_Y 不受 α 影响)
+    assert torch.equal(a1[:, 0], z_src[:, 0]) and torch.equal(a1[:, 2], z_src[:, 2])
+    # α=1: 色度通道空间均值 = 参考色度分块统计 (P_C 基)
+    zc_r = torch.einsum("ij,bjhw->bihw", P_C, z_ref).mean(dim=(2, 3))  # (2,4)
+    mean_a = torch.einsum("ij,bjhw->bihw", P_C, a1).mean(dim=(2, 3))
+    assert torch.allclose(mean_a[:, 1], zc_r[:, 1], atol=1e-5)
+    assert torch.allclose(mean_a[:, 3], zc_r[:, 3], atol=1e-5)
+    assert torch.allclose(mean_a[:, 0], torch.zeros(2), atol=1e-6)
+    # 位移范数对 α 精确线性: (anchor(α)−z_src) = α·(aligned−zc)
+    a05, n05 = build_ref_anchor(z_src, z_ref, priors, alpha=0.5)
+    assert torch.allclose(n05, 0.5 * n1, rtol=1e-4)
+
+
+def test_structural_tag_default_off_keeps_legacy_names():
+    """结构开关默认全关 → 空后缀 (产物名与旧版一致, 机制 C 按名加载不冲突); 开启才追加."""
+    assert structural_tag("src", 1.0, None, 0.0) == ""
+    assert structural_tag("ref_anchor", 1.0, None, 0.0) == "anch1"
+    assert structural_tag("src", 1.0, 16.0, 0.0) == "tr16"
+    assert structural_tag("src", 1.0, None, 0.5) == "cg0.5"
+    assert structural_tag("ref_anchor", 0.8, 24.0, 0.5) == "anch0.8_tr24_cg0.5"
+    assert structural_tag("src", 1.0, 8.0, 0.0) == "tr8"
+
+
+def test_assemble_teacher_loss_bitwise_regression():
+    """开关全关 → 装配损失与旧式内联公式**逐位一致** (B02 回归锁定);
+    color_guide 开启时恰增 w·MSE(fiber_hat, pal_ref)."""
+    from types import SimpleNamespace
+
+    from exp.v20.submode_patchswd import sliced_wasserstein_1d
+
+    torch.manual_seed(31)
+    B = 3
+    mk = lambda n, c: torch.randn(B, n, c)
+    toks_hat = {"rgb": mk(1024, 27), "s1": mk(1024, 96), "s2": mk(1024, 192), "s3": mk(256, 384)}
+    toks_ref = {"rgb": mk(1024, 27), "s1": mk(1024, 96), "s2": mk(1024, 192), "s3": mk(256, 384)}
+    src_n2, src_n3 = F.normalize(mk(1024, 192), dim=-1), F.normalize(mk(256, 384), dim=-1)
+    matched_s3_n = F.normalize(mk(256, 384), dim=-1)
+    gate_loc = (torch.rand(B, 256, 1) > 0.5).float()
+    fiber_hat, pal_ref = torch.randn(B, 27), torch.randn(B, 27)
+    z_src = torch.randn(B, 4, 8, 8)
+    z_opt = (z_src + torch.randn(B, 4, 8, 8) * 0.3).requires_grad_(True)
+    projs = SimpleNamespace(**{k: F.normalize(torch.randn(c, 16), dim=0)
+                               for k, c in (("p_rgb", 27), ("p_s1", 96), ("p_s2", 192), ("p_s3", 384))})
+
+    loss_fn = assemble_teacher_loss(toks_hat, src_n2, src_n3, toks_ref, matched_s3_n, gate_loc,
+                                    fiber_hat, pal_ref, z_opt, z_src,
+                                    content_w=1.2, projs=projs, color_guide_w=0.0)
+    # 旧式内联公式 (v1 循环体逐式复制)
+    l_swd = (
+        1.0 * sliced_wasserstein_1d(toks_hat["rgb"], toks_ref["rgb"], projs.p_rgb)
+        + 0.35 * sliced_wasserstein_1d(toks_hat["s1"], toks_ref["s1"], projs.p_s1)
+        + 0.45 * sliced_wasserstein_1d(toks_hat["s2"], toks_ref["s2"], projs.p_s2)
+        + 0.55 * sliced_wasserstein_1d(toks_hat["s3"], toks_ref["s3"], projs.p_s3)
+    ).mean()
+    l_pal = F.smooth_l1_loss(fiber_hat, pal_ref)
+    l_loc = ((1.0 - (F.normalize(toks_hat["s3"], dim=-1) * matched_s3_n).sum(-1, keepdim=True)) * gate_loc).mean()
+    l_content = 0.5 * (
+        (1.0 - (F.normalize(toks_hat["s2"], dim=-1) * src_n2).sum(-1)).mean()
+        + (1.0 - (F.normalize(toks_hat["s3"], dim=-1) * src_n3).sum(-1)).mean()
+    )
+    l_reg = (z_opt - z_src).square().mean()
+    loss_old = (l_swd + 0.7 * l_pal + 0.25 * l_loc) + 1.2 * l_content + 0.15 * l_reg
+    assert torch.equal(loss_fn, loss_old), "结构开关全关时装配损失必须与旧式逐位一致"
+    # 色彩引导开启: 恰增 w·MSE
+    loss_cg = assemble_teacher_loss(toks_hat, src_n2, src_n3, toks_ref, matched_s3_n, gate_loc,
+                                    fiber_hat, pal_ref, z_opt, z_src,
+                                    content_w=1.2, projs=projs, color_guide_w=0.5)
+    assert torch.equal(loss_cg, loss_old + 0.5 * F.mse_loss(fiber_hat, pal_ref))
+    assert float(loss_cg) > float(loss_old)
+    # 梯度流: z_opt 有非零梯度
+    loss_fn.backward()
+    assert z_opt.grad is not None and float(z_opt.grad.abs().sum()) > 0
+
+
 # ---------------- 验收 6: 双指标筛选边界 ----------------
 
 def test_dual_metric_filter_all_keep_and_all_reject():
@@ -781,4 +946,12 @@ def test_forbidden_list_covers_all_referees():
 # ---------------- 环境 ----------------
 
 def test_no_cuda_in_tests():
-    assert not torch.cuda.is_available() or torch.cuda.device_count() == 0
+    """护栏: 本测试文件必须保持纯 CPU —— CUDA context 不得被初始化.
+
+    判据用 is_initialized() 而非 device_count(): torch 2.13 下 (a) NVML 路径使
+    device_count() 在 CVD='' 时失真; (b) torch.optim.Adam 在 CPU 张量上也会初始化
+    CUDA context (本套件因此禁用 torch.optim.*, 参数更新一律手动 SGD).
+    """
+    assert os.environ.get("CUDA_VISIBLE_DEVICES", "unset") == "", "CVD='' 环境契约失效"
+    assert not torch.cuda.is_initialized(), "CUDA context 被初始化 (存在隐藏 GPU 触点)"
+    assert torch.zeros(3).device.type == "cpu"
