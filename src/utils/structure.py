@@ -157,6 +157,7 @@ def idwt2_haar(ll: torch.Tensor, lh: torch.Tensor, hl: torch.Tensor, hh: torch.T
     B, C, H2, W2 = ll_f.shape
     top = torch.stack([a, b], dim=-1)
     bot = torch.stack([c, d], dim=-1)
-    out = torch.stack([top, bot], dim=-2).reshape(B, C, H2 * 2, W2 * 2)
+    # shape (B, C, H2, W2, row_2, col_2) -> permute to (B, C, H2, row_2, W2, col_2)
+    out = torch.stack([top, bot], dim=-2).permute(0, 1, 2, 4, 3, 5).reshape(B, C, H2 * 2, W2 * 2)
     return out.to(orig_dtype)
 

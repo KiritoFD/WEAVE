@@ -431,3 +431,12 @@ def test_content_zeroing_only_when_drop_content_true():
     assert torch.equal(seen["drop_content"], torch.zeros(4, dtype=torch.bool))
     assert torch.equal(seen["drop_style"], torch.tensor([False, False, True, True]))
 
+
+def test_haar_dwt_idwt_exact_inverse():
+    from src.utils.structure import dwt2_haar, idwt2_haar
+
+    x = torch.randn(3, 4, 64, 64)
+    ll, lh, hl, hh = dwt2_haar(x)
+    x_rec = idwt2_haar(ll, lh, hl, hh)
+    assert torch.allclose(x, x_rec, atol=1e-6), f"Haar DWT/IDWT 必须精确可逆, max_diff={(x-x_rec).abs().max()}"
+
