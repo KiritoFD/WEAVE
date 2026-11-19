@@ -240,3 +240,14 @@
   - `M3_ab_cross50_noise`: `Top1 = 62.50% / DINO-S = 0.5257 / DINO-C = 0.4139`
   - **`M3_ab_cross50_srcA0`**: **`Top1 = 38.00%`** (`+18.00pp` over `M2_srcA0 20.00%`!) / **`DINO-S = 0.5270`** / **`Aff = 0.6252`** / **`DINO-C = 0.5489`** / **`LPIPS = 0.4458`**
 - **A0 Encoder + S10 往返验证**：6 张 StyleGallery 原图实测往返 `DINO-C = 0.9710`（MAE `0.0189`，编码耗时 `179 ms/img` @ 3060），打通任意 RGB→RGB 端到端 One-Shot 链路。
+
+---
+
+## 十五、V23 P2 §2.4（3060）：StyleGallery 25 类 OOD 端到端评测与 §8.4 敏感度
+
+- **§8.4 固定内容换 5 张 SG-5 参考敏感度**：`M3_ab_cross50_t35` `mean_pairwise_dist = 0.5519`（`M2_cross50_t0` `0.3522`），确认输出对不同参考有显著响应。
+- **StyleGallery 25 类 125-Pair 全盲端到端测试**（含 `A0 Encoder` + 实时特征提取 + Flow + `S10`）：
+  - `M3_ab_cross50_t35` (`tau0=0.35`): `DINO-S = 0.2625 / CLIP-S = 0.6152 / DINO-C = 0.4177 / LPIPS = 0.4157 / VGG Gram = 0.00046`，**端到端耗时 `1634 ms/img` (峰值 `2.00 GB`)**；
+  - `M2_cross50_t0` (`tau0=0.0`): `DINO-S = 0.3213 / CLIP-S = 0.6425 / DINO-C = 0.2161 / LPIPS = 0.6363`，**端到端耗时 `1572 ms/img`**。
+- **诚实视觉审计（`archives/v23_sg25_audit/sg25_audit_grid.jpg`）**：
+  5 类监督的 `StyleFiberEncoder` 在面对 OOD 25 类（二次元/水墨/抽象）与自然猫照片时出现色盘与画风收缩（仍偏 WikiArt 橘黄色调）。3060 已启动无五分类瓶颈的 **`O7_direct_app`（795D Oklab+DINO 外观直通残差）** 予以修正。
