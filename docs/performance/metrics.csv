@@ -396,3 +396,9 @@ DualC1AB_g50_ws52_t4,V23-P1I-DualC1AB,q2a_oracle_cross600,S10,False,False,600,0.
 DualC1AB_g50_ws52_p1,V23-P1I-DualC1AB,q2a_oracle_cross600,S10,False,False,600,0.54155,0.53894,0.61618,,0.63854,0.49333,,,,,,0.96667,,,,,,4090 runs/v23/p1_dual_c1ab.json
 M2_cross50_noise,V23-P2-Cross,q2a_oracle_cross600,S10,True,False,600,0.5326,0.535,0.5688,0.7216,0.6271,0.3183,,,,,,0.96667,,,,,,3060 runs/v23/p2_attn_r56.log
 M2_cross50_srcA0,V23-P2-Cross,q2a_oracle_cross600,S10,True,False,600,0.508,0.6457,0.3693,0.7025,0.6053,0.2,,,,,,0.96667,,,,,,3060 runs/v23/p2_attn_r56.log
+DualPure_orig_ws52,V23-P1J-DualSprint,q2a_oracle_cross600,S10,False,False,600,0.5529,0.60514,0.57638,,0.64295,0.50333,,,,,,0.96667,,,,,,4090 runs/v23/p1_dual_frontier_sprint.json
+DualPure_dec_gt68_gl35_w58,V23-P1J-DualSprint,q2a_oracle_cross600,S10,False,False,600,0.54955,0.54187,0.60511,,0.6415,0.50167,,,,,,0.96667,,,,,,4090 runs/v23/p1_dual_frontier_sprint.json
+DualPure_dec_gt72_gl45_w64,V23-P1J-DualSprint,q2a_oracle_cross600,S10,False,False,600,0.545,0.56329,0.59509,,0.63856,0.50667,,,,,,0.96667,,,,,,4090 runs/v23/p1_dual_frontier_sprint.json
+DualAB25_orig_ws52,V23-P1J-DualSprint,q2a_oracle_cross600,S10,False,False,600,0.55132,0.60676,0.57105,,0.64197,0.50833,,,,,,0.96667,,,,,,4090 runs/v23/p1_dual_frontier_sprint.json
+DualAB25_dec_gt68_gl35_w58,V23-P1J-DualSprint,q2a_oracle_cross600,S10,False,False,600,0.54904,0.55532,0.59731,,0.64099,0.505,,,,,,0.96667,,,,,,4090 runs/v23/p1_dual_frontier_sprint.json
+DualAB25_dec_gt72_gl45_w64,V23-P1J-DualSprint,q2a_oracle_cross600,S10,False,False,600,0.54452,0.57563,0.58723,,0.63763,0.51833,,,,,,0.96667,,,,,,4090 runs/v23/p1_dual_frontier_sprint.json
