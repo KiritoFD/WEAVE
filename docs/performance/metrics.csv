@@ -412,3 +412,15 @@ DualSWD_both_orig_ws52,V23-P1K-DualSWD,q2a_oracle_cross600,S10,False,False,600,0
 DualSWD_both_hiT_ws52,V23-P1K-DualSWD,q2a_oracle_cross600,S10,False,False,600,0.54699,0.61677,0.56772,,0.63865,0.50167,,,,,,0.96667,,,,,,4090 runs/v23/p1_dual_swd.json
 O7_directapp_t40,V23-P2-DirectApp,q2a_oracle_cross600,S10,True,False,600,0.52514,0.54807,0.44814,,0.62499,0.385,,,,,,0.96667,,,,,,3060 runs/v23/p2_o7.log
 O7_directapp_t50,V23-P2-DirectApp,q2a_oracle_cross600,S10,True,False,600,0.51124,0.63803,0.37781,,0.61048,0.26167,,,,,,0.96667,,,,,,3060 runs/v23/p2_o7.log
+M0_prism1_l075,V24-P0-M0M2,q2a_oracle_cross600,S10,False,False,600,0.43709,0.77149,0.48485,,0.56109,0.37667,,,,,,0.96667,,,,,,4090 runs/v24/p0_m0_m2.json
+M0_prism1_l100,V24-P0-M0M2,q2a_oracle_cross600,S10,False,False,600,0.44303,0.74403,0.50571,,0.5655,0.44333,,,,,,0.96667,,,,,,4090 runs/v24/p0_m0_m2.json
+M0_v20_d6,V24-P0-M0M2,q2a_oracle_cross600,S10,False,False,600,0.51073,0.66879,0.53745,,0.61445,0.55667,,,,,,0.96667,,,,,,4090 runs/v24/p0_m0_m2.json
+M1_lin_g25,V24-P0-M0M2,q2a_oracle_cross600,S10,False,False,600,0.44815,0.75269,0.49879,,0.57053,0.475,,,,,,0.96667,,,,,,4090 runs/v24/p0_m0_m2.json
+M1_lin_g40,V24-P0-M0M2,q2a_oracle_cross600,S10,False,False,600,0.46002,0.74667,0.5006,,0.57906,0.50167,,,,,,0.96667,,,,,,4090 runs/v24/p0_m0_m2.json
+M1_lin_g55,V24-P0-M0M2,q2a_oracle_cross600,S10,False,False,600,0.47446,0.73208,0.50528,,0.58921,0.52667,,,,,,0.96667,,,,,,4090 runs/v24/p0_m0_m2.json
+M2_dwt_ll0_hf50,V24-P0-M0M2,q2a_oracle_cross600,S10,False,False,600,0.46275,0.73243,0.51062,,0.57981,0.515,,,,,,0.96667,,,,,,4090 runs/v24/p0_m0_m2.json
+M2_dwt_ll0_hf85,V24-P0-M0M2,q2a_oracle_cross600,S10,False,False,600,0.49123,0.69403,0.52836,,0.59964,0.545,,,,,,0.96667,,,,,,4090 runs/v24/p0_m0_m2.json
+M2_dwt_ll25_hf85,V24-P0-M0M2,q2a_oracle_cross600,S10,False,False,600,0.49153,0.69938,0.52195,,0.60082,0.56167,,,,,,0.96667,,,,,,4090 runs/v24/p0_m0_m2.json
+O4A_t40,V24-P0-O4,q2a_oracle_cross600,S10,True,False,600,0.52591,0.56143,0.43657,,0.62362,0.35167,,,,,,,,,,,,3060 runs/v24/p0_o4_eval.json
+O4B_t50,V24-P0-O4,q2a_oracle_cross600,S10,True,False,600,0.51291,0.63699,0.37872,,0.61109,0.25833,,,,,,,,,,,,3060 runs/v24/p0_o4_eval.json
+O4C_t60,V24-P0-O4,q2a_oracle_cross600,S10,True,False,600,0.48669,0.73196,0.30843,,0.58898,0.195,,,,,,,,,,,,3060 runs/v24/p0_o4_eval.json
