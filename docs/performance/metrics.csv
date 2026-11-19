@@ -335,3 +335,15 @@ Mid_C1_hiS,V23-P1C-MidFreq,q2a_oracle_cross600,S10,False,False,600,0.575,0.48427
 Mid_C1_hiC,V23-P1C-MidFreq,q2a_oracle_cross600,S10,False,False,600,0.55729,0.5357,0.60536,,0.65015,0.675,,,,,,,,,,,,4090 runs/v23/p1_midfreq_loss.json
 Mid_C2_hiS,V23-P1C-MidFreq,q2a_oracle_cross600,S10,False,False,600,0.57501,0.48448,0.62506,,0.66461,0.77833,,,,,,,,,,,,4090 runs/v23/p1_midfreq_loss.json
 Mid_C2_hiC,V23-P1C-MidFreq,q2a_oracle_cross600,S10,False,False,600,0.5574,0.53577,0.60531,,0.65024,0.675,,,,,,,,,,,,4090 runs/v23/p1_midfreq_loss.json
+AB0_fm100_p1_hiS,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.57197,0.45693,0.6393,,0.66457,0.79167,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB0_fm100_p1_hiC,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.55435,0.51367,0.61601,,0.65013,0.69333,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB0_fm100_t4_hiS,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.57228,0.48558,0.62333,,0.66259,0.745,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB0_fm100_t4_hiC,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.55506,0.53797,0.60177,,0.64845,0.64667,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB1_mix25_p1_hiS,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.57657,0.46376,0.63594,,0.66675,0.78833,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB1_mix25_p1_hiC,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.5559,0.51972,0.61286,,0.65067,0.68833,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB1_mix25_t4_hiS,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.57445,0.48986,0.62308,,0.66279,0.72167,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB1_mix25_t4_hiC,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.55634,0.54156,0.60132,,0.64855,0.615,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB2_mix50_p1_hiS,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.57618,0.46592,0.63576,,0.66557,0.74333,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB2_mix50_p1_hiC,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.55512,0.51908,0.61418,,0.6493,0.63167,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB2_mix50_t4_hiS,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.57447,0.49085,0.62401,,0.66175,0.665,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+AB2_mix50_t4_hiC,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.55603,0.54072,0.60362,,0.64747,0.58167,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json

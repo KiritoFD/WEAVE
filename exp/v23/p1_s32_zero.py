@@ -330,7 +330,13 @@ def main():
     tasks, z_src_750, _ = tasks_and_sources()
     z_t4, _ = build_or_load_t4_latents_750(bundle, device=args.device)
     y16_750, d16_750 = get_test750_y16_and_d16(bundle)
-    y32_750 = build_y32_pair(bundle["test_struct"]["y_64"].float()).half()
+    if "y_64" in bundle["test_struct"]:
+        y64_750 = bundle["test_struct"]["y_64"].float()
+    else:
+        w_l = bundle["v18_cache"]["luma_proj"]["w"].float().view(1, 4, 1, 1)
+        b_l = bundle["v18_cache"]["luma_proj"]["b"].float()
+        y64_750 = ((z_src_750.float() * w_l).sum(1, keepdim=True) + b_l).clamp(0.0, 1.0)
+    y32_750 = build_y32_pair(y64_750).half()
     eps_750 = torch.randn(z_src_750.shape, generator=torch.Generator().manual_seed(EVAL_SEED))
     dec = load_s10_decoder(args.device)
     ctx = {"tasks": tasks, "z_src_750": z_src_750, "z_t4": z_t4, "y16_750": y16_750,
