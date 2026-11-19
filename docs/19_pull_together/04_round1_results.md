@@ -1,5 +1,12 @@
 # V25 Round 1 结果：无训练推理结构消融（2026-11-19）
 
+> **⚠️ CI 修正（2026-11-20，A01 交付，详见 [`docs/v25/audits/a01_round1_ci.md`](../v25/audits/a01_round1_ci.md)）**：
+> ① **P1-4 "fixed 门控可删"被配对 CI 否定**（`Δdino_c CI [−0.0187,−0.0113]` 整体低于容忍带下界，Ukiyo-e −10pp）→ **密度门控保留**；
+> ② **P0-2 "cs_j 删 full"为 INCONCLUSIVE**（三指标 CI 带内，但 worst-class 守卫触发：Minimalism Top-1 −7.50pp@D6h / −21.67pp@D5）→ 默认保留 full，待单画派深查；
+> ③ **Round 2 `Tr_T1 vs T0` @D6h 通过非劣且 Top-1 +1.00pp（CI 不含零）**→ drop_c 配方在主配置有真实增益；
+> ④ D6 vs Hybrid @0.73 仍**未决**——需 4090 补 τ_min≈0.72 真实臂后由 A01 工具出 CI；
+> ⑤ 下文各"初步读法"均为点估计口径，以本修正为准。
+
 > **协议**：`test750` × `S10` 解码 × 进程隔离四裁判；读数 `cross600`（`n=600`）。复用 6 条 V24 臂 + 实跑 21 臂（4090，tmux `v25r1`，~28 min）。
 > **数据**：`runs/v25/r1_inference_ablation.json`（含 `tau_records` 17 条实测 τ 分布）；台账追加 21 行至 `docs/performance/metrics.csv`（472 行）。
 > **判定规则**：`01_convergence_plan.md` §2 非劣性容忍带（`ΔDINO-C ≥ −0.010`，`ΔDINO-S ≥ −0.005`，`ΔLPIPS ≤ +0.010`）。**本页所有比较为点估计 + 线性插值；正式删除/保留决定必须等配对 Bootstrap CI**（收尾统一计算，见 §6）。
