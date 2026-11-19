@@ -41,6 +41,8 @@ T_CONFIGS = {
     "T5": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=True, struct_w=0.0),
     "T4L": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=False, struct_w=0.10),  # 长训练臂，--updates 3600
     "T4S": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=False, struct_w=0.10),  # 快照曲线臂，--updates 3600，每 300 步存快照
+    "E99": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=False, struct_w=0.10, ema=0.999),  # EMA 滞后检验
+    "E97": dict(core_frac=0.8, drop_c_prob=0.30, layout_train=False, struct_w=0.10, ema=0.997),
 }
 
 
@@ -75,6 +77,7 @@ def train_t_arm(bundle: dict, core_bank: dict, arm: str, updates: int = 1800,
     ema = copy.deepcopy(model).eval()
     for p in ema.parameters():
         p.requires_grad_(False)
+    ema_decay = cfg.get("ema", 0.996)
 
     accum = 1
     opt = torch.optim.AdamW(model.parameters(), lr=1.3e-4, betas=(0.9, 0.99), weight_decay=1e-4)
@@ -145,7 +148,7 @@ def train_t_arm(bundle: dict, core_bank: dict, arm: str, updates: int = 1800,
         opt.step()
         with torch.no_grad():
             for pe_w, pw in zip(ema.parameters(), model.parameters()):
-                pe_w.mul_(0.996).add_(pw, alpha=0.004)
+                pe_w.mul_(ema_decay).add_(pw, alpha=1.0 - ema_decay)
 
         if step == 1 or step % 400 == 0 or step == updates:
             print(f"[V22 {arm}] {step:4d}/{updates} fm={loss_fm_v:.4f} y16={loss_st_v:.4f} ({time.time()-t0:.0f}s)", flush=True)

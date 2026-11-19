@@ -24,8 +24,11 @@ BASE_CKPT = ROOT / "runs/v20/slf_flow/slf_final.pt"
 
 
 def eval_t_ckpt(core: PrismCore, ckpt_path, tag: str, ctx: dict, device: str = "cuda",
-                wc_list: tuple = ((1.1, "wc11"), (1.4, "wc14"))) -> list[dict]:
+                wc_list: tuple = ((1.1, "wc11"), (1.4, "wc14")),
+                gate: "GateConfig | None" = None,
+                solver_over: "dict | None" = None) -> list[dict]:
     """单个 T ckpt × fixed-gate 指定 wc 档评测。"""
+    gate = gate or GateConfig(mode="fixed", fixed_g=0.5)
     tasks = ctx["tasks"]
     z_src_750 = ctx["z_src_750"]
     sid_all = torch.tensor([t["source_style_id"] for t in tasks])
@@ -36,7 +39,7 @@ def eval_t_ckpt(core: PrismCore, ckpt_path, tag: str, ctx: dict, device: str = "
     y16_750, d16_750 = ctx["y16_750"], ctx["d16_750"]
     dec = ctx["dec"]
 
-    gate = GateConfig(mode="fixed", fixed_g=0.5)
+    gate_cfg = gate
     results = []
     for wc_val, wc_tag in wc_list:
         name = f"{tag}_{wc_tag}"
@@ -58,6 +61,8 @@ def eval_t_ckpt(core: PrismCore, ckpt_path, tag: str, ctx: dict, device: str = "
         solver = dict(D5_SOLVER, tau_min=0.28, tau_hi=0.66, steps=10,
                       ws_fig=4.2, wsp_fig_late=2.4, wsp_abs=5.2,
                       wc_fig=wc_val, wc_abs=wc_val, lscale_abs=0.34)
+        if solver_over:
+            solver.update(solver_over)
 
         with torch.no_grad():
             for st in range(0, 750, 25):
@@ -66,7 +71,7 @@ def eval_t_ckpt(core: PrismCore, ckpt_path, tag: str, ctx: dict, device: str = "
                 z_gen, _ = core.integrate_flow(
                     eps_750[sl], anchor_750[sl].to(core.device),
                     y16_750[sl], d16_750[sl], tid_all[sl].to(core.device),
-                    gate=gate, cfg=cfg, solver=solver,
+                    gate=gate_cfg, cfg=cfg, solver=solver,
                 )
                 z_out = torch.where(same_all[sl].view(-1, 1, 1, 1).to(core.device),
                                     z_src_750[sl].to(core.device).float(), z_gen)

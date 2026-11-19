@@ -19,7 +19,7 @@ from exp.v20.submode_patchswd import build_or_load_core_knn_bank
 from .t4 import build_or_load_t4_latents_750
 
 PEAK = OUT / "tmatrix" / "slf_T4Ssnap1500.pt"
-GATES = (0.42, 0.45)
+GATES = (0.45,)
 
 
 def main():
@@ -45,7 +45,7 @@ def main():
     results = []
     for g in GATES:
         res = eval_t_ckpt(core, PEAK, f"T4Pg{int(g*100)}", ctx, device=args.device,
-                          wc_list=((1.0, "wc10"),),
+                          wc_list=((1.15, "wc115"), (1.3, "wc130")),
                           gate=GateConfig(mode="fixed", fixed_g=g))
         results.extend(res)
 
