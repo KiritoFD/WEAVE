@@ -105,7 +105,7 @@ def build_clean_train_bridge_pairs(bundle: dict, bank: dict, dec, n_pairs: int =
 
 
 def train_m5(bundle: dict, pack: dict, dec, swd_ext: MultiScalePatchSWDExtractor,
-             eps_budget: float = 0.068, updates: int = 1000, micro: int = 8, accum: int = 4,
+             eps_budget: float = 0.068, updates: int = 1000, micro: int = 4, accum: int = 8,
              device: str = "cuda") -> Path:
     out_p = OUT / "m5_residual/res_M5.pt"
     out_p.parent.mkdir(parents=True, exist_ok=True)
@@ -118,7 +118,8 @@ def train_m5(bundle: dict, pack: dict, dec, swd_ext: MultiScalePatchSWDExtractor
     fnd = bundle["fnd"]
     fiber_enc = StyleFiberEncoder(in_dim=fnd["tr_fib"].shape[1], dim=128).to(device).eval()
     fiber_enc.load_state_dict(fnd["fiber_state"])
-    bary = fiber_enc.class_barycenters()
+    with torch.no_grad():
+        bary = fiber_enc.class_barycenters().detach()
     del fiber_enc
 
     res_net = PaletteTextureResidualNet(cond_dim=128, ch=96).to(device)

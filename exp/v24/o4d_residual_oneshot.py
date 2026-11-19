@@ -100,7 +100,7 @@ class OneShotResidualNet(nn.Module):
 
 
 def train_o4d(bundle: dict, v16_tr: torch.Tensor, dec, swd_ext: MultiScalePatchSWDExtractor,
-              teacher_pack: dict | None, updates: int = 1200, micro: int = 4, accum: int = 6,
+              teacher_pack: dict | None, updates: int = 600, micro: int = 4, accum: int = 2,
               device: str = "cuda") -> Path:
     out_p = OUT / "o4d_residual/o4d_net.pt"
     out_p.parent.mkdir(parents=True, exist_ok=True)
@@ -271,7 +271,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pool", default=str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16"))
     ap.add_argument("--device", default="cuda")
-    ap.add_argument("--updates", type=int, default=1200)
+    ap.add_argument("--updates", type=int, default=600)
     args = ap.parse_args()
 
     sanitize_cuda_env()
