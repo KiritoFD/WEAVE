@@ -329,3 +329,9 @@ A2_pk_chroma_hiC,V23-P1A,q2a_oracle_cross600,S10,True,False,600,0.50895,0.65134,
 A3_t1_t4_hiC,V23-P1A,q2a_oracle_cross600,S10,False,False,600,0.53231,0.61952,0.5659,,0.62976,0.56667,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
 A3_t1_prism1_hiS,V23-P1A,q2a_oracle_cross600,S10,False,False,600,0.54922,0.54559,0.60323,,0.64645,0.67,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
 A3_t1_prism1_hiC,V23-P1A,q2a_oracle_cross600,S10,False,False,600,0.52951,0.60254,0.57773,,0.62986,0.58833,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
+Mid_C0_hiS,V23-P1C-MidFreq,q2a_oracle_cross600,S10,False,False,600,0.5743,0.48354,0.62405,,0.66405,0.76333,,,,,,,,,,,,4090 runs/v23/p1_midfreq_loss.json
+Mid_C0_hiC,V23-P1C-MidFreq,q2a_oracle_cross600,S10,False,False,600,0.55711,0.53546,0.60263,,0.65005,0.655,,,,,,,,,,,,4090 runs/v23/p1_midfreq_loss.json
+Mid_C1_hiS,V23-P1C-MidFreq,q2a_oracle_cross600,S10,False,False,600,0.575,0.48427,0.62514,,0.66459,0.78333,,,,,,,,,,,,4090 runs/v23/p1_midfreq_loss.json
+Mid_C1_hiC,V23-P1C-MidFreq,q2a_oracle_cross600,S10,False,False,600,0.55729,0.5357,0.60536,,0.65015,0.675,,,,,,,,,,,,4090 runs/v23/p1_midfreq_loss.json
+Mid_C2_hiS,V23-P1C-MidFreq,q2a_oracle_cross600,S10,False,False,600,0.57501,0.48448,0.62506,,0.66461,0.77833,,,,,,,,,,,,4090 runs/v23/p1_midfreq_loss.json
+Mid_C2_hiC,V23-P1C-MidFreq,q2a_oracle_cross600,S10,False,False,600,0.5574,0.53577,0.60531,,0.65024,0.675,,,,,,,,,,,,4090 runs/v23/p1_midfreq_loss.json
