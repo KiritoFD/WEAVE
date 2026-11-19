@@ -570,7 +570,9 @@ def eval_mechanism_a_arm(ctx750: dict, arm: str, gamma: float, device: str, net=
         M16 = arm_gate_field(arm, c64, dz[sl].to(device), chord, net=net, kappa=kappa)
         g = energy_matched_gamma(M16, dz[sl].to(device), gamma) if energy_match else gamma
         z_out = apply_gate(z_p1[sl].to(device), dz[sl].to(device), M16, g)
-        z_out[torch.as_tensor(same[sl]).to(device)] = z_src[sl].to(device)  # bypass 网络之外
+        m_same = torch.as_tensor(same[sl]).to(device)  # bypass 网络之外: RHS 须按掩码裁剪行
+        if m_same.any():
+            z_out[m_same] = z_src[sl].to(device)[m_same]
         out[sl] = z_out.cpu()
         e_rec.append(edit_energy(z_out, z_p1[sl].to(device), dz[sl].to(device)).cpu())
     e = torch.cat(e_rec)[~same]

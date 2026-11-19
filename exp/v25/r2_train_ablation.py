@@ -52,16 +52,16 @@ R2_CONFIGS = {
 
 
 def train_r2_arm(bundle: dict, core_bank: dict, arm: str, updates: int = 1500,
-                 micro: int = 120, device: str = "cuda") -> str:
-    """返回训练好的权重路径 (runs/v25/r2_tmatrix/slf_<arm>.pt)。"""
+                 micro: int = 120, device: str = "cuda", seed: int = 20263500, tag: str = "") -> str:
+    """返回训练好的权重路径 (runs/v25/r2_tmatrix/slf_<arm><tag>.pt)。"""
     cfg = R2_CONFIGS[arm]
-    out_p = OUT / "r2_tmatrix" / f"slf_{arm}.pt"
+    out_p = OUT / "r2_tmatrix" / f"slf_{arm}{tag}.pt"
     out_p.parent.mkdir(parents=True, exist_ok=True)
     if out_p.exists():
         print(f"[V25 {arm}] Reusing {out_p}", flush=True)
         return str(out_p)
 
-    seed_all(20263500)  # 全臂同 seed → 共享采样顺序/噪声
+    seed_all(seed)  # 同 seed → 共享采样顺序/噪声; 种子复验用不同 seed
     tr = bundle["v18_cache"]["train"]
     device_t = torch.device(device)
     w_luma = bundle["v18_cache"]["luma_proj"]["w"].to(device).float()
@@ -170,6 +170,9 @@ def main():
     ap.add_argument("--pool", default=str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16"))
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--updates", type=int, default=1500)
+    ap.add_argument("--seed", type=int, default=20263500)
+    ap.add_argument("--arms", default="Tr_T0,Tr_T1,Tr_T2,Tr_T3")
+    ap.add_argument("--tag", default="")
     args = ap.parse_args()
 
     sanitize_cuda_env()
@@ -183,13 +186,13 @@ def main():
 
     out_json = OUT / "r2_train_ablation.json"
     results = []
-    for arm in ("Tr_T0", "Tr_T1", "Tr_T2", "Tr_T3"):
-        ckpt_p = train_r2_arm(bundle, bank, arm, updates=args.updates, device=args.device)
+    for arm in args.arms.split(","):
+        ckpt_p = train_r2_arm(bundle, bank, arm, updates=args.updates, device=args.device, seed=args.seed, tag=args.tag)
         # C4 规则: 配方对比一律 cs_j 双分支 × 两档水位 (T4 锚点 + original Gate)
         for tag, solver in (("d5csj", dict(D5_SOLVER)), ("d6hcsj", dict(D6H_SOLVER))):
             z, _ = run_core_flow(bundle, bank, ckpt_p, tasks, z_src_750, z_t4, y16_750, d16_750, eps_750,
                                  branches="cs_j", solver=solver, device=args.device)
-            rec = eval_latent_v25(f"V25_{arm}_{tag}", z, tasks, dec, device=args.device)
+            rec = eval_latent_v25(f"V25_{arm}{args.tag}_{tag}", z, tasks, dec, device=args.device)
             rec["train_arm"], rec["eval_solver"] = arm, tag
             results.append(rec)
             save_json(out_json, {"updated_utc": utc(), "results": results})
