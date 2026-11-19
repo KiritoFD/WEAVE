@@ -155,3 +155,10 @@ python -m pytest tests/test_no_absolute_paths.py tests/test_markdown_links.py -q
 ```
 
 输出：`docs/v25/audits/a05_feature_geometry.json`（含 meta.protocol_notes 全部协议声明、p2_pids/p1_source_stems 种群清单，供与远程导出对账）。
+
+## 附注（总控补全，2026-11-20 07:00）：128D u 空间 BLOCKED 项已解除
+
+4090 导出 `a05_u_export.npz`（7.9MB）后本地重算，本 JSON 已更新（u128 段）：
+- **u128 PCA: PR=4.0, k95=4, Fisher=29.73**——StyleFiberEncoder 把 795D 统计压缩为**有效 4 维**判别流形（对应五类结构），Fisher 比 795D 高两个数量级（29.7 vs 0.20）；
+- 结论：u 侧**无需也不可再简化**（已是最紧凑判别表示）；One-Shot 条件模块的简化空间只在 795D 输入端（PCA-64 足够，见 §F1），Oklab27 保留为独立调色通道（§F2）；
+- SG-5 own-acc=0.80（ER 失位所致，见 §F5），references150 own-acc=93.3%。

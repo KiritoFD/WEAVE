@@ -1,8 +1,8 @@
 {
   "meta": {
-    "utc": "2026-11-19T20:43:34Z",
+    "utc": "2026-11-19T22:45:16Z",
     "seed": 20261120,
-    "wall_sec": 1715.1,
+    "wall_sec": 1521.7,
     "style_order": [
       "Early_Renaissance",
       "Impressionism",
@@ -1073,10 +1073,10 @@
         "2": 0.5483,
         "4": 0.7567,
         "8": 0.8367,
-        "16": 0.8633,
-        "32": 0.88,
-        "64": 0.92,
-        "128": 0.925,
+        "16": 0.8617,
+        "32": 0.8767,
+        "64": 0.9133,
+        "128": 0.9217,
         "256": 0.92,
         "full": 0.9183
       }
@@ -1274,10 +1274,10 @@
         "4": 0.7583,
         "8": 0.8267,
         "16": 0.855,
-        "32": 0.8817,
-        "64": 0.92,
-        "128": 0.9167,
-        "256": 0.9267,
+        "32": 0.8833,
+        "64": 0.91,
+        "128": 0.9283,
+        "256": 0.9233,
         "full": 0.925
       }
     },
@@ -1444,9 +1444,262 @@
     "note": "standardization and centroids come from the P2 train proxy; this is the label-free conditioning-side geometry the One-Shot u_glob module consumes (795D standardized fiber)"
   },
   "cross_population": {
-    "p2_pca_k95_components_explained_variance_on_p1": 0.6536,
+    "p2_pca_k95_components_explained_variance_on_p1": 0.6534,
     "note": "PCA fitted on standardized P2 (train proxy), applied to standardized P1 (eval side); 1.0 = no distribution shift"
   },
-  "u128": null,
+  "u128": {
+    "source": "a05_u_export.npz",
+    "n_train": 4400,
+    "dim": 128,
+    "pca": {
+      "tag": "u128_train",
+      "n_samples": 4400,
+      "n_features": 128,
+      "numeric_rank": 128,
+      "eig_top12": [
+        0.28308,
+        0.226075,
+        0.199306,
+        0.174491,
+        0.000866,
+        0.000845,
+        0.000746,
+        0.000706,
+        0.00058,
+        0.000563,
+        0.000543,
+        0.000483
+      ],
+      "cum_variance": {
+        "k90": 4,
+        "k95": 4,
+        "k99": 13,
+        "var_top8": 0.9872,
+        "var_top16": 0.9913,
+        "var_top32": 0.9953
+      },
+      "participation_ratio": 4.0,
+      "entropy_effective_dim": 4.47
+    },
+    "fisher_ratio_train": 29.7313,
+    "centroid_cosine_train": {
+      "matrix_5x5": [
+        [
+          1.0,
+          -0.1355,
+          -0.3317,
+          -0.292,
+          -0.2689
+        ],
+        [
+          -0.1355,
+          1.0,
+          -0.1636,
+          -0.4153,
+          -0.2095
+        ],
+        [
+          -0.3317,
+          -0.1636,
+          1.0,
+          -0.1204,
+          -0.3197
+        ],
+        [
+          -0.292,
+          -0.4153,
+          -0.1204,
+          1.0,
+          -0.2372
+        ],
+        [
+          -0.2689,
+          -0.2095,
+          -0.3197,
+          -0.2372,
+          1.0
+        ]
+      ],
+      "offdiag_mean": -0.2494,
+      "offdiag_max": -0.1204,
+      "offdiag_min": -0.4153,
+      "closest_pair": {
+        "most_similar": {
+          "cos": -0.1204,
+          "pair": [
+            "Minimalism",
+            "Rococo"
+          ]
+        },
+        "most_opposite": {
+          "cos": -0.4153,
+          "pair": [
+            "Impressionism",
+            "Rococo"
+          ]
+        }
+      },
+      "style_order": [
+        "Early_Renaissance",
+        "Impressionism",
+        "Minimalism",
+        "Rococo",
+        "Ukiyo_e"
+      ]
+    },
+    "silhouette_cosine_train": 0.9718,
+    "logistic_acc_by_pca_k": {
+      "2": 0.9998,
+      "4": 1.0,
+      "8": 1.0,
+      "16": 1.0,
+      "32": 1.0,
+      "64": 1.0,
+      "128": 1.0,
+      "full": 1.0
+    },
+    "fisher_ratio_holdout300": 8.2482,
+    "centroid_cosine_holdout300": {
+      "matrix_5x5": [
+        [
+          1.0,
+          -0.1255,
+          -0.3351,
+          -0.2588,
+          -0.2823
+        ],
+        [
+          -0.1255,
+          1.0,
+          -0.1778,
+          -0.3781,
+          -0.224
+        ],
+        [
+          -0.3351,
+          -0.1778,
+          1.0,
+          -0.1381,
+          -0.3202
+        ],
+        [
+          -0.2588,
+          -0.3781,
+          -0.1381,
+          1.0,
+          -0.2534
+        ],
+        [
+          -0.2823,
+          -0.224,
+          -0.3202,
+          -0.2534,
+          1.0
+        ]
+      ],
+      "offdiag_mean": -0.2493,
+      "offdiag_max": -0.1255,
+      "offdiag_min": -0.3781,
+      "closest_pair": {
+        "most_similar": {
+          "cos": -0.1255,
+          "pair": [
+            "Early_Renaissance",
+            "Impressionism"
+          ]
+        },
+        "most_opposite": {
+          "cos": -0.3781,
+          "pair": [
+            "Impressionism",
+            "Rococo"
+          ]
+        }
+      },
+      "style_order": [
+        "Early_Renaissance",
+        "Impressionism",
+        "Minimalism",
+        "Rococo",
+        "Ukiyo_e"
+      ]
+    },
+    "holdout_silhouette_cosine": 0.878,
+    "fisher_ratio_fiber795_train": 0.1924,
+    "pca_fiber795_train": {
+      "tag": "fiber795_train_exact4400",
+      "n_samples": 4400,
+      "n_features": 795,
+      "numeric_rank": 795,
+      "eig_top12": [
+        0.166488,
+        0.037164,
+        0.023926,
+        0.020656,
+        0.014226,
+        0.011094,
+        0.007515,
+        0.007004,
+        0.005655,
+        0.004689,
+        0.004461,
+        0.00402
+      ],
+      "cum_variance": {
+        "k90": 117,
+        "k95": 210,
+        "k99": 507,
+        "var_top8": 0.6234,
+        "var_top16": 0.6947,
+        "var_top32": 0.7667
+      },
+      "participation_ratio": 6.93,
+      "entropy_effective_dim": 36.22
+    },
+    "prototype_cosine_5x5": [
+      [
+        1.0,
+        -0.187,
+        -0.019,
+        -0.0194,
+        0.0661
+      ],
+      [
+        -0.187,
+        1.0,
+        0.1451,
+        -0.0015,
+        0.1044
+      ],
+      [
+        -0.019,
+        0.1451,
+        1.0,
+        -0.0209,
+        -0.0404
+      ],
+      [
+        -0.0194,
+        -0.0015,
+        -0.0209,
+        1.0,
+        0.0207
+      ],
+      [
+        0.0661,
+        0.1044,
+        -0.0404,
+        0.0207,
+        1.0
+      ]
+    ],
+    "prototype_style_order": [
+      "Early_Renaissance",
+      "Impressionism",
+      "Minimalism",
+      "Rococo",
+      "Ukiyo_e"
+    ]
+  },
   "convnext": null
 }
