@@ -1,0 +1,3323 @@
+{
+  "task": "A04 模型强度旋钮与 Pareto 曲线分析",
+  "generated_utc": "2026-11-19 17:56 UTC",
+  "tool": "tools/v25_cpu/a04_strength_analysis.py",
+  "inputs": {
+    "metrics_csv": "docs/performance/metrics.csv",
+    "runs_v25_json": [
+      "runs/v25/r1_inference_ablation.json",
+      "runs/v25/r1b_unlock_arms.json",
+      "runs/v25/r3_oneshot_minimal.json"
+    ],
+    "tau_record_sources": [
+      "r1",
+      "r1b"
+    ],
+    "n_arms": 19,
+    "protocol": "test750 实测臂读数 cross600 (n=600)；无插值配对、无外推结论"
+  },
+  "thresholds": {
+    "saturation": {
+      "dino_c": 0.002,
+      "dino_s": 0.002,
+      "lpips": 0.002,
+      "target_top1": 0.005
+    },
+    "saturation_rule": "连续两点 |Δ| < 阈值 → 该段标注饱和",
+    "top1_task_resolution": 0.00167,
+    "pareto_lpips_max": 0.51
+  },
+  "families": {
+    "prism1_lambda": {
+      "key": "prism1_lambda",
+      "engine": "PRISM-1 (1.5M 单步前馈, 17 ms/img)",
+      "interface": "PRISMCore.transfer(strength)",
+      "knob": "lambda",
+      "direction": "direct",
+      "direction_note": "旋钮值越大编辑越强",
+      "measured_knob_range": [
+        0.75,
+        1.6
+      ],
+      "arms": [
+        {
+          "arm": "M0_prism1_l075",
+          "knob": "lambda",
+          "knob_value": 0.75,
+          "group": "V24-P0-M0M2",
+          "provenance": "V24-P0-M0M2 复用臂",
+          "dino_c": 0.77149,
+          "dino_s": 0.43709,
+          "lpips": 0.48485,
+          "target_top1": 0.37667,
+          "style_affinity": 0.56109,
+          "clip_s": null,
+          "eval_source": "4090 runs/v24/p0_m0_m2.json",
+          "tau_meta": null
+        },
+        {
+          "arm": "M0_prism1_l100",
+          "knob": "lambda",
+          "knob_value": 1.0,
+          "group": "V24-P0-M0M2",
+          "provenance": "V24-P0-M0M2 复用臂",
+          "dino_c": 0.74403,
+          "dino_s": 0.44303,
+          "lpips": 0.50571,
+          "target_top1": 0.44333,
+          "style_affinity": 0.5655,
+          "clip_s": null,
+          "eval_source": "4090 runs/v24/p0_m0_m2.json",
+          "tau_meta": null
+        },
+        {
+          "arm": "A_p1_l130",
+          "knob": "lambda",
+          "knob_value": 1.3,
+          "group": "V25-R1",
+          "provenance": "V25-R1 实跑",
+          "dino_c": 0.70319,
+          "dino_s": 0.45041,
+          "lpips": 0.53385,
+          "target_top1": 0.50167,
+          "style_affinity": 0.57051,
+          "clip_s": null,
+          "eval_source": "4090 runs/v25/r1_inference_ablation.json",
+          "tau_meta": null
+        },
+        {
+          "arm": "A_p1_l160",
+          "knob": "lambda",
+          "knob_value": 1.6,
+          "group": "V25-R1",
+          "provenance": "V25-R1 实跑",
+          "dino_c": 0.65729,
+          "dino_s": 0.45609,
+          "lpips": 0.56328,
+          "target_top1": 0.52833,
+          "style_affinity": 0.57406,
+          "clip_s": null,
+          "eval_source": "4090 runs/v25/r1_inference_ablation.json",
+          "tau_meta": null
+        }
+      ],
+      "segments_natural_knob_order": [
+        {
+          "from_arm": "M0_prism1_l075",
+          "to_arm": "M0_prism1_l100",
+          "knob_range": [
+            0.75,
+            1.0
+          ],
+          "d_knob": 0.25,
+          "d_dino_c": -0.02746,
+          "d_dino_s": 0.00594,
+          "d_lpips": 0.02086,
+          "d_target_top1": 0.06666,
+          "slope_deltaS_over_deltaC": -0.21631,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.21631,
+          "efficiency_dTop1_per_content": 2.42753,
+          "lpips_cost_per_content": 0.75965,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": false
+          }
+        },
+        {
+          "from_arm": "M0_prism1_l100",
+          "to_arm": "A_p1_l130",
+          "knob_range": [
+            1.0,
+            1.3
+          ],
+          "d_knob": 0.3,
+          "d_dino_c": -0.04084,
+          "d_dino_s": 0.00738,
+          "d_lpips": 0.02814,
+          "d_target_top1": 0.05834,
+          "slope_deltaS_over_deltaC": -0.18071,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.18071,
+          "efficiency_dTop1_per_content": 1.4285,
+          "lpips_cost_per_content": 0.68903,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": false
+          }
+        },
+        {
+          "from_arm": "A_p1_l130",
+          "to_arm": "A_p1_l160",
+          "knob_range": [
+            1.3,
+            1.6
+          ],
+          "d_knob": 0.3,
+          "d_dino_c": -0.0459,
+          "d_dino_s": 0.00568,
+          "d_lpips": 0.02943,
+          "d_target_top1": 0.02666,
+          "slope_deltaS_over_deltaC": -0.12375,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.12375,
+          "efficiency_dTop1_per_content": 0.58083,
+          "lpips_cost_per_content": 0.64118,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": false
+          }
+        }
+      ],
+      "monotonicity": {
+        "dino_c": {
+          "overall_direction": "decreasing",
+          "is_monotone": true,
+          "diffs": [
+            -0.02746,
+            -0.04084,
+            -0.0459
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "dino_s": {
+          "overall_direction": "increasing",
+          "is_monotone": true,
+          "diffs": [
+            0.00594,
+            0.00738,
+            0.00568
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "lpips": {
+          "overall_direction": "increasing",
+          "is_monotone": true,
+          "diffs": [
+            0.02086,
+            0.02814,
+            0.02943
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "target_top1": {
+          "overall_direction": "increasing",
+          "is_monotone": true,
+          "diffs": [
+            0.06666,
+            0.05834,
+            0.02666
+          ],
+          "violations": [],
+          "allow_equal": true
+        }
+      },
+      "saturation_zones": [],
+      "saturation_thresholds": {
+        "dino_c": 0.002,
+        "dino_s": 0.002,
+        "lpips": 0.002,
+        "target_top1": 0.005
+      },
+      "most_effective_interval": {
+        "segment": [
+          "M0_prism1_l075",
+          "M0_prism1_l100"
+        ],
+        "knob_range": [
+          0.75,
+          1.0
+        ],
+        "efficiency_dS_per_content": 0.21631,
+        "criterion": "强化方向 ΔDINO-S / |ΔDINO-C| 最大的实测段; 仅统计 |ΔC| ≥ 0.002 的段（双饱和段的效率比值属噪声, 不参与评选）"
+      },
+      "dead_segments": [],
+      "strength_order_arms": [
+        "M0_prism1_l075",
+        "M0_prism1_l100",
+        "A_p1_l130",
+        "A_p1_l160"
+      ],
+      "strength_mapping": {
+        "convention": "strength s∈[0,1]: 0=最弱编辑(内容保持最高实测臂), 1=最强编辑(风格最高实测臂); 内容锚定: s=(C_weakest−C)/span",
+        "anchor_metric": "dino_c",
+        "knots_measured": [
+          {
+            "arm": "M0_prism1_l075",
+            "knob_value": 0.75,
+            "strength": 0.0,
+            "dino_c": 0.77149,
+            "dino_s": 0.43709,
+            "lpips": 0.48485,
+            "target_top1": 0.37667
+          },
+          {
+            "arm": "M0_prism1_l100",
+            "knob_value": 1.0,
+            "strength": 0.24046,
+            "dino_c": 0.74403,
+            "dino_s": 0.44303,
+            "lpips": 0.50571,
+            "target_top1": 0.44333
+          },
+          {
+            "arm": "A_p1_l130",
+            "knob_value": 1.3,
+            "strength": 0.59807,
+            "dino_c": 0.70319,
+            "dino_s": 0.45041,
+            "lpips": 0.53385,
+            "target_top1": 0.50167
+          },
+          {
+            "arm": "A_p1_l160",
+            "knob_value": 1.6,
+            "strength": 1.0,
+            "dino_c": 0.65729,
+            "dino_s": 0.45609,
+            "lpips": 0.56328,
+            "target_top1": 0.52833
+          }
+        ],
+        "segments": [
+          {
+            "strength_range": [
+              0.0,
+              0.24046
+            ],
+            "knob_range": [
+              0.75,
+              1.0
+            ],
+            "evidence_arms": [
+              "M0_prism1_l075",
+              "M0_prism1_l100"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "M0_prism1_l075",
+                "knob_value": 0.75,
+                "strength": 0.0,
+                "dino_c": 0.77149,
+                "dino_s": 0.43709,
+                "lpips": 0.48485,
+                "target_top1": 0.37667
+              },
+              "to": {
+                "arm": "M0_prism1_l100",
+                "knob_value": 1.0,
+                "strength": 0.24046,
+                "dino_c": 0.74403,
+                "dino_s": 0.44303,
+                "lpips": 0.50571,
+                "target_top1": 0.44333
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.24046,
+              0.59807
+            ],
+            "knob_range": [
+              1.0,
+              1.3
+            ],
+            "evidence_arms": [
+              "M0_prism1_l100",
+              "A_p1_l130"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "M0_prism1_l100",
+                "knob_value": 1.0,
+                "strength": 0.24046,
+                "dino_c": 0.74403,
+                "dino_s": 0.44303,
+                "lpips": 0.50571,
+                "target_top1": 0.44333
+              },
+              "to": {
+                "arm": "A_p1_l130",
+                "knob_value": 1.3,
+                "strength": 0.59807,
+                "dino_c": 0.70319,
+                "dino_s": 0.45041,
+                "lpips": 0.53385,
+                "target_top1": 0.50167
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.59807,
+              1.0
+            ],
+            "knob_range": [
+              1.3,
+              1.6
+            ],
+            "evidence_arms": [
+              "A_p1_l130",
+              "A_p1_l160"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "A_p1_l130",
+                "knob_value": 1.3,
+                "strength": 0.59807,
+                "dino_c": 0.70319,
+                "dino_s": 0.45041,
+                "lpips": 0.53385,
+                "target_top1": 0.50167
+              },
+              "to": {
+                "arm": "A_p1_l160",
+                "knob_value": 1.6,
+                "strength": 1.0,
+                "dino_c": 0.65729,
+                "dino_s": 0.45609,
+                "lpips": 0.56328,
+                "target_top1": 0.52833
+              }
+            }
+          }
+        ],
+        "beyond_measured": [
+          {
+            "strength_range": [
+              1.0,
+              1.2
+            ],
+            "knob_at_1.2": 1.74928,
+            "kind": "UNMEASURED_EXTRAPOLATION",
+            "recommended": false,
+            "note": "超出实测旋钮区间，无任何实测臂支持；默认行为应为 clamp 到 s=1 端点"
+          },
+          {
+            "strength_range": [
+              -0.2,
+              0.0
+            ],
+            "knob_at_-0.2": 0.54207,
+            "kind": "UNMEASURED_EXTRAPOLATION",
+            "recommended": false,
+            "note": "超出实测旋钮区间，无任何实测臂支持；默认行为应为 clamp 到 s=0 端点"
+          }
+        ],
+        "clamp_policy": "s<0 → clamp 至最弱实测端点; s>1 → clamp 至最强实测端点（超出区间 UNMEASURED）",
+        "naive_uniform_alternative": {
+          "formula": "knob = kmin + s*(kmax-kmin)",
+          "table": [
+            {
+              "strength": 0.0,
+              "knob_value": 0.75,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "M0_prism1_l075",
+                "M0_prism1_l100"
+              ],
+              "dino_c": 0.77149,
+              "dino_s": 0.43709,
+              "lpips": 0.48485,
+              "target_top1": 0.37667
+            },
+            {
+              "strength": 0.25,
+              "knob_value": 0.9625,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "M0_prism1_l075",
+                "M0_prism1_l100"
+              ],
+              "dino_c": 0.74815,
+              "dino_s": 0.44214,
+              "lpips": 0.50258,
+              "target_top1": 0.43333
+            },
+            {
+              "strength": 0.5,
+              "knob_value": 1.175,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "M0_prism1_l100",
+                "A_p1_l130"
+              ],
+              "dino_c": 0.72021,
+              "dino_s": 0.44733,
+              "lpips": 0.52213,
+              "target_top1": 0.47736
+            },
+            {
+              "strength": 0.75,
+              "knob_value": 1.3875,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "A_p1_l130",
+                "A_p1_l160"
+              ],
+              "dino_c": 0.6898,
+              "dino_s": 0.45207,
+              "lpips": 0.54243,
+              "target_top1": 0.50945
+            },
+            {
+              "strength": 1.0,
+              "knob_value": 1.6,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "A_p1_l130",
+                "A_p1_l160"
+              ],
+              "dino_c": 0.65729,
+              "dino_s": 0.45609,
+              "lpips": 0.56328,
+              "target_top1": 0.52833
+            }
+          ],
+          "descriptive_only": true,
+          "note": "旋钮均匀刻度; 指标为实测曲线分段线性插值, 仅描述性"
+        },
+        "strength_at_0.5": {
+          "strength": 0.5,
+          "knob_value": 1.21773,
+          "bracket_arms": [
+            "M0_prism1_l100",
+            "A_p1_l130"
+          ],
+          "measured": false,
+          "descriptive_only": true
+        },
+        "notes": "λ 为加法风格注入系数；实测区间 [0.75, 1.60]。"
+      }
+    },
+    "d6_tau_min": {
+      "key": "d6_tau_min",
+      "engine": "V20 D6 SLFUNet 分段视界流 (22M, T4 锚 + full CFG, tau_hi=0.78)",
+      "interface": "PRISMCore.transfer(strength)",
+      "knob": "tau_min",
+      "direction": "inverse",
+      "direction_note": "旋钮值越大编辑越弱（与 λ/γ 方向相反; 用户 strength 与旋钮反向）",
+      "measured_knob_range": [
+        0.4,
+        0.72
+      ],
+      "arms": [
+        {
+          "arm": "M0_v20_d6",
+          "knob": "tau_min",
+          "knob_value": 0.4,
+          "group": "V24-P0-M0M2",
+          "provenance": "V24-P0-M0M2 复用臂; 04 文档记录 τ∈[0.40,0.74], 无 tau_record",
+          "dino_c": 0.66879,
+          "dino_s": 0.51073,
+          "lpips": 0.53745,
+          "target_top1": 0.55667,
+          "style_affinity": 0.61445,
+          "clip_s": null,
+          "eval_source": "4090 runs/v24/p0_m0_m2.json",
+          "tau_meta": null
+        },
+        {
+          "arm": "B_d6_t050",
+          "knob": "tau_min",
+          "knob_value": 0.5,
+          "group": "V25-R1",
+          "provenance": "V25-R1 实跑; tau_records",
+          "dino_c": 0.68422,
+          "dino_s": 0.50705,
+          "lpips": 0.53039,
+          "target_top1": 0.55167,
+          "style_affinity": 0.61081,
+          "clip_s": null,
+          "eval_source": "4090 runs/v25/r1_inference_ablation.json",
+          "tau_meta": {
+            "source": "runs/v25 tau_records",
+            "tau_cfg": [
+              0.5,
+              0.78
+            ],
+            "tau_mean": 0.6953,
+            "tau_p50": 0.7299,
+            "tau_max": 0.7675,
+            "frac_at_cap": 0.0,
+            "branches": "full",
+            "gate": "original"
+          }
+        },
+        {
+          "arm": "B_d6_t057",
+          "knob": "tau_min",
+          "knob_value": 0.58,
+          "group": "V25-R1",
+          "provenance": "V25-R1 实跑; tau_records (臂名 057, tau_cfg=0.58, 以记录为准)",
+          "dino_c": 0.69264,
+          "dino_s": 0.50625,
+          "lpips": 0.52594,
+          "target_top1": 0.55,
+          "style_affinity": 0.60963,
+          "clip_s": null,
+          "eval_source": "4090 runs/v25/r1_inference_ablation.json",
+          "tau_meta": {
+            "source": "runs/v25 tau_records",
+            "tau_cfg": [
+              0.58,
+              0.78
+            ],
+            "tau_mean": 0.7195,
+            "tau_p50": 0.7442,
+            "tau_max": 0.7711,
+            "frac_at_cap": 0.0,
+            "branches": "full",
+            "gate": "original"
+          }
+        },
+        {
+          "arm": "B_d6_t066",
+          "knob": "tau_min",
+          "knob_value": 0.66,
+          "group": "V25-R1",
+          "provenance": "V25-R1 实跑; tau_records",
+          "dino_c": 0.70072,
+          "dino_s": 0.50277,
+          "lpips": 0.52135,
+          "target_top1": 0.55,
+          "style_affinity": 0.60713,
+          "clip_s": null,
+          "eval_source": "4090 runs/v25/r1_inference_ablation.json",
+          "tau_meta": {
+            "source": "runs/v25 tau_records",
+            "tau_cfg": [
+              0.66,
+              0.78
+            ],
+            "tau_mean": 0.7437,
+            "tau_p50": 0.7585,
+            "tau_max": 0.7746,
+            "frac_at_cap": 0.0,
+            "branches": "full",
+            "gate": "original"
+          }
+        },
+        {
+          "arm": "B_d6_t070",
+          "knob": "tau_min",
+          "knob_value": 0.7,
+          "group": "V25-R1b",
+          "provenance": "V25-R1b 实跑; tau_records",
+          "dino_c": 0.70417,
+          "dino_s": 0.50068,
+          "lpips": 0.51928,
+          "target_top1": 0.55167,
+          "style_affinity": 0.60572,
+          "clip_s": null,
+          "eval_source": "4090 runs/v25/r1b_unlock_arms.json",
+          "tau_meta": {
+            "source": "runs/v25 tau_records",
+            "tau_cfg": [
+              0.7,
+              0.78
+            ],
+            "tau_mean": 0.7558,
+            "tau_p50": 0.7657,
+            "tau_max": 0.7764,
+            "frac_at_cap": 0.0,
+            "branches": "full",
+            "gate": "original"
+          }
+        },
+        {
+          "arm": "B_d6_t072",
+          "knob": "tau_min",
+          "knob_value": 0.72,
+          "group": "V25-R1b",
+          "provenance": "V25-R1b 实跑; tau_records",
+          "dino_c": 0.70549,
+          "dino_s": 0.49968,
+          "lpips": 0.51842,
+          "target_top1": 0.54833,
+          "style_affinity": 0.60503,
+          "clip_s": null,
+          "eval_source": "4090 runs/v25/r1b_unlock_arms.json",
+          "tau_meta": {
+            "source": "runs/v25 tau_records",
+            "tau_cfg": [
+              0.72,
+              0.78
+            ],
+            "tau_mean": 0.7618,
+            "tau_p50": 0.7693,
+            "tau_max": 0.7773,
+            "frac_at_cap": 0.0,
+            "branches": "full",
+            "gate": "original"
+          }
+        }
+      ],
+      "segments_natural_knob_order": [
+        {
+          "from_arm": "M0_v20_d6",
+          "to_arm": "B_d6_t050",
+          "knob_range": [
+            0.4,
+            0.5
+          ],
+          "d_knob": 0.1,
+          "d_dino_c": 0.01543,
+          "d_dino_s": -0.00368,
+          "d_lpips": -0.00706,
+          "d_target_top1": -0.005,
+          "slope_deltaS_over_deltaC": -0.2385,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.2385,
+          "efficiency_dTop1_per_content": 0.32404,
+          "lpips_cost_per_content": 0.45755,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": false
+          }
+        },
+        {
+          "from_arm": "B_d6_t050",
+          "to_arm": "B_d6_t057",
+          "knob_range": [
+            0.5,
+            0.58
+          ],
+          "d_knob": 0.08,
+          "d_dino_c": 0.00842,
+          "d_dino_s": -0.0008,
+          "d_lpips": -0.00445,
+          "d_target_top1": -0.00167,
+          "slope_deltaS_over_deltaC": -0.09501,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.09501,
+          "efficiency_dTop1_per_content": 0.19834,
+          "lpips_cost_per_content": 0.5285,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": true,
+            "lpips": false,
+            "target_top1": true
+          }
+        },
+        {
+          "from_arm": "B_d6_t057",
+          "to_arm": "B_d6_t066",
+          "knob_range": [
+            0.58,
+            0.66
+          ],
+          "d_knob": 0.08,
+          "d_dino_c": 0.00808,
+          "d_dino_s": -0.00348,
+          "d_lpips": -0.00459,
+          "d_target_top1": 0.0,
+          "slope_deltaS_over_deltaC": -0.43069,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.43069,
+          "efficiency_dTop1_per_content": -0.0,
+          "lpips_cost_per_content": 0.56807,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": true
+          }
+        },
+        {
+          "from_arm": "B_d6_t066",
+          "to_arm": "B_d6_t070",
+          "knob_range": [
+            0.66,
+            0.7
+          ],
+          "d_knob": 0.04,
+          "d_dino_c": 0.00345,
+          "d_dino_s": -0.00209,
+          "d_lpips": -0.00207,
+          "d_target_top1": 0.00167,
+          "slope_deltaS_over_deltaC": -0.6058,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.6058,
+          "efficiency_dTop1_per_content": -0.48406,
+          "lpips_cost_per_content": 0.6,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": true
+          }
+        },
+        {
+          "from_arm": "B_d6_t070",
+          "to_arm": "B_d6_t072",
+          "knob_range": [
+            0.7,
+            0.72
+          ],
+          "d_knob": 0.02,
+          "d_dino_c": 0.00132,
+          "d_dino_s": -0.001,
+          "d_lpips": -0.00086,
+          "d_target_top1": -0.00334,
+          "slope_deltaS_over_deltaC": -0.75758,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.75758,
+          "efficiency_dTop1_per_content": 2.5303,
+          "lpips_cost_per_content": 0.65152,
+          "saturated": {
+            "dino_c": true,
+            "dino_s": true,
+            "lpips": true,
+            "target_top1": true
+          }
+        }
+      ],
+      "monotonicity": {
+        "dino_c": {
+          "overall_direction": "increasing",
+          "is_monotone": true,
+          "diffs": [
+            0.01543,
+            0.00842,
+            0.00808,
+            0.00345,
+            0.00132
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "dino_s": {
+          "overall_direction": "decreasing",
+          "is_monotone": true,
+          "diffs": [
+            -0.00368,
+            -0.0008,
+            -0.00348,
+            -0.00209,
+            -0.001
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "lpips": {
+          "overall_direction": "decreasing",
+          "is_monotone": true,
+          "diffs": [
+            -0.00706,
+            -0.00445,
+            -0.00459,
+            -0.00207,
+            -0.00086
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "target_top1": {
+          "overall_direction": "non-monotone",
+          "is_monotone": false,
+          "diffs": [
+            -0.005,
+            -0.00167,
+            0.0,
+            0.00167,
+            -0.00334
+          ],
+          "violations": [
+            {
+              "segment": [
+                "B_d6_t066",
+                "B_d6_t070"
+              ],
+              "d": 0.00167,
+              "note": "与整体方向(down)相反"
+            }
+          ],
+          "allow_equal": true
+        }
+      },
+      "saturation_zones": [
+        {
+          "segment": [
+            "B_d6_t050",
+            "B_d6_t057"
+          ],
+          "knob_range": [
+            0.5,
+            0.58
+          ],
+          "metric": "dino_s",
+          "abs_delta": 0.0008,
+          "threshold": 0.002
+        },
+        {
+          "segment": [
+            "B_d6_t050",
+            "B_d6_t057"
+          ],
+          "knob_range": [
+            0.5,
+            0.58
+          ],
+          "metric": "target_top1",
+          "abs_delta": 0.00167,
+          "threshold": 0.005
+        },
+        {
+          "segment": [
+            "B_d6_t057",
+            "B_d6_t066"
+          ],
+          "knob_range": [
+            0.58,
+            0.66
+          ],
+          "metric": "target_top1",
+          "abs_delta": 0.0,
+          "threshold": 0.005
+        },
+        {
+          "segment": [
+            "B_d6_t066",
+            "B_d6_t070"
+          ],
+          "knob_range": [
+            0.66,
+            0.7
+          ],
+          "metric": "target_top1",
+          "abs_delta": 0.00167,
+          "threshold": 0.005
+        },
+        {
+          "segment": [
+            "B_d6_t070",
+            "B_d6_t072"
+          ],
+          "knob_range": [
+            0.7,
+            0.72
+          ],
+          "metric": "dino_c",
+          "abs_delta": 0.00132,
+          "threshold": 0.002
+        },
+        {
+          "segment": [
+            "B_d6_t070",
+            "B_d6_t072"
+          ],
+          "knob_range": [
+            0.7,
+            0.72
+          ],
+          "metric": "dino_s",
+          "abs_delta": 0.001,
+          "threshold": 0.002
+        },
+        {
+          "segment": [
+            "B_d6_t070",
+            "B_d6_t072"
+          ],
+          "knob_range": [
+            0.7,
+            0.72
+          ],
+          "metric": "lpips",
+          "abs_delta": 0.00086,
+          "threshold": 0.002
+        },
+        {
+          "segment": [
+            "B_d6_t070",
+            "B_d6_t072"
+          ],
+          "knob_range": [
+            0.7,
+            0.72
+          ],
+          "metric": "target_top1",
+          "abs_delta": 0.00334,
+          "threshold": 0.005
+        }
+      ],
+      "saturation_thresholds": {
+        "dino_c": 0.002,
+        "dino_s": 0.002,
+        "lpips": 0.002,
+        "target_top1": 0.005
+      },
+      "most_effective_interval": {
+        "segment": [
+          "B_d6_t066",
+          "B_d6_t070"
+        ],
+        "knob_range": [
+          0.66,
+          0.7
+        ],
+        "efficiency_dS_per_content": 0.6058,
+        "criterion": "强化方向 ΔDINO-S / |ΔDINO-C| 最大的实测段; 仅统计 |ΔC| ≥ 0.002 的段（双饱和段的效率比值属噪声, 不参与评选）"
+      },
+      "dead_segments": [
+        {
+          "segment": [
+            "B_d6_t050",
+            "B_d6_t057"
+          ],
+          "knob_range": [
+            0.5,
+            0.58
+          ],
+          "d_dino_s_abs": 0.0008,
+          "d_dino_c_abs": 0.00842,
+          "note": "风格增量低于饱和阈值而内容代价高于阈值: 纯内容代价、无风格收益"
+        }
+      ],
+      "strength_order_arms": [
+        "B_d6_t072",
+        "B_d6_t070",
+        "B_d6_t066",
+        "B_d6_t057",
+        "B_d6_t050",
+        "M0_v20_d6"
+      ],
+      "strength_mapping": {
+        "convention": "strength s∈[0,1]: 0=最弱编辑(内容保持最高实测臂), 1=最强编辑(风格最高实测臂); 内容锚定: s=(C_weakest−C)/span",
+        "anchor_metric": "dino_c",
+        "knots_measured": [
+          {
+            "arm": "B_d6_t072",
+            "knob_value": 0.72,
+            "strength": 0.0,
+            "dino_c": 0.70549,
+            "dino_s": 0.49968,
+            "lpips": 0.51842,
+            "target_top1": 0.54833
+          },
+          {
+            "arm": "B_d6_t070",
+            "knob_value": 0.7,
+            "strength": 0.03597,
+            "dino_c": 0.70417,
+            "dino_s": 0.50068,
+            "lpips": 0.51928,
+            "target_top1": 0.55167
+          },
+          {
+            "arm": "B_d6_t066",
+            "knob_value": 0.66,
+            "strength": 0.12997,
+            "dino_c": 0.70072,
+            "dino_s": 0.50277,
+            "lpips": 0.52135,
+            "target_top1": 0.55
+          },
+          {
+            "arm": "B_d6_t057",
+            "knob_value": 0.58,
+            "strength": 0.35014,
+            "dino_c": 0.69264,
+            "dino_s": 0.50625,
+            "lpips": 0.52594,
+            "target_top1": 0.55
+          },
+          {
+            "arm": "B_d6_t050",
+            "knob_value": 0.5,
+            "strength": 0.57956,
+            "dino_c": 0.68422,
+            "dino_s": 0.50705,
+            "lpips": 0.53039,
+            "target_top1": 0.55167
+          },
+          {
+            "arm": "M0_v20_d6",
+            "knob_value": 0.4,
+            "strength": 1.0,
+            "dino_c": 0.66879,
+            "dino_s": 0.51073,
+            "lpips": 0.53745,
+            "target_top1": 0.55667
+          }
+        ],
+        "segments": [
+          {
+            "strength_range": [
+              0.0,
+              0.03597
+            ],
+            "knob_range": [
+              0.72,
+              0.7
+            ],
+            "evidence_arms": [
+              "B_d6_t072",
+              "B_d6_t070"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "B_d6_t072",
+                "knob_value": 0.72,
+                "strength": 0.0,
+                "dino_c": 0.70549,
+                "dino_s": 0.49968,
+                "lpips": 0.51842,
+                "target_top1": 0.54833
+              },
+              "to": {
+                "arm": "B_d6_t070",
+                "knob_value": 0.7,
+                "strength": 0.03597,
+                "dino_c": 0.70417,
+                "dino_s": 0.50068,
+                "lpips": 0.51928,
+                "target_top1": 0.55167
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.03597,
+              0.12997
+            ],
+            "knob_range": [
+              0.7,
+              0.66
+            ],
+            "evidence_arms": [
+              "B_d6_t070",
+              "B_d6_t066"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "B_d6_t070",
+                "knob_value": 0.7,
+                "strength": 0.03597,
+                "dino_c": 0.70417,
+                "dino_s": 0.50068,
+                "lpips": 0.51928,
+                "target_top1": 0.55167
+              },
+              "to": {
+                "arm": "B_d6_t066",
+                "knob_value": 0.66,
+                "strength": 0.12997,
+                "dino_c": 0.70072,
+                "dino_s": 0.50277,
+                "lpips": 0.52135,
+                "target_top1": 0.55
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.12997,
+              0.35014
+            ],
+            "knob_range": [
+              0.66,
+              0.58
+            ],
+            "evidence_arms": [
+              "B_d6_t066",
+              "B_d6_t057"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "B_d6_t066",
+                "knob_value": 0.66,
+                "strength": 0.12997,
+                "dino_c": 0.70072,
+                "dino_s": 0.50277,
+                "lpips": 0.52135,
+                "target_top1": 0.55
+              },
+              "to": {
+                "arm": "B_d6_t057",
+                "knob_value": 0.58,
+                "strength": 0.35014,
+                "dino_c": 0.69264,
+                "dino_s": 0.50625,
+                "lpips": 0.52594,
+                "target_top1": 0.55
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.35014,
+              0.57956
+            ],
+            "knob_range": [
+              0.58,
+              0.5
+            ],
+            "evidence_arms": [
+              "B_d6_t057",
+              "B_d6_t050"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "B_d6_t057",
+                "knob_value": 0.58,
+                "strength": 0.35014,
+                "dino_c": 0.69264,
+                "dino_s": 0.50625,
+                "lpips": 0.52594,
+                "target_top1": 0.55
+              },
+              "to": {
+                "arm": "B_d6_t050",
+                "knob_value": 0.5,
+                "strength": 0.57956,
+                "dino_c": 0.68422,
+                "dino_s": 0.50705,
+                "lpips": 0.53039,
+                "target_top1": 0.55167
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.57956,
+              1.0
+            ],
+            "knob_range": [
+              0.5,
+              0.4
+            ],
+            "evidence_arms": [
+              "B_d6_t050",
+              "M0_v20_d6"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "B_d6_t050",
+                "knob_value": 0.5,
+                "strength": 0.57956,
+                "dino_c": 0.68422,
+                "dino_s": 0.50705,
+                "lpips": 0.53039,
+                "target_top1": 0.55167
+              },
+              "to": {
+                "arm": "M0_v20_d6",
+                "knob_value": 0.4,
+                "strength": 1.0,
+                "dino_c": 0.66879,
+                "dino_s": 0.51073,
+                "lpips": 0.53745,
+                "target_top1": 0.55667
+              }
+            }
+          }
+        ],
+        "beyond_measured": [
+          {
+            "strength_range": [
+              1.0,
+              1.2
+            ],
+            "knob_at_1.2": 0.35243,
+            "kind": "UNMEASURED_EXTRAPOLATION",
+            "recommended": false,
+            "note": "超出实测旋钮区间，无任何实测臂支持；默认行为应为 clamp 到 s=1 端点"
+          },
+          {
+            "strength_range": [
+              -0.2,
+              0.0
+            ],
+            "knob_at_-0.2": 0.8312,
+            "kind": "UNMEASURED_EXTRAPOLATION",
+            "recommended": false,
+            "note": "超出实测旋钮区间，无任何实测臂支持；默认行为应为 clamp 到 s=0 端点"
+          }
+        ],
+        "clamp_policy": "s<0 → clamp 至最弱实测端点; s>1 → clamp 至最强实测端点（超出区间 UNMEASURED）",
+        "naive_uniform_alternative": {
+          "formula": "knob = kmin + s*(kmax-kmin)",
+          "table": [
+            {
+              "strength": 0.0,
+              "knob_value": 0.4,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "M0_v20_d6",
+                "B_d6_t050"
+              ],
+              "dino_c": 0.66879,
+              "dino_s": 0.51073,
+              "lpips": 0.53745,
+              "target_top1": 0.55667
+            },
+            {
+              "strength": 0.25,
+              "knob_value": 0.48,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "M0_v20_d6",
+                "B_d6_t050"
+              ],
+              "dino_c": 0.68113,
+              "dino_s": 0.50779,
+              "lpips": 0.5318,
+              "target_top1": 0.55267
+            },
+            {
+              "strength": 0.5,
+              "knob_value": 0.56,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "B_d6_t050",
+                "B_d6_t057"
+              ],
+              "dino_c": 0.69054,
+              "dino_s": 0.50645,
+              "lpips": 0.52705,
+              "target_top1": 0.55042
+            },
+            {
+              "strength": 0.75,
+              "knob_value": 0.64,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "B_d6_t057",
+                "B_d6_t066"
+              ],
+              "dino_c": 0.6987,
+              "dino_s": 0.50364,
+              "lpips": 0.5225,
+              "target_top1": 0.55
+            },
+            {
+              "strength": 1.0,
+              "knob_value": 0.72,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "B_d6_t070",
+                "B_d6_t072"
+              ],
+              "dino_c": 0.70549,
+              "dino_s": 0.49968,
+              "lpips": 0.51842,
+              "target_top1": 0.54833
+            }
+          ],
+          "descriptive_only": true,
+          "note": "旋钮均匀刻度; 指标为实测曲线分段线性插值, 仅描述性"
+        },
+        "strength_at_0.5": {
+          "strength": 0.5,
+          "knob_value": 0.52774,
+          "bracket_arms": [
+            "B_d6_t057",
+            "B_d6_t050"
+          ],
+          "measured": false,
+          "descriptive_only": true
+        },
+        "notes": "τ_min 为采样带下界（tau_hi 固定 0.78）；实测 τ_min↑ → DINO-C↑（更保守）。"
+      }
+    },
+    "hybrid_gamma": {
+      "key": "hybrid_gamma",
+      "engine": "Hybrid 线性混合 (PRISM-1 λ=1.0 + V20 D6 双模型串行)",
+      "interface": "PRISMCore.transfer(strength)",
+      "knob": "gamma",
+      "direction": "direct",
+      "direction_note": "旋钮值越大编辑越强",
+      "measured_knob_range": [
+        0.25,
+        0.85
+      ],
+      "arms": [
+        {
+          "arm": "M1_lin_g25",
+          "knob": "gamma",
+          "knob_value": 0.25,
+          "group": "V24-P0-M0M2",
+          "provenance": "V24-P0-M0M2 复用臂",
+          "dino_c": 0.75269,
+          "dino_s": 0.44815,
+          "lpips": 0.49879,
+          "target_top1": 0.475,
+          "style_affinity": 0.57053,
+          "clip_s": null,
+          "eval_source": "4090 runs/v24/p0_m0_m2.json",
+          "tau_meta": null
+        },
+        {
+          "arm": "M1_lin_g40",
+          "knob": "gamma",
+          "knob_value": 0.4,
+          "group": "V24-P0-M0M2",
+          "provenance": "V24-P0-M0M2 复用臂",
+          "dino_c": 0.74667,
+          "dino_s": 0.46002,
+          "lpips": 0.5006,
+          "target_top1": 0.50167,
+          "style_affinity": 0.57906,
+          "clip_s": null,
+          "eval_source": "4090 runs/v24/p0_m0_m2.json",
+          "tau_meta": null
+        },
+        {
+          "arm": "M1_lin_g55",
+          "knob": "gamma",
+          "knob_value": 0.55,
+          "group": "V24-P0-M0M2",
+          "provenance": "V24-P0-M0M2 复用臂",
+          "dino_c": 0.73208,
+          "dino_s": 0.47446,
+          "lpips": 0.50528,
+          "target_top1": 0.52667,
+          "style_affinity": 0.58921,
+          "clip_s": null,
+          "eval_source": "4090 runs/v24/p0_m0_m2.json",
+          "tau_meta": null
+        },
+        {
+          "arm": "C_hyb_g70",
+          "knob": "gamma",
+          "knob_value": 0.7,
+          "group": "V25-R1",
+          "provenance": "V25-R1 实跑",
+          "dino_c": 0.71287,
+          "dino_s": 0.4882,
+          "lpips": 0.51261,
+          "target_top1": 0.54167,
+          "style_affinity": 0.59899,
+          "clip_s": null,
+          "eval_source": "4090 runs/v25/r1_inference_ablation.json",
+          "tau_meta": null
+        },
+        {
+          "arm": "C_hyb_g85",
+          "knob": "gamma",
+          "knob_value": 0.85,
+          "group": "V25-R1",
+          "provenance": "V25-R1 实跑",
+          "dino_c": 0.69096,
+          "dino_s": 0.50029,
+          "lpips": 0.52305,
+          "target_top1": 0.56,
+          "style_affinity": 0.60746,
+          "clip_s": null,
+          "eval_source": "4090 runs/v25/r1_inference_ablation.json",
+          "tau_meta": null
+        }
+      ],
+      "segments_natural_knob_order": [
+        {
+          "from_arm": "M1_lin_g25",
+          "to_arm": "M1_lin_g40",
+          "knob_range": [
+            0.25,
+            0.4
+          ],
+          "d_knob": 0.15,
+          "d_dino_c": -0.00602,
+          "d_dino_s": 0.01187,
+          "d_lpips": 0.00181,
+          "d_target_top1": 0.02667,
+          "slope_deltaS_over_deltaC": -1.97176,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 1.97176,
+          "efficiency_dTop1_per_content": 4.43023,
+          "lpips_cost_per_content": 0.30066,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": true,
+            "target_top1": false
+          }
+        },
+        {
+          "from_arm": "M1_lin_g40",
+          "to_arm": "M1_lin_g55",
+          "knob_range": [
+            0.4,
+            0.55
+          ],
+          "d_knob": 0.15,
+          "d_dino_c": -0.01459,
+          "d_dino_s": 0.01444,
+          "d_lpips": 0.00468,
+          "d_target_top1": 0.025,
+          "slope_deltaS_over_deltaC": -0.98972,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.98972,
+          "efficiency_dTop1_per_content": 1.7135,
+          "lpips_cost_per_content": 0.32077,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": false
+          }
+        },
+        {
+          "from_arm": "M1_lin_g55",
+          "to_arm": "C_hyb_g70",
+          "knob_range": [
+            0.55,
+            0.7
+          ],
+          "d_knob": 0.15,
+          "d_dino_c": -0.01921,
+          "d_dino_s": 0.01374,
+          "d_lpips": 0.00733,
+          "d_target_top1": 0.015,
+          "slope_deltaS_over_deltaC": -0.71525,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.71525,
+          "efficiency_dTop1_per_content": 0.78084,
+          "lpips_cost_per_content": 0.38157,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": false
+          }
+        },
+        {
+          "from_arm": "C_hyb_g70",
+          "to_arm": "C_hyb_g85",
+          "knob_range": [
+            0.7,
+            0.85
+          ],
+          "d_knob": 0.15,
+          "d_dino_c": -0.02191,
+          "d_dino_s": 0.01209,
+          "d_lpips": 0.01044,
+          "d_target_top1": 0.01833,
+          "slope_deltaS_over_deltaC": -0.5518,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.5518,
+          "efficiency_dTop1_per_content": 0.8366,
+          "lpips_cost_per_content": 0.47649,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": false
+          }
+        }
+      ],
+      "monotonicity": {
+        "dino_c": {
+          "overall_direction": "decreasing",
+          "is_monotone": true,
+          "diffs": [
+            -0.00602,
+            -0.01459,
+            -0.01921,
+            -0.02191
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "dino_s": {
+          "overall_direction": "increasing",
+          "is_monotone": true,
+          "diffs": [
+            0.01187,
+            0.01444,
+            0.01374,
+            0.01209
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "lpips": {
+          "overall_direction": "increasing",
+          "is_monotone": true,
+          "diffs": [
+            0.00181,
+            0.00468,
+            0.00733,
+            0.01044
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "target_top1": {
+          "overall_direction": "increasing",
+          "is_monotone": true,
+          "diffs": [
+            0.02667,
+            0.025,
+            0.015,
+            0.01833
+          ],
+          "violations": [],
+          "allow_equal": true
+        }
+      },
+      "saturation_zones": [
+        {
+          "segment": [
+            "M1_lin_g25",
+            "M1_lin_g40"
+          ],
+          "knob_range": [
+            0.25,
+            0.4
+          ],
+          "metric": "lpips",
+          "abs_delta": 0.00181,
+          "threshold": 0.002
+        }
+      ],
+      "saturation_thresholds": {
+        "dino_c": 0.002,
+        "dino_s": 0.002,
+        "lpips": 0.002,
+        "target_top1": 0.005
+      },
+      "most_effective_interval": {
+        "segment": [
+          "M1_lin_g25",
+          "M1_lin_g40"
+        ],
+        "knob_range": [
+          0.25,
+          0.4
+        ],
+        "efficiency_dS_per_content": 1.97176,
+        "criterion": "强化方向 ΔDINO-S / |ΔDINO-C| 最大的实测段; 仅统计 |ΔC| ≥ 0.002 的段（双饱和段的效率比值属噪声, 不参与评选）"
+      },
+      "dead_segments": [],
+      "strength_order_arms": [
+        "M1_lin_g25",
+        "M1_lin_g40",
+        "M1_lin_g55",
+        "C_hyb_g70",
+        "C_hyb_g85"
+      ],
+      "strength_mapping": {
+        "convention": "strength s∈[0,1]: 0=最弱编辑(内容保持最高实测臂), 1=最强编辑(风格最高实测臂); 内容锚定: s=(C_weakest−C)/span",
+        "anchor_metric": "dino_c",
+        "knots_measured": [
+          {
+            "arm": "M1_lin_g25",
+            "knob_value": 0.25,
+            "strength": 0.0,
+            "dino_c": 0.75269,
+            "dino_s": 0.44815,
+            "lpips": 0.49879,
+            "target_top1": 0.475
+          },
+          {
+            "arm": "M1_lin_g40",
+            "knob_value": 0.4,
+            "strength": 0.09752,
+            "dino_c": 0.74667,
+            "dino_s": 0.46002,
+            "lpips": 0.5006,
+            "target_top1": 0.50167
+          },
+          {
+            "arm": "M1_lin_g55",
+            "knob_value": 0.55,
+            "strength": 0.33387,
+            "dino_c": 0.73208,
+            "dino_s": 0.47446,
+            "lpips": 0.50528,
+            "target_top1": 0.52667
+          },
+          {
+            "arm": "C_hyb_g70",
+            "knob_value": 0.7,
+            "strength": 0.64507,
+            "dino_c": 0.71287,
+            "dino_s": 0.4882,
+            "lpips": 0.51261,
+            "target_top1": 0.54167
+          },
+          {
+            "arm": "C_hyb_g85",
+            "knob_value": 0.85,
+            "strength": 1.0,
+            "dino_c": 0.69096,
+            "dino_s": 0.50029,
+            "lpips": 0.52305,
+            "target_top1": 0.56
+          }
+        ],
+        "segments": [
+          {
+            "strength_range": [
+              0.0,
+              0.09752
+            ],
+            "knob_range": [
+              0.25,
+              0.4
+            ],
+            "evidence_arms": [
+              "M1_lin_g25",
+              "M1_lin_g40"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "M1_lin_g25",
+                "knob_value": 0.25,
+                "strength": 0.0,
+                "dino_c": 0.75269,
+                "dino_s": 0.44815,
+                "lpips": 0.49879,
+                "target_top1": 0.475
+              },
+              "to": {
+                "arm": "M1_lin_g40",
+                "knob_value": 0.4,
+                "strength": 0.09752,
+                "dino_c": 0.74667,
+                "dino_s": 0.46002,
+                "lpips": 0.5006,
+                "target_top1": 0.50167
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.09752,
+              0.33387
+            ],
+            "knob_range": [
+              0.4,
+              0.55
+            ],
+            "evidence_arms": [
+              "M1_lin_g40",
+              "M1_lin_g55"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "M1_lin_g40",
+                "knob_value": 0.4,
+                "strength": 0.09752,
+                "dino_c": 0.74667,
+                "dino_s": 0.46002,
+                "lpips": 0.5006,
+                "target_top1": 0.50167
+              },
+              "to": {
+                "arm": "M1_lin_g55",
+                "knob_value": 0.55,
+                "strength": 0.33387,
+                "dino_c": 0.73208,
+                "dino_s": 0.47446,
+                "lpips": 0.50528,
+                "target_top1": 0.52667
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.33387,
+              0.64507
+            ],
+            "knob_range": [
+              0.55,
+              0.7
+            ],
+            "evidence_arms": [
+              "M1_lin_g55",
+              "C_hyb_g70"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "M1_lin_g55",
+                "knob_value": 0.55,
+                "strength": 0.33387,
+                "dino_c": 0.73208,
+                "dino_s": 0.47446,
+                "lpips": 0.50528,
+                "target_top1": 0.52667
+              },
+              "to": {
+                "arm": "C_hyb_g70",
+                "knob_value": 0.7,
+                "strength": 0.64507,
+                "dino_c": 0.71287,
+                "dino_s": 0.4882,
+                "lpips": 0.51261,
+                "target_top1": 0.54167
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.64507,
+              1.0
+            ],
+            "knob_range": [
+              0.7,
+              0.85
+            ],
+            "evidence_arms": [
+              "C_hyb_g70",
+              "C_hyb_g85"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "C_hyb_g70",
+                "knob_value": 0.7,
+                "strength": 0.64507,
+                "dino_c": 0.71287,
+                "dino_s": 0.4882,
+                "lpips": 0.51261,
+                "target_top1": 0.54167
+              },
+              "to": {
+                "arm": "C_hyb_g85",
+                "knob_value": 0.85,
+                "strength": 1.0,
+                "dino_c": 0.69096,
+                "dino_s": 0.50029,
+                "lpips": 0.52305,
+                "target_top1": 0.56
+              }
+            }
+          }
+        ],
+        "beyond_measured": [
+          {
+            "strength_range": [
+              1.0,
+              1.2
+            ],
+            "knob_at_1.2": 0.93452,
+            "kind": "UNMEASURED_EXTRAPOLATION",
+            "recommended": false,
+            "note": "超出实测旋钮区间，无任何实测臂支持；默认行为应为 clamp 到 s=1 端点"
+          },
+          {
+            "strength_range": [
+              -0.2,
+              0.0
+            ],
+            "knob_at_-0.2": -0.05763,
+            "kind": "UNMEASURED_EXTRAPOLATION",
+            "recommended": false,
+            "note": "超出实测旋钮区间，无任何实测臂支持；默认行为应为 clamp 到 s=0 端点"
+          }
+        ],
+        "clamp_policy": "s<0 → clamp 至最弱实测端点; s>1 → clamp 至最强实测端点（超出区间 UNMEASURED）",
+        "naive_uniform_alternative": {
+          "formula": "knob = kmin + s*(kmax-kmin)",
+          "table": [
+            {
+              "strength": 0.0,
+              "knob_value": 0.25,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "M1_lin_g25",
+                "M1_lin_g40"
+              ],
+              "dino_c": 0.75269,
+              "dino_s": 0.44815,
+              "lpips": 0.49879,
+              "target_top1": 0.475
+            },
+            {
+              "strength": 0.25,
+              "knob_value": 0.4,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "M1_lin_g25",
+                "M1_lin_g40"
+              ],
+              "dino_c": 0.74667,
+              "dino_s": 0.46002,
+              "lpips": 0.5006,
+              "target_top1": 0.50167
+            },
+            {
+              "strength": 0.5,
+              "knob_value": 0.55,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "M1_lin_g40",
+                "M1_lin_g55"
+              ],
+              "dino_c": 0.73208,
+              "dino_s": 0.47446,
+              "lpips": 0.50528,
+              "target_top1": 0.52667
+            },
+            {
+              "strength": 0.75,
+              "knob_value": 0.7,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "M1_lin_g55",
+                "C_hyb_g70"
+              ],
+              "dino_c": 0.71287,
+              "dino_s": 0.4882,
+              "lpips": 0.51261,
+              "target_top1": 0.54167
+            },
+            {
+              "strength": 1.0,
+              "knob_value": 0.85,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "C_hyb_g70",
+                "C_hyb_g85"
+              ],
+              "dino_c": 0.69096,
+              "dino_s": 0.50029,
+              "lpips": 0.52305,
+              "target_top1": 0.56
+            }
+          ],
+          "descriptive_only": true,
+          "note": "旋钮均匀刻度; 指标为实测曲线分段线性插值, 仅描述性"
+        },
+        "strength_at_0.5": {
+          "strength": 0.5,
+          "knob_value": 0.63008,
+          "bracket_arms": [
+            "M1_lin_g55",
+            "C_hyb_g70"
+          ],
+          "measured": false,
+          "descriptive_only": true
+        },
+        "notes": "γ 为 D6 分支线性混合权重；实测区间 [0.25, 0.85]。V24 复用臂与 V25 实跑臂同族定义（04 文档曲线 C）。"
+      }
+    },
+    "o3_tau0": {
+      "key": "o3_tau0",
+      "engine": "O3 One-Shot Minimal (RGB+ConvNeXt gated, 参考图条件)",
+      "interface": "PRISMRef.transfer(strength)",
+      "knob": "tau0",
+      "direction": "inverse",
+      "direction_note": "旋钮值越大编辑越弱（与 λ/γ 方向相反; 用户 strength 与旋钮反向）",
+      "measured_knob_range": [
+        0.4,
+        0.6
+      ],
+      "arms": [
+        {
+          "arm": "O3_rgb_cnx_gated_t40",
+          "knob": "tau0",
+          "knob_value": 0.4,
+          "group": "V25-R3",
+          "provenance": "V25-R3 tau_curve 实测 (wj=2.3)",
+          "dino_c": 0.54565,
+          "dino_s": 0.53039,
+          "lpips": 0.45429,
+          "target_top1": 0.40833,
+          "style_affinity": 0.62931,
+          "clip_s": null,
+          "eval_source": "3060 runs/v25/r3_oneshot_minimal.json",
+          "tau_meta": {
+            "source": "runs/v25/r3_oneshot_minimal.json tau_curve",
+            "tau0": 0.4,
+            "wj": 2.3
+          }
+        },
+        {
+          "arm": "O3_rgb_cnx_gated_t45",
+          "knob": "tau0",
+          "knob_value": 0.45,
+          "group": "V24-P0-O1O3",
+          "provenance": "runs/v24 复用臂 (r3 JSON reused; JSON 无 tau0/wj 记录)",
+          "dino_c": 0.58453,
+          "dino_s": 0.52449,
+          "lpips": 0.42128,
+          "target_top1": 0.35333,
+          "style_affinity": 0.6234,
+          "clip_s": null,
+          "eval_source": "3060 runs/v24/p0_o1_o3.json",
+          "tau_meta": null
+        },
+        {
+          "arm": "O3_rgb_cnx_gated_t55",
+          "knob": "tau0",
+          "knob_value": 0.55,
+          "group": "V24-P0-O1O3",
+          "provenance": "runs/v24 复用臂 (r3 JSON reused; JSON 无 tau0/wj 记录)",
+          "dino_c": 0.67829,
+          "dino_s": 0.50253,
+          "lpips": 0.34936,
+          "target_top1": 0.24,
+          "style_affinity": 0.60393,
+          "clip_s": null,
+          "eval_source": "3060 runs/v24/p0_o1_o3.json",
+          "tau_meta": null
+        },
+        {
+          "arm": "O3_rgb_cnx_gated_t60",
+          "knob": "tau0",
+          "knob_value": 0.6,
+          "group": "V25-R3",
+          "provenance": "V25-R3 tau_curve 实测 (wj=1.9)",
+          "dino_c": 0.7274,
+          "dino_s": 0.48829,
+          "lpips": 0.31243,
+          "target_top1": 0.20333,
+          "style_affinity": 0.59149,
+          "clip_s": null,
+          "eval_source": "3060 runs/v25/r3_oneshot_minimal.json",
+          "tau_meta": {
+            "source": "runs/v25/r3_oneshot_minimal.json tau_curve",
+            "tau0": 0.6,
+            "wj": 1.9
+          }
+        }
+      ],
+      "segments_natural_knob_order": [
+        {
+          "from_arm": "O3_rgb_cnx_gated_t40",
+          "to_arm": "O3_rgb_cnx_gated_t45",
+          "knob_range": [
+            0.4,
+            0.45
+          ],
+          "d_knob": 0.05,
+          "d_dino_c": 0.03888,
+          "d_dino_s": -0.0059,
+          "d_lpips": -0.03301,
+          "d_target_top1": -0.055,
+          "slope_deltaS_over_deltaC": -0.15175,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.15175,
+          "efficiency_dTop1_per_content": 1.41461,
+          "lpips_cost_per_content": 0.84902,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": false
+          }
+        },
+        {
+          "from_arm": "O3_rgb_cnx_gated_t45",
+          "to_arm": "O3_rgb_cnx_gated_t55",
+          "knob_range": [
+            0.45,
+            0.55
+          ],
+          "d_knob": 0.1,
+          "d_dino_c": 0.09376,
+          "d_dino_s": -0.02196,
+          "d_lpips": -0.07192,
+          "d_target_top1": -0.11333,
+          "slope_deltaS_over_deltaC": -0.23422,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.23422,
+          "efficiency_dTop1_per_content": 1.20872,
+          "lpips_cost_per_content": 0.76706,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": false
+          }
+        },
+        {
+          "from_arm": "O3_rgb_cnx_gated_t55",
+          "to_arm": "O3_rgb_cnx_gated_t60",
+          "knob_range": [
+            0.55,
+            0.6
+          ],
+          "d_knob": 0.05,
+          "d_dino_c": 0.04911,
+          "d_dino_s": -0.01424,
+          "d_lpips": -0.03693,
+          "d_target_top1": -0.03667,
+          "slope_deltaS_over_deltaC": -0.28996,
+          "strength_direction": "strengthening",
+          "efficiency_dS_per_content": 0.28996,
+          "efficiency_dTop1_per_content": 0.74669,
+          "lpips_cost_per_content": 0.75199,
+          "saturated": {
+            "dino_c": false,
+            "dino_s": false,
+            "lpips": false,
+            "target_top1": false
+          }
+        }
+      ],
+      "monotonicity": {
+        "dino_c": {
+          "overall_direction": "increasing",
+          "is_monotone": true,
+          "diffs": [
+            0.03888,
+            0.09376,
+            0.04911
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "dino_s": {
+          "overall_direction": "decreasing",
+          "is_monotone": true,
+          "diffs": [
+            -0.0059,
+            -0.02196,
+            -0.01424
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "lpips": {
+          "overall_direction": "decreasing",
+          "is_monotone": true,
+          "diffs": [
+            -0.03301,
+            -0.07192,
+            -0.03693
+          ],
+          "violations": [],
+          "allow_equal": true
+        },
+        "target_top1": {
+          "overall_direction": "decreasing",
+          "is_monotone": true,
+          "diffs": [
+            -0.055,
+            -0.11333,
+            -0.03667
+          ],
+          "violations": [],
+          "allow_equal": true
+        }
+      },
+      "saturation_zones": [],
+      "saturation_thresholds": {
+        "dino_c": 0.002,
+        "dino_s": 0.002,
+        "lpips": 0.002,
+        "target_top1": 0.005
+      },
+      "most_effective_interval": {
+        "segment": [
+          "O3_rgb_cnx_gated_t55",
+          "O3_rgb_cnx_gated_t60"
+        ],
+        "knob_range": [
+          0.55,
+          0.6
+        ],
+        "efficiency_dS_per_content": 0.28996,
+        "criterion": "强化方向 ΔDINO-S / |ΔDINO-C| 最大的实测段; 仅统计 |ΔC| ≥ 0.002 的段（双饱和段的效率比值属噪声, 不参与评选）"
+      },
+      "dead_segments": [],
+      "strength_order_arms": [
+        "O3_rgb_cnx_gated_t60",
+        "O3_rgb_cnx_gated_t55",
+        "O3_rgb_cnx_gated_t45",
+        "O3_rgb_cnx_gated_t40"
+      ],
+      "strength_mapping": {
+        "convention": "strength s∈[0,1]: 0=最弱编辑(内容保持最高实测臂), 1=最强编辑(风格最高实测臂); 内容锚定: s=(C_weakest−C)/span",
+        "anchor_metric": "dino_c",
+        "knots_measured": [
+          {
+            "arm": "O3_rgb_cnx_gated_t60",
+            "knob_value": 0.6,
+            "strength": 0.0,
+            "dino_c": 0.7274,
+            "dino_s": 0.48829,
+            "lpips": 0.31243,
+            "target_top1": 0.20333
+          },
+          {
+            "arm": "O3_rgb_cnx_gated_t55",
+            "knob_value": 0.55,
+            "strength": 0.27021,
+            "dino_c": 0.67829,
+            "dino_s": 0.50253,
+            "lpips": 0.34936,
+            "target_top1": 0.24
+          },
+          {
+            "arm": "O3_rgb_cnx_gated_t45",
+            "knob_value": 0.45,
+            "strength": 0.78608,
+            "dino_c": 0.58453,
+            "dino_s": 0.52449,
+            "lpips": 0.42128,
+            "target_top1": 0.35333
+          },
+          {
+            "arm": "O3_rgb_cnx_gated_t40",
+            "knob_value": 0.4,
+            "strength": 1.0,
+            "dino_c": 0.54565,
+            "dino_s": 0.53039,
+            "lpips": 0.45429,
+            "target_top1": 0.40833
+          }
+        ],
+        "segments": [
+          {
+            "strength_range": [
+              0.0,
+              0.27021
+            ],
+            "knob_range": [
+              0.6,
+              0.55
+            ],
+            "evidence_arms": [
+              "O3_rgb_cnx_gated_t60",
+              "O3_rgb_cnx_gated_t55"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "O3_rgb_cnx_gated_t60",
+                "knob_value": 0.6,
+                "strength": 0.0,
+                "dino_c": 0.7274,
+                "dino_s": 0.48829,
+                "lpips": 0.31243,
+                "target_top1": 0.20333
+              },
+              "to": {
+                "arm": "O3_rgb_cnx_gated_t55",
+                "knob_value": 0.55,
+                "strength": 0.27021,
+                "dino_c": 0.67829,
+                "dino_s": 0.50253,
+                "lpips": 0.34936,
+                "target_top1": 0.24
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.27021,
+              0.78608
+            ],
+            "knob_range": [
+              0.55,
+              0.45
+            ],
+            "evidence_arms": [
+              "O3_rgb_cnx_gated_t55",
+              "O3_rgb_cnx_gated_t45"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "O3_rgb_cnx_gated_t55",
+                "knob_value": 0.55,
+                "strength": 0.27021,
+                "dino_c": 0.67829,
+                "dino_s": 0.50253,
+                "lpips": 0.34936,
+                "target_top1": 0.24
+              },
+              "to": {
+                "arm": "O3_rgb_cnx_gated_t45",
+                "knob_value": 0.45,
+                "strength": 0.78608,
+                "dino_c": 0.58453,
+                "dino_s": 0.52449,
+                "lpips": 0.42128,
+                "target_top1": 0.35333
+              }
+            }
+          },
+          {
+            "strength_range": [
+              0.78608,
+              1.0
+            ],
+            "knob_range": [
+              0.45,
+              0.4
+            ],
+            "evidence_arms": [
+              "O3_rgb_cnx_gated_t45",
+              "O3_rgb_cnx_gated_t40"
+            ],
+            "kind": "interpolation_measured",
+            "descriptive_only": false,
+            "endpoint_metrics": {
+              "from": {
+                "arm": "O3_rgb_cnx_gated_t45",
+                "knob_value": 0.45,
+                "strength": 0.78608,
+                "dino_c": 0.58453,
+                "dino_s": 0.52449,
+                "lpips": 0.42128,
+                "target_top1": 0.35333
+              },
+              "to": {
+                "arm": "O3_rgb_cnx_gated_t40",
+                "knob_value": 0.4,
+                "strength": 1.0,
+                "dino_c": 0.54565,
+                "dino_s": 0.53039,
+                "lpips": 0.45429,
+                "target_top1": 0.40833
+              }
+            }
+          }
+        ],
+        "beyond_measured": [
+          {
+            "strength_range": [
+              1.0,
+              1.2
+            ],
+            "knob_at_1.2": 0.35325,
+            "kind": "UNMEASURED_EXTRAPOLATION",
+            "recommended": false,
+            "note": "超出实测旋钮区间，无任何实测臂支持；默认行为应为 clamp 到 s=1 端点"
+          },
+          {
+            "strength_range": [
+              -0.2,
+              0.0
+            ],
+            "knob_at_-0.2": 0.63701,
+            "kind": "UNMEASURED_EXTRAPOLATION",
+            "recommended": false,
+            "note": "超出实测旋钮区间，无任何实测臂支持；默认行为应为 clamp 到 s=0 端点"
+          }
+        ],
+        "clamp_policy": "s<0 → clamp 至最弱实测端点; s>1 → clamp 至最强实测端点（超出区间 UNMEASURED）",
+        "naive_uniform_alternative": {
+          "formula": "knob = kmin + s*(kmax-kmin)",
+          "table": [
+            {
+              "strength": 0.0,
+              "knob_value": 0.4,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "O3_rgb_cnx_gated_t40",
+                "O3_rgb_cnx_gated_t45"
+              ],
+              "dino_c": 0.54565,
+              "dino_s": 0.53039,
+              "lpips": 0.45429,
+              "target_top1": 0.40833
+            },
+            {
+              "strength": 0.25,
+              "knob_value": 0.45,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "O3_rgb_cnx_gated_t40",
+                "O3_rgb_cnx_gated_t45"
+              ],
+              "dino_c": 0.58453,
+              "dino_s": 0.52449,
+              "lpips": 0.42128,
+              "target_top1": 0.35333
+            },
+            {
+              "strength": 0.5,
+              "knob_value": 0.5,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "O3_rgb_cnx_gated_t45",
+                "O3_rgb_cnx_gated_t55"
+              ],
+              "dino_c": 0.63141,
+              "dino_s": 0.51351,
+              "lpips": 0.38532,
+              "target_top1": 0.29667
+            },
+            {
+              "strength": 0.75,
+              "knob_value": 0.55,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "O3_rgb_cnx_gated_t45",
+                "O3_rgb_cnx_gated_t55"
+              ],
+              "dino_c": 0.67829,
+              "dino_s": 0.50253,
+              "lpips": 0.34936,
+              "target_top1": 0.24
+            },
+            {
+              "strength": 1.0,
+              "knob_value": 0.6,
+              "descriptive_only": true,
+              "bracket_arms": [
+                "O3_rgb_cnx_gated_t55",
+                "O3_rgb_cnx_gated_t60"
+              ],
+              "dino_c": 0.7274,
+              "dino_s": 0.48829,
+              "lpips": 0.31243,
+              "target_top1": 0.20333
+            }
+          ],
+          "descriptive_only": true,
+          "note": "旋钮均匀刻度; 指标为实测曲线分段线性插值, 仅描述性"
+        },
+        "strength_at_0.5": {
+          "strength": 0.5,
+          "knob_value": 0.50546,
+          "bracket_arms": [
+            "O3_rgb_cnx_gated_t55",
+            "O3_rgb_cnx_gated_t45"
+          ],
+          "measured": false,
+          "descriptive_only": true
+        },
+        "notes": "τ0↑ → DINO-C↑（更保守）。混杂: t40/t60 的内容权重 wj 不同（2.3 vs 1.9），曲线非纯 τ0 单变量。"
+      }
+    }
+  },
+  "pareto": {
+    "cs": {
+      "axes": {
+        "x": "dino_c",
+        "y": "dino_s",
+        "direction": "both maximize"
+      },
+      "noise_eps": {
+        "x": 0.0005,
+        "y": 0.0005
+      },
+      "domination_rule": "严格支配（点估计, 两维 >= 且至少一维严格 >）; dominated_details 中 sub_noise_margin=true 表示该支配关系的某一维边距低于噪声阈值（信息标注, 不改变前沿定义）",
+      "per_family": {
+        "prism1_lambda": {
+          "frontier": [
+            "M0_prism1_l075",
+            "M0_prism1_l100",
+            "A_p1_l130",
+            "A_p1_l160"
+          ],
+          "dominated": [],
+          "dominated_details": {},
+          "frontier_lpips_feasible": [
+            "M0_prism1_l075",
+            "M0_prism1_l100"
+          ]
+        },
+        "d6_tau_min": {
+          "frontier": [
+            "M0_v20_d6",
+            "B_d6_t050",
+            "B_d6_t057",
+            "B_d6_t066",
+            "B_d6_t070",
+            "B_d6_t072"
+          ],
+          "dominated": [],
+          "dominated_details": {},
+          "frontier_lpips_feasible": []
+        },
+        "hybrid_gamma": {
+          "frontier": [
+            "M1_lin_g25",
+            "M1_lin_g40",
+            "M1_lin_g55",
+            "C_hyb_g70",
+            "C_hyb_g85"
+          ],
+          "dominated": [],
+          "dominated_details": {},
+          "frontier_lpips_feasible": [
+            "M1_lin_g25",
+            "M1_lin_g40",
+            "M1_lin_g55"
+          ]
+        },
+        "o3_tau0": {
+          "frontier": [
+            "O3_rgb_cnx_gated_t40",
+            "O3_rgb_cnx_gated_t45",
+            "O3_rgb_cnx_gated_t55",
+            "O3_rgb_cnx_gated_t60"
+          ],
+          "dominated": [],
+          "dominated_details": {},
+          "frontier_lpips_feasible": [
+            "O3_rgb_cnx_gated_t40",
+            "O3_rgb_cnx_gated_t45",
+            "O3_rgb_cnx_gated_t55",
+            "O3_rgb_cnx_gated_t60"
+          ]
+        }
+      },
+      "global": {
+        "frontier": [
+          "B_d6_t050",
+          "B_d6_t057",
+          "B_d6_t066",
+          "B_d6_t070",
+          "B_d6_t072",
+          "M0_prism1_l075",
+          "M0_v20_d6",
+          "M1_lin_g25",
+          "M1_lin_g40",
+          "M1_lin_g55",
+          "O3_rgb_cnx_gated_t40",
+          "O3_rgb_cnx_gated_t45",
+          "O3_rgb_cnx_gated_t60"
+        ],
+        "dominated": [
+          "A_p1_l130",
+          "A_p1_l160",
+          "C_hyb_g70",
+          "C_hyb_g85",
+          "M0_prism1_l100",
+          "O3_rgb_cnx_gated_t55"
+        ],
+        "dominated_details": {
+          "M0_prism1_l100": [
+            {
+              "arm": "M1_lin_g25",
+              "d_x": 0.00866,
+              "d_y": 0.00512,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g40",
+              "d_x": 0.00264,
+              "d_y": 0.01699,
+              "sub_noise_margin": false
+            }
+          ],
+          "A_p1_l130": [
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.00098,
+              "d_y": 0.05027,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t072",
+              "d_x": 0.0023,
+              "d_y": 0.04927,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g40",
+              "d_x": 0.04348,
+              "d_y": 0.00961,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g55",
+              "d_x": 0.02889,
+              "d_y": 0.02405,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g70",
+              "d_x": 0.00968,
+              "d_y": 0.03779,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "O3_rgb_cnx_gated_t60",
+              "d_x": 0.02421,
+              "d_y": 0.03788,
+              "sub_noise_margin": false
+            }
+          ],
+          "A_p1_l160": [
+            {
+              "arm": "M0_v20_d6",
+              "d_x": 0.0115,
+              "d_y": 0.05464,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t050",
+              "d_x": 0.02693,
+              "d_y": 0.05096,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t057",
+              "d_x": 0.03535,
+              "d_y": 0.05016,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t066",
+              "d_x": 0.04343,
+              "d_y": 0.04668,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.04688,
+              "d_y": 0.04459,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t072",
+              "d_x": 0.0482,
+              "d_y": 0.04359,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g40",
+              "d_x": 0.08938,
+              "d_y": 0.00393,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g55",
+              "d_x": 0.07479,
+              "d_y": 0.01837,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g70",
+              "d_x": 0.05558,
+              "d_y": 0.03211,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g85",
+              "d_x": 0.03367,
+              "d_y": 0.0442,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "O3_rgb_cnx_gated_t55",
+              "d_x": 0.021,
+              "d_y": 0.04644,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "O3_rgb_cnx_gated_t60",
+              "d_x": 0.07011,
+              "d_y": 0.0322,
+              "sub_noise_margin": false
+            }
+          ],
+          "C_hyb_g70": [
+            {
+              "arm": "O3_rgb_cnx_gated_t60",
+              "d_x": 0.01453,
+              "d_y": 9e-05,
+              "sub_noise_margin": true
+            }
+          ],
+          "C_hyb_g85": [
+            {
+              "arm": "B_d6_t057",
+              "d_x": 0.00168,
+              "d_y": 0.00596,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t066",
+              "d_x": 0.00976,
+              "d_y": 0.00248,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.01321,
+              "d_y": 0.00039,
+              "sub_noise_margin": true
+            }
+          ],
+          "O3_rgb_cnx_gated_t55": [
+            {
+              "arm": "B_d6_t050",
+              "d_x": 0.00593,
+              "d_y": 0.00452,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t057",
+              "d_x": 0.01435,
+              "d_y": 0.00372,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t066",
+              "d_x": 0.02243,
+              "d_y": 0.00024,
+              "sub_noise_margin": true
+            }
+          ]
+        },
+        "frontier_members_violating_lpips": [
+          "B_d6_t050",
+          "B_d6_t057",
+          "B_d6_t066",
+          "B_d6_t070",
+          "B_d6_t072",
+          "M0_v20_d6"
+        ]
+      },
+      "global_lpips_constraint": {
+        "lpips_max": 0.51,
+        "feasible_arms": [
+          "M0_prism1_l075",
+          "M0_prism1_l100",
+          "M1_lin_g25",
+          "M1_lin_g40",
+          "M1_lin_g55",
+          "O3_rgb_cnx_gated_t40",
+          "O3_rgb_cnx_gated_t45",
+          "O3_rgb_cnx_gated_t55",
+          "O3_rgb_cnx_gated_t60"
+        ],
+        "frontier_of_feasible_subset": [
+          "M0_prism1_l075",
+          "M1_lin_g25",
+          "M1_lin_g40",
+          "M1_lin_g55",
+          "O3_rgb_cnx_gated_t40",
+          "O3_rgb_cnx_gated_t45",
+          "O3_rgb_cnx_gated_t55",
+          "O3_rgb_cnx_gated_t60"
+        ]
+      }
+    },
+    "ctop1": {
+      "axes": {
+        "x": "dino_c",
+        "y": "target_top1",
+        "direction": "both maximize"
+      },
+      "noise_eps": {
+        "x": 0.0005,
+        "y": 0.005
+      },
+      "domination_rule": "严格支配（点估计, 两维 >= 且至少一维严格 >）; dominated_details 中 sub_noise_margin=true 表示该支配关系的某一维边距低于噪声阈值（信息标注, 不改变前沿定义）",
+      "per_family": {
+        "prism1_lambda": {
+          "frontier": [
+            "M0_prism1_l075",
+            "M0_prism1_l100",
+            "A_p1_l130",
+            "A_p1_l160"
+          ],
+          "dominated": [],
+          "dominated_details": {},
+          "frontier_lpips_feasible": [
+            "M0_prism1_l075",
+            "M0_prism1_l100"
+          ]
+        },
+        "d6_tau_min": {
+          "frontier": [
+            "M0_v20_d6",
+            "B_d6_t070",
+            "B_d6_t072"
+          ],
+          "dominated": [
+            "B_d6_t050",
+            "B_d6_t057",
+            "B_d6_t066"
+          ],
+          "dominated_details": {
+            "B_d6_t050": [
+              {
+                "arm": "B_d6_t070",
+                "d_x": 0.01995,
+                "d_y": 0.0,
+                "sub_noise_margin": true
+              }
+            ],
+            "B_d6_t057": [
+              {
+                "arm": "B_d6_t066",
+                "d_x": 0.00808,
+                "d_y": 0.0,
+                "sub_noise_margin": true
+              },
+              {
+                "arm": "B_d6_t070",
+                "d_x": 0.01153,
+                "d_y": 0.00167,
+                "sub_noise_margin": true
+              }
+            ],
+            "B_d6_t066": [
+              {
+                "arm": "B_d6_t070",
+                "d_x": 0.00345,
+                "d_y": 0.00167,
+                "sub_noise_margin": true
+              }
+            ]
+          },
+          "frontier_lpips_feasible": []
+        },
+        "hybrid_gamma": {
+          "frontier": [
+            "M1_lin_g25",
+            "M1_lin_g40",
+            "M1_lin_g55",
+            "C_hyb_g70",
+            "C_hyb_g85"
+          ],
+          "dominated": [],
+          "dominated_details": {},
+          "frontier_lpips_feasible": [
+            "M1_lin_g25",
+            "M1_lin_g40",
+            "M1_lin_g55"
+          ]
+        },
+        "o3_tau0": {
+          "frontier": [
+            "O3_rgb_cnx_gated_t40",
+            "O3_rgb_cnx_gated_t45",
+            "O3_rgb_cnx_gated_t55",
+            "O3_rgb_cnx_gated_t60"
+          ],
+          "dominated": [],
+          "dominated_details": {},
+          "frontier_lpips_feasible": [
+            "O3_rgb_cnx_gated_t40",
+            "O3_rgb_cnx_gated_t45",
+            "O3_rgb_cnx_gated_t55",
+            "O3_rgb_cnx_gated_t60"
+          ]
+        }
+      },
+      "global": {
+        "frontier": [
+          "B_d6_t070",
+          "B_d6_t072",
+          "C_hyb_g70",
+          "C_hyb_g85",
+          "M0_prism1_l075",
+          "M1_lin_g25",
+          "M1_lin_g40",
+          "M1_lin_g55"
+        ],
+        "dominated": [
+          "A_p1_l130",
+          "A_p1_l160",
+          "B_d6_t050",
+          "B_d6_t057",
+          "B_d6_t066",
+          "M0_prism1_l100",
+          "M0_v20_d6",
+          "O3_rgb_cnx_gated_t40",
+          "O3_rgb_cnx_gated_t45",
+          "O3_rgb_cnx_gated_t55",
+          "O3_rgb_cnx_gated_t60"
+        ],
+        "dominated_details": {
+          "M0_prism1_l100": [
+            {
+              "arm": "M1_lin_g25",
+              "d_x": 0.00866,
+              "d_y": 0.03167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g40",
+              "d_x": 0.00264,
+              "d_y": 0.05834,
+              "sub_noise_margin": false
+            }
+          ],
+          "A_p1_l130": [
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.00098,
+              "d_y": 0.05,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t072",
+              "d_x": 0.0023,
+              "d_y": 0.04666,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g40",
+              "d_x": 0.04348,
+              "d_y": 0.0,
+              "sub_noise_margin": true
+            },
+            {
+              "arm": "M1_lin_g55",
+              "d_x": 0.02889,
+              "d_y": 0.025,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g70",
+              "d_x": 0.00968,
+              "d_y": 0.04,
+              "sub_noise_margin": false
+            }
+          ],
+          "A_p1_l160": [
+            {
+              "arm": "M0_v20_d6",
+              "d_x": 0.0115,
+              "d_y": 0.02834,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t050",
+              "d_x": 0.02693,
+              "d_y": 0.02334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t057",
+              "d_x": 0.03535,
+              "d_y": 0.02167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t066",
+              "d_x": 0.04343,
+              "d_y": 0.02167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.04688,
+              "d_y": 0.02334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t072",
+              "d_x": 0.0482,
+              "d_y": 0.02,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g70",
+              "d_x": 0.05558,
+              "d_y": 0.01334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g85",
+              "d_x": 0.03367,
+              "d_y": 0.03167,
+              "sub_noise_margin": false
+            }
+          ],
+          "M0_v20_d6": [
+            {
+              "arm": "C_hyb_g85",
+              "d_x": 0.02217,
+              "d_y": 0.00333,
+              "sub_noise_margin": true
+            }
+          ],
+          "B_d6_t050": [
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.01995,
+              "d_y": 0.0,
+              "sub_noise_margin": true
+            },
+            {
+              "arm": "C_hyb_g85",
+              "d_x": 0.00674,
+              "d_y": 0.00833,
+              "sub_noise_margin": false
+            }
+          ],
+          "B_d6_t057": [
+            {
+              "arm": "B_d6_t066",
+              "d_x": 0.00808,
+              "d_y": 0.0,
+              "sub_noise_margin": true
+            },
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.01153,
+              "d_y": 0.00167,
+              "sub_noise_margin": true
+            }
+          ],
+          "B_d6_t066": [
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.00345,
+              "d_y": 0.00167,
+              "sub_noise_margin": true
+            }
+          ],
+          "O3_rgb_cnx_gated_t40": [
+            {
+              "arm": "M0_prism1_l100",
+              "d_x": 0.19838,
+              "d_y": 0.035,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "A_p1_l130",
+              "d_x": 0.15754,
+              "d_y": 0.09334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "A_p1_l160",
+              "d_x": 0.11164,
+              "d_y": 0.12,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M0_v20_d6",
+              "d_x": 0.12314,
+              "d_y": 0.14834,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t050",
+              "d_x": 0.13857,
+              "d_y": 0.14334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t057",
+              "d_x": 0.14699,
+              "d_y": 0.14167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t066",
+              "d_x": 0.15507,
+              "d_y": 0.14167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.15852,
+              "d_y": 0.14334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t072",
+              "d_x": 0.15984,
+              "d_y": 0.14,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g25",
+              "d_x": 0.20704,
+              "d_y": 0.06667,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g40",
+              "d_x": 0.20102,
+              "d_y": 0.09334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g55",
+              "d_x": 0.18643,
+              "d_y": 0.11834,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g70",
+              "d_x": 0.16722,
+              "d_y": 0.13334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g85",
+              "d_x": 0.14531,
+              "d_y": 0.15167,
+              "sub_noise_margin": false
+            }
+          ],
+          "O3_rgb_cnx_gated_t45": [
+            {
+              "arm": "M0_prism1_l075",
+              "d_x": 0.18696,
+              "d_y": 0.02334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M0_prism1_l100",
+              "d_x": 0.1595,
+              "d_y": 0.09,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "A_p1_l130",
+              "d_x": 0.11866,
+              "d_y": 0.14834,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "A_p1_l160",
+              "d_x": 0.07276,
+              "d_y": 0.175,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M0_v20_d6",
+              "d_x": 0.08426,
+              "d_y": 0.20334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t050",
+              "d_x": 0.09969,
+              "d_y": 0.19834,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t057",
+              "d_x": 0.10811,
+              "d_y": 0.19667,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t066",
+              "d_x": 0.11619,
+              "d_y": 0.19667,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.11964,
+              "d_y": 0.19834,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t072",
+              "d_x": 0.12096,
+              "d_y": 0.195,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g25",
+              "d_x": 0.16816,
+              "d_y": 0.12167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g40",
+              "d_x": 0.16214,
+              "d_y": 0.14834,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g55",
+              "d_x": 0.14755,
+              "d_y": 0.17334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g70",
+              "d_x": 0.12834,
+              "d_y": 0.18834,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g85",
+              "d_x": 0.10643,
+              "d_y": 0.20667,
+              "sub_noise_margin": false
+            }
+          ],
+          "O3_rgb_cnx_gated_t55": [
+            {
+              "arm": "M0_prism1_l075",
+              "d_x": 0.0932,
+              "d_y": 0.13667,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M0_prism1_l100",
+              "d_x": 0.06574,
+              "d_y": 0.20333,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "A_p1_l130",
+              "d_x": 0.0249,
+              "d_y": 0.26167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t050",
+              "d_x": 0.00593,
+              "d_y": 0.31167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t057",
+              "d_x": 0.01435,
+              "d_y": 0.31,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t066",
+              "d_x": 0.02243,
+              "d_y": 0.31,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t070",
+              "d_x": 0.02588,
+              "d_y": 0.31167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "B_d6_t072",
+              "d_x": 0.0272,
+              "d_y": 0.30833,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g25",
+              "d_x": 0.0744,
+              "d_y": 0.235,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g40",
+              "d_x": 0.06838,
+              "d_y": 0.26167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g55",
+              "d_x": 0.05379,
+              "d_y": 0.28667,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g70",
+              "d_x": 0.03458,
+              "d_y": 0.30167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "C_hyb_g85",
+              "d_x": 0.01267,
+              "d_y": 0.32,
+              "sub_noise_margin": false
+            }
+          ],
+          "O3_rgb_cnx_gated_t60": [
+            {
+              "arm": "M0_prism1_l075",
+              "d_x": 0.04409,
+              "d_y": 0.17334,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M0_prism1_l100",
+              "d_x": 0.01663,
+              "d_y": 0.24,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g25",
+              "d_x": 0.02529,
+              "d_y": 0.27167,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g40",
+              "d_x": 0.01927,
+              "d_y": 0.29834,
+              "sub_noise_margin": false
+            },
+            {
+              "arm": "M1_lin_g55",
+              "d_x": 0.00468,
+              "d_y": 0.32334,
+              "sub_noise_margin": false
+            }
+          ]
+        },
+        "frontier_members_violating_lpips": [
+          "B_d6_t070",
+          "B_d6_t072",
+          "C_hyb_g70",
+          "C_hyb_g85"
+        ]
+      },
+      "global_lpips_constraint": {
+        "lpips_max": 0.51,
+        "feasible_arms": [
+          "M0_prism1_l075",
+          "M0_prism1_l100",
+          "M1_lin_g25",
+          "M1_lin_g40",
+          "M1_lin_g55",
+          "O3_rgb_cnx_gated_t40",
+          "O3_rgb_cnx_gated_t45",
+          "O3_rgb_cnx_gated_t55",
+          "O3_rgb_cnx_gated_t60"
+        ],
+        "frontier_of_feasible_subset": [
+          "M0_prism1_l075",
+          "M1_lin_g25",
+          "M1_lin_g40",
+          "M1_lin_g55"
+        ]
+      }
+    }
+  },
+  "figure_files": [
+    "docs/v25/audits/a04_strength_pareto.svg",
+    "docs/v25/audits/a04_strength_pareto.png"
+  ],
+  "report_file": "docs/v25/audits/a04_strength_report.md",
+  "descriptive_only_policy": "实测点之间的任何插值读数一律标 descriptive_only=true；strength 映射 s∈[0,1] 为实测臂端点间插值；s<0/s>1 为 UNMEASURED（clamp）。"
+}
