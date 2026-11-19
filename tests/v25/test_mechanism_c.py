@@ -64,6 +64,7 @@ from exp.v25.reference_teacher_v2 import (
     TEACHER_W_GRID,
     TEACHER_W_TAGS,
     ReferenceFeatureCache,
+    batch_cached_ref_tokens,
     build_teacher_pairs,
     bytes_sha,
     dual_metric_filter,
@@ -404,6 +405,102 @@ def test_ref_feature_cache_default_dir_matches_spec():
     from exp.v25.reference_teacher_v2 import DEFAULT_REF_CACHE_DIR
     assert DEFAULT_REF_CACHE_DIR.as_posix().endswith("runs/v25/cache/ref_feats")
     assert ReferenceFeatureCache(None).dir == DEFAULT_REF_CACHE_DIR
+
+
+def test_batch_cached_ref_tokens_3060_regression():
+    """3060 R2 现场 bug 回归: 单样本 2D (N,C) 缓存条目 cat 后不得把 batch 折进 spatial 维.
+
+    现场错误链: 12×(256,384) 沿 dim 0 cat → (3072,384) →
+    torch.gather(ref_s3, 1, best_j.unsqueeze(-1).expand_as(ref_s3)) 处
+    RuntimeError expand(LongTensor[12,256,1], size=[3072,384]).
+    修复后 batch_cached_ref_tokens 必须重建 o2 契约形状 (B,256,384), 且崩溃点走通.
+    """
+    B, N, C = 12, 256, 384
+    stale_items = [  # 3060 现场修复前的历史条目: tokens 2D (N,C) (批维丢失), pal 2D (1,27)
+        {"tokens": {"s2": torch.randn(N, 192), "s3": torch.randn(N, C)}, "pal": torch.randn(1, 27)}
+        for _ in range(B)
+    ]
+    toks, pal = batch_cached_ref_tokens(stale_items)
+    assert toks["s3"].shape == (B, N, C), "batch 维必须恢复 (不得折进 spatial 维)"
+    assert toks["s2"].shape == (B, N, 192)
+    assert pal.shape == (B, 27)
+    # 现场崩溃点: gather 的 expand_as 必须走通
+    best_j = torch.randint(0, N, (B, N))
+    matched = torch.gather(toks["s3"], 1, best_j.unsqueeze(-1).expand_as(toks["s3"]))
+    assert matched.shape == (B, N, C)
+
+
+def test_batch_cached_ref_tokens_new_format_and_mixed_entries():
+    """新条目 (单样本 extract_tokens 输出, 3D 带批维) 原样; 新旧条目混排与 pal 1D 兼容."""
+    B, N, C = 4, 8, 6
+    new_items = [{"tokens": {"s3": torch.randn(1, N, C)}, "pal": torch.randn(1, 27)} for _ in range(B)]
+    toks, pal = batch_cached_ref_tokens(new_items)
+    assert toks["s3"].shape == (B, N, C) and pal.shape == (B, 27)
+    mixed = new_items[:2] + [{"tokens": {"s3": torch.randn(N, C)}, "pal": torch.randn(27)} for _ in range(2)]
+    toks2, pal2 = batch_cached_ref_tokens(mixed)
+    assert toks2["s3"].shape == (B, N, C) and pal2.shape == (B, 27)
+    with pytest.raises(AssertionError, match="条目为空"):
+        batch_cached_ref_tokens([])
+    with pytest.raises(AssertionError, match="维度异常"):
+        batch_cached_ref_tokens([{"tokens": {"s3": torch.randn(N)}, "pal": torch.randn(1, 27)}])
+
+
+def test_teacher_first_batch_math_shapes_with_mock_tokens():
+    """教师优化首个 batch 的全链形状回归 (mock tokens/projs, 零 checkpoint 加载).
+
+    复现 build_teacher_pairs 预匹配 + 单步损失的每一步张量契约 (与 o2 逐式对照):
+    历史缓存条目 (2D) → batch_cached_ref_tokens → DINO 局部匹配 gather/expand →
+    SWD/Oklab/局部项/content_w·l_content/l_reg → backward. 3060 现场崩溃发生在
+    gather/expand; 本测试保证修复后整链在 (B,N,C) 契约下走通.
+    """
+    from exp.v20.submode_patchswd import sliced_wasserstein_1d
+
+    B, steps_hw = 12, (16, 16)
+    g = torch.Generator().manual_seed(21)
+    # 参考侧: 历史 2D 缓存条目 (现场格式) → 批量重建
+    items = [{"tokens": {"rgb": torch.randn(1024, 27), "s1": torch.randn(1024, 96),
+                         "s2": torch.randn(1024, 192), "s3": torch.randn(256, 384)},
+              "pal": torch.randn(27)} for _ in range(B)]
+    toks_ref, pal_ref = batch_cached_ref_tokens(items)
+    assert toks_ref["s3"].shape == (B, 256, 384) and pal_ref.shape == (B, 27)
+
+    # 内容/输出侧: 批量 extract_tokens 输出契约 (B,N,C)
+    mk = lambda n, c: torch.randn(B, n, c, generator=g)
+    toks_src = {"rgb": mk(1024, 27), "s1": mk(1024, 96), "s2": mk(1024, 192), "s3": mk(256, 384)}
+    toks_hat = {"rgb": mk(1024, 27), "s1": mk(1024, 96), "s2": mk(1024, 192), "s3": mk(256, 384)}
+
+    # Q/K 灰度 DINO 局部语义匹配 (与 o2 同式)
+    d16_c = torch.randn(B, 384, *steps_hw, generator=g)
+    d16_r = torch.randn(B, 384, *steps_hw, generator=g)
+    dc = F.normalize(d16_c.flatten(2).transpose(1, 2), dim=-1)
+    dr = F.normalize(d16_r.flatten(2).transpose(1, 2), dim=-1)
+    sim = torch.bmm(dc, dr.transpose(1, 2))
+    best_sim, best_j = sim.max(dim=-1)
+    gate_loc = (best_sim > 0.25).float().unsqueeze(-1)
+    ref_s3 = toks_ref["s3"]
+    matched_s3_n = F.normalize(torch.gather(ref_s3, 1, best_j.unsqueeze(-1).expand_as(ref_s3)), dim=-1)
+
+    # 单步损失 (content_w=1.2 档)
+    z_opt = torch.randn(B, 4, 64, 64, generator=g).requires_grad_(True)
+    projs = {k: F.normalize(torch.randn(c, 8, generator=g), dim=0)
+             for k, c in (("rgb", 27), ("s1", 96), ("s2", 192), ("s3", 384))}
+    l_swd = (
+        1.0 * sliced_wasserstein_1d(toks_hat["rgb"], toks_ref["rgb"], projs["rgb"])
+        + 0.35 * sliced_wasserstein_1d(toks_hat["s1"], toks_ref["s1"], projs["s1"])
+        + 0.45 * sliced_wasserstein_1d(toks_hat["s2"], toks_ref["s2"], projs["s2"])
+        + 0.55 * sliced_wasserstein_1d(toks_hat["s3"], toks_ref["s3"], projs["s3"])
+    ).mean()
+    l_pal = F.smooth_l1_loss(torch.randn(B, 27, generator=g), pal_ref)
+    l_loc = ((1.0 - (F.normalize(toks_hat["s3"], dim=-1) * matched_s3_n).sum(-1, keepdim=True)) * gate_loc).mean()
+    l_content = 0.5 * (
+        (1.0 - (F.normalize(toks_hat["s2"], dim=-1) * F.normalize(toks_src["s2"], dim=-1)).sum(-1)).mean()
+        + (1.0 - (F.normalize(toks_hat["s3"], dim=-1) * F.normalize(toks_src["s3"], dim=-1)).sum(-1)).mean()
+    )
+    l_reg = z_opt.square().mean()
+    loss = (l_swd + 0.7 * l_pal + 0.25 * l_loc) + 1.2 * l_content + 0.15 * l_reg
+    assert torch.isfinite(loss)
+    loss.backward()
+    assert z_opt.grad is not None and bool(torch.isfinite(z_opt.grad).all())
 
 
 # ---------------- 验收 6: 双指标筛选边界 ----------------

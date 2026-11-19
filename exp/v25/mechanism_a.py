@@ -44,7 +44,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from . import EVAL_SEED, OUT, ROOT, STYLES, sanitize_cuda_env, save_json, seed_all, tier_micro_accum, utc
+from . import EVAL_SEED, OUT, ROOT, STYLES, autocast, sanitize_cuda_env, save_json, seed_all, tier_micro_accum, utc
 from src.utils import decode_s10, load_s10_decoder
 from exp.v18 import tasks_and_sources
 from exp.v19.fiber_duality import StyleFiberEncoder, build_or_load_v19_foundation
@@ -63,7 +63,8 @@ EDGE_WEIGHT = 0.05       # A3: 高内容边缘连续性惩罚系数 (计划未�
 EDGE_QUANTILE = 0.75     # 高内容边缘掩码分位数
 A_SEED = 20263510        # 全臂同 seed → 共享采样顺序 (r2_train_ablation 工程规范)
 CAL_SEED = 20263511      # λ_c 标定探针子集 seed
-A_MICRO = 16             # 02 计划 A.3: micro=16 (S10 可微解码重载)
+GRAD_DECODE_CHUNK = 4    # 带梯度 S10 解码分块 (峰值显存控制; 数学等价)
+A_MICRO = 8              # 02 计划 A.3 micro=16 因 4090 OOM 降为 8: S10 可微解码带梯度的安全包络为 6-8 (V19 routed_student 实测); effective batch 由 tier_micro_accum 的 accum 补齐
 A_EFFECTIVE = 64         # 有效 batch = 16×4 accum
 TRAIN_GAMMA_DEFAULT = 0.55  # Round 1 曲线 C 工作点 (DINO-C ≈ 0.7321 ≈ 0.73 水位)
 # 注: 评测侧 solver 一律取 TeacherSpec.solver (唯一权威), 不在本地重复定义 D6H_SOLVER
@@ -312,25 +313,37 @@ def _style_moment_pair(f_a: torch.Tensor, f_b: torch.Tensor) -> torch.Tensor:
 
 
 def cnx_mid_content_loss(cnx, dec_grad, dec_ref, z_hat: torch.Tensor, z_ref: torch.Tensor) -> torch.Tensor:
-    """可微 S10 解码 z_hat → ConvNeXt stage2(32²)/stage4(16²) 空间 cos vs 解码 z_ref (v23 C1 同式)."""
-    rgb_hat = decode_s10(dec_grad, z_hat, batch=len(z_hat), dtype=torch.bfloat16,
-                         enable_grad=True, output_cpu=False)
+    """可微 S10 解码 z_hat → ConvNeXt stage2(32²)/stage4(16²) 空间 cos vs 解码 z_ref (v23 C1 同式).
+
+    显存: 带梯度解码按 GRAD_DECODE_CHUNK=4 分块 (4090 OOM 修复, 数学等价 —— 块内均值再平均)."""
     with torch.no_grad():
         rgb_ref = decode_s10(dec_ref, z_ref, batch=len(z_ref), output_cpu=False)
         f32_r, f16_r = extract_convnext_mid_spatial(cnx, rgb_ref)
-    f32_h, f16_h = extract_convnext_mid_spatial(cnx, rgb_hat)
-    return 0.5 * _mid_cos_pair(f32_h, f32_r) + 0.5 * _mid_cos_pair(f16_h, f16_r)
+    terms = []
+    for c0 in range(0, len(z_hat), GRAD_DECODE_CHUNK):
+        zc = z_hat[c0:c0 + GRAD_DECODE_CHUNK]
+        rgb_hat = decode_s10(dec_grad, zc, batch=GRAD_DECODE_CHUNK, dtype=torch.bfloat16,
+                             enable_grad=True, output_cpu=False)
+        f32_h, f16_h = extract_convnext_mid_spatial(cnx, rgb_hat)
+        terms.append(0.5 * _mid_cos_pair(f32_h, f32_r[c0:c0 + GRAD_DECODE_CHUNK])
+                     + 0.5 * _mid_cos_pair(f16_h, f16_r[c0:c0 + GRAD_DECODE_CHUNK]))
+    return torch.stack(terms).mean()
 
 
 def cnx_style_loss(cnx, dec_grad, dec_ref, z_out: torch.Tensor, z_style_ref: torch.Tensor) -> torch.Tensor:
-    """L_cnx-style: dec(z_out) 与 dec(z_D6^tr) 的多尺度通道矩匹配 (风格分布对齐)."""
-    rgb_out = decode_s10(dec_grad, z_out, batch=len(z_out), dtype=torch.bfloat16,
-                         enable_grad=True, output_cpu=False)
+    """L_cnx-style: dec(z_out) 与 dec(z_D6^tr) 的多尺度通道矩匹配 (风格分布对齐; 分块解码同上)."""
     with torch.no_grad():
         rgb_ref = decode_s10(dec_ref, z_style_ref, batch=len(z_style_ref), output_cpu=False)
         f32_r, f16_r = extract_convnext_mid_spatial(cnx, rgb_ref)
-    f32_o, f16_o = extract_convnext_mid_spatial(cnx, rgb_out)
-    return 0.5 * _style_moment_pair(f32_o, f32_r) + 0.5 * _style_moment_pair(f16_o, f16_r)
+    terms = []
+    for c0 in range(0, len(z_out), GRAD_DECODE_CHUNK):
+        zc = z_out[c0:c0 + GRAD_DECODE_CHUNK]
+        rgb_out = decode_s10(dec_grad, zc, batch=GRAD_DECODE_CHUNK, dtype=torch.bfloat16,
+                             enable_grad=True, output_cpu=False)
+        f32_o, f16_o = extract_convnext_mid_spatial(cnx, rgb_out)
+        terms.append(0.5 * _style_moment_pair(f32_o, f32_r[c0:c0 + GRAD_DECODE_CHUNK])
+                     + 0.5 * _style_moment_pair(f16_o, f16_r[c0:c0 + GRAD_DECODE_CHUNK]))
+    return torch.stack(terms).mean()
 
 
 @torch.no_grad()
@@ -407,9 +420,10 @@ def _gate_train_step(net, cond, gamma, lam_c, cnx, dec_g, dec_t, arm, decode_sub
     M16 = net(c64, dz, chord)
     z_out = apply_gate(z_p1, dz, M16, gamma)
     sub = slice(0, min(decode_sub, len(idx)))
-    loss_st = cnx_style_loss(cnx, dec_g, dec_t, z_out[sub], z_d6[sub])
-    loss_mid = cnx_mid_content_loss(cnx, dec_g, dec_t, z_out[sub], z0[sub])
-    loss = loss_st + lam_c * loss_mid
+    with autocast(device_t.type):  # ConvNeXt/S10 激活 bf16 —— fp32 双前向是 4090 OOM 主因
+        loss_st = cnx_style_loss(cnx, dec_g, dec_t, z_out[sub], z_d6[sub])
+        loss_mid = cnx_mid_content_loss(cnx, dec_g, dec_t, z_out[sub], z0[sub])
+    loss = loss_st.float() + lam_c * loss_mid.float()
     if arm == "A3_smooth":
         loss = loss + TV_WEIGHT * tv_loss(M16) + EDGE_WEIGHT * edge_continuity_loss(M16, c64)
     return loss, float(loss_st.detach()), float(loss_mid.detach())
@@ -440,7 +454,7 @@ def train_gate_arm(cond: dict, arm: str, gamma: float, lam_c: float, cnx, dec_g,
         opt.zero_grad(set_to_none=True)
         for _ in range(accum):
             loss, st_v_s, mid_v_s = _gate_train_step(net, cond, gamma, lam_c, cnx, dec_g,
-                                                     dec_t, arm, decode_sub=8, device_t=device_t,
+                                                     dec_t, arm, decode_sub=4, device_t=device_t,
                                                      cpu_gen=cpu_gen)
             (loss / accum).backward()
             st_v += st_v_s / accum
@@ -503,6 +517,8 @@ def calibrate_lambda_c(cond: dict, gamma: float, cnx, dec_g, dec_t, device: str,
                                 updates=cal_updates, save=False)
         cos = _probe_mid_cos(net, cond, probe_idx, gamma, cnx, dec_t, device_t)
         measured[lam] = cos
+        del net
+        torch.cuda.empty_cache()
         print(f"[MechA cal] λ_c={lam}: probe mid-cos={cos:.5f} (Δ={cos-target_cos:+.5f})", flush=True)
     picked = min(candidates, key=lambda lam: abs(measured[lam] - target_cos))
     info = dict(gamma=gamma, target_mid_cos=round(target_cos, 6),

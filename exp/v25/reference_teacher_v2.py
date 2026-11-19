@@ -19,6 +19,10 @@ agent2.md §二 G2-2):
 3. 参考特征缓存: ReferenceFeatureCache 按参考图 latent 内容 sha256 键控 (文件存 --cache-dir,
    默认 runs/v25/cache/ref_feats/), 同一参考重复编码直接命中 —— C3 需要同一批 (idx_c, idx_r)
    在三档权重下各优化一次, 参考侧 (SWD tokens + Oklab 27D) 只算一次.
+   形状契约 (3060 R2 现场修复): 缓存条目必须带批维 (tokens (1,N,C) / pal (1,C)) —— o2 的
+   批量 extract_tokens 输出即 (B,N,C), 单样本落盘丢批维会使 cat 把 batch 折进 spatial 维
+   (12×(256,384)→(3072,384)) 并在 expand_as 处崩溃; batch_cached_ref_tokens 在读取侧归一
+   (兼容历史 2D 条目, 无需清缓存盘).
 
 无画派 ID: 优化目标、筛选条件与损失全程不读取任何画派标签/类重心 (与 o2 铁律一致);
 唯一例外是 **诊断报告** ``family_retention_report`` (A03 审计维度"不同风格的保留比例"),
@@ -125,6 +129,35 @@ class ReferenceFeatureCache:
 
     def stats(self) -> dict:
         return {"hits": self.hits, "misses": self.misses, "dir": self.dir.as_posix()}
+
+
+def batch_cached_ref_tokens(items: list[dict], device: str = "cpu") -> tuple[dict, torch.Tensor]:
+    """缓存条目列表 → 批量参考特征 (o2 形状契约: tokens (B,N,C), pal (B,C)).
+
+    3060 R2 现场修复 (expand([B,256,1] → [3072,384]) RuntimeError): 单样本缓存条目若为
+    2D (N,C) (batch 维丢失), cat 沿 dim 0 会把 batch 折进 spatial 维 —— 12×(256,384) →
+    (3072,384), 使 best_j.unsqueeze(-1).expand_as(ref_s3) 崩溃. o2 的批量 extract_tokens
+    输出本就是 (B,N,C) 3D; 本归一保证 cat 前每个条目都带批维:
+      - tokens: 2D (N,C) (历史条目) → unsqueeze(0); 3D (1,N,C) (新条目) 原样;
+      - pal:    1D (C,) (历史条目) → unsqueeze(0); 2D (1,C) (新条目) 原样.
+    """
+    assert len(items) > 0, "缓存条目为空"
+    toks = {}
+    for k in items[0]["tokens"]:
+        parts = []
+        for it in items:
+            t = it["tokens"][k]
+            assert t.dim() in (2, 3), f"token '{k}' 维度异常: {tuple(t.shape)} (应为 (N,C) 或 (1,N,C))"
+            parts.append(t.unsqueeze(0) if t.dim() == 2 else t)
+        toks[k] = torch.cat(parts, 0).to(device).float()
+    pal_parts = []
+    for it in items:
+        t = it["pal"]
+        assert t.dim() in (1, 2), f"pal 维度异常: {tuple(t.shape)} (应为 (C,) 或 (1,C))"
+        pal_parts.append(t.unsqueeze(0) if t.dim() == 1 else t)
+    pal = torch.cat(pal_parts, 0).to(device).float()
+    assert pal.dim() == 2, f"pal_ref 形状契约破坏: {tuple(pal.shape)} (应为 (B,C))"
+    return toks, pal
 
 
 # ---------------------------------------------------------- 纯函数指标 ----
@@ -304,18 +337,20 @@ def build_teacher_pairs(
             rgb_src = decode_s10(dec, z_src, batch=batch, output_cpu=False)
             rgb_ref = decode_s10(dec, z_ref, batch=batch, output_cpu=False)
             toks_src = swd_ext.extract_tokens(rgb_src)
-            # 参考侧编码走内容 sha 缓存: 同参考重复编码直接命中 (B02 验收 5)
-            toks_ref_list, pal_ref_list = [], []
+            # 参考侧编码走内容 sha 缓存: 同参考重复编码直接命中 (B02 验收 5).
+            # 形状契约: 单样本 extract_tokens 输出 (1,N,C) 整体落盘 (带批维) —— o2 的批量
+            # extract_tokens 输出即 (B,N,C); cat 由 batch_cached_ref_tokens 归一 (兼容历史 2D 条目).
+            items = []
             for b in range(len(ir)):
                 key = tensor_sha(z_ref[b].cpu())
-                item = cache.get_or_encode(key, lambda: {
-                    "tokens": {k: v[b].cpu().half() for k, v in swd_ext.extract_tokens(rgb_ref[b:b + 1]).items()},
-                    "pal": extract_color_fiber_27d(rgb_ref[b:b + 1]).cpu().half(),
-                })
-                toks_ref_list.append({k: v.to(device).float() for k, v in item["tokens"].items()})
-                pal_ref_list.append(item["pal"].to(device).float())
-            toks_ref = {k: torch.cat([t[k] for t in toks_ref_list], 0) for k in toks_ref_list[0]}
-            pal_ref = torch.cat(pal_ref_list, 0)
+                items.append(cache.get_or_encode(
+                    key,
+                    lambda b=b: {  # 默认参数绑定 b (防闭包晚绑定)
+                        "tokens": {k: t.cpu().half() for k, t in swd_ext.extract_tokens(rgb_ref[b:b + 1]).items()},
+                        "pal": extract_color_fiber_27d(rgb_ref[b:b + 1]).cpu().half(),
+                    },
+                ))
+            toks_ref, pal_ref = batch_cached_ref_tokens(items, device)
 
             # Q/K 灰度 DINO 局部语义匹配 (与 o2 同式: 内容 DINO 布局 ↔ 参考 DINO 布局,
             # 再 gather 参考 ConvNeXt s3 token; d16_all 在内存直接索引, 无需缓存)
@@ -325,6 +360,8 @@ def build_teacher_pairs(
             best_sim, best_j = sim.max(dim=-1)
             gate_loc = (best_sim > 0.25).float().unsqueeze(-1)
             ref_s3 = toks_ref["s3"]
+            assert ref_s3.dim() == 3 and ref_s3.shape[0] == len(ir), \
+                f"toks_ref['s3'] 形状契约破坏: {tuple(ref_s3.shape)} (应为 (B,256,384))"
             matched_s3_n = F.normalize(torch.gather(ref_s3, 1, best_j.unsqueeze(-1).expand_as(ref_s3)), dim=-1)
 
         z_opt = z_src.clone().detach().requires_grad_(True)
