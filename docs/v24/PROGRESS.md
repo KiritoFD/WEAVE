@@ -99,3 +99,8 @@
 - **`M6_flow4`（1.06M 4步确定性残差流，仅 1200 对 `z_p1→z_d6`）判负**：`DINO-C=0.6608 / DINO-S=0.4227 / LPIPS=0.6392 / Top1=22.67%`（91.7% 坍缩至 Impressionism）。根因：训练期用 3×3 平滑近似 `z0` 与测试 `n2c_z.pt` 存在分布 gap，且 1.06M 无 `dino_16`/无 CFG 确定性 ODE 在 OOD 起点发散。
 - **`O4D_teacher`（1.57M 1步残差 + 2000 对无标签教师对）判负**：`DINO-C=0.9383 / DINO-S=0.3821 / Top1=1.00%`（因无标签教师优化 `mid_cos=0.965` 变动太保守，1 步网络退化为近恒等输出）。
 - **3060 后台在跑**：`O3_label_free`（使用 2000 对零标签真参考配对训练 `O3_rgb_cnx_gated`）已达 `800/1200` 步，结果将自动写入 `I:\Latent_Style\WEAVE\runs\v24\p2_o3_labelfree.json`。
+
+- **`O3_label_free` 收官结果（3060 完成）**：
+  - `O3_label_free_t45`: `DINO-C=0.6769 / DINO-S=0.4666 / LPIPS=0.3954 / Top1=11.33%`
+  - `O3_label_free_t55`: `DINO-C=0.7300 / DINO-S=0.4575 / LPIPS=0.3435 / Top1=8.83%`
+  - 对比 `O3_rgb_cnx_gated_t55`（同 `DINO-C 0.678` 下 `DINO-S 0.5025, Top1 24.00%`），完全无标签保守教师 (`mid_cos=0.965`) 使 `DINO-S` 降低 `0.036`、`Top-1` 降低 `12.7pp`，精确量化了去掉五分类先验与教师保守性带来的代价。

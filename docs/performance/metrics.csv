@@ -448,3 +448,5 @@ M6_flow4_s070,V24-P2-M6,q2a_oracle_cross600,S10,True,False,600,0.4111,0.62478,0.
 M6_flow4_s085,V24-P2-M6,q2a_oracle_cross600,S10,True,False,600,0.40105,0.59657,0.68476,,0.52417,0.205,,,,,,0.96667,,,,,,4090 runs/v24/p2_m6.json
 O4D_teacher_s100,V24-P2-O4D,q2a_oracle_cross600,S10,True,False,600,0.3821,0.9383,0.1143,,0.511,0.01,,,,,,0.96667,,,,,,4090 runs/v24_o4dt_eval.log
 O4D_teacher_s135,V24-P2-O4D,q2a_oracle_cross600,S10,True,False,600,0.3856,0.9279,0.1329,,0.5128,0.0117,,,,,,0.96667,,,,,,4090 runs/v24_o4dt_eval.log
+O3_label_free_t45,V24-P2-O3LF,q2a_oracle_cross600,S10,True,False,600,0.46661,0.67687,0.39539,,0.57349,0.11333,,,,,,0.96667,,,,,,3060 runs/v24/p2_o3_labelfree.json
+O3_label_free_t55,V24-P2-O3LF,q2a_oracle_cross600,S10,True,False,600,0.45753,0.72997,0.34347,,0.56559,0.08833,,,,,,0.96667,,,,,,3060 runs/v24/p2_o3_labelfree.json
