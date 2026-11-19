@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")  # 必须在 import torch 之前 → 纯 CPU
 os.environ.setdefault("OMP_NUM_THREADS", "2")
@@ -492,15 +493,138 @@ def test_teacher_first_batch_math_shapes_with_mock_tokens():
     ).mean()
     l_pal = F.smooth_l1_loss(torch.randn(B, 27, generator=g), pal_ref)
     l_loc = ((1.0 - (F.normalize(toks_hat["s3"], dim=-1) * matched_s3_n).sum(-1, keepdim=True)) * gate_loc).mean()
+    src_n2 = F.normalize(toks_src["s2"], dim=-1)
+    src_n3 = F.normalize(toks_src["s3"], dim=-1)
     l_content = 0.5 * (
-        (1.0 - (F.normalize(toks_hat["s2"], dim=-1) * F.normalize(toks_src["s2"], dim=-1)).sum(-1)).mean()
-        + (1.0 - (F.normalize(toks_hat["s3"], dim=-1) * F.normalize(toks_src["s3"], dim=-1)).sum(-1)).mean()
+        (1.0 - (F.normalize(toks_hat["s2"], dim=-1) * src_n2).sum(-1)).mean()
+        + (1.0 - (F.normalize(toks_hat["s3"], dim=-1) * src_n3).sum(-1)).mean()
     )
     l_reg = z_opt.square().mean()
     loss = (l_swd + 0.7 * l_pal + 0.25 * l_loc) + 1.2 * l_content + 0.15 * l_reg
     assert torch.isfinite(loss)
     loss.backward()
     assert z_opt.grad is not None and bool(torch.isfinite(z_opt.grad).all())
+
+
+# ---------------- 3060 提速修复: 缓存 v2 命中快路径 / 批量 miss 编码 ----------------
+
+class _MockDecoder:
+    """decode_s10 的 mock 模型 (记录调用次数与行数; 行内可区分输出; 形状契约 (B,3,H*8,W*8))."""
+
+    def __init__(self):
+        self.calls = 0
+        self.rows = 0
+
+    def __call__(self, z):
+        self.calls += 1
+        self.rows += z.shape[0]
+        h = z.shape[-1] * 8
+        base = torch.arange(z.shape[0], dtype=torch.float32).view(-1, 1, 1, 1)
+        return (base + 0.5).expand(z.shape[0], 3, h, h)
+
+
+class _MockExtractor:
+    """extract_tokens 的 mock (确定性: 同一行输入 → 同一 tokens, 与批大小/批内位置无关)."""
+
+    KEYS = ("rgb", "s1", "s2", "s3")
+
+    def __init__(self):
+        self.calls = 0
+        self.rows = 0
+
+    def extract_tokens(self, rgb):
+        self.calls += 1
+        self.rows += rgb.shape[0]
+        B = rgb.shape[0]
+        row_key = rgb.reshape(B, -1)[:, :1]  # 行内容派生 (decode mock 行内可区分)
+        out = {}
+        for k, (n, c) in (("rgb", (1024, 27)), ("s1", (1024, 96)), ("s2", (1024, 192)), ("s3", (256, 384))):
+            out[k] = torch.arange(n * c, dtype=torch.float32).view(1, n, c) + row_key.view(B, 1, 1)
+        return out
+
+
+def test_collect_cached_features_hit_path_skips_decode():
+    """全命中时零 decode/extract (R2 第 2/3 档前置阶段从 ~5-8s/批 → 缓存盘读)."""
+    from exp.v25.reference_teacher_v2 import CACHE_FMT, collect_cached_features
+    dec, ext = _MockDecoder(), _MockExtractor()
+    with tempfile.TemporaryDirectory() as td:
+        cache = ReferenceFeatureCache(td)
+        z = torch.randn(12, 4, 64, 64)
+        items = collect_cached_features(cache, z, dec, ext, role="r", need_pal=True, device="cpu")
+        assert dec.calls == 1 and ext.calls == 1 and dec.rows == 12
+        assert all(it["fmt"] == CACHE_FMT for it in items)
+        assert all(it["pal"].shape == (1, 27) for it in items)
+        # 第二次收集 (同批 z): 全命中 → 解码器/提取器零调用
+        items2 = collect_cached_features(cache, z, dec, ext, role="r", need_pal=True, device="cpu")
+        assert dec.calls == 1 and ext.calls == 1, "全命中必须跳过 decode/extract"
+        for k in items[0]["tokens"]:
+            assert torch.equal(items[0]["tokens"][k], items2[0]["tokens"][k])
+        # 混合: 4 个新行 → 仅解码缺失子集 (4 行), 已命中行的 tokens 逐位不变
+        z_mix = torch.cat([z[:8], torch.randn(4, 4, 64, 64)])
+        items3 = collect_cached_features(cache, z_mix, dec, ext, role="r", need_pal=True, device="cpu")
+        assert dec.calls == 2 and dec.rows == 16 and ext.calls == 2 and ext.rows == 16
+        for k in items[0]["tokens"]:
+            assert torch.equal(items3[0]["tokens"][k], items[0]["tokens"][k])
+
+
+def test_collect_cached_features_slicing_is_bitwise_batched_extract():
+    """切片落盘 (1,N,C) → batch_cached_ref_tokens cat 重建 = 逐位等于整批 extract 输出
+    (o2 的批量 extract_tokens 契约; 这是"缓存命中值与重算逐位一致"的结构保证)."""
+    B = 6
+    dec, ext = _MockDecoder(), _MockExtractor()
+    rgb = dec(torch.randn(B, 4, 64, 64))
+    full = ext.extract_tokens(rgb)  # 模拟整批 extract_tokens 输出 (o2 同款批量调用)
+    # v2 落盘 = 按样本切片 (1,N,C); cat 重建必须逐位等于原批
+    items = [{"tokens": {k: full[k][b:b + 1].cpu().float() for k in full.keys()},
+              "pal": None, "fmt": 2} for b in range(B)]
+    toks, pal = batch_cached_ref_tokens(items)
+    assert pal is None, "内容侧条目 pal 必须为 None"
+    for k in ext.KEYS:
+        assert toks[k].shape == full[k].shape
+        assert torch.equal(toks[k], full[k]), f"cat(切片) 必须逐位重建整批输出 ({k})"
+
+
+def test_collect_cached_features_roles_and_pal_none():
+    """role="s" 内容侧: pal=None 条目经 batch_cached_ref_tokens 返回 pal=None;
+    "s"/"r" 角色前缀键互不串用 (同一 latent 两命名空间各自编码)."""
+    from exp.v25.reference_teacher_v2 import collect_cached_features
+    dec, ext = _MockDecoder(), _MockExtractor()
+    with tempfile.TemporaryDirectory() as td:
+        cache = ReferenceFeatureCache(td)
+        z = torch.randn(3, 4, 64, 64)
+        toks_s, pal_s = batch_cached_ref_tokens(
+            collect_cached_features(cache, z, dec, ext, role="s", need_pal=False, device="cpu"))
+        assert pal_s is None
+        assert dec.calls == 1
+        batch_cached_ref_tokens(
+            collect_cached_features(cache, z, dec, ext, role="r", need_pal=True, device="cpu"))
+        assert dec.calls == 2, "role 前缀不同 → 必须各自编码 (不得串缓存)"
+
+
+def test_collect_cached_features_stale_v1_entries_reencoded():
+    """v1 缓存条目 (无 fmt 标记) 惰性视为 miss → 重编为 fp32 精确 v2 条目."""
+    from exp.v25.reference_teacher_v2 import CACHE_FMT, collect_cached_features, tensor_sha
+    dec, ext = _MockDecoder(), _MockExtractor()
+    with tempfile.TemporaryDirectory() as td:
+        cache = ReferenceFeatureCache(td)
+        z = torch.randn(2, 4, 64, 64)
+        stale = {"tokens": {"s3": torch.randn(256, 384).half()}, "pal": torch.randn(1, 27).half()}
+        cache.put("r" + tensor_sha(z[0]), stale)  # v1 格式 (无 fmt)
+        items = collect_cached_features(cache, z, dec, ext, role="r", need_pal=True, device="cpu")
+        assert items[0]["fmt"] == CACHE_FMT and items[0]["tokens"]["s3"].dtype == torch.float32
+        assert dec.calls == 1 and dec.rows == 2, "v1 条目必须重编 (含未命中行一起批量解码)"
+
+
+def test_enable_fast_conv_sets_cudnn_benchmark():
+    """--fast 开关: cudnn.benchmark=True (opt-in, 默认关闭 → 与 o2 数值逐位可比)."""
+    from exp.v25.reference_teacher_v2 import enable_fast_conv
+    old = torch.backends.cudnn.benchmark
+    try:
+        assert old is False or old is True
+        enable_fast_conv()
+        assert torch.backends.cudnn.benchmark is True
+    finally:
+        torch.backends.cudnn.benchmark = old
 
 
 # ---------------- 验收 6: 双指标筛选边界 ----------------
