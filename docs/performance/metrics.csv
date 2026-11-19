@@ -375,3 +375,8 @@ HiC_JPk_csj65_t4,V23-P1G-HiContent,q2a_oracle_cross600,S10,False,False,600,0.532
 HiC_JPk_lowwp_t4,V23-P1G-HiContent,q2a_oracle_cross600,S10,False,False,600,0.52039,0.66072,0.55068,,0.62074,0.525,,,,,,0.96667,,,,,,4090 runs/v23/p1_high_dinoc_frontier.json
 HiC_V20_csj65_t4,V23-P1G-HiContent,q2a_oracle_cross600,S10,False,False,600,0.52367,0.65038,0.54962,,0.62226,0.55,,,,,,0.96667,,,,,,4090 runs/v23/p1_high_dinoc_frontier.json
 HiC_V20_lowwp_t4,V23-P1G-HiContent,q2a_oracle_cross600,S10,False,False,600,0.50992,0.67961,0.53519,,0.61137,0.51833,,,,,,0.96667,,,,,,4090 runs/v23/p1_high_dinoc_frontier.json
+D62_csj65_t4,V23-P1H-Content62,q2a_oracle_cross600,S10,False,False,600,0.52419,0.65125,0.55919,,0.62161,0.49667,,,,,,0.96667,,,,,,4090 runs/v23/p1_dinoc62.json
+D62_lowwp_t4,V23-P1H-Content62,q2a_oracle_cross600,S10,False,False,600,0.51161,0.67727,0.54618,,0.61243,0.455,,,,,,0.96667,,,,,,4090 runs/v23/p1_dinoc62.json
+D62_lowwp_p1,V23-P1H-Content62,q2a_oracle_cross600,S10,False,False,600,0.50677,0.67052,0.55331,,0.61053,0.46667,,,,,,0.96667,,,,,,4090 runs/v23/p1_dinoc62.json
+D62_g52_t4,V23-P1H-Content62,q2a_oracle_cross600,S10,False,False,600,0.53126,0.62468,0.57174,,0.62819,0.53167,,,,,,0.96667,,,,,,4090 runs/v23/p1_dinoc62.json
+D62_g52_p1,V23-P1H-Content62,q2a_oracle_cross600,S10,False,False,600,0.52747,0.60957,0.57975,,0.62761,0.55333,,,,,,0.96667,,,,,,4090 runs/v23/p1_dinoc62.json
