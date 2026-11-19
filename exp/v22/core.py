@@ -142,7 +142,7 @@ def predict_guided_velocity(
         t2 = tv.repeat(2)
         ds2 = torch.cat([f0, f1], 0)
         dc2 = torch.cat([f0, f0], 0)
-        l2 = torch.cat([lscale, ls0], 0)
+        l2 = torch.cat([lscale, lscale], 0)  # V23-P0-A 修复: v_0c 必须保留内容布局 lscale，不得清零
         y32_2 = y32.repeat(2, 1, 1, 1) if (is_s32 and y32 is not None) else None
         with autocast(str(dev)):
             v_sc, v_0c = model(z2, y2, d2, s2, u2, t2, drop_style=ds2, drop_content=dc2, layout_scale=l2,

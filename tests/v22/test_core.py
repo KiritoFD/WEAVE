@@ -303,3 +303,131 @@ def test_v21_reference_sampling_without_replacement():
     assert idx.shape == (64, 4)
     for row in idx:
         assert len(set(row.tolist())) == 4, "4-Shot 参考必须无放回（无重复）"
+
+
+def _nonzero_tiny_slf(base_dim: int = 32, seed: int = 0):
+    """SLFUNet 默认 out_conv 零初始化，验证内容/条件敏感性时需开启非零 out_conv 与 SPADE 投影。"""
+    m = _tiny_slf(base_dim=base_dim, seed=seed)
+    g = torch.Generator().manual_seed(seed + 1000)
+    with torch.no_grad():
+        for p in m.out_conv.parameters():
+            p.copy_(torch.randn(p.shape, generator=g) * 0.2)
+        for name, mod in m.named_modules():
+            if isinstance(mod, nn.Conv2d) and ("spade" in name.lower() or "gamma" in name.lower() or "beta" in name.lower()):
+                for p in mod.parameters():
+                    p.copy_(torch.randn(p.shape, generator=g) * 0.2)
+    return m
+
+
+# ---------------- V23 P0-A: 双分支 cs_j 内容条件修复单测 ----------------
+
+@torch.no_grad()
+def test_cs_j_v0c_invariant_to_style():
+    model = _nonzero_tiny_slf(seed=21)
+    inp = _inputs(B=2)
+    z, y, d, tid = inp["z_t4"], inp["y16"], inp["d16"], inp["tid"]
+    u1 = F.normalize(torch.randn(2, 128, generator=torch.Generator().manual_seed(31)), dim=-1)
+    u2 = F.normalize(torch.randn(2, 128, generator=torch.Generator().manual_seed(32)), dim=-1)
+    tau = torch.tensor([0.35, 0.65])
+    lscale = torch.tensor([0.85, 1.0])
+    # cs_j 第二分支为 v_0c（drop_style=True, drop_content=False, layout_scale=lscale）
+    v0c_1 = model(z, y, d, tid, u1, tau, drop_style=f1(2), drop_content=f0(2), layout_scale=lscale)
+    v0c_2 = model(z, y, d, (tid + 2) % 5, u2, tau, drop_style=f1(2), drop_content=f0(2), layout_scale=lscale)
+    assert torch.allclose(v0c_1, v0c_2, atol=1e-6), "v_0c 必须对参考风格和 tid 变化完全不敏感"
+
+
+@torch.no_grad()
+def test_cs_j_v0c_sensitive_to_content():
+    model = _nonzero_tiny_slf(seed=22)
+    inp = _inputs(B=2)
+    z, y, d, tid = inp["z_t4"], inp["y16"], inp["d16"], inp["tid"]
+    u = F.normalize(torch.randn(2, 128, generator=torch.Generator().manual_seed(33)), dim=-1)
+    tau = torch.tensor([0.40, 0.70])
+    lscale = torch.tensor([0.90, 1.0])
+    v0c_a = model(z, y, d, tid, u, tau, drop_style=f1(2), drop_content=f0(2), layout_scale=lscale)
+    v0c_b = model(z, y * -1.5 + 0.3, d * 2.0 - 0.5, tid, u, tau, drop_style=f1(2), drop_content=f0(2), layout_scale=lscale)
+    diff = float((v0c_a - v0c_b).abs().max())
+    assert diff > 1e-3, f"v_0c 必须对源结构变化有显著响应，当前 max_diff={diff}"
+
+
+@torch.no_grad()
+def test_cs_j_batched_equals_two_independent_calls():
+    model = _nonzero_tiny_slf(seed=23)
+    inp = _inputs(B=2)
+    z, y, d, tid = inp["z_t4"], inp["y16"], inp["d16"], inp["tid"]
+    u = F.normalize(torch.randn(2, 128, generator=torch.Generator().manual_seed(34)), dim=-1)
+    tau_v = torch.tensor([0.35, 0.60])
+    lscale = torch.tensor([0.85, 0.75])
+    g_guid = torch.tensor([0.5, 0.5])
+    content = {"y_in": y, "d_in": d}
+    solver = dict(D5_SOLVER)
+    cfg = CFGConfig(branches="cs_j", rescale_phi=0.0)
+    prog = 0.55
+
+    v_batched = predict_guided_velocity(model, z, tau_v, content, tid, u, lscale, g_guid, cfg, solver, prog)
+
+    B = 2
+    v_sc = model(z, y, d, tid, u, tau_v, drop_style=f0(B), drop_content=f0(B), layout_scale=lscale)
+    v_0c = model(z, y, d, tid, u, tau_v, drop_style=f1(B), drop_content=f0(B), layout_scale=lscale)
+    gl = min(1.0, max(0.0, (prog - 0.36) / 0.32))
+    gf = g_guid.view(B, 1, 1, 1)
+    ws_j = gf * (solver["ws_fig"] - 1.1 * gl) + (1.0 - gf) * 1.4
+    v_manual = v_0c + ws_j * (v_sc - v_0c)
+    assert torch.allclose(v_batched, v_manual, atol=5e-5, rtol=1e-5), "cs_j 批量推理必须与两次独立前向合成逐位一致"
+
+
+@torch.no_grad()
+def test_cs_j_matches_four_branch_when_wc1_wp0():
+    # 验证 cs_j 修复后与四分支模型中 v_0c 完全一致（即 full 且 wc=1, wp=0, rescale=0 时等价于 cs_j）
+    model = _nonzero_tiny_slf(seed=24)
+    inp = _inputs(B=2)
+    z, y, d, tid = inp["z_t4"], inp["y16"], inp["d16"], inp["tid"]
+    u = F.normalize(torch.randn(2, 128, generator=torch.Generator().manual_seed(35)), dim=-1)
+    tau_v = torch.tensor([0.45, 0.65])
+    lscale = torch.tensor([0.80, 1.0])
+    g_guid = torch.tensor([0.6, 0.4])
+    content = {"y_in": y, "d_in": d}
+    solver = dict(D5_SOLVER, wc_fig=1.0, wc_abs=1.0, wsp_fig_late=0.0, wsp_abs=0.0)
+    prog = 0.25  # gl=0 → wc=1.0, ws_p=0.0
+
+    v_csj = predict_guided_velocity(model, z, tau_v, content, tid, u, lscale, g_guid,
+                                    CFGConfig(branches="cs_j", rescale_phi=0.0), solver, prog)
+    v_full = predict_guided_velocity(model, z, tau_v, content, tid, u, lscale, g_guid,
+                                     CFGConfig(branches="full", rescale_phi=0.0), solver, prog)
+    assert torch.allclose(v_csj, v_full, atol=1e-6), "cs_j 必须精确匹配四分支中 wc=1,wp=0 的 v_0c + wj*(v_sc - v_0c)"
+
+
+@torch.no_grad()
+def test_content_zeroing_only_when_drop_content_true():
+    model = _nonzero_tiny_slf(seed=25)
+    inp = _inputs(B=2)
+    z, y, d, tid = inp["z_t4"], inp["y16"], inp["d16"], inp["tid"]
+    u = F.normalize(torch.randn(2, 128, generator=torch.Generator().manual_seed(36)), dim=-1)
+    tau = torch.tensor([0.5, 0.5])
+    lscale = torch.tensor([0.6, 0.9])
+
+    # drop_content=True 时更改 y/d 不影响输出
+    vd_1 = model(z, y, d, tid, u, tau, drop_style=f1(2), drop_content=f1(2), layout_scale=lscale)
+    vd_2 = model(z, y * 5 - 2, d * -3 + 1, tid, u, tau, drop_style=f1(2), drop_content=f1(2), layout_scale=lscale)
+    assert torch.allclose(vd_1, vd_2, atol=1e-6), "drop_content=True 时内容张量应被清零"
+
+    # drop_content=False 且 layout_scale>0 时更改 y/d 必影响输出
+    vk_1 = model(z, y, d, tid, u, tau, drop_style=f1(2), drop_content=f0(2), layout_scale=lscale)
+    vk_2 = model(z, y * 5 - 2, d * -3 + 1, tid, u, tau, drop_style=f1(2), drop_content=f0(2), layout_scale=lscale)
+    assert float((vk_1 - vk_2).abs().max()) > 1e-3, "drop_content=False 时不得清空内容条件"
+
+    # 同时校验 predict_guided_velocity(cs_j) 传递给模型的 layout_scale 第二分支确实为 lscale
+    seen = {}
+    orig_fwd = model.forward
+    def spy_fwd(*a, **kw):
+        seen["drop_style"] = kw["drop_style"].clone()
+        seen["drop_content"] = kw["drop_content"].clone()
+        seen["layout_scale"] = kw["layout_scale"].clone()
+        return orig_fwd(*a, **kw)
+    model.forward = spy_fwd
+    predict_guided_velocity(model, z, tau, {"y_in": y, "d_in": d}, tid, u, lscale,
+                            torch.tensor([0.5, 0.5]), CFGConfig(branches="cs_j"), D5_SOLVER, 0.5)
+    assert torch.allclose(seen["layout_scale"], torch.cat([lscale, lscale], 0))
+    assert torch.equal(seen["drop_content"], torch.zeros(4, dtype=torch.bool))
+    assert torch.equal(seen["drop_style"], torch.tensor([False, False, True, True]))
+

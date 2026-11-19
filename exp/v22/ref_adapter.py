@@ -302,7 +302,7 @@ def eval_ref_adapter_1shot(bundle: dict, c21: dict, adapter_p: Path, device: str
                     t2 = (tv_c).repeat(2)
                     ds2 = torch.cat([f0, f1], 0)
                     dc2 = torch.cat([f0, f0], 0)
-                    l2 = torch.cat([l1, ls0], 0)
+                    l2 = torch.cat([l1, l1], 0)  # V23-P0-A 修复: v_0c 保留内容 layout_scale=1.0
                     with autocast(device):
                         v_sc, v_0c = pack.fm(zz2, y2, d2, s2, u2, t2, drop_style=ds2, drop_content=dc2, layout_scale=l2).float().chunk(2, 0)
                     return v_0c + 2.2 * (v_sc - v_0c)  # 双分支 CFG wj=2.2
@@ -318,7 +318,7 @@ def eval_ref_adapter_1shot(bundle: dict, c21: dict, adapter_p: Path, device: str
                 z = z + dt * v2
             z_out = torch.where(same.view(B, 1, 1, 1), zs, z)
             wr.append([t["task_id"] for t in grp],
-                      decode_s10(dec, z_out, batch=16).clamp(0.0, 1.0), z_out)
+                      decode_s10(dec, z_out, batch=16).clamp(0.0, 1.0), z_out.cpu())
         wall = round(time.time() - t0, 1)
         meta = wr.finish(arm=arm_name, wall_sec=wall, ms_per_img=round(wall * 1000 / 750, 1))
         print(f"[V22 1Shot] {arm_name} done in {wall}s", flush=True)
