@@ -140,7 +140,7 @@ def test_ref_swap_sensitivity_v23(fm: SLFUNetRefAttn, ad: RefAdapter, bundle: di
     b_l = bundle["v18_cache"]["luma_proj"]["b"].float()
     y16_b = coarse_y16_lcn(((z_src_750[sel_t].float() * w_l).sum(1, keepdim=True) + b_l).clamp(0.0, 1.0)).to(device)
     d16_b = bundle["test_struct"]["dino_16"][sel_t].to(device).float()
-    eps_b = torch.randn(len(sel), 4, 64, 64, generator=torch.Generator().manual_seed(20262100), device=device)
+    eps_b = torch.randn(len(sel), 4, 64, 64, generator=torch.Generator().manual_seed(20262100)).to(device)
     u_sg5 = c21["sg5"]["u"].float().to(device)
     d16_sg5 = _sg5_ref_d16(bundle, c21, device=device).to(device)
 
@@ -183,9 +183,10 @@ def test_ref_swap_sensitivity_v23(fm: SLFUNetRefAttn, ad: RefAdapter, bundle: di
 
 @torch.no_grad()
 def eval_sg_25_oneshot(fm: SLFUNetRefAttn, ad: RefAdapter, vae, dec, stack: FeatureStack,
-                       bundle: dict, pairs: list[dict], arm_name: str, device: str = "cuda") -> dict:
+                       bundle: dict, pairs: list[dict], arm_name: str, tau0: float = 0.35,
+                       wj: float = 2.2, device: str = "cuda") -> dict:
     """在 125 个 StyleGallery 25 类 OOD 配对上跑完整端到端 RGB->RGB 1-Shot 评测。"""
-    from exp.v19.fiber_duality import extract_raw_fiber_features
+    from exp.v19.fiber_duality import extract_color_fiber_27d, extract_dino_rgb_moments_768d
 
     dino_model = stack.dino
     fiber_enc = StyleFiberEncoder(in_dim=bundle["fnd"]["tr_fib"].shape[1], dim=128).to(device).eval()
@@ -232,26 +233,28 @@ def eval_sg_25_oneshot(fm: SLFUNetRefAttn, ad: RefAdapter, vae, dec, stack: Feat
         d16 = extract_whitened_dino_layout(dino_model, xc, batch=1, device=device)
         d16_r = extract_whitened_dino_layout(dino_model, xr, batch=1, device=device)
 
-        fib_c = extract_raw_fiber_features(xc, dino_model, device=device)
-        fib_r = extract_raw_fiber_features(xr, dino_model, device=device)
+        fib_c = torch.cat([extract_color_fiber_27d(xc), extract_dino_rgb_moments_768d(dino_model, xc, batch=1, device=device).to(device)], dim=-1)
+        fib_r = torch.cat([extract_color_fiber_27d(xr), extract_dino_rgb_moments_768d(dino_model, xr, batch=1, device=device).to(device)], dim=-1)
         u_style = ad(fiber_enc.encode(fib_r.float()), fiber_enc.encode(fib_c.float()))
 
-        z = torch.randn_like(zc)
+        eps = torch.randn_like(zc)
+        z = (1.0 - tau0) * eps + tau0 * zc if tau0 > 0 else eps
         f0 = torch.zeros(1, dtype=torch.bool, device=device)
         f1 = torch.ones(1, dtype=torch.bool, device=device)
         l1 = torch.ones(1, device=device)
         sid0 = torch.zeros(1, dtype=torch.long, device=device)
-        steps, dt = 10, 0.1
+        steps = 10
+        dt = (1.0 - tau0) / float(steps)
         for i in range(steps):
             def _v(zz, pr):
                 zz2 = torch.cat([zz, zz], 0)
-                t2 = torch.full((2,), pr, device=device)
+                t2 = torch.full((2,), tau0 + pr * (1.0 - tau0), device=device)
                 with autocast(device):
                     v_sc, v_0c = fm(zz2, y16.repeat(2, 1, 1, 1), d16.repeat(2, 1, 1, 1),
                                     sid0.repeat(2), u_style.repeat(2, 1), t2,
                                     drop_style=torch.cat([f0, f1], 0), drop_content=torch.cat([f0, f0], 0),
                                     layout_scale=torch.cat([l1, l1], 0), d16_ref=d16_r.repeat(2, 1, 1, 1)).float().chunk(2, 0)
-                return v_0c + 2.4 * (v_sc - v_0c)
+                return v_0c + wj * (v_sc - v_0c)
             v1 = _v(z, i / steps)
             v2 = _v(z + 0.5 * dt * v1, (i + 0.5) / steps)
             z = z + dt * v2
@@ -297,6 +300,8 @@ def main():
     ap.add_argument("--arm", required=True)
     ap.add_argument("--spec", default="M1_cross25")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--tau0", type=float, default=0.35)
+    ap.add_argument("--wj", type=float, default=2.2)
     ap.add_argument("--run-125", action="store_true", help="跑完整 125 对 25 类 StyleGallery 端到端评测")
     args = ap.parse_args()
 
@@ -319,7 +324,7 @@ def main():
 
     swap = test_ref_swap_sensitivity_v23(fm, ad, bundle, c21, dec, stack, args.arm, device=args.device)
     pairs = build_sg_25_manifest(sg_root, n_content=5)
-    sg_eval = eval_sg_25_oneshot(fm, ad, vae, dec, stack, bundle, pairs, args.arm, device=args.device) if args.run_125 else None
+    sg_eval = eval_sg_25_oneshot(fm, ad, vae, dec, stack, bundle, pairs, args.arm, tau0=args.tau0, wj=args.wj, device=args.device) if args.run_125 else None
     save_json(OUT / f"sg_bench_{args.arm}.json", {"updated_utc": utc(), "roundtrip": rt, "swap_sensitivity": swap, "sg25": sg_eval})
 
 

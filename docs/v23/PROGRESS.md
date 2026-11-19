@@ -231,3 +231,12 @@
 - **关键结论**：
   1. **松开 `g_layout` (`0.35~0.45`) 不仅无益于 `DINO-S`，反而导致 `DINO-C` 大幅掉点 (`-0.06`)**——`orig` 自适应门控在专用双分支高内容区间严格优于固定松布局配置；
   2. 在纯 MSE 目标下，`Dual_Pure / Dual_AB25` 停在 `DINO-S = 0.551~0.553 @ DINO-C = 0.605~0.607`；4090 已启动 **`Dual_SWD`（在 `Dual_AB25` 上施加独立于裁判的 `MultiScalePatchSWD` 局部锐利笔触分布微调）** 冲刺突破纯 MSE 笔触模糊上限！
+
+---
+
+## 十四、V23 P2（3060）：`M3_ab_cross50` 突破 `srcA0` 起点 & A0 Encoder 往返确认
+
+- **`M3_ab_cross50`**（50% 跨风格对使用 `z_src → z_cr` Anchor-Bridge 训练）：
+  - `M3_ab_cross50_noise`: `Top1 = 62.50% / DINO-S = 0.5257 / DINO-C = 0.4139`
+  - **`M3_ab_cross50_srcA0`**: **`Top1 = 38.00%`** (`+18.00pp` over `M2_srcA0 20.00%`!) / **`DINO-S = 0.5270`** / **`Aff = 0.6252`** / **`DINO-C = 0.5489`** / **`LPIPS = 0.4458`**
+- **A0 Encoder + S10 往返验证**：6 张 StyleGallery 原图实测往返 `DINO-C = 0.9710`（MAE `0.0189`，编码耗时 `179 ms/img` @ 3060），打通任意 RGB→RGB 端到端 One-Shot 链路。
