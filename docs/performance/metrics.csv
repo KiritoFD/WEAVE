@@ -487,3 +487,12 @@ O3_rgb_cnx_gated_t40,V25-R3,q2a_oracle_cross600,S10,True,False,600,0.53039,0.545
 O3_rgb_cnx_gated_t60,V25-R3,q2a_oracle_cross600,S10,True,False,600,0.48829,0.7274,0.31243,,0.59149,0.20333,,,,,,,,,,,,3060 runs/v25/r3_oneshot_minimal.json
 O3_self_only_t45,V25-R3,q2a_oracle_cross600,S10,True,False,600,0.47342,0.7233,0.31074,,0.5768,0.12333,,,,,,,,,,,,3060 runs/v25/r3_oneshot_minimal.json
 O3_self_only_t55,V25-R3,q2a_oracle_cross600,S10,True,False,600,0.45835,0.77377,0.26878,,0.56452,0.10333,,,,,,,,,,,,3060 runs/v25/r3_oneshot_minimal.json
+V25_Tr_T1_s2_d5csj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.53362,0.60858,0.56738,,0.63141,0.56667,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json (seed 20263501)
+V25_Tr_T1_s2_d6hcsj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.51494,0.66132,0.54154,,0.61608,0.56167,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json (seed 20263501)
+A0_global,V25-MechA,q2a_oracle_cross600,S10,True,False,600,0.47442,0.73614,0.50384,,0.58789,0.51667,,,,,,0.96667,,,,,,"4090 runs/v25/mechanism_a/mechanism_a.json (B4 lineage, gamma=0.55)"
+A1_heuristic_k50,V25-MechA,q2a_oracle_cross600,S10,True,False,600,0.47399,0.73786,0.50368,,0.58776,0.51833,,,,,,0.96667,,,,,,"4090 runs/v25/mechanism_a/mechanism_a.json (B4 lineage, gamma=0.55)"
+A1_heuristic_k100,V25-MechA,q2a_oracle_cross600,S10,True,False,600,0.47379,0.73858,0.50367,,0.58773,0.515,,,,,,0.96667,,,,,,"4090 runs/v25/mechanism_a/mechanism_a.json (B4 lineage, gamma=0.55)"
+A2_learned,V25-MechA,q2a_oracle_cross600,S10,True,False,600,0.46332,0.74662,0.49653,,0.58121,0.5,,,,,,0.96667,,,,,,"4090 runs/v25/mechanism_a/mechanism_a.json (B4 lineage, gamma=0.55)"
+A2_learned_em,V25-MechA,q2a_oracle_cross600,S10,True,False,600,0.4661,0.74415,0.50747,,0.58122,0.49333,,,,,,0.96667,,,,,,"4090 runs/v25/mechanism_a/mechanism_a.json (B4 lineage, gamma=0.55)"
+A3_smooth,V25-MechA,q2a_oracle_cross600,S10,True,False,600,0.4746,0.73606,0.50391,,0.58805,0.515,,,,,,0.96667,,,,,,"4090 runs/v25/mechanism_a/mechanism_a.json (B4 lineage, gamma=0.55)"
+A3_smooth_em,V25-MechA,q2a_oracle_cross600,S10,True,False,600,0.47463,0.73606,0.50391,,0.58805,0.51333,,,,,,0.96667,,,,,,"4090 runs/v25/mechanism_a/mechanism_a.json (B4 lineage, gamma=0.55)"
