@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import time
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
@@ -35,6 +36,9 @@ def main():
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--n-cand", type=int, default=1500)
     ap.add_argument("--n-keep", type=int, default=1000)
+    ap.add_argument("--ckpt", default=str(PEAK_CKPT))
+    ap.add_argument("--branches", default="full")
+    ap.add_argument("--gate-mode", default="fixed")
     args = ap.parse_args()
 
     sanitize_cuda_env()
@@ -84,13 +88,13 @@ def main():
     priors = {k: v.to(args.device) if torch.is_tensor(v) else v for k, v in fnd["priors"].items()}
     P_Y = priors["P_Y"]
 
-    core = PrismCore(bundle, bank, PEAK_CKPT, device=args.device)
+    core = PrismCore(bundle, bank, Path(args.ckpt), device=args.device)
     dec = load_s10_decoder(args.device)
     cnx = load_convnext_tiny_offline(args.device).eval()
 
-    gate = GateConfig(mode="fixed", fixed_g=0.50)
-    cfg = CFGConfig(branches="full", rescale_phi=0.48)
-    solver = dict(D5_SOLVER, wc_fig=1.5, wc_abs=1.5)
+    gate = GateConfig(mode=args.gate_mode, fixed_g=0.50)
+    cfg = CFGConfig(branches=args.branches, rescale_phi=0.48)
+    solver = dict(D5_SOLVER, wc_fig=1.5, wc_abs=1.5) if args.branches == "full" else dict(D5_SOLVER)
 
     z_cr = torch.zeros(M, 4, 64, 64, dtype=torch.float16)
     scores = torch.zeros(M, dtype=torch.float32)
