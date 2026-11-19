@@ -483,3 +483,7 @@ B_d6_t070,V25-R1b,q2a_oracle_cross600,S10,True,False,600,0.50068,0.70417,0.51928
 B_d6_t072,V25-R1b,q2a_oracle_cross600,S10,True,False,600,0.49968,0.70549,0.51842,,0.60503,0.54833,,,,,,0.96667,,,,,,4090 runs/v25/r1b_unlock_arms.json
 P14b_d6h_fixed_g69,V25-R1b,q2a_oracle_cross600,S10,True,False,600,0.51223,0.68379,0.52935,,0.61312,0.53833,,,,,,0.96667,,,,,,4090 runs/v25/r1b_unlock_arms.json
 P13b_ancp1_t044,V25-R1b,q2a_oracle_cross600,S10,True,False,600,0.50541,0.67283,0.54443,,0.60981,0.53333,,,,,,0.96667,,,,,,4090 runs/v25/r1b_unlock_arms.json
+O3_rgb_cnx_gated_t40,V25-R3,q2a_oracle_cross600,S10,True,False,600,0.53039,0.54565,0.45429,,0.62931,0.40833,,,,,,,,,,,,3060 runs/v25/r3_oneshot_minimal.json
+O3_rgb_cnx_gated_t60,V25-R3,q2a_oracle_cross600,S10,True,False,600,0.48829,0.7274,0.31243,,0.59149,0.20333,,,,,,,,,,,,3060 runs/v25/r3_oneshot_minimal.json
+O3_self_only_t45,V25-R3,q2a_oracle_cross600,S10,True,False,600,0.47342,0.7233,0.31074,,0.5768,0.12333,,,,,,,,,,,,3060 runs/v25/r3_oneshot_minimal.json
+O3_self_only_t55,V25-R3,q2a_oracle_cross600,S10,True,False,600,0.45835,0.77377,0.26878,,0.56452,0.10333,,,,,,,,,,,,3060 runs/v25/r3_oneshot_minimal.json
