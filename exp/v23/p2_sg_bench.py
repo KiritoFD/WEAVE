@@ -34,9 +34,11 @@ from src.utils import FeatureStack, decode_s10, load_s10_decoder
 from src.utils.protocol import load_vgg16_features_offline
 from src.utils._local_eval_refs import load_dino_model
 
+import paths
+
 SG_ROOT_CANDS = [
     ROOT.parent / "StyleGallery",
-    Path("I:/Latent_Style/StyleGallery"),
+    paths.asset_root() / "StyleGallery",
 ]
 SD0_VAE_DIR = ROOT / "deliver/sd0_s10_profile/sd0_vae"
 A0_ENC_CANDS = [

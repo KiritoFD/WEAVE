@@ -251,3 +251,21 @@
   - `M2_cross50_t0` (`tau0=0.0`): `DINO-S = 0.3213 / CLIP-S = 0.6425 / DINO-C = 0.2161 / LPIPS = 0.6363`，**端到端耗时 `1572 ms/img`**。
 - **诚实视觉审计（`archives/v23_sg25_audit/sg25_audit_grid.jpg`）**：
   5 类监督的 `StyleFiberEncoder` 在面对 OOD 25 类（二次元/水墨/抽象）与自然猫照片时出现色盘与画风收缩（仍偏 WikiArt 橘黄色调）。3060 已启动无五分类瓶颈的 **`O7_direct_app`（795D Oklab+DINO 外观直通残差）** 予以修正。
+
+---
+
+## 十六、V23 收尾（4090 `DualSWD` 感知笔触微调 & 3060 `O7_direct_app` 无五分类直通分支）
+
+### 1. 4090 `DualSWD`（从 `Dual_AB25` 热启动 900 updates，施加独立 `ConvNeXt+RGB Patch-SWD` 笔触分布损失）
+| 臂 | 损失设计 | 工作点 | Top-1 ↑ | DINO-S ↑ | Aff ↑ | DINO-C ↑ | LPIPS ↓ |
+|---|---|---|---|---:|---:|---:|---:|---:|
+| `DualSWD_pure_orig_ws42` | `w_swd=0.12` | orig, ws=4.2 | 49.67% | 0.5491 | 0.6402 | 0.6089 | 0.5710 |
+| `DualSWD_pure_orig_ws52` | `w_swd=0.12` | orig, ws=5.2 | **51.00%** | **0.5513** | **0.6419** | 0.6057 | 0.5732 |
+| **`DualSWD_pure_hiT_ws52`** | **`w_swd=0.12`** | **orig, τ∈[.32,.68], ws=5.2** | **51.17%** | **0.5467** | 0.6384 | **0.6164** | **0.5674** |
+| `DualSWD_both_hiT_ws52` | `+ w_mid=0.15` | orig, τ∈[.32,.68], ws=5.2 | 50.17% | 0.5470 | 0.6387 | **0.6168** | 0.5677 |
+
+- **视觉核验通过（`archives/v23_frontier_audit/v23_frontier_grid.jpg`）**：`DualSWD_pure_hiT_ws52` 与 `HiC_JPk_csj65_t4` 均完整保留圣母五官、衣袍褶皱与前景人群结构，无崩塌、无网格伪影，且 NFE 减半（20 vs 40）。
+
+### 2. 3060 `O7_direct_app`（795D 无五分类外观直通残差 + M3 跨风格 Anchor-Bridge）
+- **WEAVE test750**：`O7_directapp_t40` (`tau0=0.40, wj=2.2`) 达 **`38.50% Top-1 / 0.5251 DINO-S / 0.6250 Aff / 0.5481 DINO-C / 0.4481 LPIPS`**；`O7_directapp_t50` (`tau0=0.50, wj=2.0`) 达 **`26.17% Top-1 / 0.5112 DINO-S / 0.6380 DINO-C / 0.3778 LPIPS`**。
+- **StyleGallery 25 类 125-pair 端到端 OOD**：`O7_directapp_t35` 为 `DINO-S=0.2622 / CLIP-S=0.6156 / DINO-C=0.4202 / VGG Gram=0.00045`，与 `M3` (`0.2625 / 0.4177`) 基本持平——证实 **只用 WikiArt 5 类训练的 `SLFUNet` 主干 + 1000 对 5 类伪配对，即使旁路直通无监督外观统计，仍不足以泛化到 StyleGallery 25 个分布外新风格；真正突破 25 类 OOD 需扩充 5 画派以外的多元艺术训练池（§6.5）**。

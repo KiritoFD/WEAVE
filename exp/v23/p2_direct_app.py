@@ -294,8 +294,9 @@ def eval_o7_test750_and_sg25(bundle: dict, c21: dict, ckpt_p: Path, device: str 
                         "dino_c": round(c["dino_c"], 5), "style_affinity": round(c["style_affinity"], 5), "lpips": round(c["lpips"], 5)})
 
     # 2. StyleGallery 25 类 125-pair 端到端全盲对比 (对比同 tau0=0.35, wj=2.2 的 M3)
+    import paths
     vae = load_a0_or_sd0_encoder(device)
-    sg_root = Path("I:/Latent_Style/StyleGallery") if Path("I:/Latent_Style/StyleGallery").exists() else ROOT.parent / "StyleGallery"
+    sg_root = ROOT.parent / "StyleGallery" if (ROOT.parent / "StyleGallery").exists() else paths.asset_root() / "StyleGallery"
     pairs = build_sg_25_manifest(sg_root, n_content=5)
     vgg = load_vgg16_features_offline(device).eval()
 
