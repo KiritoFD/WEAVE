@@ -141,7 +141,7 @@ def train_o4d(bundle: dict, v16_tr: torch.Tensor, dec, swd_ext: MultiScalePatchS
 
         ls_v, lc_v = 0.0, 0.0
         for _ in range(accum):
-            if n_teach > 0 and torch.rand(1).item() < 0.5:
+            if n_teach > 0:
                 pick = torch.randint(0, n_teach, (micro,))
                 ic, ir = teacher_pack["idx_c"][pick], teacher_pack["idx_r"][pick]
                 z_tgt_lat = teacher_pack["z_cr"][pick].to(device).float()
@@ -181,14 +181,17 @@ def train_o4d(bundle: dict, v16_tr: torch.Tensor, dec, swd_ext: MultiScalePatchS
                 l_pal = F.smooth_l1_loss(extract_color_fiber_27d(rgb_out), pal_ref)
                 l_style = l_swd + 0.65 * l_pal
                 if use_lat_sup:
-                    l_style = l_style + 0.25 * F.smooth_l1_loss(z_out, z_tgt_lat)
+                    ll_p, lh_p, hl_p, hh_p = dwt2_haar(z_out - z_src)
+                    ll_t, lh_t, hl_t, hh_t = dwt2_haar(z_tgt_lat - z_src)
+                    l_lat = (F.smooth_l1_loss(ll_p, ll_t) + F.smooth_l1_loss(lh_p, lh_t)
+                             + F.smooth_l1_loss(hl_p, hl_t) + F.smooth_l1_loss(hh_p, hh_t))
+                    l_style = l_style + 1.2 * l_lat
 
                 l_c = 0.5 * (
                     (1.0 - (F.normalize(toks_out["s2"], dim=-1) * F.normalize(toks_src["s2"], dim=-1)).sum(-1)).mean()
                     + (1.0 - (F.normalize(toks_out["s3"], dim=-1) * F.normalize(toks_src["s3"], dim=-1)).sum(-1)).mean()
                 )
-                l_res = d_pal.square().mean() + 0.5 * d_tex.square().mean()
-                loss = (l_style + lam_c * l_c + 0.15 * l_res) / accum
+                loss = (l_style + lam_c * l_c) / accum
 
             loss.backward()
             ls_v += float(l_style.item()) / accum
@@ -218,20 +221,25 @@ def eval_o4d(bundle: dict, c21: dict, cnx, ckpt_p: Path, dec, device: str = "cud
     net.load_state_dict(ck["ema"], strict=True)
     fib_mean, fib_std = ck["fib_mean"].to(device), ck["fib_std"].to(device)
 
-    d16_sg5 = _sg5_ref_d16(bundle, c21, device=device).to(device)
-    v16_sg5 = _sg5_cnx_v16(c21, cnx, device=device).to(device)
-
+    # 直接从 c21["sg5"]["z"] 经 S10 解码获取 SG-5 RGB (跨机器通用, 不依赖本地 train_512clean 目录)
+    from exp.v18.structure import extract_whitened_dino_layout
+    sg5_rgb = decode_s10(dec, c21["sg5"]["z"].to(device), batch=5, output_cpu=False).clamp(0.0, 1.0)
     stack = FeatureStack(device)
     dino_model = stack.dino
-    clean_dir = ROOT / "datasets/distinct5_512/train_512clean"
-    sg_fibs = []
-    for st in c21["sg5"]["stems"]:
-        p = clean_dir / st.split("__")[0] / f"{st}.jpg"
-        if not p.exists():
-            p = list(clean_dir.rglob(f"{st}.*"))[0]
-        xr = TF.to_tensor(Image.open(p).convert("RGB").resize((512, 512), Image.Resampling.BILINEAR)).unsqueeze(0).to(device)
-        sg_fibs.append(torch.cat([extract_color_fiber_27d(xr), extract_dino_rgb_moments_768d(dino_model, xr, batch=1, device=device).to(device)], dim=-1))
-    fib_n_sg5 = (torch.cat(sg_fibs, 0) - fib_mean) / fib_std
+    d16_sg5 = extract_whitened_dino_layout(dino_model, sg5_rgb, batch=5, device=device).to(device)
+    mean_im = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
+    std_im = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
+    x_sg = (F.interpolate(sg5_rgb.float(), size=(256, 256), mode="bilinear", align_corners=False) - mean_im) / std_im
+    v16_sg5 = F.avg_pool2d(cnx[:4](x_sg), 2, 2)
+    v16_sg5 = (v16_sg5 / v16_sg5.std(dim=(2, 3), keepdim=True).clamp_min(1e-4)).to(device)
+
+    sg_fibs = torch.cat([
+        extract_color_fiber_27d(sg5_rgb),
+        extract_dino_rgb_moments_768d(dino_model, sg5_rgb, batch=5, device=device).to(device),
+    ], dim=-1)
+    fib_n_sg5 = (sg_fibs - fib_mean) / fib_std
+    del stack
+    torch.cuda.empty_cache()
     fib_n_750 = (bundle["fnd"]["test750_fib"].to(device).float() - fib_mean) / fib_std
     c64_750 = bundle["test_struct"]["c_64"].float()
     d16_750 = bundle["test_struct"]["dino_16"].float()
