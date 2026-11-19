@@ -151,11 +151,12 @@ class SLFUNetRefAttn(SLFUNet):
 
 
 ARM_SPECS = {
-    "R4_global":   dict(use_attn=False, use_conf=False, cross_prob=0.0),
-    "R5_refattn":  dict(use_attn=True,  use_conf=False, cross_prob=0.0),
-    "R6_gated_m0": dict(use_attn=True,  use_conf=True,  cross_prob=0.0),
-    "M1_cross25":  dict(use_attn=True,  use_conf=True,  cross_prob=0.25),
-    "M2_cross50":  dict(use_attn=True,  use_conf=True,  cross_prob=0.50),
+    "R4_global":   dict(use_attn=False, use_conf=False, cross_prob=0.0, ab_src=False),
+    "R5_refattn":  dict(use_attn=True,  use_conf=False, cross_prob=0.0, ab_src=False),
+    "R6_gated_m0": dict(use_attn=True,  use_conf=True,  cross_prob=0.0, ab_src=False),
+    "M1_cross25":  dict(use_attn=True,  use_conf=True,  cross_prob=0.25, ab_src=False),
+    "M2_cross50":  dict(use_attn=True,  use_conf=True,  cross_prob=0.50, ab_src=False),
+    "M3_ab_cross50": dict(use_attn=True, use_conf=True, cross_prob=0.50, ab_src=True),  # 源图->跨风格目标 Anchor-Bridge
 }
 
 
@@ -266,9 +267,30 @@ def train_attn_cross_arm(bundle: dict, c21: dict, cross_pack: dict | None,
             dc = torch.zeros(B, dtype=torch.bool, device=device)
             lscale = torch.ones(B, device=device)
             z0 = torch.randn_like(z1)
-            tau = torch.rand(B, device=device)
-            zt = (1.0 - tau).view(B, 1, 1, 1) * z0 + tau.view(B, 1, 1, 1) * z1
-            target_v = z1 - z0
+            if spec.get("ab_src", False) and n_cr > 0:
+                # 对跨风格部分(后 n_cr 个样本)走 z_src -> z_cr 的 Anchor-Bridge (tau0 in [0.25, 0.50])，教会 srcA0 起点！
+                za = z_all[ic].to(device, non_blocking=True).float()
+                tau_fm = torch.rand(B, device=device)
+                zt_fm = (1.0 - tau_fm).view(B, 1, 1, 1) * z0 + tau_fm.view(B, 1, 1, 1) * z1
+                v_fm = z1 - z0
+
+                tau0 = 0.25 + 0.25 * torch.rand(B, device=device)
+                z_init = (1.0 - tau0).view(B, 1, 1, 1) * z0 + tau0.view(B, 1, 1, 1) * za
+                tau_ab = tau0 + (1.0 - tau0) * torch.rand(B, device=device)
+                frac = ((tau_ab - tau0) / (1.0 - tau0).clamp_min(1e-4)).view(B, 1, 1, 1)
+                zt_ab = z_init + frac * (z1 - z_init)
+                v_ab = (z1 - z_init) / (1.0 - tau0).clamp_min(1e-4).view(B, 1, 1, 1)
+
+                is_ab = torch.zeros(B, dtype=torch.bool, device=device)
+                is_ab[n_self:] = True
+                m4 = is_ab.view(B, 1, 1, 1)
+                tau = torch.where(is_ab, tau_ab, tau_fm)
+                zt = torch.where(m4, zt_ab, zt_fm)
+                target_v = torch.where(m4, v_ab, v_fm)
+            else:
+                tau = torch.rand(B, device=device)
+                zt = (1.0 - tau).view(B, 1, 1, 1) * z0 + tau.view(B, 1, 1, 1) * z1
+                target_v = z1 - z0
 
             with autocast(device):
                 pred_v = fm(zt, y16_aug, d16_aug, sid, u_style, tau,
@@ -296,13 +318,31 @@ def train_attn_cross_arm(bundle: dict, c21: dict, cross_pack: dict | None,
 
 @torch.no_grad()
 def _sg5_ref_d16(bundle: dict, c21: dict, device: str = "cuda") -> torch.Tensor:
-    """获取 SG-5 5 张参考图的 16×16 DINO patch 特征 (5, 384, 16, 16)（不读类别 ID）。"""
+    """用 V18 extract_whitened_dino_layout 从 SG-5 5 张参考图提取原生 (5, 384, 16, 16) 布局特征（不读类别 ID）。"""
     if "d16" in c21["sg5"]:
         return c21["sg5"]["d16"].float()
-    # 从 q32 (5, 384, 32, 32) 下采样或从 sg5 原始图提取
-    if "q32" in c21["sg5"]:
-        return F.avg_pool2d(c21["sg5"]["q32"].float(), 2, 2)
-    raise KeyError("sg5 cache lacks d16/q32")
+    from PIL import Image
+    import torchvision.transforms.functional as TF
+    from exp.v18.structure import extract_whitened_dino_layout
+    from src.utils._local_eval_refs import load_dino_model
+
+    stems = c21["sg5"]["stems"]
+    clean_dir = ROOT / "datasets/distinct5_512/train_512clean"
+    imgs = []
+    for st in stems:
+        style = st.split("__")[0]
+        p = clean_dir / style / f"{st}.jpg"
+        if not p.exists():
+            matches = list(clean_dir.rglob(f"{st}.*"))
+            p = matches[0]
+        im = Image.open(p).convert("RGB").resize((512, 512), Image.Resampling.BILINEAR)
+        imgs.append(TF.to_tensor(im))
+    rgb01 = torch.stack(imgs, dim=0).to(device)
+    dino = load_dino_model(device=device)
+    d16 = extract_whitened_dino_layout(dino, rgb01, batch=5, device=device).cpu()
+    del dino
+    torch.cuda.empty_cache()
+    return d16
 
 
 @torch.no_grad()
