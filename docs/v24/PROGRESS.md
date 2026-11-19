@@ -88,3 +88,14 @@
   - `M5_clean_s100`: `DINO-C=0.7320 / DINO-S=0.4355 / LPIPS=0.5153 / Top1=41.50%`
   - **1步卷积表达力判负**：虽成功去除了 `M3/M4` 的高频 LPIPS 噪声（`0.543 → 0.502`），但 1 步 0.99M 卷积无法拟合 8 步 ODE 非线性风格残差（平均模糊导致 DINO-S 仅 `0.436 < PRISM-1 0.443`）。按 P4 验收准则关闭 1 步卷积蒸馏，4090 已接续 **`M6_flow4`（4步 RK2 轻量 1.4M ResidualFlowNet）** 与 **`PRISM-1 × DualSWD` 混合**。
 - **3060 `O4D_self`（无教师纯自监督 1.57M 1步残差）**：`DINO-C=0.9139 / DINO-S=0.3854 / Top1=1.50%`（无教师+幅度正则导致残差接近零而退回源图）。4090 正在运行 100% 挂载 `ref_teacher_pairs_2000.pt` + 去掉幅度惩罚的 **`O4D_teacher`**。
+
+---
+
+## 七、V24 补充收尾：`PRISM-1 × DualSWD`、`M6_flow4` 与 `O4D_teacher`
+
+- **`PRISM-1 × V23 DualSWD_pure_hiT` 潜空间混合**：
+  - `M1_p1_dswd_g35`: **`DINO-C=0.7394 / DINO-S=0.4664 / LPIPS=0.5053 / Top1=49.50%`**
+  - `M1_p1_dswd_g50`: **`DINO-C=0.7167 / DINO-S=0.4907 (+0.0477) / LPIPS=0.5137 / Top1=51.83%`**
+- **`M6_flow4`（1.06M 4步确定性残差流，仅 1200 对 `z_p1→z_d6`）判负**：`DINO-C=0.6608 / DINO-S=0.4227 / LPIPS=0.6392 / Top1=22.67%`（91.7% 坍缩至 Impressionism）。根因：训练期用 3×3 平滑近似 `z0` 与测试 `n2c_z.pt` 存在分布 gap，且 1.06M 无 `dino_16`/无 CFG 确定性 ODE 在 OOD 起点发散。
+- **`O4D_teacher`（1.57M 1步残差 + 2000 对无标签教师对）判负**：`DINO-C=0.9383 / DINO-S=0.3821 / Top1=1.00%`（因无标签教师优化 `mid_cos=0.965` 变动太保守，1 步网络退化为近恒等输出）。
+- **3060 后台在跑**：`O3_label_free`（使用 2000 对零标签真参考配对训练 `O3_rgb_cnx_gated`）已达 `800/1200` 步，结果将自动写入 `I:\Latent_Style\WEAVE\runs\v24\p2_o3_labelfree.json`。

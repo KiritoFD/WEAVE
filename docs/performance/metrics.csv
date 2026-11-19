@@ -441,3 +441,10 @@ M5_clean_s085,V24-P2-M5,q2a_oracle_cross600,S10,False,False,600,0.43587,0.74558,
 M5_clean_s100,V24-P2-M5,q2a_oracle_cross600,S10,False,False,600,0.43553,0.73202,0.51526,,0.56104,0.415,,,,,,0.96667,,,,,,4090 runs/v24/p2_m5.json
 O4D_self_s100,V24-P2-O4D,q2a_oracle_cross600,S10,True,False,600,0.3854,0.9139,0.2329,,0.5139,0.015,,,,,,0.96667,,,,,,3060 runs/v24/o4d_self.log
 O4D_self_s135,V24-P2-O4D,q2a_oracle_cross600,S10,True,False,600,0.3891,0.8888,0.3032,,0.5173,0.0183,,,,,,0.96667,,,,,,3060 runs/v24/o4d_self.log
+M1_p1_dswd_g35,V24-P2-M6,q2a_oracle_cross600,S10,False,False,600,0.46636,0.73942,0.50527,,0.58399,0.495,,,,,,0.96667,,,,,,4090 runs/v24/p2_m6.json
+M1_p1_dswd_g50,V24-P2-M6,q2a_oracle_cross600,S10,False,False,600,0.49074,0.71671,0.51374,,0.60074,0.51833,,,,,,0.96667,,,,,,4090 runs/v24/p2_m6.json
+M6_flow4_s055,V24-P2-M6,q2a_oracle_cross600,S10,True,False,600,0.42269,0.66075,0.63915,,0.53911,0.22667,,,,,,0.96667,,,,,,4090 runs/v24/p2_m6.json
+M6_flow4_s070,V24-P2-M6,q2a_oracle_cross600,S10,True,False,600,0.4111,0.62478,0.66701,,0.53057,0.215,,,,,,0.96667,,,,,,4090 runs/v24/p2_m6.json
+M6_flow4_s085,V24-P2-M6,q2a_oracle_cross600,S10,True,False,600,0.40105,0.59657,0.68476,,0.52417,0.205,,,,,,0.96667,,,,,,4090 runs/v24/p2_m6.json
+O4D_teacher_s100,V24-P2-O4D,q2a_oracle_cross600,S10,True,False,600,0.3821,0.9383,0.1143,,0.511,0.01,,,,,,0.96667,,,,,,4090 runs/v24_o4dt_eval.log
+O4D_teacher_s135,V24-P2-O4D,q2a_oracle_cross600,S10,True,False,600,0.3856,0.9279,0.1329,,0.5128,0.0117,,,,,,0.96667,,,,,,4090 runs/v24_o4dt_eval.log
