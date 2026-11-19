@@ -30,6 +30,7 @@ from exp.v19.fiber_duality import StyleFiberEncoder, build_or_load_v19_foundatio
 from exp.v20.run_v20 import get_test750_y16_and_d16
 from exp.v20.submode_patchswd import MultiScalePatchSWDExtractor, build_or_load_core_knn_bank
 from src.utils import decode_s10, load_s10_decoder
+from src.utils.structure import dwt2_haar
 
 DUAL_SWD_CKPT = ROOT / "runs/v23/dual_swd/slf_DualSWD_pure.pt"
 JPK_CKPT = ROOT / "runs/v23/joint_c1ab/slf_Joint_Pk_C1AB.pt"
