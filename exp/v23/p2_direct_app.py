@@ -26,7 +26,7 @@ import torch.nn.functional as F
 
 from . import OUT, EVAL_SEED, ROOT, RawWriterV23, autocast, config_hash, export_raw_pngs, file_sha, git_sha, read_json, run_measure_v23, sanitize_cuda_env, save_json, seed_all, utc, validate_raw_meta
 from .p2_attn_cross import SLFUNetRefAttn, _sg5_ref_d16
-from .p2_sg_bench import build_sg_25_manifest, load_a0_or_sd0_encoder, encode_rgb_sd0
+from .p2_sg_bench import build_sg_25_manifest, load_a0_or_sd0_encoder, encode_rgb_scaled
 from exp.v18 import tasks_and_sources
 from exp.v18.structure import extract_whitened_dino_layout
 from exp.v19.fiber_duality import StyleFiberEncoder, build_or_load_v19_foundation, extract_color_fiber_27d, extract_dino_rgb_moments_768d
@@ -323,7 +323,7 @@ def eval_o7_test750_and_sg25(bundle: dict, c21: dict, ckpt_p: Path, device: str 
         im_c = Image.open(p["content_path"]).convert("RGB").resize((512, 512), Image.Resampling.BILINEAR)
         im_r = Image.open(p["style_path"]).convert("RGB").resize((512, 512), Image.Resampling.BILINEAR)
         xc, xr = TF.to_tensor(im_c).unsqueeze(0).to(device), TF.to_tensor(im_r).unsqueeze(0).to(device)
-        zc = encode_rgb_sd0(vae, xc)
+        zc = encode_rgb_scaled(vae, xc)
         y16 = coarse_y16_lcn(((zc * w_l_d).sum(1, keepdim=True) + b_l_d).clamp(0.0, 1.0))
         d16 = extract_whitened_dino_layout(dino_model, xc, batch=1, device=device)
         d16_r = extract_whitened_dino_layout(dino_model, xr, batch=1, device=device)
