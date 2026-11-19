@@ -145,10 +145,20 @@ def train_dual_swd_arm(bundle: dict, core_bank: dict, z_a_tr: torch.Tensor, dec,
                     with torch.no_grad():
                         rgb_gt = decode_s10(dec, z1[sub], batch=4, enable_grad=False, output_cpu=False)
                         ref_toks = swd_ext.extract_tokens(rgb_gt)
-                    swd_loss = swd_ext.swd_loss(rgb_hat, ref_toks).mean()
+                    cur_toks = swd_ext.extract_tokens(rgb_hat)
+                    from exp.v20.submode_patchswd import sliced_wasserstein_1d
+                    swd_loss = (
+                        1.2 * sliced_wasserstein_1d(cur_toks["rgb"], ref_toks["rgb"], swd_ext.p_rgb)
+                        + 0.35 * sliced_wasserstein_1d(cur_toks["s1"], ref_toks["s1"], swd_ext.p_s1)
+                        + 0.45 * sliced_wasserstein_1d(cur_toks["s2"], ref_toks["s2"], swd_ext.p_s2)
+                        + 0.55 * sliced_wasserstein_1d(cur_toks["s3"], ref_toks["s3"], swd_ext.p_s3)
+                    ).mean()
                     swd_v += float(swd_loss.item())
                     if w_mid > 0:
-                        mid_loss = _mid_spatial_cos_loss(cnx_feats, dec, z1_hat, z1[sub])
+                        # 复用已提取的 s2 (32×32, 192ch) 与 s3 (16×16, 384ch) 空间特征算余弦对齐，零额外 S10+ConvNeXt 显存！
+                        p2, g2 = F.normalize(cur_toks["s2"], dim=-1), F.normalize(ref_toks["s2"], dim=-1)
+                        p3, g3 = F.normalize(cur_toks["s3"], dim=-1), F.normalize(ref_toks["s3"], dim=-1)
+                        mid_loss = 0.5 * ((1.0 - (p2 * g2).sum(-1)).mean() + (1.0 - (p3 * g3).sum(-1)).mean())
                         mid_v += float(mid_loss.item())
                     n_p += 1
 
