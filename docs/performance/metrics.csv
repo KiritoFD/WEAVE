@@ -424,3 +424,15 @@ M2_dwt_ll25_hf85,V24-P0-M0M2,q2a_oracle_cross600,S10,False,False,600,0.49153,0.6
 O4A_t40,V24-P0-O4,q2a_oracle_cross600,S10,True,False,600,0.52591,0.56143,0.43657,,0.62362,0.35167,,,,,,,,,,,,3060 runs/v24/p0_o4_eval.json
 O4B_t50,V24-P0-O4,q2a_oracle_cross600,S10,True,False,600,0.51291,0.63699,0.37872,,0.61109,0.25833,,,,,,,,,,,,3060 runs/v24/p0_o4_eval.json
 O4C_t60,V24-P0-O4,q2a_oracle_cross600,S10,True,False,600,0.48669,0.73196,0.30843,,0.58898,0.195,,,,,,,,,,,,3060 runs/v24/p0_o4_eval.json
+M3_res_s075,V24-P1-M3M4,q2a_oracle_cross600,S10,False,False,600,0.45573,0.71467,0.54461,,0.56592,0.29833,,,,,,0.96667,,,,,,4090 runs/v24/p1_m3_m4.json
+M3_res_s100,V24-P1-M3M4,q2a_oracle_cross600,S10,False,False,600,0.4556,0.67027,0.57889,,0.56355,0.24833,,,,,,0.96667,,,,,,4090 runs/v24/p1_m3_m4.json
+M3_res_s135,V24-P1-M3M4,q2a_oracle_cross600,S10,False,False,600,0.44879,0.60468,0.62503,,0.55822,0.21833,,,,,,0.96667,,,,,,4090 runs/v24/p1_m3_m4.json
+M4_res_s075,V24-P1-M3M4,q2a_oracle_cross600,S10,False,False,600,0.4621,0.70548,0.54316,,0.57182,0.32667,,,,,,0.96667,,,,,,4090 runs/v24/p1_m3_m4.json
+M4_res_s100,V24-P1-M3M4,q2a_oracle_cross600,S10,False,False,600,0.46522,0.66291,0.57573,,0.57176,0.28667,,,,,,0.96667,,,,,,4090 runs/v24/p1_m3_m4.json
+M4_res_s135,V24-P1-M3M4,q2a_oracle_cross600,S10,False,False,600,0.46576,0.60287,0.62174,,0.57031,0.22833,,,,,,0.96667,,,,,,4090 runs/v24/p1_m3_m4.json
+O1_gray_dino_t45,V24-P0-O1O3,q2a_oracle_cross600,S10,True,False,600,0.51691,0.58503,0.42021,,0.61636,0.30667,,,,,,0.96667,,,,,,3060 runs/v24/p0_o1_o3.json
+O1_gray_dino_t55,V24-P0-O1O3,q2a_oracle_cross600,S10,True,False,600,0.49955,0.67805,0.35019,,0.60027,0.22333,,,,,,0.96667,,,,,,3060 runs/v24/p0_o1_o3.json
+O2_rgb_convnext_t45,V24-P0-O1O3,q2a_oracle_cross600,S10,True,False,600,0.51045,0.58288,0.41977,,0.61388,0.335,,,,,,0.96667,,,,,,3060 runs/v24/p0_o1_o3.json
+O2_rgb_convnext_t55,V24-P0-O1O3,q2a_oracle_cross600,S10,True,False,600,0.49487,0.67931,0.34885,,0.59878,0.24,,,,,,0.96667,,,,,,3060 runs/v24/p0_o1_o3.json
+O3_rgb_cnx_gated_t45,V24-P0-O1O3,q2a_oracle_cross600,S10,True,False,600,0.52449,0.58453,0.42128,,0.6234,0.35333,,,,,,0.96667,,,,,,3060 runs/v24/p0_o1_o3.json
+O3_rgb_cnx_gated_t55,V24-P0-O1O3,q2a_oracle_cross600,S10,True,False,600,0.50253,0.67829,0.34936,,0.60393,0.24,,,,,,0.96667,,,,,,3060 runs/v24/p0_o1_o3.json
