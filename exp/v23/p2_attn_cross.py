@@ -407,11 +407,13 @@ def main():
     sanitize_cuda_env()
     bundle = build_or_load_v19_foundation(args.pool, device=args.device)
     c21 = torch.load(ROOT / "runs/v21/cache/v21_stiefel_ref_cache.pt", map_location="cpu", weights_only=False)
+    arms = [a.strip() for a in args.arms.split(",") if a.strip()]
+    need_cross = any(ARM_SPECS[a]["cross_prob"] > 0 for a in arms)
     cross_p = OUT / "cache/train_cross_pairs_1000.pt"
-    cross_pack = torch.load(cross_p, map_location="cpu", weights_only=False) if cross_p.exists() else None
+    cross_pack = torch.load(cross_p, map_location="cpu", weights_only=False) if (need_cross and cross_p.exists()) else None
 
     results = []
-    for arm in [a.strip() for a in args.arms.split(",") if a.strip()]:
+    for arm in arms:
         if ARM_SPECS[arm]["cross_prob"] > 0 and cross_pack is None:
             print(f"[V23 {arm}] SKIP (waiting for {cross_p})", flush=True)
             continue

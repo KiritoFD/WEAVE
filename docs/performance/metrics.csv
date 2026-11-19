@@ -347,3 +347,15 @@ AB2_mix50_p1_hiS,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.
 AB2_mix50_p1_hiC,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.55512,0.51908,0.61418,,0.6493,0.63167,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
 AB2_mix50_t4_hiS,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.57447,0.49085,0.62401,,0.66175,0.665,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
 AB2_mix50_t4_hiC,V23-P1E-AnchorBridge,q2a_oracle_cross600,S10,False,False,600,0.55603,0.54072,0.60362,,0.64747,0.58167,,,,,,,,,,,,4090 runs/v23/p1_anchor_bridge.json
+S32Zero_hiS,V23-P1D-S32Zero,q2a_oracle_cross600,S10,False,False,600,0.57486,0.48543,0.62333,,0.66407,0.74667,,,,,,,,,,,,4090 runs/v23/p1_s32_zero.json
+S32Zero_hiC,V23-P1D-S32Zero,q2a_oracle_cross600,S10,False,False,600,0.5574,0.53727,0.60184,,0.64982,0.64333,,,,,,,,,,,,4090 runs/v23/p1_s32_zero.json
+S32Ctrl_hiS,V23-P1D-S32Zero,q2a_oracle_cross600,S10,False,False,600,0.57327,0.48462,0.62341,,0.66313,0.745,,,,,,,,,,,,4090 runs/v23/p1_s32_zero.json
+S32Ctrl_hiC,V23-P1D-S32Zero,q2a_oracle_cross600,S10,False,False,600,0.55631,0.53681,0.60206,,0.64912,0.645,,,,,,,,,,,,4090 runs/v23/p1_s32_zero.json
+R0_1shot_noise,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.49155,0.62208,0.50542,,0.59296,0.15667,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
+R0_1shot_srcA0,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.47899,0.70121,0.33309,,0.58076,0.12833,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
+R1_1shot_noise,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.50032,0.61386,0.51722,,0.60015,0.185,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
+R1_1shot_srcA0,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.48078,0.70049,0.33209,,0.58235,0.12833,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
+R2_1shot_noise,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.50212,0.61693,0.52037,,0.60175,0.20833,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
+R2_1shot_srcA0,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.48087,0.70276,0.32869,,0.58259,0.13,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
+R3_1shot_noise,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.49984,0.62098,0.51785,,0.60016,0.20333,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
+R3_1shot_srcA0,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.47744,0.70677,0.32601,,0.58029,0.13333,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
