@@ -35,6 +35,7 @@ D6H_SOLVER = dict(D6_SOLVER, tau_min=0.48, tau_hi=0.78)
 def run_core_flow(bundle: dict, bank: dict, ckpt, tasks: list[dict], z_src_750: torch.Tensor,
                   anchor: torch.Tensor | None, y16_750: torch.Tensor, d16_750: torch.Tensor,
                   eps_750: torch.Tensor, branches: str = "full", gate_mode: str = "original",
+                  fixed_g: float = 0.5,
                   solver: dict | None = None, device: str = "cuda", batch: int = 25):
     """通用 PrismCore 流积分 (可换权重/分支/Gate/solver), 同时按 integrate_flow 内部公式记录实测 τ 分布。"""
     solver = dict(solver)
@@ -42,7 +43,7 @@ def run_core_flow(bundle: dict, bank: dict, ckpt, tasks: list[dict], z_src_750: 
     sid_all = torch.tensor([t["source_style_id"] for t in tasks])
     tid_all = torch.tensor([t["target_style_id"] for t in tasks])
     same_all = sid_all == tid_all
-    gate = GateConfig(mode=gate_mode)
+    gate = GateConfig(mode=gate_mode, fixed_g=fixed_g)
     cfg = CFGConfig(branches=branches, rescale_phi=0.48)
     out = torch.zeros_like(z_src_750, dtype=torch.float32)
     tau_rec = []

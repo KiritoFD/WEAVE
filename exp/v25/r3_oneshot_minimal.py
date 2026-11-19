@@ -253,7 +253,6 @@ def sg25_and_swap(bundle: dict, c21: dict, cnx, ckpt_p: Path, tau_list: list[tup
         feats_r.append(stack.extract(pils, batch=10)["dino"].mean(0).cpu())
     dists = [float(F.pairwise_distance(feats_r[i].unsqueeze(0), feats_r[j].unsqueeze(0))) for i in range(5) for j in range(i + 1, 5)]
     swap_dist = round(sum(dists) / len(dists), 4)
-    del fiber_enc
 
     # 2. SG-25 OOD 125-pair 全盲 (delta_S = S(out,ref) - S(src,ref))
     pairs = build_sg_25_manifest(sg_root, n_content=5)
@@ -319,7 +318,7 @@ def sg25_and_swap(bundle: dict, c21: dict, cnx, ckpt_p: Path, tau_list: list[tup
                "peak_vram_mb": round(torch.cuda.max_memory_allocated(device) / (1024 ** 2), 1)}
         sg_runs.append(row)
         print(f"[V25 R3 SG-25] {row}", flush=True)
-    del fm, ad, stack, vae
+    del fm, ad, stack, vae, fiber_enc
     torch.cuda.empty_cache()
     return swap_dist, sg_runs
 

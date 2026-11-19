@@ -479,3 +479,7 @@ V25_Tr_T2_d5csj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.53784,0.61459,0.
 V25_Tr_T2_d6hcsj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.51603,0.66586,0.539,,0.61649,0.55167,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
 V25_Tr_T3_d5csj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.53595,0.61083,0.56743,,0.63253,0.56167,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
 V25_Tr_T3_d6hcsj,V25-R2,q2a_oracle_cross600,S10,True,False,600,0.51507,0.66315,0.54107,,0.61604,0.56833,,,,,,0.96667,,,,,,4090 runs/v25/r2_train_ablation.json
+B_d6_t070,V25-R1b,q2a_oracle_cross600,S10,True,False,600,0.50068,0.70417,0.51928,,0.60572,0.55167,,,,,,0.96667,,,,,,4090 runs/v25/r1b_unlock_arms.json
+B_d6_t072,V25-R1b,q2a_oracle_cross600,S10,True,False,600,0.49968,0.70549,0.51842,,0.60503,0.54833,,,,,,0.96667,,,,,,4090 runs/v25/r1b_unlock_arms.json
+P14b_d6h_fixed_g69,V25-R1b,q2a_oracle_cross600,S10,True,False,600,0.51223,0.68379,0.52935,,0.61312,0.53833,,,,,,0.96667,,,,,,4090 runs/v25/r1b_unlock_arms.json
+P13b_ancp1_t044,V25-R1b,q2a_oracle_cross600,S10,True,False,600,0.50541,0.67283,0.54443,,0.60981,0.53333,,,,,,0.96667,,,,,,4090 runs/v25/r1b_unlock_arms.json
