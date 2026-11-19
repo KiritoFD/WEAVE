@@ -306,3 +306,26 @@ N3b_ortho_g45,V22-N3,q2a_oracle_cross600,S10,False,False,600,0.57379,0.48966,0.6
 N3c_rmscap_g45,V22-N3,q2a_oracle_cross600,S10,True,False,600,0.57806,0.47791,0.62679,0.75603,0.66704,0.76833,0.1088,,,,,0.96667,,,,,,runs/v22/measured_from4090/measured
 N3a_neg_proj_g50_wc15,V22-N3,q2a_oracle_cross600,S10,False,False,600,0.55781,0.54133,0.60126,0.74291,0.65036,0.66833,0.07725,,,,,0.96667,,,,,,runs/v22/measured_from4090/measured
 P2B_1shot_v2_vsc,V22-1Shot,q2a_oracle_cross600,S10,True,False,600,0.47794,0.6284,0.5157,0.68322,0.58058,0.12333,-0.20695,,,,,0.96667,,,,,,3060 runs/v22/measured/P2B_1shot_v2_vsc
+F0_v20_buggy_orig,V23-P0B,q2a_oracle_cross600,S10,True,False,600,0.49017,0.70074,0.52282,,0.59367,0.425,,,,,,0.96667,,,,,,4090 runs/v23/p0b_dual_reval.json
+F0_v20_buggy_g50,V23-P0B,q2a_oracle_cross600,S10,True,False,600,0.49048,0.68512,0.53046,,0.59379,0.41,,,,,,0.96667,,,,,,4090 runs/v23/p0b_dual_reval.json
+F1_v20_fixed_orig,V23-P0B,q2a_oracle_cross600,S10,False,False,600,0.52628,0.64082,0.55353,,0.62345,0.505,,,,,,0.96667,,,,,,4090 runs/v23/p0b_dual_reval.json
+F1_v20_fixed_g50,V23-P0B,q2a_oracle_cross600,S10,False,False,600,0.53163,0.61435,0.56192,,0.628,0.48833,,,,,,0.96667,,,,,,4090 runs/v23/p0b_dual_reval.json
+F4_pk_buggy_g50,V23-P0B,q2a_oracle_cross600,S10,True,False,600,0.52615,0.62326,0.56586,,0.6229,0.45833,,,,,,0.96667,,,,,,4090 runs/v23/p0b_dual_reval.json
+F4_pk_fixed_g50,V23-P0B,q2a_oracle_cross600,S10,False,False,600,0.55434,0.55044,0.59485,,0.64544,0.55167,,,,,,0.96667,,,,,,4090 runs/v23/p0b_dual_reval.json
+F4_pk_fixed_g45,V23-P0B,q2a_oracle_cross600,S10,False,False,600,0.55867,0.53578,0.60219,,0.64877,0.565,,,,,,0.96667,,,,,,4090 runs/v23/p0b_dual_reval.json
+F4_pk_fixed_g45_hiw,V23-P0B,q2a_oracle_cross600,S10,False,False,600,0.56321,0.52511,0.60733,,0.65308,0.605,,,,,,0.96667,,,,,,4090 runs/v23/p0b_dual_reval.json
+F2_dual_buggy_g50,V23-P0C,q2a_oracle_cross600,S10,True,False,600,0.50474,0.62634,0.56697,,0.60449,0.34667,,,,,,0.96667,,,,,,3060 runs/v23/p0c_oneshot_reval.json
+F3_dual_fixed_orig,V23-P0C,q2a_oracle_cross600,S10,False,False,600,0.55222,0.60962,0.57228,,0.6419,0.495,,,,,,0.96667,,,,,,3060 runs/v23/p0c_oneshot_reval.json
+F3_dual_fixed_g50,V23-P0C,q2a_oracle_cross600,S10,False,False,600,0.54283,0.55117,0.603,,0.63588,0.435,,,,,,0.96667,,,,,,3060 runs/v23/p0c_oneshot_reval.json
+P0C_dual_oh_zero,V23-P0C,q2a_oracle_cross600,S10,True,False,600,0.54009,0.54512,0.61214,,0.63339,0.40833,,,,,,0.96667,,,,,,3060 runs/v23/p0c_oneshot_reval.json
+P0C_dual_oh_pred,V23-P0C,q2a_oracle_cross600,S10,False,False,600,0.54286,0.55126,0.60295,,0.6359,0.43667,,,,,,0.96667,,,,,,3060 runs/v23/p0c_oneshot_reval.json
+P2A_1shot_cs_j_fixed,V23-P0C,q2a_oracle_cross600,S10,True,False,600,0.48391,0.63161,0.50111,,0.58622,0.14,,,,,,,,,,,,3060 runs/v23/p0c_oneshot_reval.json
+A0_pk_t4_hiS,V23-P1A,q2a_oracle_cross600,S10,False,False,600,0.57806,0.47791,0.62679,,0.66705,0.76833,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
+A0_pk_t4_hiC,V23-P1A,q2a_oracle_cross600,S10,False,False,600,0.56104,0.53186,0.60487,,0.65303,0.69,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
+A1_pk_prism1_hiS,V23-P1A,q2a_oracle_cross600,S10,False,False,600,0.57953,0.44958,0.64324,,0.67025,0.81333,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
+A1_pk_prism1_hiC,V23-P1A,q2a_oracle_cross600,S10,False,False,600,0.56247,0.50668,0.61964,,0.65618,0.74667,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
+A2_pk_chroma_hiS,V23-P1A,q2a_oracle_cross600,S10,True,False,600,0.52243,0.60594,0.39313,,0.61949,0.245,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
+A2_pk_chroma_hiC,V23-P1A,q2a_oracle_cross600,S10,True,False,600,0.50895,0.65134,0.36853,,0.60786,0.225,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
+A3_t1_t4_hiC,V23-P1A,q2a_oracle_cross600,S10,False,False,600,0.53231,0.61952,0.5659,,0.62976,0.56667,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
+A3_t1_prism1_hiS,V23-P1A,q2a_oracle_cross600,S10,False,False,600,0.54922,0.54559,0.60323,,0.64645,0.67,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
+A3_t1_prism1_hiC,V23-P1A,q2a_oracle_cross600,S10,False,False,600,0.52951,0.60254,0.57773,,0.62986,0.58833,,,,,,0.96667,,,,,,4090 runs/v23/p1_fast_anchor.json
