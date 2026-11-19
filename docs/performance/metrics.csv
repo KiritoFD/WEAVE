@@ -359,3 +359,11 @@ R2_1shot_noise,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.50212,0.6169
 R2_1shot_srcA0,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.48087,0.70276,0.32869,,0.58259,0.13,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
 R3_1shot_noise,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.49984,0.62098,0.51785,,0.60016,0.20333,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
 R3_1shot_srcA0,V23-P2-R0R3,q2a_oracle_cross600,S10,True,False,600,0.47744,0.70677,0.32601,,0.58029,0.13333,,,,,,,,,,,,3060 runs/v23/p2_r0_r3.json
+Joint_T1_C1AB_p1_hiS,V23-P1F-JointC1AB,q2a_oracle_cross600,S10,False,False,600,0.55027,0.548,0.60266,,0.64715,0.67833,,,,,,,,,,,,4090 runs/v23/p1_joint_c1_ab.json
+Joint_T1_C1AB_p1_hiC,V23-P1F-JointC1AB,q2a_oracle_cross600,S10,False,False,600,0.53073,0.60138,0.58168,,0.63044,0.60833,,,,,,,,,,,,4090 runs/v23/p1_joint_c1_ab.json
+Joint_T1_C1AB_p1_bal,V23-P1F-JointC1AB,q2a_oracle_cross600,S10,False,False,600,0.52434,0.62581,0.57027,,0.62498,0.58,,,,,,,,,,,,4090 runs/v23/p1_joint_c1_ab.json
+Joint_T1_C1AB_t4_hiC,V23-P1F-JointC1AB,q2a_oracle_cross600,S10,False,False,600,0.53421,0.61713,0.57401,,0.63075,0.56167,,,,,,,,,,,,4090 runs/v23/p1_joint_c1_ab.json
+Joint_Pk_C1AB_p1_hiS,V23-P1F-JointC1AB,q2a_oracle_cross600,S10,False,False,600,0.5769,0.46226,0.63854,,0.66734,0.80667,,,,,,,,,,,,4090 runs/v23/p1_joint_c1_ab.json
+Joint_Pk_C1AB_p1_hiC,V23-P1F-JointC1AB,q2a_oracle_cross600,S10,False,False,600,0.55864,0.51579,0.61803,,0.65245,0.715,,,,,,,,,,,,4090 runs/v23/p1_joint_c1_ab.json
+Joint_Pk_C1AB_p1_bal,V23-P1F-JointC1AB,q2a_oracle_cross600,S10,False,False,600,0.54639,0.55943,0.60087,,0.64238,0.64333,,,,,,,,,,,,4090 runs/v23/p1_joint_c1_ab.json
+Joint_Pk_C1AB_t4_hiC,V23-P1F-JointC1AB,q2a_oracle_cross600,S10,False,False,600,0.55914,0.5383,0.60775,,0.65015,0.65333,,,,,,,,,,,,4090 runs/v23/p1_joint_c1_ab.json
