@@ -21,6 +21,7 @@ K2-C CSD 题材偏置: CLIP zero-shot 为 750 源图打题材标签 (person/land
 from __future__ import annotations
 
 import argparse
+import json
 import math
 from pathlib import Path
 

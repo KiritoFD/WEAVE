@@ -50,6 +50,8 @@ def train_c2nt_v26(bundle, c21, v16_tr, arm: str, *, style_loss: str = "vgg",
                    swd_n_proj: int = 64, diag_every: int = 200) -> Path:
     """C2nt V26 单轮受控训练 (S1 采样修复固定开启). 返回 ckpt 路径."""
     assert style_loss in ("vgg", "swd")
+    assert micro <= MICRO_3060
+    torch.cuda.empty_cache()
     out_p = OUT / "oneshot_val" / f"{arm}.pt"
     out_p.parent.mkdir(parents=True, exist_ok=True)
     if out_p.exists():
