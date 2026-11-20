@@ -42,12 +42,16 @@ from exp.v25.mechanism_c import (
     SWAP_MICRO_3060,
     SWAP_WEIGHT_DEFAULT,
     TRAIN_FEATURE_KINDS,
+    _STAGES,
+    assign_c2nt_refs,
     assert_label_free_interface,
     assert_label_free_interfaces,
     assert_ref_conditions_smoke,
     assert_train_feature_kind,
     build_strength_mix_pack,
     check_ref_conditions_smoke,
+    c2nt_swap_active,
+    c2nt_swap_losses,
     content_cos_loss,
     cosine_distance_loss,
     eval_ref_conditions,
@@ -58,6 +62,7 @@ from exp.v25.mechanism_c import (
     swap_loss_features,
     swap_loss_images,
     train_c2_arm,
+    train_c2nt_arm,
 )
 from exp.v25.reference_teacher_v2 import (
     MID_COS_BAND,
@@ -790,6 +795,73 @@ def test_assemble_teacher_loss_bitwise_regression():
     # 梯度流: z_opt 有非零梯度
     loss_fn.backward()
     assert z_opt.grad is not None and float(z_opt.grad.abs().sum()) > 0
+
+
+# ---------------- 方案③ C2nt: 无教师参考正则训练 ----------------
+
+def test_c2nt_no_teacher_interface():
+    """无教师路径接口断言: train_c2nt_arm 签名不含任何教师包/画派 ID 参数;
+    stage 已注册; swap 正则 λ 开关语义正确."""
+    sig = inspect.signature(train_c2nt_arm)
+    assert_label_free_interface(train_c2nt_arm, "train_c2nt_arm")
+    for bad in ("pack", "cross_pack", "teacher", "z_cr"):
+        assert bad not in sig.parameters, f"C2nt 训练接口不得携带教师参数 {bad}"
+    assert "C2nt" in _STAGES
+    assert c2nt_swap_active(0.5, 1.0) is True
+    assert c2nt_swap_active(0.0, 1.0) is True
+    assert c2nt_swap_active(0.5, 0.0) is True
+    assert c2nt_swap_active(0.0, 0.0) is False, "λ 双零 → 严格退化为 O3_self_only 配方"
+
+
+def test_c2nt_swap_losses_joint_sanity():
+    """swap 正则与 MSE 的联合梯度 sanity (CPU mock): 梯度流向预览特征;
+    方向正确 (gen→ref 降 style 项, gen→src 降 content 项); λ=0 联合损失退化为纯 MSE."""
+    torch.manual_seed(53)
+    f_ref = {"style": torch.randn(4, 16), "content": torch.randn(4, 12)}
+    f_src = {"style": torch.randn(4, 16), "content": torch.randn(4, 12)}
+    f_gen = {"style": torch.randn(4, 16, requires_grad=True),
+             "content": torch.randn(4, 12, requires_grad=True)}
+    l_style, l_cont, cos_style, cos_cont = c2nt_swap_losses(f_gen, f_ref, f_src)
+    assert cos_style.shape == (4,) and cos_cont.shape == (4,)
+    assert 0.0 < float(l_style) <= 2.0 and 0.0 < float(l_cont) <= 2.0
+    # 联合损失 = flow_MSE(mock) + λ_sw·l_style + λ_c·l_cont; 梯度流向预览特征
+    mse_mock = f_gen["style"].square().mean() + f_gen["content"].square().mean()
+    total = mse_mock + 0.5 * l_style + 1.0 * l_cont
+    total.backward()
+    assert f_gen["style"].grad is not None and float(f_gen["style"].grad.abs().sum()) > 0
+    assert f_gen["content"].grad is not None and float(f_gen["content"].grad.abs().sum()) > 0
+    # 方向 sanity (有限差分, 无梯度状态)
+    with torch.no_grad():
+        g2 = {"style": f_gen["style"].detach() + 0.2 * F.normalize(f_ref["style"] - f_gen["style"].detach(), dim=-1),
+              "content": f_gen["content"].detach() + 0.2 * F.normalize(f_src["content"] - f_gen["content"].detach(), dim=-1)}
+        ls2, lc2, _, _ = c2nt_swap_losses(g2, f_ref, f_src)
+    assert float(ls2) < float(l_style), "预览向参考移动必须降低 style 项"
+    assert float(lc2) < float(l_cont), "预览向源图移动必须降低 content 项"
+    # λ=0: 联合损失退化为纯 MSE (逐位) — O3_self_only 回归语义
+    assert torch.equal(mse_mock + 0.0 * l_style + 0.0 * l_cont, mse_mock)
+
+
+def test_assign_c2nt_refs_diversity_groups_and_cross_style():
+    """参考分配: 形状; batch 内 ≥2 不同参考; 组 = 同内容双参考且互异;
+    跨风格优先 (行内存在跨风格邻居时必取); 同 seed 确定性; micro 过小报错."""
+    g = torch.Generator().manual_seed(61)
+    N, W = 50, 12
+    nbr_idx = torch.randint(0, N, (N, W), generator=g)
+    sid_all = torch.randint(0, 5, (N,), generator=g)
+    ic, ir = assign_c2nt_refs(12, N, nbr_idx, sid_all, torch.Generator().manual_seed(99), n_group=1)
+    assert ic.shape == (12,) and ir.shape == (12,)
+    assert len(set(ir.tolist())) >= 2, "batch 内参考多样性 (≥2 不同参考)"
+    assert int(ic[10]) == int(ic[11]) and int(ir[10]) != int(ir[11]), "末两行 = 同内容双参考组且互异"
+    for i, r in zip(ic.tolist()[:10], ir.tolist()[:10]):
+        sc = int(sid_all[i])
+        row_has_cross = any(int(sid_all[int(x)]) != sc for x in nbr_idx[i].tolist())
+        if row_has_cross:
+            assert int(sid_all[r]) != sc, f"行内存在跨风格邻居时参考必须跨风格 (content {i})"
+    gen2 = torch.Generator().manual_seed(99)
+    ic2, ir2 = assign_c2nt_refs(12, N, nbr_idx, sid_all, gen2, n_group=1)
+    assert torch.equal(ic, ic2) and torch.equal(ir, ir2), "同 seed generator 必须确定性重放"
+    with pytest.raises(AssertionError):
+        assign_c2nt_refs(2, N, nbr_idx, sid_all, torch.Generator().manual_seed(1), n_group=1)
 
 
 # ---------------- 验收 6: 双指标筛选边界 ----------------

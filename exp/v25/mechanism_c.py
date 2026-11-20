@@ -46,13 +46,34 @@ docs/19_pull_together/02_mechanism_plan.md §机制 C + agent2.md §二 G2-2 修
 
 阶段
 ----
-- C0  只评已有 O3 (runs/v24/oneshot_val/O3_rgb_cnx_gated.pt) —— τ45/55 + 四条件钩子.
-- C1  校准教师包训练: reference_teacher_v2.build_teacher_pairs(content_w) → train_o_arm
-      (复用 r3_oneshot_minimal 的 OUT 重定向手法, 产出落 runs/v25).
-- C2  C1 + swap 损失: train_c2_arm, 特征 fn 参数化 (VGG-16 / ConvNeXt, 训练专用);
-      **禁用评测裁判 DINOv2/CSD/CLIP/LPIPS 作训练损失** (assert_train_feature_kind).
-- C3  连续教师强度混合: γ_t ∈ {0.4, 0.7, 1.0} 逐对混合保守(2.2)/表现(0.7)教师目标
-      (对级对齐, 双包 kept 交集), 复用 train_o_arm; γ 仅作用于目标侧, 架构零改动.
+- C0   只评已有 O3 (runs/v24/oneshot_val/O3_rgb_cnx_gated.pt) —— τ45/55 + 四条件钩子.
+- C1   校准教师包训练: reference_teacher_v2.build_teacher_pairs(content_w) → train_o_arm
+       (复用 r3_oneshot_minimal 的 OUT 重定向手法, 产出落 runs/v25).
+- C2   C1 + swap 损失: train_c2_arm, 特征 fn 参数化 (VGG-16 / ConvNeXt, 训练专用);
+       **禁用评测裁判 DINOv2/CSD/CLIP/LPIPS 作训练损失** (assert_train_feature_kind).
+- C3   连续教师强度混合: γ_t ∈ {0.4, 0.7, 1.0} 逐对混合保守(2.2)/表现(0.7)教师目标
+       (对级对齐, 双包 kept 交集), 复用 train_o_arm; γ 仅作用于目标侧, 架构零改动.
+- C2nt 方案③ 无教师参考正则训练 (绕开教师问题本身):
+       C1 教师两轮结构验证证明 latent-SWD 优化下 mid_cos 频带不可达 (w_c/步数/锚/信任域
+       全排除), 且 self-pair 单独训练必然恒等坍缩 (O3_self_only Top-1 12.33%) —— 方案③
+       直接把风格信号从"伪目标 MSE"换成"参考正则损失":
+         训练对 = 自配对 (z 目标 = z_src 恒等, 内容锚 + same 任务语义);
+         损失   = flow_MSE(自配对) + λ_sw·style(一阶预览, r_i) + λ_c·content(预览, z_src);
+         预览   = z_init + v·(1−τ0) → 可微 S10 → 训练专用特征 (VGG/ConvNeXt);
+         参考池 = 训练集 4400 张自身, 每样本参考 = 其跨风格邻居 (nbr_idx, sid 仅用于参考
+                  抽样选择, 非模型输入); 同内容双参考组 ≥1 组/步 (batch 内 ≥2 不同参考
+                  结构性保证); 参考特征走 ReferenceFeatureCache (fp32 v2, 独立子目录
+                  ref_feats_c2nt/).
+       MSE 锚住恒等, swap 风格项提供"离开恒等"的梯度 —— 编辑幅度由 λ_sw 隐式决定,
+       无教师、无频带问题. 风格 dropout 关闭 (ds≡False): swap 项需要每个样本的风格条件
+       速度, o3 的 12% dropout 会清零被丢弃样本的风格梯度.
+       3060 12GB 预算: 每 update = 4×flow fwd/bwd (micro 12) + 1×swap pass
+       (S10 可微解码 12×512² + 训练特征 fwd/bwd) → 1200 updates ≈ 25-40 min;
+       OOM 降 --micro 8. λ 校准计划: 先 --updates 200 探针跑 λ_sw ∈ {0.2, 0.5, 1.0}
+       (诊断每 200 步输出 preview_content_cos / preview_style_cos —— 训练即可见
+       "编辑幅度-内容保持"曲线, 无需等评测), 再定正式 λ_sw.
+       用法: python -m exp.v25.mechanism_c --stage C2nt --lambda-sw 0.5 --updates 1200
+       判读: t45/t55 vs C0/O3 与 O3_self_only —— Top-1 ≥ 20% 且 DINO-S ≥ 0.48 → 方案③成立.
 
 用法 (3060, 本任务只交付不启动 GPU; G2 队列 R2–R4/R5)
 ------------------------------------------------------
@@ -136,8 +157,9 @@ _FORBIDDEN_PARAM_RE = re.compile(
     re.IGNORECASE,
 )
 LABEL_FREE_INTERFACES = (
-    "build_teacher_pairs", "train_c2_arm", "eval_ref_conditions", "run_ref_condition_eval",
-    "make_train_feature_fn", "swap_loss", "swap_loss_features", "swap_loss_images", "run_stage",
+    "build_teacher_pairs", "train_c2_arm", "train_c2nt_arm", "eval_ref_conditions",
+    "run_ref_condition_eval", "make_train_feature_fn", "swap_loss", "swap_loss_features",
+    "swap_loss_images", "run_stage",
 )
 
 
@@ -499,6 +521,260 @@ def run_ref_condition_eval(bundle, c21, cnx, v16_tr, ckpt_p, *, n_tasks: int = 4
             "ckpt": str(ckpt_p).replace("\\", "/").split("runs/")[-1], "updated_utc": utc()}
 
 
+# ------------------------------------------------ C2nt 无教师参考正则 ----
+
+def c2nt_swap_active(lambda_sw: float, lambda_c: float) -> bool:
+    """λ 双零 → swap 正则停用, C2nt 严格退化为 O3_self_only 配方 (纯自配对 flow-MSE)."""
+    return (float(lambda_sw) > 0.0) or (float(lambda_c) > 0.0)
+
+
+def c2nt_swap_losses(f_gen: dict, f_ref: dict, f_src: dict):
+    """C2nt swap 正则逐项 (训练专用特征, dict 契约 {"style","content"}).
+
+    返回 (l_style, l_cont, cos_style, cos_cont): 前两者为 (1−cos) 批均值标量 (梯度项),
+    后两者为逐样本余弦 (B,) —— 训练期"编辑幅度-内容保持"曲线的诊断量
+    (cos_cont = mid_cos 代理, 在所选训练特征空间; --feature-kind cnx 时即 ConvNeXt 余弦).
+    """
+    cos_style = F.cosine_similarity(_pooled(f_gen["style"]), _pooled(f_ref["style"]), dim=-1)
+    cos_cont = F.cosine_similarity(_pooled(f_gen["content"]), _pooled(f_src["content"]), dim=-1)
+    return (1.0 - cos_style).mean(), (1.0 - cos_cont).mean(), cos_style, cos_cont
+
+
+def assign_c2nt_refs(micro: int, n_total: int, nbr_idx: torch.Tensor, sid_all: torch.Tensor,
+                     generator: torch.Generator, *, n_group: int = 1) -> tuple[torch.Tensor, torch.Tensor]:
+    """C2nt 参考分配: 每样本一个参考 (跨风格邻居优先), 末 2·n_group 行 = 同内容双参考组.
+
+    - 跨风格: 从该内容的 nbr_idx 行随机抽 4 列, 取首个 sid≠内容 的邻居
+      (sid 为数据集元数据, 仅用于参考**抽样选择**, 非模型输入 —— 与四条件评测同性质;
+      无合适跨风格邻居时回退首列);
+    - 组内两参考强制互异 → batch 内 ≥2 不同参考为结构性保证;
+    - 返回 (ic (micro,), ir (micro,)).
+    """
+    assert micro >= 2 * n_group + 1, "micro 须容纳 ≥1 单样本行 + 2·n_group 组行"
+    nbr_w = nbr_idx.shape[1]
+
+    def _cross_ref(content: int) -> int:
+        cols = torch.randint(0, nbr_w, (4,), generator=generator).tolist()
+        sc = int(sid_all[content])
+        for c in cols:
+            r = int(nbr_idx[content, c])
+            if int(sid_all[r]) != sc:
+                return r
+        for c in range(nbr_w):  # 全行扫描兜底: 行内存在跨风格邻居则必取
+            r = int(nbr_idx[content, c])
+            if int(sid_all[r]) != sc:
+                return r
+        return int(nbr_idx[content, 0])
+
+    n_single = micro - 2 * n_group
+    ic_single = torch.randint(0, n_total, (n_single,), generator=generator)
+    ic_parts, ir_parts = [ic_single], [torch.tensor([_cross_ref(int(i)) for i in ic_single.tolist()],
+                                                    dtype=torch.long)]
+    for _ in range(n_group):
+        c = int(torch.randint(0, n_total, (1,), generator=generator))
+        ra = _cross_ref(c)
+        rb = ra
+        for _ in range(8):
+            rb = _cross_ref(c)
+            if rb != ra:
+                break
+        if rb == ra:
+            alt = [int(x) for x in nbr_idx[c].tolist() if int(x) != ra]
+            rb = alt[0] if alt else (ra + 1) % n_total
+        ic_parts.append(torch.tensor([c, c], dtype=torch.long))
+        ir_parts.append(torch.tensor([ra, rb], dtype=torch.long))
+    ic, ir = torch.cat(ic_parts), torch.cat(ir_parts)
+    assert len(set(ir.tolist())) >= 2, "参考多样性保证失效"
+    return ic, ir
+
+
+def train_c2nt_arm(bundle, c21, v16_tr, arm, *, lambda_sw: float = 0.5, lambda_c: float = 1.0,
+                   feature_kind: str = "vgg", updates: int = 1200, micro: int = MICRO_3060,
+                   accum: int = 4, device: str = "cuda", ref_cache_dir: str | Path | None = None,
+                   seed: int = 20265500, diag_every: int = 200):
+    """方案③ C2nt: 无教师参考正则训练 (绕开教师 mid_cos 频带不可达问题).
+
+    损失 = flow_MSE(自配对) + λ_sw·style(预览, r_i) + λ_c·content(预览, z_src):
+    - flow-MSE: O3_self_only 配方 (z 目标 = z_src 恒等, τ 均匀采样, 内容锚 + same 语义);
+    - swap 正则: 每 update 一次独立 pass 覆盖 micro 个样本 —— 一阶预览 z_init+v·(1−τ0)
+      → 可微 S10 → 训练专用特征 (VGG/ConvNeXt), 逐样本拉向其跨风格邻居参考;
+      同内容双参考组 ≥1 组/步 (结构保证 batch 内 ≥2 不同参考);
+    - MSE 锚住恒等, swap 风格项提供"离开恒等"的梯度 —— 编辑幅度由 λ_sw 隐式决定,
+      无教师、无频带问题;
+    - 风格 dropout 关闭 (ds≡False): swap 项需要每个样本的风格条件速度, o3 的 12% dropout
+      会清零被丢弃样本的风格梯度;
+    - sid 仅用于参考抽样选择 (数据集元数据), 模型输入保持 label-free (onehot 槽位恒零).
+
+    3060 12GB 显存预算: 每 update = 4×flow fwd/bwd (micro 12) + 1×swap pass
+    (S10 可微解码 12×512² + 训练特征 fwd/bwd) → 1200 updates ≈ 25-40 min;
+    OOM 时降 --micro 8 (swap 覆盖随之 8). λ 校准计划: 先 --updates 200 探针跑
+    λ_sw ∈ {0.2, 0.5, 1.0} 看诊断的 preview_content_cos / preview_style_cos 曲线再定.
+
+    返回 (ckpt Path, diag_rows list); 诊断 JSON 落 OUT/oneshot_val/<arm>_train_diag.json.
+    """
+    assert micro <= MICRO_3060, f"3060 12GB: flow micro ≤ {MICRO_3060} (train_o_arm 口径)"
+    spec = O_SPECS[arm]
+    out_p = OUT / "oneshot_val" / f"{arm}.pt"
+    out_p.parent.mkdir(parents=True, exist_ok=True)
+    if out_p.exists():
+        print(f"[V25 {arm}] Reusing {out_p}", flush=True)
+        return out_p, []
+    swap_on = c2nt_swap_active(lambda_sw, lambda_c)
+
+    seed_all(seed)
+    tr = bundle["v18_cache"]["train"]
+    fnd = bundle["fnd"]
+    z_all = tr["z"]
+    d16_all = tr["dino_16"]
+    sid_all = tr["sid"].long()
+    y16_all = coarse_y16_lcn(tr["y_64"].float()).half()
+    nbr_idx = c21["train"]["nbr_idx"]
+
+    fib_tr = fnd["tr_fib"].float()
+    fib_mean = fib_tr.mean(0, keepdim=True).to(device)
+    fib_std = fib_tr.std(0, keepdim=True).clamp_min(1e-4).to(device)
+    fib_n_all = (fib_tr.to(device) - fib_mean) / fib_std
+    fiber_enc = StyleFiberEncoder(in_dim=fib_tr.shape[1], dim=128).to(device).eval()
+    fiber_enc.load_state_dict(fnd["fiber_state"])
+    with torch.no_grad():
+        u_all = fiber_enc.encode(fib_tr.to(device))
+    del fiber_enc
+
+    v_dim = 384 if spec["v_type"] == "dino" else 192
+    fm = SLFUNetV24OneShot(v_dim=v_dim, use_conf_gate=spec["use_conf"], use_global_fib=spec["use_glob_fib"]).to(device)
+    fm.load_state_dict(torch.load(DUAL_CKPT, map_location="cpu", weights_only=False)["ema"], strict=False)
+    adapter = RefAdapter(dim=128).to(device)
+    feature_fn = make_train_feature_fn(feature_kind, device)
+    dec = load_s10_decoder(device)
+    cache = ReferenceFeatureCache(ref_cache_dir if ref_cache_dir is not None
+                                  else OUT / "cache/ref_feats_c2nt")
+
+    for p in fm.parameters():
+        p.requires_grad_(False)
+    unfreeze = ("cond_mlp.", "dino_proj.", "mid1.", "mid_attn.", "mid2.", "dec32.", "dec64.", "out_norm.", "out_conv.")
+    fm_p, new_p = [], list(adapter.parameters())
+    for n, p in fm.named_parameters():
+        if n.startswith("ref_attn16."):
+            p.requires_grad_(True); new_p.append(p)
+        elif n.startswith(unfreeze):
+            p.requires_grad_(True); fm_p.append(p)
+    opt = torch.optim.AdamW([{"params": new_p, "lr": 1.5e-4}, {"params": fm_p, "lr": 3e-5}], weight_decay=1e-3)
+    base_lrs = [1.5e-4, 3e-5]
+    ema_fm, ema_ad = copy.deepcopy(fm).eval(), copy.deepcopy(adapter).eval()
+    for p in list(ema_fm.parameters()) + list(ema_ad.parameters()):
+        p.requires_grad_(False)
+
+    n_total = len(z_all)
+    diag_rows = []
+    t0 = time.time()
+    for step in range(1, updates + 1):
+        scale = 0.2 + 0.4 * (1.0 + math.cos(math.pi * step / max(1, updates)))
+        for pg, blr in zip(opt.param_groups, base_lrs):
+            pg["lr"] = blr * scale
+        opt.zero_grad(set_to_none=True)
+        loss_v = 0.0
+        for _ in range(accum):  # ---- flow-MSE 自配对 (O3_self_only 配方) ----
+            ic, ir = assign_c2nt_refs(micro, n_total, nbr_idx, sid_all,
+                                      torch.Generator().manual_seed(seed * 7919 + step))
+            z1 = z_all[ic].to(device).float()          # 自配对: 目标 = 源 (恒等)
+            B = len(ic)
+            d16 = d16_all[ic].to(device).float()
+            d16_r = d16_all[ir].to(device).float()
+            v16_r = v16_tr[ir].to(device).float()
+            y16 = y16_all[ic].to(device).float()
+            u_style = adapter(u_all[ir], u_all[ic])
+            u_glob = fib_n_all[ir]
+            d16_aug = d16 + 0.08 * torch.randn_like(d16)
+            d16_aug = d16_aug - d16_aug.mean(dim=(2, 3), keepdim=True)
+            y16_aug = (y16 * (0.85 + 0.30 * torch.rand(B, 1, 1, 1, device=device)) + 0.04 * torch.randn_like(y16)).clamp(-1.1, 1.1)
+            slot = torch.zeros(B, dtype=torch.long, device=device)  # legacy onehot 槽位恒零
+            z0 = torch.randn_like(z1)
+            tau = torch.rand(B, device=device)
+            zt = (1.0 - tau).view(B, 1, 1, 1) * z0 + tau.view(B, 1, 1, 1) * z1
+            target_v = z1 - z0
+            with autocast(device):
+                pred_v = fm(zt, y16_aug, d16_aug, slot, u_style, tau,
+                            drop_style=torch.zeros(B, dtype=torch.bool, device=device),
+                            drop_content=torch.zeros(B, dtype=torch.bool, device=device),
+                            layout_scale=torch.ones(B, device=device),
+                            d16_ref=d16_r, v16_ref=v16_r, u_glob=u_glob)
+                loss = F.mse_loss(pred_v.float(), target_v) / accum
+            loss.backward()
+            loss_v += float(loss.item())
+
+        l_sw_v = l_c_v = 0.0
+        if swap_on:  # ---- 参考正则 pass (每 update 一次, 覆盖 micro 个样本) ----
+            ic_sw, ir_sw = assign_c2nt_refs(micro, n_total, nbr_idx, sid_all,
+                                            torch.Generator().manual_seed(seed * 104729 + step))
+            za = z_all[ic_sw].to(device).float()
+            zr = z_all[ir_sw].to(device).float()
+            S = len(za)
+            d16_c = d16_all[ic_sw].to(device).float()
+            y16_c = y16_all[ic_sw].to(device).float()
+            u_src = u_all[ic_sw]
+            tau0_s = 0.35 + 0.25 * torch.rand(S, device=device)
+            z0_s = torch.randn_like(za)
+            z_init = (1.0 - tau0_s).view(S, 1, 1, 1) * z0_s + tau0_s.view(S, 1, 1, 1) * za
+            slot0 = torch.zeros(S, dtype=torch.long, device=device)
+            d16_aug = d16_c + 0.08 * torch.randn_like(d16_c)
+            d16_aug = d16_aug - d16_aug.mean(dim=(2, 3), keepdim=True)
+            y16_aug = (y16_c * (0.85 + 0.30 * torch.rand(S, 1, 1, 1, device=device))
+                       + 0.04 * torch.randn_like(y16_c)).clamp(-1.1, 1.1)
+            with autocast(device):
+                v_prev = fm(z_init, y16_aug, d16_aug, slot0,
+                            adapter(u_all[ir_sw], u_src), tau0_s,
+                            drop_style=torch.zeros(S, dtype=torch.bool, device=device),
+                            drop_content=torch.zeros(S, dtype=torch.bool, device=device),
+                            layout_scale=torch.ones(S, device=device),
+                            d16_ref=d16_all[ir_sw].to(device).float(),
+                            v16_ref=v16_tr[ir_sw].to(device).float(),
+                            u_glob=fib_n_all[ir_sw]).float()
+            z_prev = z_init + v_prev * (1.0 - tau0_s.view(-1, 1, 1, 1))
+            rgb_prev = decode_s10(dec, z_prev.clamp(-5.0, 5.0), batch=S, enable_grad=True, output_cpu=False)
+            with torch.no_grad():
+                rgb_r = decode_s10(dec, zr, batch=S, enable_grad=True, output_cpu=False)
+                rgb_s = decode_s10(dec, za, batch=S, enable_grad=True, output_cpu=False)
+                with autocast(device):
+                    f_ref = feature_fn(rgb_r)
+                    f_src = feature_fn(rgb_s)
+            with autocast(device):
+                f_gen = feature_fn(rgb_prev)
+            l_style, l_cont, cos_style, cos_cont = c2nt_swap_losses(f_gen, f_ref, f_src)
+            l_swap = lambda_sw * l_style + lambda_c * l_cont
+            l_swap.backward()
+            l_sw_v, l_c_v = float(l_style.item()), float(l_cont.item())
+            if step == 1 or step % diag_every == 0 or step == updates:
+                row = {"step": step,
+                       "preview_content_cos": round(float(cos_cont.mean()), 5),
+                       "preview_style_cos": round(float(cos_style.mean()), 5),
+                       "content_cos_min": round(float(cos_cont.min()), 5),
+                       "style_cos_max": round(float(cos_style.max()), 5),
+                       "preview_edit_norm": round(float((z_prev.detach() - za).flatten(1).norm(dim=1).mean()), 4),
+                       "l_style": round(l_sw_v, 5), "l_cont": round(l_c_v, 5),
+                       "lambda_sw": float(lambda_sw), "lambda_c": float(lambda_c)}
+                diag_rows.append(row)
+                print(f"[V25 {arm}] diag {row}", flush=True)
+
+        all_p = [p for g_ in opt.param_groups for p in g_["params"]]
+        nn.utils.clip_grad_norm_(all_p, 1.0)
+        opt.step()
+        with torch.no_grad():
+            for pe, pw in zip(ema_fm.parameters(), fm.parameters()):
+                pe.mul_(0.996).add_(pw, alpha=0.004)
+            for pe, pw in zip(ema_ad.parameters(), adapter.parameters()):
+                pe.mul_(0.996).add_(pw, alpha=0.004)
+
+    torch.save({"fm": ema_fm.state_dict(), "adapter": ema_ad.state_dict(),
+                "fib_mean": fib_mean.cpu(), "fib_std": fib_std.cpu(),
+                "meta": {"lambda_sw": lambda_sw, "lambda_c": lambda_c, "feature_kind": feature_kind,
+                         "micro": micro, "accum": accum, "updates": updates, "updated_utc": utc()}}, out_p)
+    save_json(OUT / "oneshot_val" / f"{arm}_train_diag.json",
+              {"arm": arm, "lambda_sw": lambda_sw, "lambda_c": lambda_c,
+               "feature_kind": feature_kind, "rows": diag_rows, "updated_utc": utc()})
+    print(f"[V25 {arm}] Saved {out_p} in {(time.time() - t0) / 60:.1f} min", flush=True)
+    return out_p, diag_rows
+
+
 # ----------------------------------------------------------- C2 训练 ----
 
 def train_c2_arm(bundle, c21, cross_pack, v16_tr, arm, *, feature_kind: str = "vgg",
@@ -770,7 +1046,8 @@ def run_stage_c2(args, env) -> dict:
     _register_arm(arm)
     _, eval_o_tau_list = _lazy_r3()
     ckpt = train_c2_arm(env.bundle, env.c21, pack, env.v16_tr, arm,
-                        feature_kind=args.feature_kind, lambda_c=args.lambda_c,
+                        feature_kind=args.feature_kind,
+                        lambda_c=(LAMBDA_C_DEFAULT if args.lambda_c is None else args.lambda_c),
                         swap_weight=args.swap_weight, swap_micro=args.swap_micro,
                         updates=args.updates, device=args.device)
     rows = eval_o_tau_list(env.bundle, env.c21, env.cnx, ckpt, arm,
@@ -778,7 +1055,8 @@ def run_stage_c2(args, env) -> dict:
     ref_cond = run_ref_condition_eval(env.bundle, env.c21, env.cnx, env.v16_tr, ckpt,
                                       n_tasks=args.n_tasks, device=args.device)
     return {"stage": "C2", "arm": arm, "teacher_w": w, "feature_kind": args.feature_kind,
-            "lambda_c": args.lambda_c, "swap_weight": args.swap_weight,
+            "lambda_c": (LAMBDA_C_DEFAULT if args.lambda_c is None else args.lambda_c),
+            "swap_weight": args.swap_weight,
             "n_pairs": int(len(pack["idx_c"])),
             "swap_groups_kept": int(pack["swap_groups"].shape[0]),
             "o3_tau": rows, "ref_conditions": ref_cond}
@@ -803,7 +1081,31 @@ def run_stage_c3(args, env) -> dict:
             "o3_tau": rows, "ref_conditions": ref_cond}
 
 
-_STAGES = {"C0": run_stage_c0, "C1": run_stage_c1, "C2": run_stage_c2, "C3": run_stage_c3}
+def run_stage_c2nt(args, env) -> dict:
+    """方案③ C2nt: 无教师参考正则训练 (自配对 flow-MSE + λ_sw·swap_style + λ_c·content).
+
+    不加载任何教师包 (接口与实现均无 pack); 判读框架: t45/t55 vs C0/O3 与 O3_self_only ——
+    Top-1 ≥ 20% 且 DINO-S ≥ 0.48 → 方案③成立.
+    """
+    lambda_c = 1.0 if args.lambda_c is None else args.lambda_c
+    arm = f"C2nt_sw{args.lambda_sw:g}_lc{lambda_c:g}"
+    _register_arm(arm)
+    ckpt, diag = train_c2nt_arm(env.bundle, env.c21, env.v16_tr, arm,
+                                lambda_sw=args.lambda_sw, lambda_c=lambda_c,
+                                feature_kind=args.feature_kind, updates=args.updates,
+                                device=args.device)
+    _, eval_o_tau_list = _lazy_r3()
+    rows = eval_o_tau_list(env.bundle, env.c21, env.cnx, ckpt, arm,
+                           [(0.45, 2.2, "t45"), (0.55, 2.0, "t55")], device=args.device)
+    ref_cond = run_ref_condition_eval(env.bundle, env.c21, env.cnx, env.v16_tr, ckpt,
+                                      n_tasks=args.n_tasks, device=args.device)
+    return {"stage": "C2nt", "arm": arm, "lambda_sw": args.lambda_sw, "lambda_c": lambda_c,
+            "feature_kind": args.feature_kind, "train_diag": diag,
+            "o3_tau": rows, "ref_conditions": ref_cond}
+
+
+_STAGES = {"C0": run_stage_c0, "C1": run_stage_c1, "C2": run_stage_c2, "C3": run_stage_c3,
+           "C2nt": run_stage_c2nt}
 
 
 def run_stage(stage: str, args) -> dict:
@@ -836,7 +1138,10 @@ def main():
     ap.add_argument("--mid-cos-hi", type=float, default=MID_COS_BAND[1])
     ap.add_argument("--style-gain-min", type=float, default=STYLE_GAIN_MIN)
     ap.add_argument("--feature-kind", default="vgg", choices=TRAIN_FEATURE_KINDS)
-    ap.add_argument("--lambda-c", type=float, default=LAMBDA_C_DEFAULT)
+    ap.add_argument("--lambda-sw", type=float, default=0.5,
+                    help="C2nt: swap 风格项权重 (校准: --updates 200 探针 × {0.2, 0.5, 1.0})")
+    ap.add_argument("--lambda-c", type=float, default=None,
+                    help="内容保持项权重 (C2 swap 项默认 0.5 / C2nt 预览项默认 1.0; 缺省按阶段解析)")
     ap.add_argument("--swap-weight", type=float, default=SWAP_WEIGHT_DEFAULT)
     ap.add_argument("--swap-micro", type=int, default=SWAP_MICRO_3060)
     ap.add_argument("--n-tasks", type=int, default=48)
