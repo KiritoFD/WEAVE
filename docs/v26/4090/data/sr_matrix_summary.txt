@@ -1,0 +1,9 @@
+SR0_t45 {'dino_c': 0.5448, 'dino_s': 0.5235, 'lpips': 0.5205, 'style_affinity': 0.6221, 'csd_top1': 0.4217}
+SR0b_pos {'dino_c': 0.6331, 'dino_s': 0.5136, 'lpips': 0.4429, 'style_affinity': 0.6097, 'csd_top1': 0.255}
+SR1_w03 {'dino_c': 0.6059, 'dino_s': 0.519, 'lpips': 0.4653, 'style_affinity': 0.6158, 'csd_top1': 0.3417}
+SR2_w06 {'dino_c': 0.5752, 'dino_s': 0.5216, 'lpips': 0.4895, 'style_affinity': 0.6196, 'csd_top1': 0.385}
+SR3_w10 {'dino_c': 0.5321, 'dino_s': 0.5204, 'lpips': 0.5216, 'style_affinity': 0.6201, 'csd_top1': 0.4033}
+SR4_w15 {'dino_c': 0.4798, 'dino_s': 0.5148, 'lpips': 0.5588, 'style_affinity': 0.6164, 'csd_top1': 0.3967}
+SR5_w06_pc {'dino_c': 0.5954, 'dino_s': 0.5181, 'lpips': 0.4755, 'style_affinity': 0.6162, 'csd_top1': 0.3667}
+SR6_w10_pc {'dino_c': 0.5678, 'dino_s': 0.5179, 'lpips': 0.4983, 'style_affinity': 0.6174, 'csd_top1': 0.39}
+SR7_3br_w06 {'dino_c': 0.4871, 'dino_s': 0.5222, 'lpips': 0.5614, 'style_affinity': 0.6216, 'csd_top1': 0.4283}

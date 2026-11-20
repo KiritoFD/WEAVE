@@ -1,0 +1,21 @@
+{
+  "task": "V26 SG-25 OOD audit for C2nt_sw6_lc0.8 (t45)",
+  "updated_utc": "2026-11-20T18:12:29.064752+00:00",
+  "ckpt": "v25/oneshot_val/C2nt_sw6_lc0.8.pt",
+  "swap_dist": 0.5349,
+  "rows": [
+    {
+      "arm": "t45",
+      "n_pairs": 125,
+      "dino_c": 0.3566,
+      "dino_s": 0.2879,
+      "delta_dino_s": 0.2216,
+      "clip_s": 0.6339,
+      "style_affinity": 0.4609,
+      "lpips": 0.5227,
+      "vgg_gram": 0.00042,
+      "e2e_ms": 3260.5,
+      "peak_vram_mb": 2112.1
+    }
+  ]
+}

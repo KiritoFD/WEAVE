@@ -1,0 +1,157 @@
+{
+  "task": "V26-K0 Q32 spectrum/leak/retention audit",
+  "updated_utc": "2026-11-20T17:24:00.625074+00:00",
+  "soft_eta": 18.78018,
+  "soft_lowrank_stable": true,
+  "q32_hard_gram_identity_err": 1.7285346984863281e-06,
+  "audit": [
+    {
+      "variant": "raw384",
+      "leak_gram_5way": 0.9233,
+      "leak_pooled_5way": 0.1833,
+      "structure_retention": 1.0,
+      "spatial_autocorr": 0.48,
+      "perturb_stability": 0.05,
+      "spectrum": {
+        "sigma_max": 188.5663,
+        "sigma_min": 0.001963,
+        "sigma_min_max_ratio": 1.7e-05,
+        "effective_rank": 12.884,
+        "spectrum_mean_head8": [
+          141.376,
+          108.0043,
+          91.6707,
+          80.2454,
+          71.2977,
+          65.2653,
+          60.1475,
+          55.606
+        ]
+      }
+    },
+    {
+      "variant": "pca32",
+      "leak_gram_5way": 0.9167,
+      "leak_pooled_5way": 0.2,
+      "structure_retention": -0.0897,
+      "spatial_autocorr": 0.4934,
+      "perturb_stability": 0.0221,
+      "spectrum": {
+        "sigma_max": 149.4106,
+        "sigma_min": 2.773679,
+        "sigma_min_max_ratio": 0.055671,
+        "effective_rank": 7.548,
+        "spectrum_mean_head8": [
+          109.7021,
+          80.7236,
+          66.8053,
+          57.9128,
+          51.5144,
+          46.2365,
+          41.6913,
+          37.7586
+        ]
+      }
+    },
+    {
+      "variant": "q32_hard",
+      "leak_gram_5way": 0.2,
+      "leak_pooled_5way": 0.2,
+      "structure_retention": 0.1991,
+      "spatial_autocorr": 0.2996,
+      "perturb_stability": 0.05,
+      "spectrum": {
+        "sigma_max": 16.0,
+        "sigma_min": 15.999985,
+        "sigma_min_max_ratio": 0.999999,
+        "effective_rank": 32.0,
+        "spectrum_mean_head8": [
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0
+        ]
+      }
+    },
+    {
+      "variant": "q32_soft",
+      "leak_gram_5way": 0.9333,
+      "leak_pooled_5way": 0.2,
+      "structure_retention": 0.2013,
+      "spatial_autocorr": 0.3763,
+      "perturb_stability": 0.0703,
+      "spectrum": {
+        "sigma_max": 15.8751,
+        "sigma_min": 2.337711,
+        "sigma_min_max_ratio": 0.304211,
+        "effective_rank": 24.185,
+        "spectrum_mean_head8": [
+          15.7566,
+          15.5697,
+          15.3884,
+          15.2066,
+          15.0178,
+          14.8016,
+          14.5534,
+          14.283
+        ]
+      }
+    }
+  ],
+  "spectra_mean_by_style_holdout": {
+    "raw384": {
+      "0": 10.3742,
+      "1": 9.8679,
+      "2": 8.8732,
+      "3": 10.1197,
+      "4": 10.3608
+    },
+    "pca32": {
+      "0": 29.0919,
+      "1": 27.1415,
+      "2": 23.5626,
+      "3": 28.768,
+      "4": 28.9406
+    },
+    "q32_hard": {
+      "0": 16.0,
+      "1": 16.0,
+      "2": 16.0,
+      "3": 16.0,
+      "4": 16.0
+    },
+    "q32_soft": {
+      "0": 11.453,
+      "1": 10.8379,
+      "2": 9.4055,
+      "3": 11.2177,
+      "4": 11.4337
+    }
+  },
+  "tradeoff_2d": [
+    {
+      "variant": "raw384",
+      "style_leak_gram": 0.9233,
+      "structure_retention": 1.0
+    },
+    {
+      "variant": "pca32",
+      "style_leak_gram": 0.9167,
+      "structure_retention": -0.0897
+    },
+    {
+      "variant": "q32_hard",
+      "style_leak_gram": 0.2,
+      "structure_retention": 0.1991
+    },
+    {
+      "variant": "q32_soft",
+      "style_leak_gram": 0.9333,
+      "structure_retention": 0.2013
+    }
+  ]
+}

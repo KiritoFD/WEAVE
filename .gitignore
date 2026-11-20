@@ -43,6 +43,7 @@ runs/*
 !runs/blog_sbflow/
 !runs/v8_speed.json
 data/
+!docs/v26/4090/data/
 datasets/
 results/
 exp/*
