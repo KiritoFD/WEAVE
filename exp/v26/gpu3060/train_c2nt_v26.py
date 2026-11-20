@@ -106,6 +106,7 @@ def train_c2nt_v26(bundle, c21, v16_tr, arm: str, *, style_loss: str = "vgg",
 
     n_total = len(z_all)
     diag_rows = []
+    t_last_diag = time.time()
     t0 = time.time()
     for step in range(1, updates + 1):
         scale = 0.2 + 0.4 * (1.0 + math.cos(math.pi * step / max(1, updates)))
@@ -214,11 +215,15 @@ def train_c2nt_v26(bundle, c21, v16_tr, arm: str, *, style_loss: str = "vgg",
         cos_cont = torch.cat(cos_ct_parts)
         edit_norms = torch.cat(en_parts)
         if step == 1 or step % diag_every == 0 or step == updates:
+            now = time.time()
             row = {"step": step, "style_loss": style_loss,
+                   "ups_per_sec": round((step - (diag_rows[-1]["step"] if diag_rows else 0))
+                                        / max(now - t_last_diag, 1e-6), 3),
                    "preview_content_cos": round(float(cos_cont.mean()), 5),
                    "preview_style_cos": round(float(cos_style.mean()), 5),
                    "preview_edit_norm": round(float(edit_norms.mean()), 4),
                    "l_style": round(l_sw_v, 5), "l_cont": round(l_c_v, 5)}
+            t_last_diag = now
             diag_rows.append(row)
             print(f"[V26 {arm}] diag {row}", flush=True)
 

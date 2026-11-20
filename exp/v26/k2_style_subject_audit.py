@@ -39,7 +39,7 @@ from src.utils import decode_s10, load_s10_decoder
 
 REPORT_MD = ROOT / "docs/v26/4090/K2_STYLE_LOSS_AND_SUBJECT_AUDIT.md"
 N_PER_STYLE = 40
-N_GRAD = 128
+N_GRAD = 32
 SUBJECT_PROMPTS = {
     "person": "a painting featuring one or more people, portraits, figures",
     "landscape": "a landscape painting of scenery, mountains, rivers, trees",
@@ -207,47 +207,55 @@ def k2a_discriminability(bundle, device: str) -> dict:
 
 def k2b_gradients(bundle, device: str) -> dict:
     tr = bundle["v18_cache"]["train"]
-    z_all, sid_all = tr["z"], tr["sid"].long()
-    nbr_idx = bundle.get("c21_nbr_idx")  # 未用
+    z_all = tr["z"]
     dec = load_s10_decoder(device)
     g = torch.Generator().manual_seed(20261186)
     idx = torch.randperm(len(z_all), generator=g)[:N_GRAD]
     zt = z_all[idx].to(device).float()
-
-    # 参考侧: 同批样本的"下一位"作跨风格参考代理 (审计只用, 不训练)
     ir = (idx + 1) % len(z_all)
-    imgs_ref = torch.cat([decode_s10(dec, z_all[ir[i:i + 32]].to(device), batch=32).clamp(0.0, 1.0)
-                          for i in range(0, N_GRAD, 32)]).to(device)
+    imgs_ref = torch.cat([decode_s10(dec, z_all[ir[i:i + 16]].to(device), batch=16).clamp(0.0, 1.0)
+                          for i in range(0, N_GRAD, 16)]).to(device)
     vgg, mean, std = _vgg_layers(device)
     f_ref_mean = vgg_mean_style(imgs_ref, vgg, mean, std).detach()
     f_ref_gram = vgg_gram_feat(imgs_ref, vgg, mean, std).detach()
 
     grads = {}
     swd = DynamicSWD(device=device, dtype=torch.float32)
+
+    def _decode_grad(z_in: torch.Tensor):
+        rgb = decode_s10(dec, z_in, batch=8, enable_grad=True, output_cpu=False).clamp(0.0, 1.0)
+        return rgb
+
     for k_proj in (32, 64, 128):
         swd.n_proj = k_proj
         z = zt.clone().requires_grad_(True)
-        rgb = decode_s10(dec, z, batch=16, enable_grad=True, output_cpu=False).clamp(0.0, 1.0)
+        rgb = _decode_grad(z)
         r = swd.loss(rgb, imgs_ref, gen=torch.Generator().manual_seed(20261185))
         r["loss"].backward()
         grads[f"swd_k{k_proj}"] = z.grad.detach().clone()
         z.grad = None
+        del rgb, r
+        torch.cuda.empty_cache()
 
     z = zt.clone().requires_grad_(True)
-    rgb = decode_s10(dec, z, batch=16, enable_grad=True, output_cpu=False).clamp(0.0, 1.0)
+    rgb = _decode_grad(z)
     f_gen = vgg_mean_style(rgb, vgg, mean, std)
     loss_mean = cosine_distance_loss(f_gen, f_ref_mean)
     loss_mean.backward()
     grads["meanvgg"] = z.grad.detach().clone()
     z.grad = None
+    del rgb, f_gen
+    torch.cuda.empty_cache()
 
     z = zt.clone().requires_grad_(True)
-    rgb = decode_s10(dec, z, batch=16, enable_grad=True, output_cpu=False).clamp(0.0, 1.0)
+    rgb = _decode_grad(z)
     f_g = vgg_gram_feat(rgb, vgg, mean, std)
     loss_gram = F.mse_loss(f_g, f_ref_gram)
     loss_gram.backward()
     grads["gram"] = z.grad.detach().clone()
     z.grad = None
+    del rgb, f_g
+    torch.cuda.empty_cache()
 
     def norm(x):
         return round(float(x.norm()), 4)
@@ -256,14 +264,17 @@ def k2b_gradients(bundle, device: str) -> dict:
         return round(float(F.cosine_similarity(a.flatten().unsqueeze(0), b.flatten().unsqueeze(0)).mean()), 4)
 
     def seed_stability(k_proj: int) -> float:
-        ga, gb = [], []
         swd.n_proj = k_proj
+        ga = []
         for seed in (111, 222):
-            z = zt[:16].clone().requires_grad_(True)
-            rgb = decode_s10(dec, z, batch=16, enable_grad=True, output_cpu=False).clamp(0.0, 1.0)
-            r = swd.loss(rgb, imgs_ref[:16], gen=torch.Generator().manual_seed(seed))
+            z = zt[:8].clone().requires_grad_(True)
+            rgb = _decode_grad(z)
+            r = swd.loss(rgb, imgs_ref[:8], gen=torch.Generator().manual_seed(seed))
             r["loss"].backward()
-            ga.append(z.grad.detach().clone()); z.grad = None
+            ga.append(z.grad.detach().clone())
+            z.grad = None
+            del rgb, r
+            torch.cuda.empty_cache()
         return cos(ga[0], ga[1])
 
     return {
@@ -342,10 +353,11 @@ def read_rows(path: Path) -> list[dict]:
 
 # ------------------------------------------------------- 报告 ----
 
-def _write_report(a: dict, b: dict, c: dict) -> None:
+def _write_report(out: dict) -> None:
+    a, b, c = out["k2a"], out["k2b"], out["k2c"]
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
     L = ["# K2 — SWD 风格判别力 / 梯度稳定性 / CSD 题材偏置审计 (V26, 零训练)",
-         "", f"> 生成时间: {utc()}",
+         "", f"> 生成时间: {out['updated_utc']}",
          "",
          "## K2-A 同/异画派距离间隔 (200 张训练图, 40/画派)",
          "",
@@ -386,15 +398,25 @@ def _write_report(a: dict, b: dict, c: dict) -> None:
 def run_k2(pool: str, device: str = "cuda") -> dict:
     seed_all(20261185)
     bundle = build_or_load_v19_foundation(pool, device=device)
+    out_p = OUT / "gpu4090" / "k2_style_subject_audit.json"
+    out = {"task": "V26-K2 style-loss discriminability & CSD subject-bias audit",
+           "updated_utc": utc()}
+
     a = k2a_discriminability(bundle, device=device)
     print(f"[K2-A] {json.dumps({k: a[k] for k in ('meanvgg', 'gram', 'swd')}, default=str)}", flush=True)
+    out["k2a"] = a
+    save_json(out_p, out)  # 分阶段落盘, 防后续阶段崩溃丢失
+
     b = k2b_gradients(bundle, device=device)
     print(f"[K2-B] norms={b['grad_norms']} cos(SWD64,meanVGG)={b['cos_swd64_vs_meanvgg']}", flush=True)
+    out["k2b"] = b
+    save_json(out_p, out)
+
     c = k2c_subject_bias(bundle, device=device)
-    out = {"task": "V26-K2 style-loss discriminability & CSD subject-bias audit",
-           "updated_utc": utc(), "k2a": a, "k2b": b, "k2c": c}
-    save_json(OUT / "gpu4090" / "k2_style_subject_audit.json", out)
-    _write_report(a, b, c)
+    out["k2c"] = c
+    out["updated_utc"] = utc()
+    save_json(out_p, out)
+    _write_report(out)
     return out
 
 
