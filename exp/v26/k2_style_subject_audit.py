@@ -60,34 +60,40 @@ def _vgg_layers(device: str):
     return vgg, mean, std
 
 
-def vgg_mean_style(imgs: torch.Tensor, vgg, mean, std) -> torch.Tensor:
-    """与 mechanism_c._make_vgg_feature_fn 同口径: relu3_3+relu4_3 池化 (B,768)."""
-    x = (imgs.float() - mean) / std
-    f3 = f4 = None
-    h = x
-    for i, m in enumerate(vgg):
-        h = m(h)
-        if i == 15:
-            f3 = h
-        elif i == 22:
-            f4 = h
-    return torch.cat([f3.mean(dim=(2, 3)), f4.mean(dim=(2, 3))], dim=-1)
+def vgg_mean_style(imgs: torch.Tensor, vgg, mean, std, batch: int = 16) -> torch.Tensor:
+    """与 mechanism_c._make_vgg_feature_fn 同口径: relu3_3+relu4_3 池化 (B,768); 微批防 OOM."""
+    outs = []
+    for s in range(0, len(imgs), batch):
+        x = (imgs[s:s + batch].float() - mean) / std
+        f3 = f4 = None
+        h = x
+        for i, m in enumerate(vgg):
+            h = m(h)
+            if i == 15:
+                f3 = h
+            elif i == 22:
+                f4 = h
+        outs.append(torch.cat([f3.mean(dim=(2, 3)), f4.mean(dim=(2, 3))], dim=-1))
+    return torch.cat(outs, dim=0)
 
 
-def vgg_gram_feat(imgs: torch.Tensor, vgg, mean, std) -> torch.Tensor:
-    """relu1_2/2_2/3_3 Gram 上三角展平 (纹理二阶统计)."""
-    x = (imgs.float() - mean) / std
-    grams = []
-    h = x
-    for i, m in enumerate(vgg):
-        h = m(h)
-        if i in (3, 8, 15):
-            B, C, H, W = h.shape
-            f = h.view(B, C, H * W)
-            g = torch.bmm(f, f.transpose(1, 2)) / (C * H * W)
-            ii = torch.triu_indices(C, C)
-            grams.append(g[:, ii[0], ii[1]])
-    return torch.cat(grams, dim=-1)
+def vgg_gram_feat(imgs: torch.Tensor, vgg, mean, std, batch: int = 16) -> torch.Tensor:
+    """relu1_2/2_2/3_3 Gram 上三角展平 (纹理二阶统计); 微批防 OOM."""
+    outs = []
+    for s in range(0, len(imgs), batch):
+        x = (imgs[s:s + batch].float() - mean) / std
+        grams = []
+        h = x
+        for i, m in enumerate(vgg):
+            h = m(h)
+            if i in (3, 8, 15):
+                B, C, H, W = h.shape
+                f = h.view(B, C, H * W)
+                g = torch.bmm(f, f.transpose(1, 2)) / (C * H * W)
+                ii = torch.triu_indices(C, C)
+                grams.append(g[:, ii[0], ii[1]])
+        outs.append(torch.cat(grams, dim=-1))
+    return torch.cat(outs, dim=0)
 
 
 def dist_matrix_feat(feat: torch.Tensor) -> torch.Tensor:
