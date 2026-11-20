@@ -285,7 +285,7 @@ def k2b_gradients(bundle, device: str) -> dict:
 
 @torch.no_grad()
 def k2c_subject_bias(bundle, device: str) -> dict:
-    from src.utils._local_eval_refs import FeatureStack
+    from src.utils import FeatureStack
     from exp.v18 import tasks_and_sources
 
     tasks, z_src_750, _ = tasks_and_sources()
