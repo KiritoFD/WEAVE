@@ -69,3 +69,13 @@ def test_refattn_stats_per_sample_plumbing():
         assert torch.isfinite(stats[0][key]).all(), key
     assert torch.isfinite(out).all()
     del fm.ref_attn16.forward
+
+
+def test_k2_module_import_safety():
+    """契约 16: K2 模块可导入且关键符号已定义 (防 NameError 到 GPU 才炸)."""
+    import inspect
+    import exp.v26.k2_style_subject_audit as k2
+
+    src = inspect.getsource(k2._vgg_layers)
+    assert "load_vgg16_features_offline" in src
+    assert callable(k2.load_vgg16_features_offline)

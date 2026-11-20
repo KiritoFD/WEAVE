@@ -28,6 +28,8 @@ import torch
 import torch.nn.functional as F
 from PIL import Image as PILImage
 
+from src.utils.protocol import load_vgg16_features_offline
+
 from . import OUT, ROOT, sanitize_cuda_env, save_json, seed_all, utc
 from exp.v19.fiber_duality import build_or_load_v19_foundation
 from exp.v26.dynamic_style_swd import DynamicSWD, swd_distance_matrix
