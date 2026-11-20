@@ -62,7 +62,7 @@ OURS_PARETO_T1 = [
 EXTRA_HIGHLIGHT = [
     ("C2nt_sw6_lc0.8_t45", "V25 C2nt (t45, 0-teacher)", "D", (-10, 12, "right"), (-14, -16, "right"), "o3_ref_fresh"),
     ("C2nt_sw6_lc0.8_t55", "V25 C2nt (t55, 0-teacher)", "D", (-14, -22, "right"), (-14, -16, "right"), "o3_ref_fresh"),
-    ("M0_prism1_l100",     "PRISM-1 (5.97 img/s)",       "o", (-14, -22, "right"), (-16, -22, "right"), "prism1"),
+    ("M0_prism1_l100",     "PRISM-1 (5.97 img/s)",       "o", (-14, -22, "right"), (-28, -4, "right"),  "prism1"),
 ]
 
 # 外部基线 (名称: (显示名, 左偏移, 右偏移, 固定 ms/img 若 metrics.csv 缺失))
