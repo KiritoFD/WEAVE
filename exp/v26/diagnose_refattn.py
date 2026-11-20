@@ -284,13 +284,19 @@ def k1c_velocity_field(env: dict, device: str = "cuda", n_pairs: int = N_VELOCIT
 
     g = torch.Generator().manual_seed(20261185)
     ic_list, ir_list = [], []
+    # 注意: c21["train"]["nbr_idx"] 行内全部是同画派核心邻居 (v21 构造), 直接按画派划分
+    # 采样跨风格对 —— 这同时揭示一个机制事实: C2nt 训练的 "跨风格邻居优先" 查找在
+    # nbr_idx 全同画派的结构下必然回退同画派参考 (见 K1 报告 §C2nt 训练参考结构)。
+    style_pool = [(sid_all == s).nonzero(as_tuple=True)[0] for s in range(5)]
     while len(ic_list) < n_pairs:
         c = int(torch.randint(0, len(z_all), (1,), generator=g))
-        cols = torch.randint(0, nbr_idx.shape[1], (4,), generator=g).tolist()
-        r = next((int(nbr_idx[c, k]) for k in cols if int(sid_all[int(nbr_idx[c, k])]) != int(sid_all[c])), None)
-        if r is not None:
-            ic_list.append(c); ir_list.append(r)
-    ic = torch.tensor(ic_list); ir = torch.tensor(ir_list)
+        pool = style_pool[int(sid_all[c])]
+        others = torch.cat([style_pool[s] for s in range(5) if s != int(sid_all[c])])
+        r = int(others[int(torch.randint(0, len(others), (1,), generator=g))])
+        ic_list.append(c)
+        ir_list.append(r)
+    ic = torch.tensor(ic_list)
+    ir = torch.tensor(ir_list)
 
     w_l, b_l = env["w_l"].to(device), env["b_l"].to(device)
     wy = w_l.flatten() / w_l.flatten().norm()
