@@ -79,3 +79,29 @@ def test_k2_module_import_safety():
     src = inspect.getsource(k2._vgg_layers)
     assert "load_vgg16_features_offline" in src
     assert callable(k2.load_vgg16_features_offline)
+
+
+def test_k2a_one_vs_rest_margin_fix():
+    """契约 17 (回归): K2-A one-vs-rest 必须含 '恰一端为 s' 的 cross 对 (原实现恒空 → 负值)."""
+    import torch
+    # 构造 4 样本: 2 个 style0 (近), 2 个 style1 (远); style0 的 one-vs-rest 应为正
+    d = torch.zeros(4, 4)
+    d[0, 1] = d[1, 0] = 0.5   # style0 within (近)
+    d[2, 3] = d[3, 2] = 0.55  # style1 within (近)
+    cross = 2.0               # 跨画派 (远)
+    for i in (0, 1):
+        for j in (2, 3):
+            d[i, j] = d[j, i] = cross
+    sids = torch.tensor([0, 0, 1, 1])
+    s = 0
+    m_in, m_out = [], []
+    for i in range(4):
+        for j in range(i + 1, 4):
+            si, sj = bool(sids[i] == s), bool(sids[j] == s)
+            if not (si or sj):
+                continue
+            val = float(d[i, j])
+            (m_in if (si and sj) else m_out).append(val)
+    assert len(m_out) == 4, f"cross 对未被收入 (旧 bug): m_out={m_out}"
+    margin = sum(m_out) / len(m_out) - sum(m_in) / len(m_in)
+    assert margin == 2.0 - 0.5, f"one-vs-rest margin 错误: {margin}"
