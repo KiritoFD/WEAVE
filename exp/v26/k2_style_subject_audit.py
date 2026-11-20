@@ -192,11 +192,7 @@ def k2a_discriminability(bundle, device: str) -> dict:
         deltas.append(d1 - d0)
     sens["texture_shuffle_swd_delta"] = round(sum(deltas) / len(deltas), 5)
 
-    # 大张量清理 (imgs/变换副本/距离矩阵 ~4GB), 防 K2-B OOM
-    del imgs_d, tex, d_swd, f_mean, f_gram
-    torch.cuda.empty_cache()
-
-    return {
+    result = {
         "n_images": len(imgs),
         "meanvgg": margins(dist_matrix_feat(f_mean)),
         "gram": margins(dist_matrix_feat(f_gram)),
@@ -204,6 +200,11 @@ def k2a_discriminability(bundle, device: str) -> dict:
         "swd_per_style_margin": per_style,
         "transform_sensitivity": sens,
     }
+
+    # 大张量清理 (imgs/变换副本/距离矩阵 ~4GB), 防 K2-B OOM
+    del imgs_d, tex, d_swd, f_mean, f_gram
+    torch.cuda.empty_cache()
+    return result
 
 
 # ------------------------------------------------- K2-B 梯度 ----
