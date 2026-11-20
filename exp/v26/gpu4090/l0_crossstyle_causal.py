@@ -71,7 +71,18 @@ def build_pair_matrix(sid_all: torch.Tensor, pairs: list[tuple[int, int]]) -> li
 
 @torch.no_grad()
 def ref_swap_sensitivity(env: dict, device: str = "cuda", n_tasks: int = 24) -> dict:
-    """参考更换敏感性: 同内容同噪声下 正确参考 vs 错误画派参考 的 dino_s 差."""
+    """参考更换敏感性: 同内容同噪声下 正确参考 vs 错误画派参考 的 dino_s 差.
+
+    防御式: 任何异常 → 返回 swap=None (次级指标不杀臂管线).
+    """
+    try:
+        return _ref_swap_impl(env, device=device, n_tasks=n_tasks)
+    except Exception as exc:
+        print(f"[L0 swap] FAILED (arm continues): {exc}", flush=True)
+        return {"correct": None, "wrong": None, "swap_delta": None, "error": str(exc)[:200]}
+
+
+def _ref_swap_impl(env: dict, device: str = "cuda", n_tasks: int = 24) -> dict:
     from src.utils import FeatureStack
     from PIL import Image as PILImage
     from exp.v18 import tasks_and_sources

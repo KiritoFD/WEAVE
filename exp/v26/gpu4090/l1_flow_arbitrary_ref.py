@@ -70,12 +70,15 @@ def build_teacher(pool: str, device: str = "cuda", batch: int = 25) -> Path:
     fm = SLFUNetV24OneShot(v_dim=192, use_conf_gate=True, use_global_fib=True).to(device).eval()
     fm.load_state_dict(ck["ema"], strict=False)  # 双分支 ckpt 布局: {"ema": state_dict, ...}
 
+    fib_tr = bundle["fnd"]["tr_fib"].float()
+    fib_mean = fib_tr.mean(0, keepdim=True).to(device)
+    fib_std = fib_tr.std(0, keepdim=True).clamp_min(1e-4).to(device)
     fiber_enc = StyleFiberEncoder(in_dim=bundle["fnd"]["tr_fib"].shape[1], dim=128).to(device).eval()
     fiber_enc.load_state_dict(bundle["fnd"]["fiber_state"])
     tr = bundle["v18_cache"]["train"]
     z_all, sid_all = tr["z"], tr["sid"].long()
     u_all = fiber_enc.encode(bundle["fnd"]["tr_fib"].to(device).float())
-    fib_n_all = (bundle["fnd"]["tr_fib"].to(device).float() - ck["fib_mean"].to(device)) / ck["fib_std"].to(device)
+    fib_n_all = (bundle["fnd"]["tr_fib"].to(device).float() - fib_mean) / fib_std
     del fiber_enc
 
     w_l = bundle["v18_cache"]["luma_proj"]["w"].float().view(1, 4, 1, 1).to(device)
