@@ -1,0 +1,43 @@
+{
+  "name": "07_V23_HiC_Joint_Pk",
+  "title": "V23 HiC Joint-Pk (slf_Joint_Pk_C1AB.pt)",
+  "role": "均衡高内容 Top-1 冠军 (20 NFE, Top-1 58.83% @ DINO-C 0.6299)",
+  "status": "frozen",
+  "checkpoints": [
+    {
+      "file": "slf_Joint_Pk_C1AB.pt",
+      "original_path": "runs/v23/joint_c1ab/slf_Joint_Pk_C1AB.pt",
+      "size_mb": 83.76,
+      "sha256": "d10ae418004ec0f40c6750e6713d2545b6b66b56219ee63cc44c2d217cc43575"
+    }
+  ],
+  "images_750": {
+    "images_750": {
+      "source_arm": "HiC_JPk_csj65_t4",
+      "count": 750
+    }
+  },
+  "architecture": "SLFUNet(base_dim=144, u_dim=128), 21.95M",
+  "training_config": {
+    "script": "exp/v23/p1_joint_c1_ab.py (ConvNeXt C1 mid-freq content + Anchor-Bridge AB)"
+  },
+  "inference_config": {
+    "anchor": "T4",
+    "branches": "cs_j (20 NFE)",
+    "gate": "original",
+    "solver": "csj65 (tau_hi=0.65)",
+    "decoder": "S10"
+  },
+  "metrics_cross600_s10": [
+    {
+      "arm": "HiC_JPk_csj65_t4",
+      "dino_c": 0.62985,
+      "dino_s": 0.53296,
+      "lpips": 0.56494,
+      "style_affinity": 0.63007,
+      "csd_top1_pct": 58.83,
+      "same_top1_pct": 96.7
+    }
+  ],
+  "notes": "Our-Frontier 中段代表点: 同 DINO-C 下击败 V20 D5 (+3.7pp) 且 NFE 减半。"
+}

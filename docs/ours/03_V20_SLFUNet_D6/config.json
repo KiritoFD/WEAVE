@@ -1,0 +1,72 @@
+{
+  "name": "03_V20_SLFUNet_D6",
+  "title": "V20 SLFUNet Core (slf_core_v2.pt)",
+  "role": "V20/V25 主干基座 (D5/D6/D6H/Hybrid 核心权重)",
+  "status": "active",
+  "checkpoints": [
+    {
+      "file": "slf_core_v2.pt",
+      "original_path": "runs/v20/slf_flow/slf_core_v2.pt",
+      "size_mb": 83.76,
+      "sha256": "85737c5331895032ff2bd722e54c669ff14e92a40c3bd1a14707bb439f63166b"
+    }
+  ],
+  "images_750": {
+    "images_750": {
+      "source_arm": "M0_v20_d6",
+      "count": 750
+    }
+  },
+  "architecture": "SLFUNet(base_dim=144, u_dim=128), 21.95M, Coarse-16 瓶颈语义注入 (DINO-16 + y16_lcn)",
+  "training_config": {
+    "script": "exp/v20/run_v20.py",
+    "conditioning": "Core-kNN8 原型 + 5 类 onehot + layout_scale + drop_style/drop_content",
+    "objective": "Rectified Flow Matching MSE + y16_lcn structure loss"
+  },
+  "inference_config": {
+    "anchor": "T4 (V19 Anisotropic S10-VGG)",
+    "branches": "full (32 img-eq) or cs_j (16 img-eq, 20 NFE notation)",
+    "solver": "D6_SOLVER (tau in [0.40,0.74]) or D6H (tau in [0.48,0.78])",
+    "gate": "original sigmoid((dsd-mid)*550)",
+    "decoder": "S10"
+  },
+  "metrics_cross600_s10": [
+    {
+      "arm": "M0_v20_d6",
+      "dino_c": 0.66879,
+      "dino_s": 0.51073,
+      "lpips": 0.53745,
+      "style_affinity": 0.61445,
+      "csd_top1_pct": 55.67,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "B_d6_t066",
+      "dino_c": 0.70072,
+      "dino_s": 0.50277,
+      "lpips": 0.52135,
+      "style_affinity": 0.60713,
+      "csd_top1_pct": 55.0,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "P02_d6h_csj",
+      "dino_c": 0.67818,
+      "dino_s": 0.51214,
+      "lpips": 0.53502,
+      "style_affinity": 0.61257,
+      "csd_top1_pct": 55.0,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "P02_d6h_full",
+      "dino_c": 0.68204,
+      "dino_s": 0.50735,
+      "lpips": 0.53152,
+      "style_affinity": 0.61125,
+      "csd_top1_pct": 55.17,
+      "same_top1_pct": 96.7
+    }
+  ],
+  "notes": "V25 Round 1/2/R1b 全程基准权重; T4 锚下 tau_min=0.72 饱和于 DINO-C=0.7055, full CFG 对 Impressionism->Minimalism 去杂乱路线不可删。"
+}

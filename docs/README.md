@@ -13,6 +13,7 @@
 | **2** | [**`performance/MASTER_LEDGER.md`**](performance/MASTER_LEDGER.md) | **全仓唯一数据与结论总台账**：V6→V21 全部 265 条实验臂 750 任务实测数据（`metrics.csv` / `metrics.json`）与八条方法论铁律 |
 | **3** | [**`icme2027/README.md`**](icme2027/README.md) · [`STORY.md`](icme2027/STORY.md) | **ICME 2027 独立论文工程（`PRISM`）**：6 页双栏 `IEEEtran` 完整手稿（`paper.tex` / `paper.pdf`）、可插拔宏 `macros.tex` 与全套矢量生成脚本 |
 | **4** | [**`19_pull_together/README.md`**](19_pull_together/README.md) | **V25 当前活跃计划（12h 双卡）**：前 2h `Minimal PRISM` 收敛消融（τ≤0.78 截断修正、非劣性判定）+ 后 10h `V25-M` 三机制（空间自适应混合 / 多强度蒸馏 / One-Shot 监督解耦）与排程 ETA |
+| **4a** | [**`ours/README.md`**](ours/README.md) | **WEAVE/PRISM 核心模型资产库（9 个代表模型独立打包）**：每目录含 checkpoint (`.pt`) + 750 评测图 + `config.json` + `RECIPE.md`（含 `PRISM-HighContent-R12`、`PRISM-1`、`O3 One-Shot` 等） |
 | **4b** | [**`next1118/README.md`**](next1118/README.md) | **`PRISM v2 / V19` 正交商—纤维对偶与各向异性谱传输蓝图**：源码级病灶剖析、完整数学推导与 4090 执行方案 |
 | **5** | [`HIGHLIGHTS.md`](HIGHLIGHTS.md) · [`vae/README.md`](vae/README.md) | **基石设施档案**：`S10` 剪枝解码器（`10.66M`，`2.86×` 加速，`+3.17pp` Top-1）与冻结 `tasks_750` 四裁判协议 |
 | **6** | [`../exp/README.md`](../exp/README.md) | **实验代码包总索引**：`exp/v8` → `exp/v20` 模块入口、职责与文档映射 |

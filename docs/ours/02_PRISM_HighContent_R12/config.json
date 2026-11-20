@@ -1,0 +1,103 @@
+{
+  "name": "02_PRISM_HighContent_R12",
+  "title": "PRISM-HighContent-R12 (B4 锚 + D6 cs_j + PRISM-1 高内容前沿突破候选)",
+  "role": "极高内容 & 极低 LPIPS 前沿主力 (DINO-C 0.73-0.775)",
+  "status": "active (promoted candidate)",
+  "checkpoints": [
+    {
+      "file": "checkpoints/P1_B4_distill50.pt",
+      "original_path": "runs/v6/P1_B4_distill50/P1_B4_distill50.pt",
+      "size_mb": 0.87,
+      "sha256": "2716436fe0ee99937d1b40a5615d4e0aeda496b82be396f6edd4fd5580071dc2"
+    },
+    {
+      "file": "checkpoints/s2_prism1_v2.pt",
+      "original_path": "runs/v19/students/s2_prism1_v2.pt",
+      "size_mb": 4.91,
+      "sha256": "a15f5928fc70a664777e706a8aeac33852d36ca4980c99b3722ecd0a95172625"
+    },
+    {
+      "file": "checkpoints/slf_core_v2.pt",
+      "original_path": "runs/v20/slf_flow/slf_core_v2.pt",
+      "size_mb": 83.76,
+      "sha256": "85737c5331895032ff2bd722e54c669ff14e92a40c3bd1a14707bb439f63166b"
+    }
+  ],
+  "images_750": {
+    "images_750": {
+      "source_arm": "MechA_B4anc_A0_global_g55",
+      "count": 750
+    },
+    "images_750_g70": {
+      "source_arm": "HC_R12_g70",
+      "count": 750
+    },
+    "images_750_g85": {
+      "source_arm": "HC_R12_g85",
+      "count": 750
+    }
+  },
+  "architecture": "线性混合 (1-gamma)*z_P1 + gamma*z_D6(B4-anchored SLFUNet cs_j D6H); g100 为单模型免 P1",
+  "training_config": {
+    "script": "exp/v25/r12_anchor_reeval.py + exp/v25/r13_highcontent_r12.py",
+    "note": "零新权重重训; 组合 P1_B4_distill50 (218K C3UNet 锚) + slf_core_v2 (21.95M) + s2_prism1_v2 (1.28M)",
+    "eval_seed": 20261185
+  },
+  "inference_config": {
+    "d6_anchor": "B4_distill50(canonicalizer(z_src, mode='c1_gentle', augment=False))",
+    "d6_branches": "cs_j (20 NFE = 8 RK2 steps x2 CFG)",
+    "d6_solver": "D6H_SOLVER (tau_min=0.48, tau_hi=0.78, steps=8, ws_fig=4.4, rescale_phi=0.48)",
+    "gate": "original sigmoid((dsd - mid)*550)",
+    "p1_lambda": 1.0,
+    "mix_gamma": "0.55 (0.7723/0.4564/0.4783) | 0.70 (0.7622/0.4669/0.4799) | 0.85 (0.7470/0.4774/0.4863) | 1.00 single-model (0.7286/0.4870/0.4980)",
+    "decoder": "S10"
+  },
+  "metrics_cross600_s10": [
+    {
+      "arm": "HC_R12_g40",
+      "dino_c": 0.77484,
+      "dino_s": 0.44675,
+      "lpips": 0.48068,
+      "style_affinity": 0.5688,
+      "csd_top1_pct": 41.67,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "MechA_B4anc_A0_global_g55",
+      "dino_c": 0.7723,
+      "dino_s": 0.45643,
+      "lpips": 0.47832,
+      "style_affinity": 0.57518,
+      "csd_top1_pct": 42.5,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "HC_R12_g70",
+      "dino_c": 0.76218,
+      "dino_s": 0.46694,
+      "lpips": 0.47994,
+      "style_affinity": 0.58197,
+      "csd_top1_pct": 43.33,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "HC_R12_g85",
+      "dino_c": 0.74701,
+      "dino_s": 0.4774,
+      "lpips": 0.48626,
+      "style_affinity": 0.5885,
+      "csd_top1_pct": 43.33,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "HC_R12_g100",
+      "dino_c": 0.72859,
+      "dino_s": 0.48704,
+      "lpips": 0.49799,
+      "style_affinity": 0.59462,
+      "csd_top1_pct": 42.0,
+      "same_top1_pct": 96.7
+    }
+  ],
+  "notes": "V25 最重要正向发现 (R13 严格三因子解耦与配对 CI 确认): g55 四项严格支配 PRISM-1 l075 (+0.0193 D-S, -0.0065 LPIPS, +4.83pp Top-1); g70/g85 在内容/风格/LPIPS 三维严格支配旧 Hybrid g25/g40/g55 (代价 CSD Top-1 -4~-9pp); g100 单模型直达 DINO-C=0.7286 打破 T4 下 0.7055 天花板; 4090 RGB->RGB 82.9 ms/img (b16)。"
+}

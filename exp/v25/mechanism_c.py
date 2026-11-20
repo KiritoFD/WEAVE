@@ -103,6 +103,7 @@ from pathlib import Path
 from . import OUT, ROOT, autocast, sanitize_cuda_env, save_json, seed_all, utc
 from exp.v25.reference_teacher_v2 import (
     MID_COS_BAND,
+    ReferenceFeatureCache,
     STYLE_GAIN_MIN,
     TEACHER_W_GRID,
     build_teacher_pairs,
@@ -720,36 +721,52 @@ def train_c2nt_arm(bundle, c21, v16_tr, arm, *, lambda_sw: float = 0.5, lambda_c
             d16_aug = d16_aug - d16_aug.mean(dim=(2, 3), keepdim=True)
             y16_aug = (y16_c * (0.85 + 0.30 * torch.rand(S, 1, 1, 1, device=device))
                        + 0.04 * torch.randn_like(y16_c)).clamp(-1.1, 1.1)
-            with autocast(device):
-                v_prev = fm(z_init, y16_aug, d16_aug, slot0,
-                            adapter(u_all[ir_sw], u_src), tau0_s,
-                            drop_style=torch.zeros(S, dtype=torch.bool, device=device),
-                            drop_content=torch.zeros(S, dtype=torch.bool, device=device),
-                            layout_scale=torch.ones(S, device=device),
-                            d16_ref=d16_all[ir_sw].to(device).float(),
-                            v16_ref=v16_tr[ir_sw].to(device).float(),
-                            u_glob=fib_n_all[ir_sw]).float()
-            z_prev = z_init + v_prev * (1.0 - tau0_s.view(-1, 1, 1, 1))
-            rgb_prev = decode_s10(dec, z_prev.clamp(-5.0, 5.0), batch=S, enable_grad=True, output_cpu=False)
-            with torch.no_grad():
-                rgb_r = decode_s10(dec, zr, batch=S, enable_grad=True, output_cpu=False)
-                rgb_s = decode_s10(dec, za, batch=S, enable_grad=True, output_cpu=False)
+            d16_r_sw = d16_all[ir_sw].to(device).float()
+            v16_r_sw = v16_tr[ir_sw].to(device).float()
+            u_glob_sw = fib_n_all[ir_sw]
+            # 分块(<=4)过 adapter+fm+可微S10+feature_fn 并逐块反传, 控制 3060 12GB 峰值显存且每块图独立
+            sw_chunk = 4
+            cos_st_parts, cos_ct_parts, en_parts = [], [], []
+            for c0 in range(0, S, sw_chunk):
+                c1 = min(c0 + sw_chunk, S)
+                w_frac = float(c1 - c0) / float(S)
+                u_style_c = adapter(u_all[ir_sw[c0:c1]], u_src[c0:c1])
                 with autocast(device):
-                    f_ref = feature_fn(rgb_r)
-                    f_src = feature_fn(rgb_s)
-            with autocast(device):
-                f_gen = feature_fn(rgb_prev)
-            l_style, l_cont, cos_style, cos_cont = c2nt_swap_losses(f_gen, f_ref, f_src)
-            l_swap = lambda_sw * l_style + lambda_c * l_cont
-            l_swap.backward()
-            l_sw_v, l_c_v = float(l_style.item()), float(l_cont.item())
+                    v_prev = fm(z_init[c0:c1], y16_aug[c0:c1], d16_aug[c0:c1], slot0[c0:c1],
+                                u_style_c, tau0_s[c0:c1],
+                                drop_style=torch.zeros(c1 - c0, dtype=torch.bool, device=device),
+                                drop_content=torch.zeros(c1 - c0, dtype=torch.bool, device=device),
+                                layout_scale=torch.ones(c1 - c0, device=device),
+                                d16_ref=d16_r_sw[c0:c1],
+                                v16_ref=v16_r_sw[c0:c1],
+                                u_glob=u_glob_sw[c0:c1]).float()
+                z_prev = z_init[c0:c1] + v_prev * (1.0 - tau0_s[c0:c1].view(-1, 1, 1, 1))
+                rgb_prev = decode_s10(dec, z_prev.clamp(-5.0, 5.0), batch=c1 - c0, enable_grad=True, output_cpu=False)
+                with torch.no_grad():
+                    rgb_r = decode_s10(dec, zr[c0:c1], batch=c1 - c0, enable_grad=True, output_cpu=False)
+                    rgb_s = decode_s10(dec, za[c0:c1], batch=c1 - c0, enable_grad=True, output_cpu=False)
+                    with autocast(device):
+                        f_ref = feature_fn(rgb_r)
+                        f_src = feature_fn(rgb_s)
+                with autocast(device):
+                    f_gen = feature_fn(rgb_prev)
+                l_style_c, l_cont_c, cos_st_c, cos_ct_c = c2nt_swap_losses(f_gen, f_ref, f_src)
+                ((lambda_sw * l_style_c + lambda_c * l_cont_c) * w_frac).backward()
+                l_sw_v += float(l_style_c.item()) * w_frac
+                l_c_v += float(l_cont_c.item()) * w_frac
+                cos_st_parts.append(cos_st_c.detach())
+                cos_ct_parts.append(cos_ct_c.detach())
+                en_parts.append((z_prev.detach() - za[c0:c1]).flatten(1).norm(dim=1))
+            cos_style = torch.cat(cos_st_parts)
+            cos_cont = torch.cat(cos_ct_parts)
+            edit_norms = torch.cat(en_parts)
             if step == 1 or step % diag_every == 0 or step == updates:
                 row = {"step": step,
                        "preview_content_cos": round(float(cos_cont.mean()), 5),
                        "preview_style_cos": round(float(cos_style.mean()), 5),
                        "content_cos_min": round(float(cos_cont.min()), 5),
                        "style_cos_max": round(float(cos_style.max()), 5),
-                       "preview_edit_norm": round(float((z_prev.detach() - za).flatten(1).norm(dim=1).mean()), 4),
+                       "preview_edit_norm": round(float(edit_norms.mean()), 4),
                        "l_style": round(l_sw_v, 5), "l_cont": round(l_c_v, 5),
                        "lambda_sw": float(lambda_sw), "lambda_c": float(lambda_c)}
                 diag_rows.append(row)
@@ -1106,13 +1123,14 @@ def run_stage_c2nt(args, env) -> dict:
 
 _STAGES = {"C0": run_stage_c0, "C1": run_stage_c1, "C2": run_stage_c2, "C3": run_stage_c3,
            "C2nt": run_stage_c2nt}
+_STAGES_BY_LOWER = {k.lower(): k for k in _STAGES}
 
 
 def run_stage(stage: str, args) -> dict:
     """阶段分发入口 (run_stage 前机械自检接口标签自由)."""
     assert_label_free_interfaces()
-    s = str(stage).upper()
-    if s not in _STAGES:
+    s = _STAGES_BY_LOWER.get(str(stage).strip().lower())
+    if s is None:
         raise ValueError(f"未知阶段 {stage} (允许: {sorted(_STAGES)})")
     env = _load_train_env(args)
     result = _STAGES[s](args, env)

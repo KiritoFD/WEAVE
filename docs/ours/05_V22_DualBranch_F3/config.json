@@ -1,0 +1,44 @@
+{
+  "name": "05_V22_DualBranch_F3",
+  "title": "V22 DualBranch F3 (prism_dual_branch.pt)",
+  "role": "V23 cs_j bug 修复后 20 NFE 高风格双分支 + One-Shot 底座",
+  "status": "frozen (also O3 initialization base)",
+  "checkpoints": [
+    {
+      "file": "prism_dual_branch.pt",
+      "original_path": "runs/v22/attn_flow/prism_dual_branch.pt",
+      "size_mb": 83.76,
+      "sha256": "ad25267445bf46bc7588b768325b43efeb165967c803f6a348a26739b149ae35"
+    }
+  ],
+  "images_750": {
+    "images_750": {
+      "source_arm": "F3_dual_fixed_orig",
+      "count": 750
+    }
+  },
+  "architecture": "SLFUNet(base_dim=144, u_dim=128), 21.95M",
+  "training_config": {
+    "script": "exp/v22/train_dual.py",
+    "note": "双分支 cs_j 专训底座; 修复 layout_scale 误清零 bug 后在 DINO-C=0.6096 达 DINO-S=0.5522"
+  },
+  "inference_config": {
+    "anchor": "T4",
+    "branches": "cs_j (20 NFE)",
+    "gate": "original",
+    "solver": "D5_SOLVER",
+    "decoder": "S10"
+  },
+  "metrics_cross600_s10": [
+    {
+      "arm": "F3_dual_fixed_orig",
+      "dino_c": 0.60962,
+      "dino_s": 0.55222,
+      "lpips": 0.57228,
+      "style_affinity": 0.6419,
+      "csd_top1_pct": 49.5,
+      "same_top1_pct": 96.7
+    }
+  ],
+  "notes": "全仓除 StyleGallery 外 DINO-S@DINO-C>=0.61 最高单模型之一, 同时是 V24 O1/O2/O3 One-Shot 的热启动底座。"
+}

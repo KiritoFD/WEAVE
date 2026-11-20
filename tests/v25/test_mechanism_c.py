@@ -807,6 +807,16 @@ def test_c2nt_no_teacher_interface():
     for bad in ("pack", "cross_pack", "teacher", "z_cr"):
         assert bad not in sig.parameters, f"C2nt 训练接口不得携带教师参数 {bad}"
     assert "C2nt" in _STAGES
+    # run_stage("C2nt") 分发回归: 此前 .upper() 把 "C2nt" 变成 "C2NT" 导致 3060 实跑崩溃
+    import argparse
+    import exp.v25.mechanism_c as _mc
+    called = []
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(_mc, "_load_train_env", lambda _a: {})
+        mp.setitem(_mc._STAGES, "C2nt", lambda _a, _e: (called.append("C2nt") or {"ok": True}))
+        mp.setattr(_mc, "save_json", lambda *a, **kw: None)
+        out = _mc.run_stage("C2nt", argparse.Namespace(stage="C2nt"))
+    assert called == ["C2nt"] and out["ok"] is True
     assert c2nt_swap_active(0.5, 1.0) is True
     assert c2nt_swap_active(0.0, 1.0) is True
     assert c2nt_swap_active(0.5, 0.0) is True

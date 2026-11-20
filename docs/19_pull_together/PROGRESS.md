@@ -142,3 +142,20 @@
 - **升级结论**：`O2` 教师的 latent-SWD 优化结构下 **mid_cos∈[0.80,0.92] 频带不可达**——参考风格的潜在空间梯度相对内容项根本性偏弱，任何 w_c/步数/锚/信任域组合都无法到达；教师目标需换方向（① DINO 中层引导的编辑方向；② 扩散式教师（SDEdit 式）而非潜空间逐点优化；③ 或直接以 O3 的参考交叉注意力无教师训练 + 参考消融正则）。**C0 vs C1 弱包对照已被 A03 预先否定（label_free 教师边际贡献 ≤0），不再重复训练**。
 - 本窗口 C1 净产出：完整的否定性证据链（w_c 三档 + 步数反转 + 锚初始化 + 信任域剂量-响应，全部 pair 级量化），以及 53→58 单测的结构重设计代码资产（ref_anchor/trust_region/color_guide 可复用于任何未来教师）。
 - GPU 已清空（两台全部空闲）；全部判定/文档/台账已提交至 `b8abbbb`+本条。
+
+## 收束四件事执行汇总（2026-11-20 13:20，总控）
+
+1. **R13：`PRISM-HighContent-R12` 严格对照与三因子解耦**（4090，统一 `EVAL_SEED=20261185`，配对 CI `n_boot=4000`；详细见 [`docs/v25/audits/r13_highcontent_r12.md`](../v25/audits/r13_highcontent_r12.md)，8 臂入库 `metrics.csv` → 519 行）：
+   - **`HC_R12_g55` (`0.7723/0.4564/0.4783/42.50%`) 四项严格支配 `PRISM-1 λ=0.75` (`PASS`：`ΔS +0.0193`, `ΔLPIPS −0.0065`, `ΔTop1 +4.83pp`)**；
+   - **`HC_R12_g70` (`0.7622/0.4669/0.4799`) 与 `g85` (`0.7470/0.4774/0.4863`) 在 DINO-C/DINO-S/LPIPS 三维严格支配旧 Hybrid `M1_lin_g25/g40/g55`**（代价 CSD Top-1 −4.2~−9.3pp）；
+   - **`HC_R12_g100`（单模型 `B4 + cs_j + D6H`，免 P1 混合）直达 `0.7286 / 0.4870 / 0.4980`**，打破 T4 锚下 `0.7055` 单模型天花板；
+   - **三因子归因（γ=0.55）**：`B4` 锚贡献 `+0.029~+0.036 DINO-C` 与 `−0.021~−0.026 LPIPS`（主因，代价 −7~−9pp Top-1）；`D6H` 贡献 `+0.010 DINO-C / −0.006 LPIPS`；`cs_j` 在不降内容前提下贡献 `+0.002 DINO-S` 并省一半流 NFE。
+2. **最后三项推理与配方消融定案**（详见 [`docs/v25/audits/r14_convergence_and_e2e.md`](../v25/audits/r14_convergence_and_e2e.md)）：
+   - `fixed_g=0.69` vs `original`：全局内容（`+0.0056`）与 LPIPS（`−0.0057`）显著更优、风格持平，但 **`Ukiyo_e` 掉 5.0pp** 触发守卫（`INCONCLUSIVE`）→ 全画派正式交付保留 `original` 门控；
+   - **Minimalism `full` vs `cs_j`**：`full` 确实不可替代——D5 `Impressionism→Minimalism` `full=86.7% vs cs_j=30.0%`（`−56.7pp`, 源锁定 `+0.567`），D6H `−7.50pp`；`full` 的无内容先验项负责剥离密集纹理；`cs_j` 定位高内容高速分支；
+   - **Round 2 训练配方**：`T1/T2/T3` @D6h 均 `PASS` vs `T0`，AB (`T2`/`T3`) 对 `T1` 无增益 → 冻结 **`Tr_T1`（`drop_c=30%, AB=0%`）** 为最简训练配方。
+3. **`docs/ours/` 核心模型资产库整理完毕**：9 个代表模型独立分目录（ckpt + 750 图 + `config.json` + `RECIPE.md` + [`docs/ours/README.md`](../ours/README.md)），含 `PRISM-HighContent-R12`、`PRISM-1`、`V20 D6`、`V22 Peak1500`、`V22 Dual F3`、`V23 DualSWD`、`V23 HiC`、`V25 Tr_T1`、`V24 O3`。
+4. **R14 正式端到端 RGB→RGB 基准 + 双接口冒烟**：
+   - 4090 实测 `512² RGB→RGB`（`b1` / `b16`）：`PRISM-1 71.1 / 58.2 ms`、`d6_csj_b4 207.4 / 67.2 ms`、`d6_full_b4 212.6 / 99.7 ms`（`b16` 下 `cs_j` 流加速 2.33×）、`PRISM-HC-R12 234.1 / 84.0 ms`、`o3_ref 306.9 (fresh) / 267.4 ms (ref-cached, −39.4ms)`；
+   - 双接口 GPU 冒烟全过：`PRISMCore`（4090：`student` gate + `prism1`/`d6_flow`/`hybrid` `deterministic=True`）+ `PRISMRef`（3060：`o3_ref` `PASS`，修掉 `RefRuntime.run` 缺 `torch.no_grad()` 导致 22GB OOM 与 `_decode` 跨设备 bug）。
+5. **`C2nt` 推进中**：4090 跑完 0.2 探针（3.1 min，4 条件 `correct_ref` `dino_s_correct=0.345` > `wrong` `0.334` > `diff` `0.332`，smoke PASS），0.5/1.0 探针运行中。

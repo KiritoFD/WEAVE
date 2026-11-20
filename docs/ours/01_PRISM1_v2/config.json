@@ -1,0 +1,66 @@
+{
+  "name": "01_PRISM1_v2",
+  "title": "PRISM-1 v2 (V19 极速高内容单步基座)",
+  "role": "极速单步基座 / Hybrid 混合分量",
+  "status": "active",
+  "checkpoints": [
+    {
+      "file": "s2_prism1_v2.pt",
+      "original_path": "runs/v19/students/s2_prism1_v2.pt",
+      "size_mb": 4.91,
+      "sha256": "a15f5928fc70a664777e706a8aeac33852d36ca4980c99b3722ecd0a95172625"
+    }
+  ],
+  "images_750": {
+    "images_750": {
+      "source_arm": "M0_prism1_l100",
+      "count": 750
+    }
+  },
+  "architecture": "SpatiallyRoutedChordNet(width=96, chord_dim=128, spatial_router=True), ~1.28M net (+0.31M StyleFiberEncoder)",
+  "training_config": {
+    "script": "exp/v19/routed_student.py",
+    "teacher": "V19 Anisotropic S10-VGG+Oklab T4",
+    "cond": "StyleFiberEncoder(128D chord = bary[tid] - u_src) + DINO-16 + c_64 + latent luma",
+    "loss": "latent MSE + Haar DWT high-freq (0.35) + S10 VGG+Oklab moment (0.12, every 2 steps)",
+    "steps": 3600,
+    "optimizer": "AdamW"
+  },
+  "inference_config": {
+    "nfe": 1,
+    "anchor": "latent chroma-shift (alpha = min(0.45, 0.20*lam))",
+    "strength_knob": "lambda in [0.75, 1.30], default 1.0",
+    "decoder": "S10 (decode_s10, scaling_factor=0.18215)",
+    "same_task_bypass": true
+  },
+  "metrics_cross600_s10": [
+    {
+      "arm": "M0_prism1_l075",
+      "dino_c": 0.77149,
+      "dino_s": 0.43709,
+      "lpips": 0.48485,
+      "style_affinity": 0.56109,
+      "csd_top1_pct": 37.67,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "M0_prism1_l100",
+      "dino_c": 0.74403,
+      "dino_s": 0.44303,
+      "lpips": 0.50571,
+      "style_affinity": 0.5655,
+      "csd_top1_pct": 44.33,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "A_p1_l130",
+      "dino_c": 0.70319,
+      "dino_s": 0.45041,
+      "lpips": 0.53385,
+      "style_affinity": 0.57051,
+      "csd_top1_pct": 50.17,
+      "same_top1_pct": 96.7
+    }
+  ],
+  "notes": "4090 协议批推理 17.0 ms/img；4090 完整 RGB->RGB (含 A0 encode + DINO + S10 decode) = 70.7 ms/img (b1) / 59.3 ms/img (b16)。"
+}

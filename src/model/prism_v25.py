@@ -264,30 +264,31 @@ class CoreRuntime:
             raise NotImplementedError(STUDENT_PENDING_MESSAGE)
         z_src, tasks = self._align_protocol(content, style, R, engine)
         extras: dict[str, Any] = {}
-        if engine == "d6_flow":
-            z, tau_stats = self._flow_branch(config, R, seed, solver=dict(config.solver or {}),
-                                             tau_override=float(knob_value),
-                                             branches=config.branches, gate=config.gate)
-            extras["tau_stats"] = tau_stats
-        elif engine == "hybrid":
-            from exp.v24.p0_m0_m2 import compute_prism1_latents
-            z_p1 = compute_prism1_latents(R["bundle"], tasks, z_src, R["d16"],
-                                          lam=float(config.p1_lambda), device=R["device"])
-            z_d6, tau_stats = self._flow_branch(config, R, seed, solver=dict(config.solver or {}),
-                                                tau_override=None, branches=config.branches,
-                                                gate=config.gate)
-            gamma = float(knob_value)
-            z = (1.0 - gamma) * z_p1 + gamma * z_d6
-            extras = {"tau_stats": tau_stats, "z_p1": z_p1, "z_d6": z_d6, "gamma": gamma}
-        elif engine == "prism1":
-            from exp.v24.p0_m0_m2 import compute_prism1_latents
-            z = compute_prism1_latents(R["bundle"], tasks, z_src, R["d16"],
-                                       lam=float(knob_value), device=R["device"])
-        elif engine == "mecha_a":
-            z, extras = self._mecha_arm(config, R, knob_value)
-        else:
-            raise ValueError(f"unknown core engine '{engine}'")
-        rgb01 = self._decode(z, R)
+        with torch.no_grad():
+            if engine == "d6_flow":
+                z, tau_stats = self._flow_branch(config, R, seed, solver=dict(config.solver or {}),
+                                                 tau_override=float(knob_value),
+                                                 branches=config.branches, gate=config.gate)
+                extras["tau_stats"] = tau_stats
+            elif engine == "hybrid":
+                from exp.v24.p0_m0_m2 import compute_prism1_latents
+                z_p1 = compute_prism1_latents(R["bundle"], tasks, z_src, R["d16"],
+                                              lam=float(config.p1_lambda), device=R["device"])
+                z_d6, tau_stats = self._flow_branch(config, R, seed, solver=dict(config.solver or {}),
+                                                    tau_override=None, branches=config.branches,
+                                                    gate=config.gate)
+                gamma = float(knob_value)
+                z = (1.0 - gamma) * z_p1 + gamma * z_d6
+                extras = {"tau_stats": tau_stats, "z_p1": z_p1, "z_d6": z_d6, "gamma": gamma}
+            elif engine == "prism1":
+                from exp.v24.p0_m0_m2 import compute_prism1_latents
+                z = compute_prism1_latents(R["bundle"], tasks, z_src, R["d16"],
+                                           lam=float(knob_value), device=R["device"])
+            elif engine == "mecha_a":
+                z, extras = self._mecha_arm(config, R, knob_value)
+            else:
+                raise ValueError(f"unknown core engine '{engine}'")
+            rgb01 = self._decode(z, R)
         return {"engine": engine, "interface": "core", "knob": knob,
                 "knob_value": float(knob_value), "strength": float(strength),
                 "seed": int(seed), "z": z, "rgb01": rgb01, **extras}
@@ -384,7 +385,7 @@ class CoreRuntime:
     def _decode(z, R: dict):
         """S10 契约解码（decode_s10 内部 /0.18215 + 自带 post_quant_conv 恰好一次）。"""
         from src.utils import decode_s10
-        return decode_s10(R["dec"], z, batch=16).clamp(0.0, 1.0)
+        return decode_s10(R["dec"], z.to(R["device"]), batch=16).clamp(0.0, 1.0)
 
 
 class RefRuntime:
@@ -525,50 +526,51 @@ class RefRuntime:
 
         eps = torch.randn(zs.shape, generator=torch.Generator().manual_seed(int(seed)))
         out = torch.zeros_like(zs)
-        for st in range(0, B, 25):
-            sl = slice(st, min(st + 25, B))
-            b = sl.stop - sl.start
-            zb = zs[sl].to(device)
-            tid_d = tid_t[sl].to(device)
-            u_style = R["ad"](R["u_sg5"][tid_t[sl].cpu()].to(device), R["u_src"][sl].to(device))
-            u_glob = (R["fib_n_sg5"][tid_t[sl].cpu()].to(device)
-                      if R["fib_n_sg5"] is not None else u_style)
-            d16_r = R["d16_sg5"][tid_t[sl].cpu()].to(device)
-            v16_r = R["v16_sg5"][tid_t[sl].cpu()].to(device)
-            y16 = R["y16"][sel][sl].to(device).float()
-            d16 = R["d16"][sel][sl].to(device).float()
-            z = (1.0 - tau0) * eps[sl].to(device) + tau0 * zb
+        with torch.no_grad():
+            for st in range(0, B, 25):
+                sl = slice(st, min(st + 25, B))
+                b = sl.stop - sl.start
+                zb = zs[sl].to(device)
+                tid_d = tid_t[sl].to(device)
+                u_style = R["ad"](R["u_sg5"][tid_t[sl].cpu()].to(device), R["u_src"][sl].to(device))
+                u_glob = (R["fib_n_sg5"][tid_t[sl].cpu()].to(device)
+                          if R["fib_n_sg5"] is not None else u_style)
+                d16_r = R["d16_sg5"][tid_t[sl].cpu()].to(device)
+                v16_r = R["v16_sg5"][tid_t[sl].cpu()].to(device)
+                y16 = R["y16"][sel][sl].to(device).float()
+                d16 = R["d16"][sel][sl].to(device).float()
+                z = (1.0 - tau0) * eps[sl].to(device) + tau0 * zb
 
-            f0 = torch.zeros(b, dtype=torch.bool, device=device)
-            f1 = torch.ones(b, dtype=torch.bool, device=device)
-            l1 = torch.ones(b, device=device)
-            sid0 = torch.zeros(b, dtype=torch.long, device=device)
-            dt = (1.0 - tau0) / float(steps)
+                f0 = torch.zeros(b, dtype=torch.bool, device=device)
+                f1 = torch.ones(b, dtype=torch.bool, device=device)
+                l1 = torch.ones(b, device=device)
+                sid0 = torch.zeros(b, dtype=torch.long, device=device)
+                dt = (1.0 - tau0) / float(steps)
 
-            def _v(zz, pr):
-                tv = torch.full((b,), tau0 + pr * (1.0 - tau0), device=device)
-                with autocast(device):
-                    v_sc, v_0c = R["fm"](
-                        torch.cat([zz, zz], 0), y16.repeat(2, 1, 1, 1), d16.repeat(2, 1, 1, 1),
-                        sid0.repeat(2), u_style.repeat(2, 1), tv.repeat(2),
-                        drop_style=torch.cat([f0, f1], 0),
-                        drop_content=torch.cat([f0, f0], 0),
-                        layout_scale=torch.cat([l1, l1], 0),
-                        d16_ref=d16_r.repeat(2, 1, 1, 1), v16_ref=v16_r.repeat(2, 1, 1, 1),
-                        u_glob=u_glob.repeat(2, 1)).float().chunk(2, 0)
-                return v_0c + wj * (v_sc - v_0c)
+                def _v(zz, pr):
+                    tv = torch.full((b,), tau0 + pr * (1.0 - tau0), device=device)
+                    with autocast(device):
+                        v_sc, v_0c = R["fm"](
+                            torch.cat([zz, zz], 0), y16.repeat(2, 1, 1, 1), d16.repeat(2, 1, 1, 1),
+                            sid0.repeat(2), u_style.repeat(2, 1), tv.repeat(2),
+                            drop_style=torch.cat([f0, f1], 0),
+                            drop_content=torch.cat([f0, f0], 0),
+                            layout_scale=torch.cat([l1, l1], 0),
+                            d16_ref=d16_r.repeat(2, 1, 1, 1), v16_ref=v16_r.repeat(2, 1, 1, 1),
+                            u_glob=u_glob.repeat(2, 1)).float().chunk(2, 0)
+                    return v_0c + wj * (v_sc - v_0c)
 
-            for i in range(steps):
-                v1 = _v(z, i / float(steps))
-                v2 = _v(z + 0.5 * dt * v1, (i + 0.5) / float(steps))
-                z = z + dt * v2
-            if config.same_mask:
-                m_same = same[sl].to(device)
-                if m_same.any():
-                    z = torch.where(m_same.view(-1, 1, 1, 1), zb, z)
-            out[sl] = z.cpu()
+                for i in range(steps):
+                    v1 = _v(z, i / float(steps))
+                    v2 = _v(z + 0.5 * dt * v1, (i + 0.5) / float(steps))
+                    z = z + dt * v2
+                if config.same_mask:
+                    m_same = same[sl].to(device)
+                    if m_same.any():
+                        z = torch.where(m_same.view(-1, 1, 1, 1), zb, z)
+                out[sl] = z.cpu()
 
-        rgb01 = decode_s10(R["dec"], out, batch=16).clamp(0.0, 1.0)
+            rgb01 = decode_s10(R["dec"], out.to(device), batch=16).clamp(0.0, 1.0)
         return {"engine": engine, "interface": "ref", "knob": knob,
                 "knob_value": tau0, "strength": float(strength), "seed": int(seed),
                 "z": out, "rgb01": rgb01, "wj": wj, "steps": steps}

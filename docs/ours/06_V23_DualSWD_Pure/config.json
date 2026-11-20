@@ -1,0 +1,52 @@
+{
+  "name": "06_V23_DualSWD_Pure",
+  "title": "V23 DualSWD Pure (slf_DualSWD_pure.pt)",
+  "role": "均衡高内容双分支 (DINO-C 0.6164, DINO-S 0.5467)",
+  "status": "frozen",
+  "checkpoints": [
+    {
+      "file": "slf_DualSWD_pure.pt",
+      "original_path": "runs/v23/dual_swd/slf_DualSWD_pure.pt",
+      "size_mb": 83.76,
+      "sha256": "8437d7c6fc20985a51c216c761056929b4f4e5d9834fd8865be0cc849ce74a2b"
+    }
+  ],
+  "images_750": {
+    "images_750": {
+      "source_arm": "DualSWD_pure_hiT_ws52",
+      "count": 750
+    }
+  },
+  "architecture": "SLFUNet(base_dim=144, u_dim=128), 21.95M",
+  "training_config": {
+    "script": "exp/v23/p1_dual_swd_train.py (pure cs_j + ConvNeXt/RGB Patch-SWD + mid-scale content loss)"
+  },
+  "inference_config": {
+    "anchor": "T4",
+    "branches": "cs_j",
+    "gate": "original",
+    "solver": "hiT (tau_min=0.32, tau_hi=0.68, ws_fig=5.2)",
+    "decoder": "S10"
+  },
+  "metrics_cross600_s10": [
+    {
+      "arm": "DualSWD_pure_hiT_ws52",
+      "dino_c": 0.61638,
+      "dino_s": 0.54674,
+      "lpips": 0.56741,
+      "style_affinity": 0.63843,
+      "csd_top1_pct": 51.17,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "B_dswd_t058",
+      "dino_c": 0.67703,
+      "dino_s": 0.5156,
+      "lpips": 0.53511,
+      "style_affinity": 0.61535,
+      "csd_top1_pct": 51.83,
+      "same_top1_pct": 96.7
+    }
+  ],
+  "notes": "视觉审计通过的超 StyleGallery 内容工作点 (0.6164 vs SG 0.6113); V25 R1 B_dswd_t058 为高内容备选。"
+}

@@ -1,0 +1,77 @@
+{
+  "name": "09_V24_O3_OneShot",
+  "title": "V24 O3 RGB-ConvNeXt Gated One-Shot (O3_rgb_cnx_gated.pt)",
+  "role": "最强免类别 ID 单参考任意风格迁移模型 (PRISMRef 默认引擎)",
+  "status": "active",
+  "checkpoints": [
+    {
+      "file": "O3_rgb_cnx_gated.pt",
+      "original_path": "runs/v24/oneshot_val/O3_rgb_cnx_gated.pt",
+      "size_mb": 85.09,
+      "sha256": "0832c35f62e4b294e52a3c2751570b84f1bad0f0ccdd3959b3f14969b5900bc4"
+    }
+  ],
+  "images_750": {
+    "images_750": {
+      "source_arm": "O3_rgb_cnx_gated_t45",
+      "count": 750
+    }
+  },
+  "architecture": "SLFUNetV24OneShot (22.23M, Q/K=gray DINO-16, V=RGB ConvNeXt-s2, global 795D fiber + confidence gate) + RefAdapter (0.066M)",
+  "training_config": {
+    "script": "exp/v24/p0_o1_o3_value.py",
+    "init": "runs/v22/attn_flow/prism_dual_branch.pt",
+    "onehot": 0,
+    "cross_pairs": "50% V23 cross pairs + 50% self pairs (srcA0 Anchor-Bridge tau0 in [0.35,0.60])",
+    "updates": 1200,
+    "micro": 12,
+    "accum": 4,
+    "seed": 20262700
+  },
+  "inference_config": {
+    "steps": 10,
+    "nfe": "20 vel evals x2 CFG = 40 img-eq",
+    "strength_knob": "tau0 in [0.40, 0.60] (t45 canonical, wj=2.2)",
+    "encoder": "A0 encoder (runs/a0/a0_encoder_only.pt)",
+    "decoder": "S10"
+  },
+  "metrics_cross600_s10": [
+    {
+      "arm": "O3_rgb_cnx_gated_t40",
+      "dino_c": 0.54565,
+      "dino_s": 0.53039,
+      "lpips": 0.45429,
+      "style_affinity": 0.62931,
+      "csd_top1_pct": 40.83,
+      "same_top1_pct": null
+    },
+    {
+      "arm": "O3_rgb_cnx_gated_t45",
+      "dino_c": 0.58453,
+      "dino_s": 0.52449,
+      "lpips": 0.42128,
+      "style_affinity": 0.6234,
+      "csd_top1_pct": 35.33,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "O3_rgb_cnx_gated_t55",
+      "dino_c": 0.67829,
+      "dino_s": 0.50253,
+      "lpips": 0.34936,
+      "style_affinity": 0.60393,
+      "csd_top1_pct": 24.0,
+      "same_top1_pct": 96.7
+    },
+    {
+      "arm": "O3_rgb_cnx_gated_t60",
+      "dino_c": 0.7274,
+      "dino_s": 0.48829,
+      "lpips": 0.31243,
+      "style_affinity": 0.59149,
+      "csd_top1_pct": 20.33,
+      "same_top1_pct": null
+    }
+  ],
+  "notes": "SG-25 OOD 125-pair 阶段诊断 DINO-C=0.5867, dS=+0.157; swap_dist=0.442; 4090 RGB->RGB 实测 304.6 ms (fresh) / 265.8 ms (ref-cached, 省 39ms)。"
+}
