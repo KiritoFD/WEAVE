@@ -23,6 +23,8 @@ def _step(name: str, fn) -> None:
 
 
 def main():
+    from exp.v26.sg25_hook import run_sg25
+
     sanitize_cuda_env()
     seed_all(20261185)
     pool = str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16")

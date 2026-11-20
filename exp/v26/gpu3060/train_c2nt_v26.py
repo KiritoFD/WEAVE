@@ -81,7 +81,11 @@ def train_c2nt_v26(bundle, c21, v16_tr, arm: str, *, style_loss: str = "vgg",
     adapter = RefAdapter(dim=128).to(device)
     feature_fn = make_train_feature_fn("vgg", device)
     dec = load_s10_decoder(device)
-    swd = DynamicSWD(device=device, n_proj=swd_n_proj) if style_loss == "swd" else None
+    # swd 臂: bf16 VGG (显存减半) + 更小 swap 分块 (3060 12GB 安全水位)
+    sw_chunk = 2 if style_loss == "swd" else SW_CHUNK
+    swd = DynamicSWD(device=device, n_proj=swd_n_proj,
+                     dtype=torch.bfloat16 if style_loss == "swd" else torch.float32) \
+        if style_loss == "swd" else None
 
     for p in fm.parameters():
         p.requires_grad_(False)
@@ -162,8 +166,8 @@ def train_c2nt_v26(bundle, c21, v16_tr, arm: str, *, style_loss: str = "vgg",
 
         l_sw_v = l_c_v = 0.0
         cos_st_parts, cos_ct_parts, en_parts = [], [], []
-        for c0 in range(0, S, SW_CHUNK):
-            c1 = min(c0 + SW_CHUNK, S)
+        for c0 in range(0, S, sw_chunk):
+            c1 = min(c0 + sw_chunk, S)
             w_frac = float(c1 - c0) / float(S)
             u_style_c = adapter(u_all[ir_sw[c0:c1]], u_src[c0:c1])
             with autocast(device):

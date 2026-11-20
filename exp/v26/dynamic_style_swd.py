@@ -31,17 +31,19 @@ class DynamicSWD:
         vgg = load_vgg16_features_offline(device).eval()
         for p in vgg.parameters():
             p.requires_grad_(False)
+        if dtype != torch.float32:
+            vgg = vgg.to(dtype)  # bf16 权重: 激活/梯度显存减半 (3060 单轮 SWD 试验需要)
         self.vgg = vgg.to(device)
         self.device = device
         self.n_proj = n_proj
         self.n_token = n_token
         self.dtype = dtype
-        self._mean = _MEAN.to(device)
-        self._std = _STD.to(device)
+        self._mean = _MEAN.to(device, dtype)
+        self._std = _STD.to(device, dtype)
         self._layer_scales = None  # 首次调用时按参考特征幅度初始化层归一
 
     def _feats(self, rgb01: torch.Tensor) -> list[torch.Tensor]:
-        x = (rgb01.float().to(self.device) - self._mean) / self._std
+        x = (rgb01.to(self.device).to(self.dtype) - self._mean) / self._std
         outs = []
         h = x
         for i, m in enumerate(self.vgg):
@@ -71,18 +73,18 @@ class DynamicSWD:
         for f in feats:
             B, C, H, W = f.shape
             # 共享投影方向: (C, n_proj) 每次调用重采样 (契约 6: 逐 update 刷新)
-            proj = torch.randn(C, self.n_proj, generator=g, device="cpu").to(self.device)
-            proj = F.normalize(proj, dim=0)
+            proj = torch.randn(C, self.n_proj, generator=g).to(self.device, self.dtype)
+            proj = F.normalize(proj.float(), dim=0).to(self.dtype)
             # 共享 token 索引
             n_hw = H * W
             t = min(self.n_token, n_hw)
             idx = torch.randperm(n_hw, generator=g)[:t].to(self.device)
             # 投影后的 1-D 边际分布: (B, T, n_proj)
-            p_all = self._token_sample(f, idx) @ proj            # (B*k?, no: imgs batch)
+            p_all = self._token_sample(f, idx) @ proj            # (B, T, n_proj)
             p_out, p_ref = p_all[:k], p_all[k:2 * k]
-            # 逐方向排序经验分布 L1
-            q_out, _ = torch.sort(p_out, dim=1)
-            q_ref, _ = torch.sort(p_ref, dim=1)
+            # 逐方向排序经验分布 L1 (fp32 排序求差, 数值稳定)
+            q_out, _ = torch.sort(p_out.float(), dim=1)
+            q_ref, _ = torch.sort(p_ref.float(), dim=1)
             w1 = (q_out - q_ref).abs().mean(dim=(1, 2))          # (k,)
             losses_per_layer.append(w1)
         # 层归一 (首次: 以参考侧幅度为准, 之后固定)
