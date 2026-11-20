@@ -226,10 +226,34 @@ def load_sr_env(pool: str, device: str = "cuda", ckpt_path: Path | None = None) 
     v16_sg5 = _sg5_cnx_v16(c21, cnx, device=device)
     u_sg5 = c21["sg5"]["u"].float()
 
+    # SG-5 参考图的原始 795D 风格纤维 (协议口径与 r3.eval_o_tau_list 一致):
+    # u_glob 必须取 SG-5 目标画派纤维 (5,795), 而非 test750 样本纤维!
+    from PIL import Image
+
+    import torchvision.transforms.functional as TF
+    from exp.v19.fiber_duality import extract_color_fiber_27d, extract_dino_rgb_moments_768d
+    from src.utils._local_eval_refs import load_dino_model
+
+    dino_model = load_dino_model(device=device)
+    clean_dir = ROOT / "datasets/distinct5_512/train_512clean"
+    sg_fibs = []
+    for st in c21["sg5"]["stems"]:
+        p = clean_dir / st.split("__")[0] / f"{st}.jpg"
+        if not p.exists():
+            p = list(clean_dir.rglob(f"{st}.*"))[0]
+        xr = TF.to_tensor(Image.open(p).convert("RGB").resize((512, 512), Image.Resampling.BILINEAR)).unsqueeze(0).to(device)
+        sg_fibs.append(torch.cat([extract_color_fiber_27d(xr),
+                                  extract_dino_rgb_moments_768d(dino_model, xr, batch=1, device=device).to(device)], dim=-1))
+    fib_sg5 = torch.cat(sg_fibs, 0)                                  # (5, 795)
+    fib_n_sg5 = (fib_sg5 - fib_mean) / fib_std
+    del dino_model
+    torch.cuda.empty_cache()
+
     w_l = bundle["v18_cache"]["luma_proj"]["w"].float().view(1, 4, 1, 1)
     b_l = bundle["v18_cache"]["luma_proj"]["b"].float()
     return dict(bundle=bundle, c21=c21, cnx=cnx, fm=fm, ad=ad, fib_mean=fib_mean,
                 fib_std=fib_std, u_src_750=u_src_750, fib_n_750=fib_n_750,
+                fib_n_sg5=fib_n_sg5,
                 v16_tr=v16_tr, d16_sg5=d16_sg5, v16_sg5=v16_sg5, u_sg5=u_sg5,
                 w_l=w_l, b_l=b_l)
 
@@ -278,8 +302,8 @@ def eval_sr_arm(env: dict, arm: str, *, steps: int = 10, sampler: str = "rk2",
 
             u_style_t = ad(env["u_sg5"][tid_t.cpu()].to(device), env["u_src_750"][sl].to(device))
             u_style_s = u_style_self[sl].to(device)
-            u_glob_t = env["fib_n_750"][tid_t.cpu()]
-            u_glob_s = env["fib_n_750"][sl]
+            u_glob_t = env["fib_n_sg5"][tid_t.cpu()]  # SG-5 目标画派纤维 (协议口径)
+            u_glob_s = env["fib_n_750"][sl]           # 源图自参考: 源样本自身纤维
             d16 = d16_750[sl].to(device).float()
             d16_r_t = env["d16_sg5"][tid_t.cpu()].to(device)
             v16_r_t = env["v16_sg5"][tid_t.cpu()].to(device)
@@ -416,7 +440,7 @@ def _eval_baseline_steps(env: dict, arm: str, steps: int, sampler: str, device: 
         sid_p = torch.tensor([t["source_style_id"] for t in grp], device=device)
         tid_t = torch.tensor([t["target_style_id"] for t in grp], device=device)
         u_style_t = ad(env["u_sg5"][tid_t.cpu()].to(device), env["u_src_750"][sl].to(device))
-        u_glob_t = env["fib_n_750"][tid_t.cpu()]
+        u_glob_t = env["fib_n_sg5"][tid_t.cpu()]  # SG-5 目标画派纤维 (协议口径)
         d16 = d16_750[sl].to(device).float()
         d16_r_t = env["d16_sg5"][tid_t.cpu()].to(device)
         v16_r_t = env["v16_sg5"][tid_t.cpu()].to(device)

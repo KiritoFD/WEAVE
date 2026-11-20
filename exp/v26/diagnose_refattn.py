@@ -147,7 +147,7 @@ def k1a_telemetry(env: dict, device: str = "cuda", n_tasks: int = N_TELEMETRY_TA
     u_src = env["u_src_750"][sel].to(device)
     tid_cpu = tid_t.cpu()
     u_style = ad(env["u_sg5"][tid_cpu].to(device), u_src)
-    u_glob = env["fib_n_750"][tid_cpu]
+    u_glob = env["fib_n_sg5"][tid_cpu]  # SG-5 目标画派纤维 (协议口径)
     d16_r = env["d16_sg5"][tid_cpu].to(device)
     v16_r = env["v16_sg5"][tid_cpu].to(device)
     tau0, wj = 0.45, 2.2
@@ -206,7 +206,7 @@ def k1a_telemetry(env: dict, device: str = "cuda", n_tasks: int = N_TELEMETRY_TA
 
 @torch.no_grad()
 def k1b_interventions(env: dict, device: str = "cuda", n_tasks: int = N_INTERVENTION_TASKS) -> dict:
-    from src.utils._local_eval_refs import FeatureStack
+    from src.utils import FeatureStack
     tasks, z_src_750, _ = tasks_and_sources()
     cross_ids = [i for i, t in enumerate(tasks) if t["source_style_id"] != t["target_style_id"]][:n_tasks]
     sel = torch.tensor(cross_ids, dtype=torch.long)
@@ -223,7 +223,7 @@ def k1b_interventions(env: dict, device: str = "cuda", n_tasks: int = N_INTERVEN
     d16 = env["bundle"]["test_struct"]["dino_16"][sel].to(device).float()
     u_src = env["u_src_750"][sel].to(device)
     u_style = ad(env["u_sg5"][tid_cpu].to(device), u_src)
-    u_glob = env["fib_n_750"][tid_cpu]
+    u_glob = env["fib_n_sg5"][tid_cpu]  # SG-5 目标画派纤维 (协议口径)
     d16_r = env["d16_sg5"][tid_cpu].to(device)
     v16_r = env["v16_sg5"][tid_cpu].to(device)
     tau0, wj = 0.45, 2.2
