@@ -127,7 +127,7 @@ def k2a_discriminability(bundle, device: str) -> dict:
         pick = pool[torch.randperm(len(pool), generator=g)[:N_PER_STYLE]]
         idxs.append(pick)
     idx = torch.cat(idxs)
-    imgs = torch.cat([decode_s10(dec, z_all[chunk], batch=32).to(device).clamp(0.0, 1.0)
+    imgs = torch.cat([decode_s10(dec, z_all[chunk].to(device), batch=32).clamp(0.0, 1.0)
                       for chunk in idx.split(32)]).cpu()
     sids = torch.cat([torch.full((N_PER_STYLE,), s) for s in range(5)])
 
