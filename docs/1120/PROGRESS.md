@@ -92,7 +92,33 @@ C2nt t45 × StyleGallery 25 类 125 对（`docs/v26/4090/data/sg25_c2nt_t45.json
 
 **SG-25 定论**：C2nt 在**训练五画派之外**的参考上仍有正迁移（+0.22 dino_s、swap 0.53），"参考响应"这一核心科学结论在 OOD 域成立——但内容保持（0.357）确认其作为最终模型的短板，支持降级决策。
 
-### 3060 — 单轮 SWD 受控试验（运行中，S1fix_vgg 18:12 起，ETA ~1.5h/臂）
+### 3060 — 单轮 SWD 受控试验（INCONCLUSIVE — 环境竞争，C2nt 训练配方正式冻结）
+
+训练速率诊断：`ups_per_sec = 0.065`（V25 同配方 ~0.5-0.8）——3060 GPU 出现 **17 个外部 compute 进程竞争**（WDDM 隐藏显存），micro=8 + expandable_segments + 卸载 cnx/dec 均无法恢复。已降级为 600-upd 匹配预算仍不可交付。按 docs 预注册停机条件处置：
+
+> **C2nt 训练配方正式冻结（2026-11-21）**。SWD 单轮试验记 **INCONCLUSIVE（环境：3060 外部负载竞争，非科学结论）**；队列保留后台机会性完成，若后续产出将作为补充合并，不再阻塞任何主线。C2nt 的全部科学结论（免教师参考响应 +0.0732、OOD 正迁移 +0.22、SR/注意力和速度场诊断）已归档，研究重心按 [`07_c2nt_demotion_decision.md`](07_c2nt_demotion_decision.md) 转向 PRISM-Flow 任意参考化。
+
+### K2 — SWD 判别力 / 梯度 / 题材偏置审计（✅ 完成，`docs/v26/4090/K2_STYLE_LOSS_AND_SUBJECT_AUDIT.md` + `data/k2_style_subject_audit.json` + `data/k2c_local_join.json`）
+
+| 审计 | 读数 | 判读 |
+|---|---|---|
+| **K2-A 判别力** | margin：mean-VGG 0.064 / Gram 0.075 / **SWD 0.827** | **SWD 同/异画派判别间隔是 mean-VGG 的 13×** |
+| **K2-B 梯度** | ‖∇SWD64‖=2.06 vs ‖∇meanVGG‖=0.104（20×）；cos(∇SWD,∇meanVGG)=**0.179**；cos(∇SWD,∇Gram)=0.0；种子稳定性随 K 升 (0.24→0.39 @K=128) | SWD 提供与均值损失**近正交的互补纹理梯度**，K=128 最稳 |
+| **K2-C 题材偏置** | Rococo：person 0.0% / landscape 0.0% / architecture 0.0% / abstract 0.0%；ER 全题材 0–12.2% | **排除题材混杂**：困难画派失败是真实的风格迁移失败（All-subject × Roc = 0），"Top-1 不是唯一正确性"的混杂担忧对 Roc 不成立 |
+
+**K2 定论**：SWD 具备真实的纹理判别力与互补梯度（支持未来 Flow 主线引入分布损失的候选资格）；CSD 题材混杂被数据排除，Top-1 在 Roc/ER 上的读数可信。
+
+---
+
+## V26 阶段收官（2026-11-21）
+
+六问的当日证据（详见 [`V26_RESULTS_SUMMARY.md`](V26_RESULTS_SUMMARY.md)）：
+1. **Q32 是否必要** → K0：极分解步真实去二阶泄漏（92.3→20.0），结构保持度量退化，INCONCLUSIVE → K3 匹配消融 gated。
+2. **SR-CFG 能否破源锁定** → FAIL（无臂达门槛）；但 `v_pos−v_src` 是免标签 uncond 替代（w=1 恢复 40.3% vs 42.17%）。
+3. **C2nt 困难画派瓶颈** → 四重证据定位：局部注意力内容净损害（K1-B）、轨迹末端参考身份消失（K1-C）、训练参考 ~100% 同画派（nbr_idx 结构）、题材混杂排除（K2-C）。
+4. **PRISM-Flow 任意参考化路径** → 全局弦通路优先、局部注入结构安全化、SWD 互补梯度候选（K1/K2 证据闭环）。
+5. **推理步数** → **4 步 Euler 43.17% Top-1**（零训练最优，> 10 步 42.17%）。
+6. **SG-25 正迁移** → +0.2216 dino_s / swap 0.535 成立（One-Shot 线欠账补齐）。
 
 ---
 
