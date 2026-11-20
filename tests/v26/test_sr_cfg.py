@@ -114,3 +114,26 @@ def test_sr_arm_registry_valid():
         assert spec["mode"] in ("baseline", "sr", "sr3"), arm
         assert spec["proj"] in ("none", "chroma"), arm
         assert spec["w"] >= 0.0
+
+
+def test_baseline_cfg_direction(sr_inputs):
+    """契约 15 (回归): baseline CFG 必须 = v_uncond + wj*(v_cond - v_uncond), 不得反转.
+
+    回归背景: chunk 顺序反转曾把 CFG 写成负方向, 导致 FS/基线全部近恒等输出.
+    """
+    from exp.v26.sr_cfg import v_0c_ret
+    s = sr_inputs
+    mock = MockFM()
+    v_base, _ = sr_velocity(mock, None, s["u1"], None, s["g_t"], None, s["d16"], s["d16"],
+                            s["v16_t"], None, None, s["y16"], s["zz"], s["tv"],
+                            mode="baseline", w=0.0, wj=2.2, device="cpu")
+    # 手工按 mock 语义重算 cond / uncond 两分支
+    def branch(drop_style_flag):
+        ds = torch.tensor(float(drop_style_flag), dtype=torch.float32).view(1, 1, 1, 1).expand_as(s["zz"])
+        ref = s["v16_t"].mean(dim=(2, 3))[:, :1].view(-1, 1, 1, 1)
+        g = s["g_t"].mean(dim=-1).view(-1, 1, 1, 1)
+        return 0.5 * s["zz"] + (1.0 - ds) * (0.1 * ref + 0.2 * g) + ds * 0.05
+    v_cond, v_uncond = branch(False), branch(True)
+    expect = v_uncond + 2.2 * (v_cond - v_uncond)
+    assert torch.allclose(v_base, expect, atol=1e-5), "baseline CFG 方向错误 (chunk 反转回归)"
+    assert torch.allclose(v_base, v_0c_ret(v_cond, v_uncond, 2.2), atol=1e-6)

@@ -78,14 +78,15 @@ TAU0, WJ = 0.45, 2.2  # 与 V25 C2nt t45 读取数完全同口径
 
 # 预注册 SR 臂矩阵 (docs/1120 §P0-A; 不得臂间私改)
 SR_ARMS: dict[str, dict] = {
-    "SR0_t45":     dict(mode="baseline", w=0.0,  proj="none"),   # 原始 C2nt 2 分支 CFG
+    "SR0_t45":     dict(mode="baseline", w=0.0,  proj="none"),   # 原始 C2nt 2 分支 CFG (协议基线)
+    "SR0b_pos":    dict(mode="sr",      w=0.0,  proj="none"),   # 单条件分支 v_pos (docs 公平对照 1)
     "SR1_w03":     dict(mode="sr",      w=0.3,  proj="none"),
     "SR2_w06":     dict(mode="sr",      w=0.6,  proj="none"),
     "SR3_w10":     dict(mode="sr",      w=1.0,  proj="none"),
     "SR4_w15":     dict(mode="sr",      w=1.5,  proj="none"),
     "SR5_w06_pc":  dict(mode="sr",      w=0.6,  proj="chroma"),
     "SR6_w10_pc":  dict(mode="sr",      w=1.0,  proj="chroma"),
-    "SR7_3br_w06": dict(mode="sr3",     w=0.6,  proj="none"),   # 3 分支 1.5×NFE
+    "SR7_3br_w06": dict(mode="sr3",     w=0.6,  proj="none"),   # 3 分支 1.5×NFE (CFG + 排斥)
 }
 
 
@@ -140,7 +141,9 @@ def sr_velocity(fm, ad, u_style_t, u_style_s, u_glob_t, u_glob_s,
         return out.chunk(k, 0)
 
     if mode == "baseline":
-        # 标准 2 分支: 分支 1 目标参考全条件 (drop_style=F), 分支 2 无风格 (drop_style=T)
+        # 标准 2 分支 CFG (r3.eval_o_tau_list 协议口径): out=cat([zz,zz]) 后
+        # chunk0 = drop_style=False (条件/目标参考), chunk1 = drop_style=True (无条件)。
+        # 正确 CFG = v_uncond + wj*(v_cond - v_uncond) —— **勿反转 chunk 顺序!**
         out = fm(torch.cat([zz, zz], 0), y16.repeat(2, 1, 1, 1), d16.repeat(2, 1, 1, 1),
                  slot.repeat(2), torch.cat([u_style_t, u_style_t], 0), tv.repeat(2),
                  drop_style=torch.cat([f0, f1], 0),
@@ -148,8 +151,8 @@ def sr_velocity(fm, ad, u_style_t, u_style_s, u_glob_t, u_glob_s,
                  layout_scale=l1.repeat(2),
                  d16_ref=d16_r_t.repeat(2, 1, 1, 1), v16_ref=v16_r_t.repeat(2, 1, 1, 1),
                  u_glob=u_glob_t.repeat(2, 1)).float()
-        v_pos, v_sc = out.chunk(2, 0)
-        return v_pos + wj * (v_sc - v_pos), 2
+        v_cond, v_uncond = out.chunk(2, 0)
+        return v_uncond + wj * (v_cond - v_uncond), 2
 
     if mode == "sr":
         v_pos, v_src = _branch([u_style_t, u_style_s], [u_glob_t, u_glob_s],
@@ -161,15 +164,15 @@ def sr_velocity(fm, ad, u_style_t, u_style_s, u_glob_t, u_glob_s,
                                      [u_glob_t, u_glob_s, u_glob_t],
                                      [d16_r_t, d16_r_s, d16_r_t],
                                      [v16_r_t, v16_r_s, v16_r_t], [False, False, True])
-        v_cfg = v_pos + wj * (v_sc - v_pos)
+        v_cfg = v_sc + wj * (v_pos - v_sc)  # 正确 CFG: uncond + wj*(cond - uncond)
         return v_cfg + w * apply_proj(v_pos - v_src, pc), 3
 
     raise ValueError(f"未知 SR mode: {mode}")
 
 
-def v_0c_ret(v_pos: torch.Tensor, v_sc: torch.Tensor, wj: float) -> torch.Tensor:
-    """基线 CFG 组合式 (供单测引用)."""
-    return v_pos + wj * (v_sc - v_pos)
+def v_0c_ret(v_cond: torch.Tensor, v_uncond: torch.Tensor, wj: float) -> torch.Tensor:
+    """正确 CFG 组合式 (chunk 顺序: cond, uncond) — 供单测引用; 勿再反转."""
+    return v_uncond + wj * (v_cond - v_uncond)
 
 
 # ------------------------------------------------- RK2 / Euler 积分 ----
