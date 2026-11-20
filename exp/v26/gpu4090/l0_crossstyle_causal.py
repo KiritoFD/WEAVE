@@ -27,7 +27,7 @@ from exp.v26 import OUT, ROOT, save_json, utc
 from exp.v26.gpu3060.train_c2nt_v26 import train_c2nt_v26
 from exp.v25.mechanism_c import assign_c2nt_refs  # A0 原样对照
 from exp.v26.sr_cfg import _eval_baseline_steps, load_sr_env
-from src.utils import load_s10_decoder
+from src.utils import decode_s10, load_s10_decoder
 
 L0_UPDATES = 1200
 L0_SEED = 20265700
