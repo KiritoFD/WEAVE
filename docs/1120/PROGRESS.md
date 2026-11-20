@@ -12,6 +12,11 @@
 - **4090**：`git archive HEAD | tar -x` 同步 → tmux `v26k`（`/opt/conda/envs/cu121/bin/python`）。
 - **3060**：scp 同步 → `.bat + schtasks v26p0`（`C:\Program Files\Python312\python.exe`）。
 - **两处运行时 bug 修复并重启动**：① `Tensor.norm(dim=(1,2,3))` 在 torch 2.5 触发 `linalg.matrix_norm` 限制（K0 / K1-C）→ 改 flatten+`norm(dim=1)`；② 3060 队列 `_few_step`/`_swd_arm` 缺函数内 import → NameError。均已修复、同步、重启（幂等跳过已完成臂）。
+- **协议级 bug 发现与全部 SR/FS 臂作废重跑（重要）**：K1-A 逐样本化修复后暴露 `u_glob` 取数错误——`load_sr_env` 误用 `fib_n_750[tid]`（test750 样本纤维）而非协议要求的 **SG-5 目标画派纤维 `fib_n_sg5`**（`r3.eval_o_tau_list` 口径）。受污染臂：4090 `SR1–SR7` 全部（`u_glob_t` 错误，解释了 FS/SR 早期"近恒等输出"读数），3060 `FS_*` 全部。已修复（`load_sr_env` 现场提取 SG-5 5 张参考图的 795D 纤维）、两机作废重跑（提交 `71c3f1d` + ROOT 导入修复）。
+- **保留有效的早期读数**：`SR0_t45` 复用 V25 raw（不受影响，读数逐位复现 42.17%）；`selfref_identity_audit`（自参考纤维口径正确）有效——**发现 ref==src 时输出显著偏离源（latent MAE 0.451，DINO-C 0.707，identity_pass=False）**：C2nt 的参考条件并不支持自参考恒等，Same150 bypass 是必要的协议补丁而非模型能力。
+- **第二次重大 bug：CFG chunk 顺序反转（已修复，全部 SR1–SR7 / FS / K1-B 作废重跑）**：baseline 分支误写为 `v_pos + wj*(v_sc − v_pos)`，而协议口径（`r3.eval_o_tau_list`）为 `v_uncond + wj*(v_cond − v_uncond)`——等效**负 CFG**，导致 FS/基线全部"近恒等输出"（Top1 0.8–2.3%）。回归测试契约 15 已固化（`test_baseline_cfg_direction`）。同时新增 docs 公平对照 1 要求的**单条件分支臂 `SR0b_pos`**（v_pos alone，与 SR1–SR6 同 NFE 比较）。u_glob 修复后的 SR1–SR6 旧读数（Min 98–100% 现象）实为"无 CFG 锚定的 v_pos+排斥"行为，不作结论。
+- **K1-B 有效结论（作废前的一次有效观察，待重跑确认）**：R0–R6 干预对 `dino_s_vs_target_ref` 的影响 ≤ ±0.02（R3 V=0 反而 +0.02）——**16×16 局部参考注意力在当前 C2nt 中近乎惰性，参考响应主要由全局风格通路承载**。此结论若重跑复现，将直接指导 PRISM-Flow 任意参考化设计（优先全局弦通路而非局部注意力）。
+- **4090 为共享 GPU**：机上另有外部推理服务占用 ~12GB 显存（host PID 589217/1091267，**不得触碰**）；本队列所有 VRAM 预算按 ≤12GB 约束运行（已验证 SR 全矩阵可在此水位完成）。
 
 ## 实时结果（滚动追加）
 
