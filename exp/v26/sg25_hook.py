@@ -21,6 +21,12 @@ from exp.v20.submode_patchswd import load_convnext_tiny_offline
 
 
 def run_sg25(pool: str, device: str = "cuda") -> dict:
+    out_p = OUT / "gpu3060" / "sg25_c2nt_t45.json"
+    if out_p.exists():
+        print(f"[V26 SG25] Reusing {out_p}", flush=True)
+        import json as _json
+        return _json.loads(out_p.read_text(encoding="utf-8"))
+
     from exp.v25.r3_oneshot_minimal import sg25_and_swap
 
     bundle = build_or_load_v19_foundation(pool, device=device)
@@ -38,7 +44,7 @@ def run_sg25(pool: str, device: str = "cuda") -> dict:
         "swap_dist": float(swap_dist),
         "rows": rows,
     }
-    save_json(OUT / "gpu3060" / "sg25_c2nt_t45.json", out)
+    save_json(out_p, out)
     print(f"[V26 SG25] swap_dist={swap_dist} rows={len(rows)}", flush=True)
     for r in rows:
         print(f"[V26 SG25] {json.dumps(r, default=str)[:220]}", flush=True)

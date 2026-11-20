@@ -135,7 +135,9 @@ def perturb_stability(t4d: torch.Tensor, gen: torch.Generator, std: float = NOIS
     """输入加噪后特征相对 L2 变化 (越低越稳)."""
     noise = torch.randn(t4d.shape, generator=gen).to(t4d.device) * std
     f2 = t4d + noise
-    return float(((t4d.float() - f2.float()).norm(dim=(1, 2, 3)) / t4d.float().norm(dim=(1, 2, 3)).clamp_min(1e-8)).mean())
+    a = (t4d.float() - f2.float()).flatten(1).norm(dim=1)
+    b = t4d.float().flatten(1).norm(dim=1).clamp_min(1e-8)
+    return float((a / b).mean())
 
 
 def audit_variant(name: str, feat: torch.Tensor, raw: torch.Tensor,

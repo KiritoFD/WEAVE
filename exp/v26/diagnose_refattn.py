@@ -294,9 +294,10 @@ def k1c_velocity_field(env: dict, device: str = "cuda", n_pairs: int = N_VELOCIT
             luma_e = float(((diff * wy.view(1, 4, 1, 1)).square().sum(dim=(1, 2, 3))).mean())
             total_e = float(diff.square().sum(dim=(1, 2, 3)).mean().clamp_min(1e-12))
             rows.append({
-                "prog": prog, "norm_v_pos": round(float(v_pos.norm(dim=(1, 2, 3)).mean()), 4),
-                "norm_v_src": round(float(v_src.norm(dim=(1, 2, 3)).mean()), 4),
-                "norm_diff": round(float(diff.norm(dim=(1, 2, 3)).mean()), 4),
+                "prog": prog,
+                "norm_v_pos": round(float(v_pos.flatten(1).norm(dim=1).mean()), 4),
+                "norm_v_src": round(float(v_src.flatten(1).norm(dim=1).mean()), 4),
+                "norm_diff": round(float(diff.flatten(1).norm(dim=1).mean()), 4),
                 "cos_diff_vpos": round(cos_dp, 4),
                 "luma_energy_ratio": round(luma_e / max(total_e, 1e-9), 4),
             })

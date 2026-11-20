@@ -23,11 +23,6 @@ def _step(name: str, fn) -> None:
 
 
 def main():
-    from exp.v26.sr_cfg import FEW_STEP_ARMS, load_sr_env, eval_few_step_arm
-    from exp.v26.sg25_hook import run_sg25
-    from exp.v26.gpu3060.train_c2nt_v26 import train_c2nt_v26
-    from exp.v26.sr_cfg import _eval_baseline_steps
-
     sanitize_cuda_env()
     seed_all(20261185)
     pool = str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16")
@@ -43,9 +38,8 @@ def main():
 
 
 def _few_step(pool: str) -> None:
-    from exp.v19.fiber_duality import build_or_load_v19_foundation
-    env_bundle = build_or_load_v19_foundation(pool, device="cuda")
-    del env_bundle
+    from exp.v26.sr_cfg import FEW_STEP_ARMS, eval_few_step_arm, load_sr_env
+
     env = load_sr_env(pool, device="cuda")
     for arm in FEW_STEP_ARMS:
         eval_few_step_arm(env, arm, device="cuda")
@@ -57,6 +51,7 @@ def _swd_arm(pool: str, style_loss: str) -> None:
     from exp.v24.p0_o1_o3_value import build_or_load_train_cnx_v16
     from exp.v20.submode_patchswd import load_convnext_tiny_offline
     from exp.v26.gpu3060.train_c2nt_v26 import train_c2nt_v26
+    from exp.v26.sr_cfg import _eval_baseline_steps, load_sr_env
     from src.utils import load_s10_decoder
 
     bundle = build_or_load_v19_foundation(pool, device="cuda")
