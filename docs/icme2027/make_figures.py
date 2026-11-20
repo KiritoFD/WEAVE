@@ -55,10 +55,10 @@ EXTERNAL_PTS = [
     ("SD-Turbo",      0.9998, 0.4894,  0.50, 0.0048,   400.0),
 ]
 
-# Only the two representative flagship regimes of PRISM (Unified Narrative)
+# Only the two representative flagship regimes of PRISM (Unified Narrative, RTX 3060)
 OURS_PTS = [
-    (FLOW_NAME,                   0.5335, 0.6584, 60.50, 0.6022, 134.1, "flagship"),
-    (FAST_NAME,                   0.7440, 0.5655, 44.33, 0.5057,  17.0, "flagship"),
+    (FLOW_NAME,                   0.5335, 0.6584, 60.50, 0.6022, 541.0, "flagship"),
+    (FAST_NAME,                   0.7440, 0.5655, 44.33, 0.5057,  58.5, "flagship"),
 ]
 
 IDT_AFFINITY = 0.4902
@@ -198,11 +198,11 @@ def plot_fig1_pareto_zoom():
     fig.text(0.085, 0.900,
              "600 Cross-Style Pairs · PRISM-Flow Beats StyleGallery (0.658 vs 0.643 Aff) at 226× Higher Throughput",
              fontsize=9.3, color=MUTED, va="top")
-    fig.text(0.965, 0.954, "58.7 img/s", ha="right", va="top", fontsize=19.5, color=CRIMSON, weight="bold")
-    fig.text(0.965, 0.900, f"{METHOD} (1-Step, 17 ms) · {METHOD}-Flow (134 ms)", ha="right", va="top", fontsize=8.6, color=MUTED)
+    fig.text(0.965, 0.954, "5.97 img/s", ha="right", va="top", fontsize=19.5, color=CRIMSON, weight="bold")
+    fig.text(0.965, 0.900, f"{METHOD} (1-Step, 58.5 ms cached) · {METHOD}-Flow (541 ms)", ha="right", va="top", fontsize=8.6, color=MUTED)
 
     cat_handles = [
-        Line2D([], [], marker="o", ls="none", ms=9.0, mfc=CRIMSON, mec="#59080C", label=f"{METHOD} (1-Step 17ms & Flow 134ms)"),
+        Line2D([], [], marker="o", ls="none", ms=9.0, mfc=CRIMSON, mec="#59080C", label=f"{METHOD} (RTX 3060: 1-Step 168ms / Flow 680ms E2E)"),
         Line2D([], [], marker="o", ls="none", ms=8.0, mfc=BLUE, mec="white", label="Published / Commercial Baselines (incl. StyleGallery)"),
         Line2D([], [], color=CRIMSON, ls="-", lw=2.3, label=f"{METHOD} Pareto Frontier"),
         Line2D([], [], color=BLUE, ls=(0, (5, 3)), lw=2.0, label="External-Only Frontier"),
@@ -242,7 +242,7 @@ def plot_fig2_three_paradoxes():
 
     # (b) Pruned Decoder Regularization Paradox
     ax = axes[1]
-    models_b = ["Full SD-VAE Dec\n(49.5M, 1.0×)", f"{DEC_NAME}\n(10.7M, 2.86×)"]
+    models_b = ["Full SD-VAE Dec\n(49.5M, 1.0×)", f"{DEC_NAME}\n(10.7M, 3.15×)"]
     top1_b = [34.50, 37.67]
     lpips_b = [51.49, 50.34]
     x = np.arange(2)
@@ -261,7 +261,7 @@ def plot_fig2_three_paradoxes():
 
     # (c) Counterfactual Causal Specificity Ladder
     ax = axes[2]
-    arms_c = ["Post-Hoc\nSubband", "De-Styled\nFlow (τ0=0)", f"{METHOD}-1\n(17 ms)", f"{METHOD}-Flow\n(Ours)"]
+    arms_c = ["Post-Hoc\nSubband", "De-Styled\nFlow (τ0=0)", f"{METHOD}-1\n(58 ms)", f"{METHOD}-Flow\n(Ours)"]
     corr_v = [12.33, 18.67, 44.33, 60.50]
     wrong_v = [13.00, 8.83, 0.83, 2.33]
     xc = np.arange(4)
@@ -386,7 +386,7 @@ def plot_fig4_specificity_frontier():
     fig.text(0.965, 0.900, f"{METHOD}-Flow (+8.0pp over StyleGallery)", ha="right", va="top", fontsize=8.6, color=MUTED)
 
     cat_handles = [
-        Line2D([], [], marker="o", ls="none", ms=9.0, mfc=CRIMSON, mec="#59080C", label=f"{METHOD} (1-Step 17ms & Flow 134ms)"),
+        Line2D([], [], marker="o", ls="none", ms=9.0, mfc=CRIMSON, mec="#59080C", label=f"{METHOD} (RTX 3060: 1-Step 168ms / Flow 680ms E2E)"),
         Line2D([], [], marker="o", ls="none", ms=8.0, mfc=BLUE, mec="white", label="Published / Commercial Baselines (incl. StyleGallery)"),
         Line2D([], [], color=CRIMSON, ls="-", lw=2.3, label=f"{METHOD} Pareto Frontier"),
         Line2D([], [], color=BLUE, ls=(0, (5, 3)), lw=2.0, label="External-Only Frontier"),

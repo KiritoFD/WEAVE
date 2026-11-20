@@ -25,8 +25,7 @@ plt.rcParams.update({
 
 BASE_JPG = REPO / "docs/performance/images/baselines_D5_512/jpg"
 SG_DIR = REPO / "docs/baseline/StyleGallery"
-PRISM1_DIR = REPO / "docs/performance/images/PRISM1_v2_750"
-PRISM_PRO_DIR = REPO / "docs/performance/images/PRISM_Pro_T4_750"
+PRISM_HC_DIR = REPO / "docs/ours/02_PRISM_HighContent_R12/images_750"
 PRISM_FLOW_DIR = REPO / "docs/performance/images/PRISM_Flow_D2_750"
 
 
@@ -89,25 +88,22 @@ def build_qualitative_grid():
         ("Source", None, "Input $x_s$", False),
         ("StyleShot", "styleshot", "24.5 s · 0.36 D-C", False),
         ("StyleGallery", "stylegallery", "30.4 s · .560 D-S", False),
-        ("StyTr$^2$", "stytr2", "3.0 s · .407 D-S", False),
         ("Seedream 4.5", "seedream", "2.0 s · .389 D-S", False),
-        ("PRISM-1 (Ours)", "prism1", "17 ms · 44.3%", True),
-        ("PRISM-Pro (Ours)", "prism_pro", "137 ms · 59.0%", True),
-        ("PRISM-Flow (Ours)", "prism_flow", "134 ms · .567 D-S", True),
+        ("PRISM-HC (Ours)", "prism_hc", "297 ms · .772 D-C", True),
+        ("PRISM-Flow (Ours)", "prism_flow", "680 ms · .567 D-S", True),
     ]
 
     n_rows, n_cols = len(rows_spec), len(cols_spec)
     fig, axes = plt.subplots(
         n_rows, n_cols,
-        figsize=(15.4, 5.85),
+        figsize=(13.2, 6.2),
         facecolor="white",
         gridspec_kw={"wspace": 0.045, "hspace": 0.055, "left": 0.068, "right": 0.995, "top": 0.885, "bottom": 0.015},
     )
 
     for r_i, (s_style, stem, t_style, row_lbl) in enumerate(rows_spec):
         src_p = REPO / "data/test" / s_style / f"{stem}.jpg"
-        p1_p = PRISM1_DIR / f"{s_style}__{stem}__{t_style}.png"
-        pro_p = PRISM_PRO_DIR / f"{s_style}__{stem}__{t_style}.png"
+        hc_p = PRISM_HC_DIR / f"{s_style}__{stem}__{t_style}.png"
         flow_p = PRISM_FLOW_DIR / f"{s_style}__{stem}__{t_style}.png"
         tid_str = f"{s_style}/{stem}/{t_style}"
 
@@ -115,10 +111,8 @@ def build_qualitative_grid():
             ax = axes[r_i, c_i]
             if key is None:
                 img_p = src_p
-            elif key == "prism1":
-                img_p = p1_p
-            elif key == "prism_pro":
-                img_p = pro_p
+            elif key == "prism_hc":
+                img_p = hc_p
             elif key == "prism_flow":
                 img_p = flow_p
             elif key == "stylegallery":
@@ -126,7 +120,7 @@ def build_qualitative_grid():
             else:
                 img_p = _find_baseline_img(BASE_JPG / key, s_style, stem, t_style)
 
-            ax.imshow(_load_rgb(img_p, 288))
+            ax.imshow(_load_rgb(img_p, 384))
             ax.set_xticks([])
             ax.set_yticks([])
             ec = "#C81D25" if is_ours else "#2C3E50"

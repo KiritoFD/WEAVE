@@ -1,18 +1,15 @@
-"""绘制 V25 最新全局 Pareto 图（计算范式对抗版：Diffusion-Heavy vs. Conventional Lightweight vs. PRISM）。
+"""绘制简化版全局 Pareto 图（计算范式对抗版：Diffusion-Heavy vs. Conventional Lightweight vs. PRISM）。
 
-落实论文视觉叙事要求：
-1. 三种范式视觉分明：
-   - Diffusion-Heavy (5.0–30.4 s/img)：蓝色标记 + 蓝色虚线前沿，单独标出 s/img；
-   - Conventional Lightweight (0.2–3.0 s/img)：深灰方块，集中在高内容/弱风格区域；
-   - PRISM (Ours, 橙红色)：气泡半径 ∝ RTX 3060 最大安全 Batch 实测端到端吞吐 (img/s)。
-2. 严格区分：
-   - 同一 checkpoint 不同 strength 的连续轨迹（橙红实线：左侧高风格 PRISM-Peak 曲线、右侧高内容 PRISM-R12 γ 曲线）；
-   - 跨 checkpoint 组成的全局 Pareto 包络（深红长虚线 Global Ours-Pareto Envelope）。
-3. 移除绿色未达标 Target 框，聚焦已实测的完整三维 Content–Style–Compute 前沿。
+严格落实 ICME 2027 论文视觉叙事要求：
+1. 每张子图仅保留一条橙红色全局 Pareto 线（PRISM Global Pareto Frontier），突出 6 个代表点；
+   不再画多条 Ours 曲线，不标注 V22/V23/V25/R12/R13 等内部版本名。
+2. 全部速度口径严格统一为 RTX 3060 实测（气泡半径 ∝ RTX 3060 Max-Batch E2E img/s），
+   慢速基线显式标注 s/img。
+3. 移除绿色未达标 Target 框，聚焦完整的 Content–Style–Compute 三维前沿对比。
 
 输出:
-  docs/performance/figures/ours_pareto.png
-  docs/performance/figures/ours_pareto.svg
+  docs/performance/figures/ours_pareto.{png,svg}
+  docs/icme2027/figures/fig1_prism_pareto.{pdf,png,svg}
 """
 from __future__ import annotations
 
@@ -25,82 +22,51 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 CSV_PATH = ROOT / "docs/performance/metrics.csv"
 BENCH_3060_PATH = ROOT / "runs/v25/r15_3060_maxbatch_bench.json"
+R16_3060_PATH = ROOT / "runs/v25/r16_3060_stage_and_dec_bench.json"
 OUT_DIR = ROOT / "docs/performance/figures"
 
 ORANGE_RED = "#ff4500"
 ORANGE_DARK = "#9a3412"
-CRIMSON_ENV = "#b91c1c"
 ORANGE_FILL = "#fed7aa"
 
-# 单一模型连续 strength 轨迹 1：强风格族 (V22 Peak1500 / Gate 同权重连续门控/引导轨迹)
-INTRA_CURVE_STRONG_STYLE = [
-    ("T4Pg45_wc10", "d5_full_10s"),
-    ("T4Pk_wc15",   "d5_full_10s"),
-    ("T4Pg65_wc10", "d5_full_10s"),
-]
-
-# 单一模型连续 strength 轨迹 2：V25 PRISM-HighContent-R12 (同一 B4+cs_j+D6H+P1 连续 γ∈[0.40,1.00] 轨迹)
-INTRA_CURVE_R12 = [
-    ("HC_R12_g100",               "d6_csj_b4"),
-    ("HC_R12_g85",                "prism_hc_r12"),
-    ("HC_R12_g70",                "prism_hc_r12"),
-    ("MechA_B4anc_A0_global_g55", "prism_hc_r12"),
-    ("HC_R12_g40",                "prism_hc_r12"),
-]
-
-# 左面板 (DINO-C vs DINO-S) 跨 checkpoint 全局非支配前沿代表点
+# 左面板 (DINO-C vs DINO-S): 5 个非支配前沿代表点 + PRISM-1 (共 6 个代表点)
 OURS_PARETO_DS = [
-    ("T4Pg45_wc10",               "V22 Peak1500",          (12, 10, "left"),    "d5_full_10s"),
-    ("T4Pg65_wc10",               "V22 Gate65",            (-10, -20, "right"), "d5_full_10s"),
-    ("F3_dual_fixed_orig",        "V23 Dual-F3",           (14, -8, "left"),    "d5_csj_10s"),
-    ("HiC_JPk_csj65_t4",          "V23 HiC-JPk",           (10, 14, "left"),    "d5_csj_10s"),
-    ("P14b_d6h_fixed_g69",        "V25 D6H-g69",           (16, 6, "left"),     "d6_csj_b4"),
-    ("B_d6_t066",                 "V25 D6-τ0.66",          (16, 7, "left"),     "d6_full_b4"),
-    ("HC_R12_g100",               "V25 R12 (γ=1.0)",       (16, 8, "left"),     "d6_csj_b4"),
-    ("HC_R12_g85",                "V25 R12 (γ=0.85)",      (16, 7, "left"),     "prism_hc_r12"),
-    ("HC_R12_g70",                "V25 R12 (γ=0.70)",      (16, 6, "left"),     "prism_hc_r12"),
-    ("MechA_B4anc_A0_global_g55", "V25 R12 (γ=0.55)",      (16, 2, "left"),     "prism_hc_r12"),
+    ("T4Pg45_wc10",               "PRISM-Flow (Max-Style)", (-6, 14, "left"),    "d5_full_10s"),
+    ("V20.D2_core_slf_bal",       "PRISM-Flow (Balanced)",  (-6, -20, "right"),  "prism_flow_d2"),
+    ("HiC_JPk_csj65_t4",          "PRISM-Flow (Hi-C)",      (14, 10, "left"),    "d5_csj_10s"),
+    ("HC_R12_g100",               "PRISM-HC (γ=1.0)",       (14, 12, "left"),    "d6_csj_b4"),
+    ("MechA_B4anc_A0_global_g55", "PRISM-HC (γ=0.55)",      (14, 6, "left"),     "prism_hc_r12"),
 ]
 
-# 右面板 (DINO-C vs CSD Top-1) 跨 checkpoint 全局非支配前沿代表点
+# 右面板 (DINO-C vs CSD Top-1): 5 个非支配前沿代表点 + PRISM-1 (共 6 个代表点)
 OURS_PARETO_T1 = [
-    ("T4Pg45_wc10",               "V22 Peak1500",          (12, 6, "left"),     "d5_full_10s"),
-    ("T4Pk_wc15",                 "V22 Peak1500 (wc15)",   (14, 5, "left"),     "d5_full_10s"),
-    ("V20.A1_t4_patchswd",        "V20 PRISM-Pro+",        (14, 6, "left"),     "d6_full_b4"),
-    ("B_d6_t070",                 "V25 D6-τ0.70",          (-14, -16, "right"), "d6_full_b4"),
-    ("M1_lin_g55",                "V24 Hybrid (γ=0.55)",   (14, 9, "left"),     "prism_hc_r12"),
-    ("M1_lin_g40",                "V24 Hybrid (γ=0.40)",   (14, 6, "left"),     "prism_hc_r12"),
-    ("HC_B4_full_D6_g55",         "V25 R13 (B4+full)",     (16, 12, "left"),    "prism_hc_r12"),
-    ("HC_B4_full_D6H_g55",        "V25 R13 (B4+D6H)",      (16, -14, "left"),   "prism_hc_r12"),
+    ("T4Pg45_wc10",               "PRISM-Flow (Max-Style)", (12, 8, "left"),     "d5_full_10s"),
+    ("V20.A1_t4_patchswd",        "PRISM-Flow (Strong)",    (14, 8, "left"),     "d6_full_b4"),
+    ("B_d6_t070",                 "PRISM-Flow (Hi-C)",      (10, 16, "left"),    "d6_full_b4"),
+    ("M1_lin_g55",                "PRISM-Hybrid (γ=0.55)",  (16, 4, "left"),     "prism_hc_r12"),
+    ("MechA_B4anc_A0_global_g55", "PRISM-HC (γ=0.55)",      (14, -4, "left"),    "prism_hc_r12"),
 ]
 
-# 额外标出的 V25 One-Shot 零教师点 & PRISM-1 极速代表点
-EXTRA_HIGHLIGHT = [
-    ("C2nt_sw6_lc0.8_t45", "V25 C2nt (t45, 0-teacher)", "D", (-10, 12, "right"), (-14, -16, "right"), "o3_ref_fresh"),
-    ("C2nt_sw6_lc0.8_t55", "V25 C2nt (t55, 0-teacher)", "D", (-14, -22, "right"), (-14, -16, "right"), "o3_ref_fresh"),
-    ("M0_prism1_l100",     "PRISM-1 (5.97 img/s)",       "o", (-14, -22, "right"), (-28, -4, "right"),  "prism1"),
-]
+# 第 6 个突出代表点: PRISM-1 (消费级 3060 最高吞吐 5.97 img/s)
+PRISM1_HIGHLIGHT = ("M0_prism1_l100", "PRISM-1 (5.97 img/s)", (-14, -22, "right"), (-24, -10, "right"), "prism1")
 
-# 外部基线：拆分为 Diffusion-Heavy 与 Conventional Lightweight 两类范式
 DIFFUSION_BASELINES = {
     "StyleShot":    ("StyleShot\n(24.5 s/img)",            (8, 6, "left"),     (10, -10, "left"),  24480.0),
     "StyleID":      ("StyleID (5.0 s/img)",                (8, 10, "left"),    (10, -4, "left"),    5040.0),
-    "StyleGallery": ("StyleGallery\n(CVPR26, 30.4 s/img)", (10, 12, "left"),   (-18, 14, "right"), 30400.0),
+    "StyleGallery": ("StyleGallery\n(CVPR26, 30.4 s/img)", (14, 12, "left"),   (-16, 14, "right"), 30400.0),
 }
 
 CONVENTIONAL_BASELINES = {
-    "AesPA":             ("AesPA (1.8 s/img)",               (8, -4, "left"),     (-8, -10, "right"),  1840.0),
-    "StyTr2":            ("StyTr2 (3.0 s/img)",              (-8, -12, "right"),  (-10, -10, "right"), 3040.0),
-    "Seedream 4.5":      ("Seedream 4.5 (2.0 s/img)",        (-8, -14, "right"),  (-12, -14, "right"), 2000.0),
-    "WEAVE (Published)": ("WEAVE (Orig)",                    (8, 7, "left"),      (10, 6, "left"),     2500.0),
-    "SaMAM":             ("SaMAM (1.4 s/img)",               (-10, -12, "right"), (10, -4, "left"),    1408.0),
-    "CUT":               ("CUT (0.4 s/img)",                 (8, 10, "left"),     (-10, -6, "right"),   400.0),
-    "Hist2Style":        ("Hist2Style (0.2 s/img)",          (-16, -2, "right"),  (-16, -6, "right"),   200.0),
+    "AesPA":        ("AesPA (1.8 s/img)",         (8, -4, "left"),     (-10, -8, "right"),  1840.0),
+    "StyTr2":       ("StyTr2 (3.0 s/img)",        (-10, -12, "right"), (-10, -10, "right"), 3040.0),
+    "Seedream 4.5": ("Seedream 4.5 (2.0 s/img)",  (-10, -14, "right"), (-12, -14, "right"), 2000.0),
+    "SaMAM":        ("SaMAM (1.4 s/img)",         (-10, -12, "right"), (10, -4, "left"),    1408.0),
+    "CUT":          ("CUT (0.4 s/img)",           (8, 10, "left"),     (-10, -6, "right"),   400.0),
+    "Hist2Style":   ("Hist2Style (0.2 s/img)",    (-16, -2, "right"),  (-16, -6, "right"),   200.0),
 }
 
 
@@ -130,8 +96,22 @@ def load_data():
 
 
 def load_3060_speeds() -> dict[str, float]:
-    d = json.load(open(BENCH_3060_PATH, encoding="utf-8"))
-    return {eng: float(info["best_e2e"]["e2e_img_per_s"]) for eng, info in d["results"].items()}
+    spd = {}
+    if BENCH_3060_PATH.exists():
+        d = json.load(open(BENCH_3060_PATH, encoding="utf-8"))
+        for eng, info in d["results"].items():
+            spd[eng] = float(info["best_e2e"]["e2e_img_per_s"])
+    if R16_3060_PATH.exists():
+        d16 = json.load(open(R16_3060_PATH, encoding="utf-8"))
+        d2_speeds = [
+            1000.0 / float(v["total_rgb2rgb"]["p50_ms_per_img"])
+            for k, v in d16.get("stages", {}).items()
+            if k.startswith("prism_flow_d2_")
+        ]
+        if d2_speeds:
+            spd["prism_flow_d2"] = max(d2_speeds)
+    spd.setdefault("prism_flow_d2", 1.47)
+    return spd
 
 
 def pareto_envelope(pts: list[tuple[float, float]]) -> list[tuple[float, float]]:
@@ -145,9 +125,8 @@ def pareto_envelope(pts: list[tuple[float, float]]) -> list[tuple[float, float]]
 
 
 def draw_radius_legend(ax, loc="lower left"):
-    """绘制与图上完全同尺度的吞吐量半径图例."""
     if loc == "lower left":
-        bx, by, bw, bh = 0.015, 0.255, 0.360, 0.165
+        bx, by, bw, bh = 0.015, 0.215, 0.365, 0.165
     else:
         bx, by, bw, bh = 0.015, 0.025, 0.365, 0.165
     rect = mpatches.FancyBboxPatch(
@@ -173,14 +152,8 @@ def main():
     spd = load_3060_speeds()
 
     all_baselines = {**DIFFUSION_BASELINES, **CONVENTIONAL_BASELINES}
-    hi_set = (
-        {s[0] for s in OURS_PARETO_DS}
-        | {s[0] for s in OURS_PARETO_T1}
-        | {s[0] for s in EXTRA_HIGHLIGHT}
-        | {s[0] for s in INTRA_CURVE_STRONG_STYLE}
-        | {s[0] for s in INTRA_CURVE_R12}
-    )
-    base_set = set(all_baselines.keys())
+    hi_set = {s[0] for s in OURS_PARETO_DS} | {s[0] for s in OURS_PARETO_T1} | {PRISM1_HIGHLIGHT[0]}
+    base_set = set(all_baselines.keys()) | {"WEAVE (Published)"}
     cloud = [
         r for r in rows
         if r["arm"] not in hi_set
@@ -205,23 +178,23 @@ def main():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16.8, 7.2), dpi=240)
     fig.patch.set_facecolor("white")
 
-    # 背景散点云
+    # 背景探索点云
     ax1.scatter([r["dc"] for r in cloud], [r["ds"] for r in cloud],
-                s=11, c="#64748b", alpha=0.14, edgecolors="none",
-                label=f"Explored PRISM ablation cloud (n={len(cloud)})", zorder=2)
+                s=10, c="#64748b", alpha=0.11, edgecolors="none",
+                label=f"Explored configuration cloud (n={len(cloud)})", zorder=2)
     ax2.scatter([r["dc"] for r in cloud], [r["top1"] for r in cloud],
-                s=11, c="#64748b", alpha=0.14, edgecolors="none",
-                label=f"Explored PRISM ablation cloud (n={len(cloud)})", zorder=2)
+                s=10, c="#64748b", alpha=0.11, edgecolors="none",
+                label=f"Explored configuration cloud (n={len(cloud)})", zorder=2)
 
     # 外部基线包络
     base_rows = [by_arm[k] for k in all_baselines if k in by_arm]
     env_b_ds = pareto_envelope([(r["dc"], r["ds"]) for r in base_rows])
     env_b_t1 = pareto_envelope([(r["dc"], r["top1"]) for r in base_rows])
     ax1.plot([p[0] for p in env_b_ds], [p[1] for p in env_b_ds],
-             color="#475569", linestyle="--", linewidth=1.3, alpha=0.65,
+             color="#475569", linestyle="--", linewidth=1.35, alpha=0.68,
              label="External Baselines Envelope", zorder=3)
     ax2.plot([p[0] for p in env_b_t1], [p[1] for p in env_b_t1],
-             color="#475569", linestyle="--", linewidth=1.3, alpha=0.65,
+             color="#475569", linestyle="--", linewidth=1.35, alpha=0.68,
              label="External Baselines Envelope", zorder=3)
 
     # 1) Diffusion-Heavy Baselines (蓝色)
@@ -233,15 +206,15 @@ def main():
         sz = img_s_to_area(1000.0 / ms)
         is_sg = (k == "StyleGallery")
         mk = "*" if is_sg else "^"
-        sz_use = max(sz * 1.4, 52.0) if is_sg else max(sz, 36.0)
+        sz_use = max(sz * 1.4, 54.0) if is_sg else max(sz, 38.0)
         kw_arr = dict(arrowstyle="-", color="#2563eb", lw=0.85, alpha=0.8) if is_sg else None
         ax1.scatter([r["dc"]], [r["ds"]], marker=mk, s=sz_use, c="#2563eb", edgecolors="#1e3a8a", linewidths=0.9, zorder=7)
         ax1.annotate(lbl, (r["dc"], r["ds"]), xytext=(off1[0], off1[1]), textcoords="offset points",
-                     fontsize=8.2 if is_sg else 7.6, fontweight="bold" if is_sg else "normal",
+                     fontsize=8.3 if is_sg else 7.7, fontweight="bold" if is_sg else "normal",
                      color="#1d4ed8", ha=off1[2], arrowprops=kw_arr, zorder=9)
         ax2.scatter([r["dc"]], [r["top1"]], marker=mk, s=sz_use, c="#2563eb", edgecolors="#1e3a8a", linewidths=0.9, zorder=7)
         ax2.annotate(lbl, (r["dc"], r["top1"]), xytext=(off2[0], off2[1]), textcoords="offset points",
-                     fontsize=8.2 if is_sg else 7.6, fontweight="bold" if is_sg else "normal",
+                     fontsize=8.3 if is_sg else 7.7, fontweight="bold" if is_sg else "normal",
                      color="#1d4ed8", ha=off2[2], arrowprops=kw_arr, zorder=9)
 
     # 2) Conventional Lightweight / Feed-Forward Baselines (深灰方块)
@@ -253,80 +226,56 @@ def main():
         sz = img_s_to_area(1000.0 / ms)
         ax1.scatter([r["dc"]], [r["ds"]], marker="s", s=sz, c="#334155", edgecolors="white", linewidths=0.9, zorder=7)
         ax1.annotate(lbl, (r["dc"], r["ds"]), xytext=(off1[0], off1[1]), textcoords="offset points",
-                     fontsize=7.4, color="#334155", ha=off1[2], zorder=9)
+                     fontsize=7.5, color="#334155", ha=off1[2], zorder=9)
         ax2.scatter([r["dc"]], [r["top1"]], marker="s", s=sz, c="#334155", edgecolors="white", linewidths=0.9, zorder=7)
         ax2.annotate(lbl, (r["dc"], r["top1"]), xytext=(off2[0], off2[1]), textcoords="offset points",
-                     fontsize=7.4, color="#334155", ha=off2[2], zorder=9)
+                     fontsize=7.5, color="#334155", ha=off2[2], zorder=9)
 
     ax1.scatter([], [], marker="*", s=75, c="#2563eb", edgecolors="#1e3a8a", label="Diffusion-Heavy (5.0–30.4 s/img)")
     ax1.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Conventional Lightweight (0.2–3.0 s/img)")
     ax2.scatter([], [], marker="*", s=75, c="#2563eb", edgecolors="#1e3a8a", label="Diffusion-Heavy (5.0–30.4 s/img)")
     ax2.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Conventional Lightweight (0.2–3.0 s/img)")
 
-    # ---- 3) PRISM: 区分 (a) 跨 checkpoint 全局包络 (长虚线) 与 (b) 单模型连续 strength 轨迹 (实线) ----
+    # 3) 单一橙红色全局 PRISM Pareto 线 + 6 个代表点
     ds_pts = [(by_arm[a], lbl, off, spd.get(eng, 3.0)) for a, lbl, off, eng in OURS_PARETO_DS if a in by_arm]
     ax1.plot([p[0]["dc"] for p in ds_pts], [p[0]["ds"] for p in ds_pts],
-             color=CRIMSON_ENV, linestyle=(0, (6, 3)), linewidth=2.2, alpha=0.85, zorder=8,
-             label="PRISM Multi-Regime Global Pareto")
+             color=ORANGE_RED, linestyle="-", linewidth=2.9, alpha=0.94, zorder=8,
+             label="PRISM Global Pareto Frontier")
     ax1.fill_between([p[0]["dc"] for p in ds_pts], [p[0]["ds"] for p in ds_pts], 0.35,
                      color=ORANGE_FILL, alpha=0.14, zorder=1)
-
-    # 左面板单模型连续 strength 实线轨迹
-    r12_curve = [by_arm[a] for a, _ in INTRA_CURVE_R12 if a in by_arm]
-    st_curve = [by_arm[a] for a, _ in INTRA_CURVE_STRONG_STYLE if a in by_arm]
-    ax1.plot([r["dc"] for r in r12_curve], [r["ds"] for r in r12_curve],
-             color=ORANGE_RED, linestyle="-", linewidth=3.2, alpha=0.96, zorder=9,
-             label="Single-Model Continuous Strength Curve")
-    ax1.plot([r["dc"] for r in st_curve], [r["ds"] for r in st_curve],
-             color=ORANGE_RED, linestyle="-", linewidth=3.2, alpha=0.96, zorder=9)
-
     for r, lbl, off, isp in ds_pts:
         ax1.scatter([r["dc"]], [r["ds"]], s=img_s_to_area(isp), c=ORANGE_RED,
-                    edgecolors="white", linewidths=1.4, alpha=0.93, zorder=10)
+                    edgecolors="white", linewidths=1.5, alpha=0.95, zorder=10)
         ax1.annotate(lbl, (r["dc"], r["ds"]), xytext=(off[0], off[1]), textcoords="offset points",
-                     fontsize=8.0, fontweight="bold", color=ORANGE_DARK, ha=off[2], zorder=11,
-                     arrowprops=dict(arrowstyle="-", color=ORANGE_RED, lw=0.8, alpha=0.75))
+                     fontsize=8.3, fontweight="bold", color=ORANGE_DARK, ha=off[2], zorder=11,
+                     arrowprops=dict(arrowstyle="-", color=ORANGE_RED, lw=0.85, alpha=0.8))
 
     t1_pts = [(by_arm[a], lbl, off, spd.get(eng, 3.0)) for a, lbl, off, eng in OURS_PARETO_T1 if a in by_arm]
     ax2.plot([p[0]["dc"] for p in t1_pts], [p[0]["top1"] for p in t1_pts],
-             color=CRIMSON_ENV, linestyle=(0, (6, 3)), linewidth=2.2, alpha=0.85, zorder=8,
-             label="PRISM Multi-Regime Global Pareto")
+             color=ORANGE_RED, linestyle="-", linewidth=2.9, alpha=0.94, zorder=8,
+             label="PRISM Global Pareto Frontier")
     ax2.fill_between([p[0]["dc"] for p in t1_pts], [p[0]["top1"] for p in t1_pts], 0.0,
                      color=ORANGE_FILL, alpha=0.13, zorder=1)
-
-    hyb_curve = [by_arm[a] for a in ("M1_lin_g55", "M1_lin_g40", "M1_lin_g25") if a in by_arm]
-    pk_t1_curve = [by_arm[a] for a in ("T4Pg45_wc10", "T4Pk_wc15") if a in by_arm]
-    ax2.plot([r["dc"] for r in hyb_curve], [r["top1"] for r in hyb_curve],
-             color=ORANGE_RED, linestyle="-", linewidth=3.2, alpha=0.96, zorder=9,
-             label="Single-Model Continuous Strength Curve")
-    ax2.plot([r["dc"] for r in pk_t1_curve], [r["top1"] for r in pk_t1_curve],
-             color=ORANGE_RED, linestyle="-", linewidth=3.2, alpha=0.96, zorder=9)
-
     for r, lbl, off, isp in t1_pts:
         ax2.scatter([r["dc"]], [r["top1"]], s=img_s_to_area(isp), c=ORANGE_RED,
-                    edgecolors="white", linewidths=1.4, alpha=0.93, zorder=10)
+                    edgecolors="white", linewidths=1.5, alpha=0.95, zorder=10)
         ax2.annotate(lbl, (r["dc"], r["top1"]), xytext=(off[0], off[1]), textcoords="offset points",
-                     fontsize=8.0, fontweight="bold", color=ORANGE_DARK, ha=off[2], zorder=11,
-                     arrowprops=dict(arrowstyle="-", color=ORANGE_RED, lw=0.8, alpha=0.75))
+                     fontsize=8.3, fontweight="bold", color=ORANGE_DARK, ha=off[2], zorder=11,
+                     arrowprops=dict(arrowstyle="-", color=ORANGE_RED, lw=0.85, alpha=0.8))
 
-    # V25 C2nt 零教师 One-Shot & PRISM-1 极速点
-    for a, lbl, mk, off1, off2, eng in EXTRA_HIGHLIGHT:
-        if a not in by_arm:
-            continue
-        r = by_arm[a]
-        sz = img_s_to_area(spd.get(eng, 3.0))
-        fc = "#fb923c" if mk == "D" else "#ff6b35"
-        ax1.scatter([r["dc"]], [r["ds"]], marker=mk, s=sz, c=fc, edgecolors=ORANGE_DARK, linewidths=1.3, alpha=0.92, zorder=10)
-        ax1.annotate(lbl, (r["dc"], r["ds"]), xytext=(off1[0], off1[1]), textcoords="offset points",
-                     fontsize=7.8, fontweight="bold", color="#c2410c", ha=off1[2], zorder=11,
-                     arrowprops=dict(arrowstyle="-", color=fc, lw=0.8, alpha=0.85))
-        ax2.scatter([r["dc"]], [r["top1"]], marker=mk, s=sz, c=fc, edgecolors=ORANGE_DARK, linewidths=1.3, alpha=0.92, zorder=10)
-        ax2.annotate(lbl, (r["dc"], r["top1"]), xytext=(off2[0], off2[1]), textcoords="offset points",
-                     fontsize=7.8, fontweight="bold", color="#c2410c", ha=off2[2], zorder=11,
-                     arrowprops=dict(arrowstyle="-", color=fc, lw=0.8, alpha=0.85))
-
-    ax1.scatter([], [], marker="D", s=80, c="#fb923c", edgecolors=ORANGE_DARK, label="PRISM-Ref (0-teacher One-Shot)")
-    ax2.scatter([], [], marker="D", s=80, c="#fb923c", edgecolors=ORANGE_DARK, label="PRISM-Ref (0-teacher One-Shot)")
+    # PRISM-1 第 6 个突出代表点
+    a1, lbl1, off1, off2, eng1 = PRISM1_HIGHLIGHT
+    if a1 in by_arm:
+        r = by_arm[a1]
+        sz1 = img_s_to_area(spd.get(eng1, 5.97))
+        ax1.scatter([r["dc"]], [r["ds"]], s=sz1, c="#ff6b35", edgecolors="white", linewidths=1.5, alpha=0.95, zorder=10)
+        ax1.annotate(lbl1, (r["dc"], r["ds"]), xytext=(off1[0], off1[1]), textcoords="offset points",
+                     fontsize=8.3, fontweight="bold", color=ORANGE_DARK, ha=off1[2], zorder=11,
+                     arrowprops=dict(arrowstyle="-", color="#ff6b35", lw=0.85, alpha=0.8))
+        ax2.scatter([r["dc"]], [r["top1"]], s=sz1, c="#ff6b35", edgecolors="white", linewidths=1.5, alpha=0.95, zorder=10)
+        ax2.annotate(lbl1, (r["dc"], r["top1"]), xytext=(off2[0], off2[1]), textcoords="offset points",
+                     fontsize=8.3, fontweight="bold", color=ORANGE_DARK, ha=off2[2], zorder=11,
+                     arrowprops=dict(arrowstyle="-", color="#ff6b35", lw=0.85, alpha=0.8))
 
     draw_radius_legend(ax1, loc="lower left")
     draw_radius_legend(ax2, loc="bottom left")
@@ -337,7 +286,7 @@ def main():
     ax1.set_xlim(0.32, 0.94)
     ax1.set_ylim(0.352, 0.615)
     ax1.grid(True)
-    ax1.legend(loc="lower left", frameon=True, facecolor="white", edgecolor="#cbd5e1", fontsize=7.8, framealpha=0.95)
+    ax1.legend(loc="lower left", frameon=True, facecolor="white", edgecolor="#cbd5e1", fontsize=8.0, framealpha=0.95)
 
     ax2.set_title("(b) Content vs. Target Style Recognition (DINO-C ↑ vs. CSD Top-1 ↑)", fontsize=12.2, fontweight="bold", pad=10, color="#0f172a")
     ax2.set_xlabel("Content Preservation — DINO-C ↑ (higher = more faithful)", fontsize=10.5, color="#1e293b")
@@ -345,11 +294,11 @@ def main():
     ax2.set_xlim(0.32, 0.94)
     ax2.set_ylim(0, 96)
     ax2.grid(True)
-    ax2.legend(loc="upper right", frameon=True, facecolor="white", edgecolor="#cbd5e1", fontsize=7.8, framealpha=0.95)
+    ax2.legend(loc="upper right", frameon=True, facecolor="white", edgecolor="#cbd5e1", fontsize=8.0, framealpha=0.95)
 
     fig.suptitle(
-        "Content–Style–Compute Paradigm Confrontation (Cross600, S10) — PRISM vs. Diffusion-Heavy & Conventional Baselines",
-        fontsize=13.4, fontweight="bold", color="#0f172a", y=0.985,
+        "Content–Style–Compute Paradigm Confrontation (Cross600, RTX 3060) — PRISM Global Frontier vs. External Baselines",
+        fontsize=13.2, fontweight="bold", color="#0f172a", y=0.985,
     )
     plt.tight_layout(rect=[0, 0, 1, 0.945])
 

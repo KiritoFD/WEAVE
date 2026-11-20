@@ -1181,11 +1181,11 @@ def build_architecture() -> None:
     ax.text(
         8.21,
         1.06,
-        r"1-Step Amortized (PRISM-1): $1.50\mathrm{M}\cdot 17\,\mathrm{ms}\;(58.7\,\mathrm{fps})$"
-        r"   |   Bottleneck Flow: $134\,\mathrm{ms}\cdot 0.579$ DINO-S",
+        r"1-Step (PRISM-1): $1.50\mathrm{M}\cdot 58.5\,\mathrm{ms}$ cached ($5.97\,\mathrm{img/s}$ E2E)"
+        r"  |  Bottleneck Flow: $541\,\mathrm{ms}$ ($0.567$ DINO-S)",
         ha="center",
         va="center",
-        fontsize=6.85,
+        fontsize=6.55,
         weight="bold",
         color="#713F12",
         zorder=5,
@@ -1209,7 +1209,7 @@ def build_architecture() -> None:
     )
 
     ax.text(11.82, 4.41, r"$49.5\mathrm{M}\!\to\!\mathbf{10.7\mathrm{M}}$", ha="center", va="center", fontsize=7.95, weight="bold", color="#881337", zorder=6)
-    ax.text(11.82, 4.21, r"$(-78.5\%\;\mathrm{Params},\;2.86\times\;\mathrm{Faster})$", ha="center", va="center", fontsize=6.6, weight="bold", color="#9F1239", zorder=6)
+    ax.text(11.82, 4.21, r"$(-78.5\%\;\mathrm{Params},\;3.15\times\;\mathrm{Faster})$", ha="center", va="center", fontsize=6.6, weight="bold", color="#9F1239", zorder=6)
 
     # Bottom-aligned 4-stage expanding channel-pruned pyramid (base y = 2.12)
     stage_xs = [11.12, 11.46, 11.81, 12.16]
