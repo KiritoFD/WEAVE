@@ -1,0 +1,257 @@
+"""绘制 V25 最新全局 Pareto 图（双面板: DINO-C vs DINO-S 与 DINO-C vs CSD Top-1）。
+
+- 其余 ~500 个历史与消融实验臂以高透明度小散点云表示背景探索空间；
+- 我们最新的合法非支配前沿点（含 V25 PRISM-HighContent-R12、D6 tau-shift、V22/V23 冠军点）
+  统一用橙红色高亮并连成 `Ours-Pareto` 曲线；
+- 另以橙红菱形标出 V25 C2nt 零教师 One-Shot 新点，以蓝星/灰方标出外部基线包络。
+
+输出:
+  docs/performance/figures/ours_pareto.png
+  docs/performance/figures/ours_pareto.svg
+"""
+from __future__ import annotations
+
+import csv
+from pathlib import Path
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[2]
+CSV_PATH = ROOT / "docs/performance/metrics.csv"
+OUT_DIR = ROOT / "docs/performance/figures"
+
+ORANGE_RED = "#ff4500"
+ORANGE_EDGE = "#9a3412"
+ORANGE_FILL = "#fed7aa"
+
+# 左面板 (DINO-C vs DINO-S) 严格非支配 Ours-Pareto 序列（按 DINO-C 严格递增、DINO-S 严格递减）
+OURS_PARETO_DS = [
+    ("T4Pg45_wc10",               "V22 Peak1500",          (10, 8, "left")),
+    ("T4Pg65_wc10",               "V22 Gate65",            (-8, -18, "right")),
+    ("F3_dual_fixed_orig",        "V23 Dual-F3",           (14, -8, "left")),
+    ("HiC_JPk_csj65_t4",          "V23 HiC-JPk",           (-14, -10, "right")),
+    ("P14b_d6h_fixed_g69",        "V25 D6H-g69",           (14, 6, "left")),
+    ("B_d6_t066",                 "V25 D6-τ0.66",          (14, 7, "left")),
+    ("HC_R12_g100",               "V25 R12 Single",        (14, 8, "left")),
+    ("HC_R12_g85",                "V25 R12 (g85)",         (14, 7, "left")),
+    ("HC_R12_g70",                "V25 R12 (g70)",         (14, 6, "left")),
+    ("MechA_B4anc_A0_global_g55", "V25 R12 (g55)",         (14, 2, "left")),
+]
+
+# 右面板 (DINO-C vs CSD Top-1) 严格非支配 Ours-Pareto 序列（含 V25 R13 高内容因子端点）
+OURS_PARETO_T1 = [
+    ("T4Pg45_wc10",               "V22 Peak1500",          (10, 6, "left")),
+    ("T4Pk_wc15",                 "V22 Peak1500 (wc15)",   (12, 5, "left")),
+    ("V20.A1_t4_patchswd",        "V20 PRISM-Pro+",        (12, 6, "left")),
+    ("B_d6_t070",                 "V25 D6-τ0.70",          (-12, -14, "right")),
+    ("M1_lin_g55",                "V24 Hybrid (g55)",      (12, 8, "left")),
+    ("M1_lin_g40",                "V24 Hybrid (g40)",      (12, 6, "left")),
+    ("HC_B4_full_D6_g55",         "V25 R13 (B4+full)",     (14, 12, "left")),
+    ("HC_B4_full_D6H_g55",        "V25 R13 (B4+D6H)",      (14, -14, "left")),
+]
+
+# 额外标出的 V25 One-Shot 零教师代表点（菱形高亮，不串入 Core 折线）
+ONESHOT_HIGHLIGHT = [
+    ("C2nt_sw6_lc0.8_t45", "V25 C2nt (t45, 0-teacher)", (-8, 12, "right"), (-12, -14, "right")),
+    ("C2nt_sw6_lc0.8_t55", "V25 C2nt (t55, 0-teacher)", (-14, -20, "right"), (-12, -14, "right")),
+]
+
+KEY_BASELINES = {
+    "StyleShot":         ("StyleShot",             (8, -12, "left"),    (10, -4, "left")),
+    "StyleID":           ("StyleID",               (6, 10, "left"),     (10, -4, "left")),
+    "AesPA":             ("AesPA",                 (-8, -11, "right"),  (-8, -10, "right")),
+    "StyleGallery":      ("StyleGallery (CVPR26)", (12, 16, "left"),    (-22, 14, "right")),
+    "StyTr2":            ("StyTr2",                (-8, -12, "right"),  (-10, -10, "right")),
+    "Seedream 4.5":      ("Seedream 4.5",          (-8, -13, "right"),  (-12, -14, "right")),
+    "WEAVE (Published)": ("WEAVE (Orig)",          (8, 7, "left"),      (10, 6, "left")),
+    "SaMAM":             ("SaMAM",                 (-10, -12, "right"), (10, -4, "left")),
+    "CUT":               ("CUT",                   (8, 10, "left"),     (-10, -6, "right")),
+    "Hist2Style":        ("Hist2Style",            (-10, -10, "right"), (-6, 10, "right")),
+}
+
+
+def load_data():
+    rows = []
+    with open(CSV_PATH, encoding="utf-8-sig") as f:
+        for r in csv.DictReader(f):
+            if r.get("protocol") != "q2a_oracle_cross600":
+                continue
+            if not (r.get("dino_c") and r.get("dino_s") and r.get("target_top1")):
+                continue
+            rows.append({
+                "arm": r["arm"],
+                "group": r["group"],
+                "dc": float(r["dino_c"]),
+                "ds": float(r["dino_s"]),
+                "top1": float(r["target_top1"]) * 100.0,
+            })
+    return rows, {r["arm"]: r for r in rows}
+
+
+def pareto_envelope(pts: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    s = sorted(pts, key=lambda p: (-p[0], -p[1]))
+    out, best_y = [], -1e9
+    for x, y in s:
+        if y > best_y + 1e-6:
+            out.append((x, y))
+            best_y = y
+    return sorted(out, key=lambda p: p[0])
+
+
+def main():
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    rows, by_arm = load_data()
+
+    hi_set = {s[0] for s in OURS_PARETO_DS} | {s[0] for s in OURS_PARETO_T1} | {s[0] for s in ONESHOT_HIGHLIGHT}
+    base_set = set(KEY_BASELINES.keys())
+    cloud = [
+        r for r in rows
+        if r["arm"] not in hi_set
+        and r["arm"] not in base_set
+        and "Baseline" not in r["group"]
+        and 0.30 <= r["dc"] <= 0.94
+        and 0.34 <= r["ds"] <= 0.62
+    ]
+
+    plt.rcParams.update({
+        "font.family": "DejaVu Sans",
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.edgecolor": "#475569",
+        "axes.linewidth": 0.95,
+        "grid.color": "#cbd5e1",
+        "grid.linestyle": "--",
+        "grid.linewidth": 0.6,
+        "grid.alpha": 0.65,
+    })
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16.8, 7.2), dpi=240)
+    fig.patch.set_facecolor("white")
+
+    # V24/V25 主目标区间
+    target_box = mpatches.FancyBboxPatch(
+        (0.73, 0.49), 0.08, 0.035,
+        boxstyle="round,pad=0.002", facecolor="#dcfce7", edgecolor="#16a34a",
+        linestyle="--", linewidth=1.2, alpha=0.50, zorder=1,
+    )
+    ax1.add_patch(target_box)
+    ax1.text(0.77, 0.528, "High-Content Target\n(DINO-C ≥ 0.73, DINO-S ≥ 0.49)",
+             color="#15803d", fontsize=8.3, fontweight="bold", ha="center", va="bottom", zorder=4)
+
+    # 背景散点云
+    ax1.scatter([r["dc"] for r in cloud], [r["ds"] for r in cloud],
+                s=12, c="#64748b", alpha=0.14, edgecolors="none",
+                label=f"Other explored arms (n={len(cloud)})", zorder=2)
+    ax2.scatter([r["dc"] for r in cloud], [r["top1"] for r in cloud],
+                s=12, c="#64748b", alpha=0.14, edgecolors="none",
+                label=f"Other explored arms (n={len(cloud)})", zorder=2)
+
+    # 外部基线包络
+    base_rows = [by_arm[k] for k in KEY_BASELINES if k in by_arm]
+    env_b_ds = pareto_envelope([(r["dc"], r["ds"]) for r in base_rows])
+    env_b_t1 = pareto_envelope([(r["dc"], r["top1"]) for r in base_rows])
+    ax1.plot([p[0] for p in env_b_ds], [p[1] for p in env_b_ds],
+             color="#475569", linestyle="--", linewidth=1.3, alpha=0.65,
+             label="External Baselines Pareto", zorder=3)
+    ax2.plot([p[0] for p in env_b_t1], [p[1] for p in env_b_t1],
+             color="#475569", linestyle="--", linewidth=1.3, alpha=0.65,
+             label="External Baselines Pareto", zorder=3)
+
+    for k, (lbl, off1, off2) in KEY_BASELINES.items():
+        if k not in by_arm:
+            continue
+        r = by_arm[k]
+        is_sg = (k == "StyleGallery")
+        mk, sz = ("*", 175) if is_sg else ("s", 42)
+        col = "#2563eb" if is_sg else "#334155"
+        ec = "#1e3a8a" if is_sg else "white"
+        kw_arr = dict(arrowstyle="-", color="#2563eb", lw=0.75, alpha=0.7) if is_sg else None
+        ax1.scatter([r["dc"]], [r["ds"]], marker=mk, s=sz, c=col, edgecolors=ec, linewidths=0.9, zorder=7)
+        ax1.annotate(lbl, (r["dc"], r["ds"]), xytext=(off1[0], off1[1]), textcoords="offset points",
+                     fontsize=8.6 if is_sg else 8.0, fontweight="bold" if is_sg else "normal",
+                     color="#1d4ed8" if is_sg else "#334155", ha=off1[2], arrowprops=kw_arr, zorder=9)
+        ax2.scatter([r["dc"]], [r["top1"]], marker=mk, s=sz, c=col, edgecolors=ec, linewidths=0.9, zorder=7)
+        ax2.annotate(lbl, (r["dc"], r["top1"]), xytext=(off2[0], off2[1]), textcoords="offset points",
+                     fontsize=8.6 if is_sg else 8.0, fontweight="bold" if is_sg else "normal",
+                     color="#1d4ed8" if is_sg else "#334155", ha=off2[2], arrowprops=kw_arr, zorder=9)
+
+    ax1.scatter([], [], marker="*", s=140, c="#2563eb", edgecolors="#1e3a8a", label="StyleGallery (strongest external)")
+    ax1.scatter([], [], marker="s", s=38, c="#334155", edgecolors="white", label="Other external baselines")
+    ax2.scatter([], [], marker="*", s=140, c="#2563eb", edgecolors="#1e3a8a", label="StyleGallery (strongest external)")
+    ax2.scatter([], [], marker="s", s=38, c="#334155", edgecolors="white", label="Other external baselines")
+
+    # ---- Ours-Pareto (橙红色 #ff4500) ----
+    ds_pts = [(by_arm[a], lbl, off) for a, lbl, off in OURS_PARETO_DS if a in by_arm]
+    ax1.plot([p[0]["dc"] for p in ds_pts], [p[0]["ds"] for p in ds_pts],
+             color=ORANGE_RED, linewidth=3.0, alpha=0.95, zorder=8, label="Ours-Pareto (V19–V25)")
+    ax1.fill_between([p[0]["dc"] for p in ds_pts], [p[0]["ds"] for p in ds_pts], 0.35,
+                     color=ORANGE_FILL, alpha=0.18, zorder=1)
+    for r, lbl, off in ds_pts:
+        ax1.scatter([r["dc"]], [r["ds"]], s=90, c=ORANGE_RED, edgecolors="white", linewidths=1.5, zorder=10)
+        ax1.annotate(lbl, (r["dc"], r["ds"]), xytext=(off[0], off[1]), textcoords="offset points",
+                     fontsize=8.2, fontweight="bold", color=ORANGE_EDGE, ha=off[2], zorder=11,
+                     arrowprops=dict(arrowstyle="-", color=ORANGE_RED, lw=0.8, alpha=0.75))
+
+    t1_pts = [(by_arm[a], lbl, off) for a, lbl, off in OURS_PARETO_T1 if a in by_arm]
+    ax2.plot([p[0]["dc"] for p in t1_pts], [p[0]["top1"] for p in t1_pts],
+             color=ORANGE_RED, linewidth=3.0, alpha=0.95, zorder=8, label="Ours-Pareto (V19–V25)")
+    ax2.fill_between([p[0]["dc"] for p in t1_pts], [p[0]["top1"] for p in t1_pts], 0.0,
+                     color=ORANGE_FILL, alpha=0.14, zorder=1)
+    for r, lbl, off in t1_pts:
+        ax2.scatter([r["dc"]], [r["top1"]], s=90, c=ORANGE_RED, edgecolors="white", linewidths=1.5, zorder=10)
+        ax2.annotate(lbl, (r["dc"], r["top1"]), xytext=(off[0], off[1]), textcoords="offset points",
+                     fontsize=8.2, fontweight="bold", color=ORANGE_EDGE, ha=off[2], zorder=11,
+                     arrowprops=dict(arrowstyle="-", color=ORANGE_RED, lw=0.8, alpha=0.75))
+
+    # V25 C2nt 零教师 One-Shot 菱形标注
+    for a, lbl, off1, off2 in ONESHOT_HIGHLIGHT:
+        if a not in by_arm:
+            continue
+        r = by_arm[a]
+        ax1.scatter([r["dc"]], [r["ds"]], marker="D", s=72, c="#fb923c", edgecolors=ORANGE_EDGE, linewidths=1.2, zorder=10)
+        ax1.annotate(lbl, (r["dc"], r["ds"]), xytext=(off1[0], off1[1]), textcoords="offset points",
+                     fontsize=7.8, fontweight="bold", color="#c2410c", ha=off1[2], zorder=11,
+                     arrowprops=dict(arrowstyle="-", color="#fb923c", lw=0.75, alpha=0.8))
+        ax2.scatter([r["dc"]], [r["top1"]], marker="D", s=72, c="#fb923c", edgecolors=ORANGE_EDGE, linewidths=1.2, zorder=10)
+        ax2.annotate(lbl, (r["dc"], r["top1"]), xytext=(off2[0], off2[1]), textcoords="offset points",
+                     fontsize=7.8, fontweight="bold", color="#c2410c", ha=off2[2], zorder=11,
+                     arrowprops=dict(arrowstyle="-", color="#fb923c", lw=0.75, alpha=0.8))
+    ax1.scatter([], [], marker="D", s=64, c="#fb923c", edgecolors=ORANGE_EDGE, label="V25 C2nt (0-teacher One-Shot)")
+    ax2.scatter([], [], marker="D", s=64, c="#fb923c", edgecolors=ORANGE_EDGE, label="V25 C2nt (0-teacher One-Shot)")
+
+    ax1.set_title("Content vs. Style Similarity (DINO-C ↑ vs. DINO-S ↑)", fontsize=12.5, fontweight="bold", pad=10, color="#0f172a")
+    ax1.set_xlabel("Content Preservation — DINO-C ↑ (higher = more faithful)", fontsize=10.5, color="#1e293b")
+    ax1.set_ylabel("Style Similarity — DINO-S ↑ (higher = stronger style)", fontsize=10.5, color="#1e293b")
+    ax1.set_xlim(0.32, 0.94)
+    ax1.set_ylim(0.352, 0.615)
+    ax1.grid(True)
+    ax1.legend(loc="lower left", frameon=True, facecolor="white", edgecolor="#cbd5e1", fontsize=8.4, framealpha=0.95)
+
+    ax2.set_title("Content vs. Style Classification (DINO-C ↑ vs. CSD Top-1 ↑)", fontsize=12.5, fontweight="bold", pad=10, color="#0f172a")
+    ax2.set_xlabel("Content Preservation — DINO-C ↑ (higher = more faithful)", fontsize=10.5, color="#1e293b")
+    ax2.set_ylabel("Target Style Recognition — CSD Top-1 (%) ↑", fontsize=10.5, color="#1e293b")
+    ax2.set_xlim(0.32, 0.94)
+    ax2.set_ylim(0, 96)
+    ax2.grid(True)
+    ax2.legend(loc="upper right", frameon=True, facecolor="white", edgecolor="#cbd5e1", fontsize=8.4, framealpha=0.95)
+
+    fig.suptitle(
+        "WEAVE / PRISM Global Pareto Frontier (Cross600, S10 Protocol) — Ours-Pareto (V19–V25) vs. Cloud & External Baselines",
+        fontsize=13.8, fontweight="bold", color="#0f172a", y=0.985,
+    )
+    plt.tight_layout(rect=[0, 0, 1, 0.945])
+
+    png_p = OUT_DIR / "ours_pareto.png"
+    svg_p = OUT_DIR / "ours_pareto.svg"
+    fig.savefig(png_p, dpi=240)
+    fig.savefig(svg_p)
+    plt.close(fig)
+    print(f"Saved: {png_p} & {svg_p} (ds_pts={len(ds_pts)}, t1_pts={len(t1_pts)}, cloud={len(cloud)}, baselines={len(base_rows)})")
+
+
+if __name__ == "__main__":
+    main()
