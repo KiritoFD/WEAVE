@@ -210,6 +210,7 @@ def k2a_discriminability(bundle, device: str) -> dict:
 # ------------------------------------------------- K2-B 梯度 ----
 
 def k2b_gradients(bundle, device: str) -> dict:
+    """梯度审计: **逐图 backward** (峰值 = 单图解码+VGG 反传图), 防 32 图整批图保留 OOM."""
     tr = bundle["v18_cache"]["train"]
     z_all = tr["z"]
     dec = load_s10_decoder(device)
@@ -217,8 +218,8 @@ def k2b_gradients(bundle, device: str) -> dict:
     idx = torch.randperm(len(z_all), generator=g)[:N_GRAD]
     zt = z_all[idx].to(device).float()
     ir = (idx + 1) % len(z_all)
-    imgs_ref = torch.cat([decode_s10(dec, z_all[ir[i:i + 16]].to(device), batch=16).clamp(0.0, 1.0)
-                          for i in range(0, N_GRAD, 16)]).to(device)
+    imgs_ref = torch.cat([decode_s10(dec, z_all[ir[i:i + 8]].to(device), batch=8).clamp(0.0, 1.0)
+                          for i in range(0, N_GRAD, 8)]).to(device)
     vgg, mean, std = _vgg_layers(device)
     f_ref_mean = vgg_mean_style(imgs_ref, vgg, mean, std).detach()
     f_ref_gram = vgg_gram_feat(imgs_ref, vgg, mean, std).detach()
@@ -226,40 +227,29 @@ def k2b_gradients(bundle, device: str) -> dict:
     grads = {}
     swd = DynamicSWD(device=device, dtype=torch.float32)
 
-    def _decode_grad(z_in: torch.Tensor):
-        rgb = decode_s10(dec, z_in, batch=8, enable_grad=True, output_cpu=False).clamp(0.0, 1.0)
-        return rgb
+    def _grad_of(loss_fn, tag: str) -> torch.Tensor:
+        """逐图 forward+backward, z.grad 逐图累加 (峰值显存 = 单图图)."""
+        z = zt.clone().requires_grad_(True)
+        for i in range(N_GRAD):
+            rgb_i = decode_s10(dec, z[i:i + 1], batch=1, enable_grad=True, output_cpu=False).clamp(0.0, 1.0)
+            loss_fn(rgb_i, i).backward()
+        g = z.grad.detach().clone()
+        z.grad = None
+        torch.cuda.empty_cache()
+        return g
 
     for k_proj in (32, 64, 128):
         swd.n_proj = k_proj
-        z = zt.clone().requires_grad_(True)
-        rgb = _decode_grad(z)
-        r = swd.loss(rgb, imgs_ref, gen=torch.Generator().manual_seed(20261185))
-        r["loss"].backward()
-        grads[f"swd_k{k_proj}"] = z.grad.detach().clone()
-        z.grad = None
-        del rgb, r
-        torch.cuda.empty_cache()
+        grads[f"swd_k{k_proj}"] = _grad_of(
+            lambda rgb_i, i, kp=k_proj: swd.loss(rgb_i, imgs_ref[i:i + 1],
+                                                 gen=torch.Generator().manual_seed(20261185))["loss"],
+            f"swd_k{k_proj}")
 
-    z = zt.clone().requires_grad_(True)
-    rgb = _decode_grad(z)
-    f_gen = vgg_mean_style(rgb, vgg, mean, std)
-    loss_mean = cosine_distance_loss(f_gen, f_ref_mean)
-    loss_mean.backward()
-    grads["meanvgg"] = z.grad.detach().clone()
-    z.grad = None
-    del rgb, f_gen
-    torch.cuda.empty_cache()
-
-    z = zt.clone().requires_grad_(True)
-    rgb = _decode_grad(z)
-    f_g = vgg_gram_feat(rgb, vgg, mean, std)
-    loss_gram = F.mse_loss(f_g, f_ref_gram)
-    loss_gram.backward()
-    grads["gram"] = z.grad.detach().clone()
-    z.grad = None
-    del rgb, f_g
-    torch.cuda.empty_cache()
+    grads["meanvgg"] = _grad_of(
+        lambda rgb_i, i: cosine_distance_loss(vgg_mean_style(rgb_i, vgg, mean, std),
+                                              f_ref_mean[i:i + 1]), "meanvgg")
+    grads["gram"] = _grad_of(
+        lambda rgb_i, i: F.mse_loss(vgg_gram_feat(rgb_i, vgg, mean, std), f_ref_gram[i:i + 1]), "gram")
 
     def norm(x):
         return round(float(x.norm()), 4)
@@ -272,12 +262,12 @@ def k2b_gradients(bundle, device: str) -> dict:
         ga = []
         for seed in (111, 222):
             z = zt[:8].clone().requires_grad_(True)
-            rgb = _decode_grad(z)
-            r = swd.loss(rgb, imgs_ref[:8], gen=torch.Generator().manual_seed(seed))
-            r["loss"].backward()
+            for i in range(8):
+                rgb_i = decode_s10(dec, z[i:i + 1], batch=1, enable_grad=True, output_cpu=False).clamp(0.0, 1.0)
+                r = swd.loss(rgb_i, imgs_ref[i:i + 1], gen=torch.Generator().manual_seed(seed))["loss"]
+                (r / 8.0).backward()
             ga.append(z.grad.detach().clone())
             z.grad = None
-            del rgb, r
             torch.cuda.empty_cache()
         return cos(ga[0], ga[1])
 
@@ -287,7 +277,7 @@ def k2b_gradients(bundle, device: str) -> dict:
         "cos_swd64_vs_gram": cos(grads["swd_k64"], grads["gram"]),
         "cos_meanvgg_vs_gram": cos(grads["meanvgg"], grads["gram"]),
         "swd_grad_seed_stability": {str(k): round(seed_stability(k), 4) for k in (32, 64, 128)},
-        "loss_values": {"meanvgg": round(float(loss_mean), 5), "gram": round(float(loss_gram), 5)},
+        "note": "逐图反传口径: 峰值显存 = 单图解码+VGG 反传图; 单图 loss 值不聚合",
     }
 
 
