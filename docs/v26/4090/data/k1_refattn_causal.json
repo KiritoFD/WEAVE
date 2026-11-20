@@ -1,0 +1,182 @@
+{
+  "task": "V26-K1 RefAttn causal audit + source-lock velocity field",
+  "updated_utc": "2026-11-20T18:23:11.548964+00:00",
+  "telemetry": {
+    "n_tasks": 150,
+    "n_calls": 20,
+    "overall": {
+      "entropy_ratio": 0.8375,
+      "max_qk": 0.3116,
+      "gate_mean": 0.5285,
+      "gate_p10": 0.5285,
+      "gate_p90": 0.5285,
+      "gate_low_frac": 0.0,
+      "local_norm": 3.1506,
+      "global_norm": 4.0519,
+      "out_rel_norm": 0.1716
+    },
+    "by_target_style": {
+      "Early_Renaissance": {
+        "entropy_ratio": 0.8524,
+        "max_qk": 0.2883,
+        "gate_mean": 0.486,
+        "gate_p10": 0.486,
+        "gate_p90": 0.486,
+        "gate_low_frac": 0.0,
+        "local_norm": 2.8916,
+        "global_norm": 4.6653,
+        "out_rel_norm": 0.154
+      },
+      "Impressionism": {
+        "entropy_ratio": 0.8317,
+        "max_qk": 0.3187,
+        "gate_mean": 0.5426,
+        "gate_p10": 0.5426,
+        "gate_p90": 0.5426,
+        "gate_low_frac": 0.0,
+        "local_norm": 3.2495,
+        "global_norm": 3.4435,
+        "out_rel_norm": 0.2075
+      },
+      "Minimalism": {
+        "entropy_ratio": 0.8454,
+        "max_qk": 0.3032,
+        "gate_mean": 0.515,
+        "gate_p10": 0.515,
+        "gate_p90": 0.515,
+        "gate_low_frac": 0.0,
+        "local_norm": 3.8249,
+        "global_norm": 5.371,
+        "out_rel_norm": 0.2085
+      },
+      "Rococo": {
+        "entropy_ratio": 0.8325,
+        "max_qk": 0.3178,
+        "gate_mean": 0.5376,
+        "gate_p10": 0.5376,
+        "gate_p90": 0.5376,
+        "gate_low_frac": 0.0,
+        "local_norm": 2.9423,
+        "global_norm": 3.4998,
+        "out_rel_norm": 0.1545
+      },
+      "Ukiyo_e": {
+        "entropy_ratio": 0.8358,
+        "max_qk": 0.313,
+        "gate_mean": 0.531,
+        "gate_p10": 0.531,
+        "gate_p90": 0.531,
+        "gate_low_frac": 0.0,
+        "local_norm": 2.6421,
+        "global_norm": 3.61,
+        "out_rel_norm": 0.1256
+      }
+    },
+    "by_source_style": {
+      "Early_Renaissance": {
+        "entropy_ratio": 0.8352,
+        "max_qk": 0.3148,
+        "gate_mean": 0.5345,
+        "gate_p10": 0.5345,
+        "gate_p90": 0.5345,
+        "gate_low_frac": 0.0,
+        "local_norm": 3.1792,
+        "global_norm": 3.9577,
+        "out_rel_norm": 0.1746
+      },
+      "Impressionism": {
+        "entropy_ratio": 0.8467,
+        "max_qk": 0.2986,
+        "gate_mean": 0.5043,
+        "gate_p10": 0.5043,
+        "gate_p90": 0.5043,
+        "gate_low_frac": 0.0,
+        "local_norm": 3.036,
+        "global_norm": 4.4289,
+        "out_rel_norm": 0.1596
+      }
+    }
+  },
+  "interventions": {
+    "n_tasks": 150,
+    "arms": {
+      "R0_original": {
+        "dino_c_vs_content": 0.5392,
+        "dino_s_vs_target_ref": 0.39575,
+        "dino_s_vs_source": 0.5392
+      },
+      "R1_gate0": {
+        "dino_c_vs_content": 0.4767,
+        "dino_s_vs_target_ref": 0.40574,
+        "dino_s_vs_source": 0.4767
+      },
+      "R2_gate1": {
+        "dino_c_vs_content": 0.57576,
+        "dino_s_vs_target_ref": 0.36959,
+        "dino_s_vs_source": 0.57576
+      },
+      "R3_vzero": {
+        "dino_c_vs_content": 0.58917,
+        "dino_s_vs_target_ref": 0.38974,
+        "dino_s_vs_source": 0.58917
+      },
+      "R4_vshuffle": {
+        "dino_c_vs_content": 0.5886,
+        "dino_s_vs_target_ref": 0.3851,
+        "dino_s_vs_source": 0.5886
+      },
+      "R5_key_only": {
+        "dino_c_vs_content": 0.54176,
+        "dino_s_vs_target_ref": 0.39248,
+        "dino_s_vs_source": 0.54176
+      },
+      "R6_value_only": {
+        "dino_c_vs_content": 0.5886,
+        "dino_s_vs_target_ref": 0.3851,
+        "dino_s_vs_source": 0.5886
+      }
+    }
+  },
+  "velocity_field": {
+    "n_pairs": 64,
+    "tau0": 0.45,
+    "by_prog": {
+      "0.0": {
+        "norm_v_pos": 132.3614,
+        "norm_v_src": 117.7603,
+        "norm_diff": 83.527,
+        "cos_diff_vpos": 0.4277,
+        "luma_energy_ratio": 0.2435
+      },
+      "0.25": {
+        "norm_v_pos": 113.0318,
+        "norm_v_src": 101.9692,
+        "norm_diff": 66.1191,
+        "cos_diff_vpos": 0.3948,
+        "luma_energy_ratio": 0.2476
+      },
+      "0.5": {
+        "norm_v_pos": 89.0818,
+        "norm_v_src": 83.9075,
+        "norm_diff": 40.7024,
+        "cos_diff_vpos": 0.3137,
+        "luma_energy_ratio": 0.2511
+      },
+      "0.75": {
+        "norm_v_pos": 70.2622,
+        "norm_v_src": 69.1663,
+        "norm_diff": 21.4304,
+        "cos_diff_vpos": 0.1932,
+        "luma_energy_ratio": 0.2612
+      },
+      "1.0": {
+        "norm_v_pos": 78.2578,
+        "norm_v_src": 78.2562,
+        "norm_diff": 8.0469,
+        "cos_diff_vpos": 0.0416,
+        "luma_energy_ratio": 0.2788
+      }
+    },
+    "note": "diff=v_pos−v_src 非严格正交分量; 几何诊断仅判断方向有效性"
+  }
+}
