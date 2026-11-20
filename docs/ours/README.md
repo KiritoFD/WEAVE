@@ -16,10 +16,11 @@
 | [`07_V23_HiC_Joint_Pk`](07_V23_HiC_Joint_Pk/RECIPE.md) | frozen | `HiC_JPk_csj65_t4` | 0.6299 | 0.5330 | 0.5649 | 58.83% | 750 PNGs |
 | [`08_V25_Tr_T1`](08_V25_Tr_T1/RECIPE.md) | active | `V25_Tr_T1_d6hcsj` | 0.6613 | 0.5162 | 0.5411 | 56.67% | 750 PNGs |
 | [`09_V24_O3_OneShot`](09_V24_O3_OneShot/RECIPE.md) | active | `O3_rgb_cnx_gated_t45` | 0.5845 | 0.5245 | 0.4213 | 35.33% | 750 PNGs |
+| [`10_V25_C2nt_OneShot`](10_V25_C2nt_OneShot/RECIPE.md) | active (V25 C2nt breakthrough) | `C2nt_sw6_lc0.8_t55` | 0.6647 | 0.5027 | 0.3992 | 28.33% | 750 PNGs |
 
 ## 推荐使用族（V25 收束定案）
 
-1. **极速高内容基座**：[`01_PRISM1_v2/`](01_PRISM1_v2/RECIPE.md)（1.28M，单步 `17.0 ms` 协议批 / `70.7 ms` 完整 RGB→RGB）
-2. **极高内容前沿主选**：[`02_PRISM_HighContent_R12/`](02_PRISM_HighContent_R12/RECIPE.md)（`B4 + D6H cs_j + PRISM-1`，`DINO-C 0.7286–0.7748`, `LPIPS 0.478–0.498`，4090 `batch=16` `82.9 ms/img`）
+1. **极速高内容基座**：[`01_PRISM1_v2/`](01_PRISM1_v2/RECIPE.md)（1.28M，单步 `17.0 ms` 协议批 / `71.1 ms` 完整 RGB→RGB）
+2. **极高内容前沿主选**：[`02_PRISM_HighContent_R12/`](02_PRISM_HighContent_R12/RECIPE.md)（`B4 + D6H cs_j + PRISM-1`，`DINO-C 0.7286–0.7748`, `LPIPS 0.478–0.498`，4090 `batch=16` `84.0 ms/img`）
 3. **高 CSD Top-1 Hybrid / 强风格对照**：[`03_V20_SLFUNet_D6/`](03_V20_SLFUNet_D6/RECIPE.md)、[`04_V22_Peak1500/`](04_V22_Peak1500/RECIPE.md)（76.83%）、[`07_V23_HiC_Joint_Pk/`](07_V23_HiC_Joint_Pk/RECIPE.md)（58.83%）
-4. **One-Shot 任意参考引擎**：[`09_V24_O3_OneShot/`](09_V24_O3_OneShot/RECIPE.md)（免类别标签，SG-25 `ΔS=+0.157`）
+4. **One-Shot 任意参考引擎**：[`09_V24_O3_OneShot/`](09_V24_O3_OneShot/RECIPE.md)（V23 教师基线）与 **[`10_V25_C2nt_OneShot/`](10_V25_C2nt_OneShot/RECIPE.md)**（零教师突破：`t45 42.17% / 0.5235`，同内容参考特异性 `+0.0732`）

@@ -518,3 +518,15 @@ HC_B4_full_D6_g55,V25-R13-HighContent,q2a_oracle_cross600,S10,True,False,600,0.4
 HC_B4_full_D6_g100,V25-R13-HighContent,q2a_oracle_cross600,S10,True,False,600,0.49086,0.70691,0.50855,,0.60032,0.46833,,,,,,0.96667,,,,,,"4090 runs/v25/r13_highcontent_r12.json (B4 anchor, full, D6, g=1.0)"
 HC_B4_csj_D6_g55,V25-R13-HighContent,q2a_oracle_cross600,S10,True,False,600,0.46201,0.76238,0.48436,,0.57942,0.44167,,,,,,0.96667,,,,,,"4090 runs/v25/r13_highcontent_r12.json (B4 anchor, cs_j, D6, g=0.55)"
 HC_B4_full_D6H_g55,V25-R13-HighContent,q2a_oracle_cross600,S10,True,False,600,0.45467,0.77177,0.47811,,0.57472,0.445,,,,,,0.96667,,,,,,"4090 runs/v25/r13_highcontent_r12.json (B4 anchor, full, D6H, g=0.55)"
+C2nt_sw0.2_lc1_t45,V25-C2nt-Probe,q2a_oracle_cross600,S10,True,False,600,0.47738,0.71637,0.31823,,0.57946,0.125,,,,,,0.96667,,,,,,runs/v25/c2nt_probe_sw_0.2.json (4090 cnx sw=0.2 200upd)
+C2nt_sw0.2_lc1_t55,V25-C2nt-Probe,q2a_oracle_cross600,S10,True,False,600,0.46146,0.76821,0.27389,,0.56664,0.11,,,,,,0.96667,,,,,,runs/v25/c2nt_probe_sw_0.2.json (4090 cnx sw=0.2 200upd)
+C2nt_sw0.5_lc1_t45,V25-C2nt-Probe,q2a_oracle_cross600,S10,True,False,600,0.47756,0.71635,0.31822,,0.57952,0.12667,,,,,,0.96667,,,,,,runs/v25/c2nt_probe_sw_0.5.json (4090 cnx sw=0.5 200upd)
+C2nt_sw0.5_lc1_t55,V25-C2nt-Probe,q2a_oracle_cross600,S10,True,False,600,0.46141,0.76822,0.27393,,0.56658,0.10667,,,,,,0.96667,,,,,,runs/v25/c2nt_probe_sw_0.5.json (4090 cnx sw=0.5 200upd)
+C2nt_sw1_lc1_t45,V25-C2nt-Probe,q2a_oracle_cross600,S10,True,False,600,0.47757,0.71626,0.31832,,0.57957,0.12833,,,,,,0.96667,,,,,,runs/v25/c2nt_probe_sw_1.0.json (4090 cnx sw=1.0 200upd)
+C2nt_sw1_lc1_t55,V25-C2nt-Probe,q2a_oracle_cross600,S10,True,False,600,0.46146,0.76817,0.27396,,0.56664,0.11,,,,,,0.96667,,,,,,runs/v25/c2nt_probe_sw_1.0.json (4090 cnx sw=1.0 200upd)
+C2nt_sw40_lc1_t45,V25-C2nt-Probe,q2a_oracle_cross600,S10,True,False,600,0.47835,0.71237,0.32626,,0.58051,0.13167,,,,,,0.96667,,,,,,runs/v25/c2nt_probe_cnx40.json (4090 cnx sw=40.0 200upd)
+C2nt_sw40_lc1_t55,V25-C2nt-Probe,q2a_oracle_cross600,S10,True,False,600,0.46182,0.76631,0.27802,,0.56716,0.115,,,,,,0.96667,,,,,,runs/v25/c2nt_probe_cnx40.json (4090 cnx sw=40.0 200upd)
+C2nt_sw5_lc1_t45,V25-C2nt-Probe,q2a_oracle_cross600,S10,True,False,600,0.49086,0.69001,0.38685,,0.58961,0.155,,,,,,0.96667,,,,,,runs/v25/c2nt_probe_vgg5.json (4090 vgg sw=5.0 200upd)
+C2nt_sw5_lc1_t55,V25-C2nt-Probe,q2a_oracle_cross600,S10,True,False,600,0.47163,0.74982,0.31397,,0.57488,0.13,,,,,,0.96667,,,,,,runs/v25/c2nt_probe_vgg5.json (4090 vgg sw=5.0 200upd)
+C2nt_sw6_lc0.8_t45,V25-C2nt,q2a_oracle_cross600,S10,True,False,600,0.52348,0.54479,0.52052,,0.62207,0.42167,,,,,,0.96667,,,,,,runs/v25/c2nt_formal_vgg_sw6_lc08.json (4090 vgg sw=6.0 lc=0.8 1200upd formal)
+C2nt_sw6_lc0.8_t55,V25-C2nt,q2a_oracle_cross600,S10,True,False,600,0.5027,0.66471,0.39919,,0.60488,0.28333,,,,,,0.96667,,,,,,runs/v25/c2nt_formal_vgg_sw6_lc08.json (4090 vgg sw=6.0 lc=0.8 1200upd formal)

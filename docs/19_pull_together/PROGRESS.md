@@ -154,8 +154,17 @@
    - `fixed_g=0.69` vs `original`：全局内容（`+0.0056`）与 LPIPS（`−0.0057`）显著更优、风格持平，但 **`Ukiyo_e` 掉 5.0pp** 触发守卫（`INCONCLUSIVE`）→ 全画派正式交付保留 `original` 门控；
    - **Minimalism `full` vs `cs_j`**：`full` 确实不可替代——D5 `Impressionism→Minimalism` `full=86.7% vs cs_j=30.0%`（`−56.7pp`, 源锁定 `+0.567`），D6H `−7.50pp`；`full` 的无内容先验项负责剥离密集纹理；`cs_j` 定位高内容高速分支；
    - **Round 2 训练配方**：`T1/T2/T3` @D6h 均 `PASS` vs `T0`，AB (`T2`/`T3`) 对 `T1` 无增益 → 冻结 **`Tr_T1`（`drop_c=30%, AB=0%`）** 为最简训练配方。
-3. **`docs/ours/` 核心模型资产库整理完毕**：9 个代表模型独立分目录（ckpt + 750 图 + `config.json` + `RECIPE.md` + [`docs/ours/README.md`](../ours/README.md)），含 `PRISM-HighContent-R12`、`PRISM-1`、`V20 D6`、`V22 Peak1500`、`V22 Dual F3`、`V23 DualSWD`、`V23 HiC`、`V25 Tr_T1`、`V24 O3`。
+3. **`docs/ours/` 核心模型资产库整理完毕**：10 个代表模型独立分目录（ckpt + 750 图 + `config.json` + `RECIPE.md` + [`docs/ours/README.md`](../ours/README.md)），含 `PRISM-HighContent-R12`、`PRISM-1`、`V20 D6`、`V22 Peak1500`、`V22 Dual F3`、`V23 DualSWD`、`V23 HiC`、`V25 Tr_T1`、`V24 O3`、`V25 C2nt`。
 4. **R14 正式端到端 RGB→RGB 基准 + 双接口冒烟**：
    - 4090 实测 `512² RGB→RGB`（`b1` / `b16`）：`PRISM-1 71.1 / 58.2 ms`、`d6_csj_b4 207.4 / 67.2 ms`、`d6_full_b4 212.6 / 99.7 ms`（`b16` 下 `cs_j` 流加速 2.33×）、`PRISM-HC-R12 234.1 / 84.0 ms`、`o3_ref 306.9 (fresh) / 267.4 ms (ref-cached, −39.4ms)`；
    - 双接口 GPU 冒烟全过：`PRISMCore`（4090：`student` gate + `prism1`/`d6_flow`/`hybrid` `deterministic=True`）+ `PRISMRef`（3060：`o3_ref` `PASS`，修掉 `RefRuntime.run` 缺 `torch.no_grad()` 导致 22GB OOM 与 `_decode` 跨设备 bug）。
-5. **`C2nt` 推进中**：4090 跑完 0.2 探针（3.1 min，4 条件 `correct_ref` `dino_s_correct=0.345` > `wrong` `0.334` > `diff` `0.332`，smoke PASS），0.5/1.0 探针运行中。
+5. **`C2nt` 正式收官（第 3 项，全量完成，详见 [`docs/v25/audits/c2nt_no_teacher_report.md`](../v25/audits/c2nt_no_teacher_report.md)）**：
+   - **病灶诊断**：CNX 空间均值池化因共享通道均值偏置导致跨画作余弦 `0.9975`（`l_style≈0.0022`），探针 `sw=0.2/0.5/1.0/40.0` 仅推至 `12.50%→13.17%`；切换 **`VGG-16 (relu3_3+relu4_3)`** 后 `l_style=0.2617`（`105×` 动态范围）；
+   - **1200-step 正式臂 (`C2nt_sw6_lc0.8`)**：训练稳定收敛（`l_style 0.2617→0.0625`, `preview_style_cos 0.738→0.938`）；**相同内容水位下（`dino_c 0.5873 vs 0.5866`）正确参考风格匹配高出错误参考 `+0.0732`**（`0.3964 vs 0.3232`，`smoke PASS`）；完整 `test750` 达到 **`t45 0.5448 / 0.5235 / 42.17%`**、`t55 0.6647 / 0.5027 / 28.33%`（两档全面超越有标签教师版 `O3` `35.33% / 24.00%`，彻底绕开 O2 教师近恒等盆地）；台账 `metrics.csv` 共 **531 行**。
+
+### V25 最终模型族定位（收束定案）
+
+- **PRISM-1 极速档**：`01_PRISM1_v2`（1.28M，`17.0 ms` 协议批 / `71.1 ms` b1 RGB→RGB）
+- **Hybrid 高保真前沿档**：`02_PRISM_HighContent_R12`（`B4 + D6H cs_j + PRISM-1`，`DINO-C 0.7286–0.7748`, `LPIPS 0.478–0.498`，4090 `b16 84.0 ms/img`）与 `03_V20_SLFUNet_D6` / `08_V25_Tr_T1`（高 Top-1 对照）
+- **One-Shot 任意参考档**：`09_V24_O3_OneShot` 与 `10_V25_C2nt_OneShot`（免教师包、强参考特异性 `+0.0732`）
+- **状态**：两台 GPU 清空就绪；全套 V25 收束四件事全部完成并经过完整统计与冒烟验证。

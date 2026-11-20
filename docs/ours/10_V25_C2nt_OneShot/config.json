@@ -1,0 +1,98 @@
+{
+  "name": "10_V25_C2nt_OneShot",
+  "title": "V25 C2nt No-Teacher Reference-Regularized One-Shot (C2nt_sw6_lc0.8.pt)",
+  "role": "零教师伪目标依赖的新 One-Shot 强迁移候选 (参考灵敏度 +0.0732)",
+  "status": "active (V25 C2nt breakthrough)",
+  "checkpoints": [
+    {
+      "file": "C2nt_sw6_lc0.8.pt",
+      "original_path": "runs/v25/oneshot_val/C2nt_sw6_lc0.8.pt",
+      "size_mb": 85.09,
+      "sha256": "5580d76158b1af31062b9b8284feee52560355be64c148f1a9079714cc9e6940"
+    }
+  ],
+  "images_750": {
+    "images_750": {
+      "source_arm": "C2nt_sw6_lc0.8_t55",
+      "count": 750
+    }
+  },
+  "architecture": "SLFUNetV24OneShot (22.23M, Q/K=gray DINO-16, V=RGB ConvNeXt-s2, global 795D fiber + confidence gate) + RefAdapter (0.066M)",
+  "training_config": {
+    "script": "exp/v25/mechanism_c.py (--stage C2nt --feature-kind vgg --lambda-sw 6.0 --lambda-c 0.8 --updates 1200)",
+    "init": "runs/v22/attn_flow/prism_dual_branch.pt",
+    "teacher_pack": null,
+    "onehot": 0,
+    "drop_style": false,
+    "loss": "self-paired flow-MSE + 6.0*VGG(1-cos style vs assigned ref) + 0.8*VGG(1-cos content vs src)",
+    "updates": 1200,
+    "micro": 12,
+    "accum": 4
+  },
+  "inference_config": {
+    "steps": 10,
+    "nfe": "20 vel evals x2 CFG = 40 img-eq",
+    "strength_knob": "tau0 in [0.45, 0.55] (t55 balanced: 0.6647/0.5027/28.33%; t45 strong: 0.5448/0.5235/42.17%)",
+    "decoder": "S10"
+  },
+  "metrics_cross600_s10": [
+    {
+      "arm": "C2nt_sw6_lc0.8_t45",
+      "tau0": 0.45,
+      "wj": 2.2,
+      "dino_c": 0.54479,
+      "dino_s": 0.52348,
+      "lpips": 0.52052,
+      "style_affinity": 0.62207,
+      "csd_top1": 0.42167
+    },
+    {
+      "arm": "C2nt_sw6_lc0.8_t55",
+      "tau0": 0.55,
+      "wj": 2.0,
+      "dino_c": 0.66471,
+      "dino_s": 0.5027,
+      "lpips": 0.39919,
+      "style_affinity": 0.60488,
+      "csd_top1": 0.28333
+    }
+  ],
+  "ref_conditions_48": {
+    "table": [
+      {
+        "condition": "correct_ref",
+        "dino_c": 0.58728,
+        "dino_s_own": 0.39636,
+        "dino_s_correct": 0.39636
+      },
+      {
+        "condition": "wrong_ref",
+        "dino_c": 0.58656,
+        "dino_s_own": 0.32256,
+        "dino_s_correct": 0.32324
+      },
+      {
+        "condition": "same_style_alt_ref",
+        "dino_c": 0.59621,
+        "dino_s_own": 0.39301,
+        "dino_s_correct": 0.37649
+      },
+      {
+        "condition": "diff_style_ref",
+        "dino_c": 0.4928,
+        "dino_s_own": 0.26295,
+        "dino_s_correct": 0.2497
+      }
+    ],
+    "smoke": {
+      "ok": true,
+      "failures": []
+    },
+    "n_tasks": 48,
+    "tau0": 0.45,
+    "wj": 2.2,
+    "ckpt": "v25/oneshot_val/C2nt_sw6_lc0.8.pt",
+    "updated_utc": "2026-11-20T06:00:15.261084+00:00"
+  },
+  "notes": "完全绕开 O2 教师近恒等盆地问题: 同内容水平 (0.5873 vs 0.5866) 下正确参考比错误参考 DINO-S 高 +0.0732, test750 Top-1 在 t45/t55 均反超有标签教师版 O3。"
+}
