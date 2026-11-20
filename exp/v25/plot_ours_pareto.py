@@ -65,18 +65,18 @@ EXTRA_HIGHLIGHT = [
     ("M0_prism1_l100",     "PRISM-1 (5.97 img/s)",       "o", (-14, -22, "right"), (-28, -4, "right"),  "prism1"),
 ]
 
-# 外部基线 (名称: (显示名, 左偏移, 右偏移, 固定 ms/img 若 metrics.csv 缺失))
+# 外部基线 (名称: (显示名, 左偏移, 右偏移, ms/img))
 KEY_BASELINES = {
-    "StyleShot":         ("StyleShot",             (8, -12, "left"),    (10, -4, "left"),    24480.0),
-    "StyleID":           ("StyleID",               (8, 10, "left"),     (10, -4, "left"),    5040.0),
-    "AesPA":             ("AesPA",                 (-8, -11, "right"),  (-8, -10, "right"),  1840.0),
-    "StyleGallery":      ("StyleGallery (CVPR26)", (12, 16, "left"),    (-22, 14, "right"),  30400.0),
-    "StyTr2":            ("StyTr2",                (-8, -12, "right"),  (-10, -10, "right"), 3040.0),
-    "Seedream 4.5":      ("Seedream 4.5",          (-8, -13, "right"),  (-12, -14, "right"), 2000.0),
-    "WEAVE (Published)": ("WEAVE (Orig)",          (8, 7, "left"),      (10, 6, "left"),     2500.0),
-    "SaMAM":             ("SaMAM",                 (-10, -12, "right"), (10, -4, "left"),    1408.0),
-    "CUT":               ("CUT",                   (8, 10, "left"),     (-10, -6, "right"),  400.0),
-    "Hist2Style":        ("Hist2Style",            (-10, -10, "right"), (-6, 10, "right"),   1500.0),
+    "StyleShot":         ("StyleShot\n(24.5 s/img)",         (8, 6, "left"),      (10, -10, "left"),   24480.0),
+    "StyleID":           ("StyleID (5.0 s/img)",             (8, 10, "left"),      (10, -4, "left"),    5040.0),
+    "AesPA":             ("AesPA (1.8 s/img)",               (-8, -11, "right"),   (-8, -10, "right"),  1840.0),
+    "StyleGallery":      ("StyleGallery\n(CVPR26, 30.4 s/img)", (10, 14, "left"),  (-18, 14, "right"),  30400.0),
+    "StyTr2":            ("StyTr2 (3.0 s/img)",              (-8, -12, "right"),   (-10, -10, "right"), 3040.0),
+    "Seedream 4.5":      ("Seedream 4.5 (2.0 s/img)",        (-8, -14, "right"),   (-12, -14, "right"), 2000.0),
+    "WEAVE (Published)": ("WEAVE (Orig)",                    (8, 7, "left"),       (10, 6, "left"),     2500.0),
+    "SaMAM":             ("SaMAM (1.4 s/img)",               (-10, -12, "right"),  (10, -4, "left"),    1408.0),
+    "CUT":               ("CUT (0.4 s/img)",                 (8, 10, "left"),      (-10, -6, "right"),  400.0),
+    "Hist2Style":        ("Hist2Style (0.2 s/img)",          (-16, -2, "right"),   (-16, -6, "right"),  200.0),
 }
 
 
@@ -213,23 +213,23 @@ def main():
         sz = img_s_to_area(img_s)
         is_sg = (k == "StyleGallery")
         mk = "*" if is_sg else "s"
-        sz_use = max(sz * 3.0, 120.0) if is_sg else sz
+        sz_use = max(sz * 1.4, 48.0) if is_sg else sz  # StyleGallery 0.03 img/s 真实微点, 仅用蓝星框区分
         col = "#2563eb" if is_sg else "#334155"
         ec = "#1e3a8a" if is_sg else "white"
-        kw_arr = dict(arrowstyle="-", color="#2563eb", lw=0.75, alpha=0.7) if is_sg else None
+        kw_arr = dict(arrowstyle="-", color="#2563eb", lw=0.85, alpha=0.8) if is_sg else None
         ax1.scatter([r["dc"]], [r["ds"]], marker=mk, s=sz_use, c=col, edgecolors=ec, linewidths=0.9, zorder=7)
         ax1.annotate(lbl, (r["dc"], r["ds"]), xytext=(off1[0], off1[1]), textcoords="offset points",
-                     fontsize=8.5 if is_sg else 7.9, fontweight="bold" if is_sg else "normal",
+                     fontsize=8.2 if is_sg else 7.4, fontweight="bold" if is_sg else "normal",
                      color="#1d4ed8" if is_sg else "#334155", ha=off1[2], arrowprops=kw_arr, zorder=9)
         ax2.scatter([r["dc"]], [r["top1"]], marker=mk, s=sz_use, c=col, edgecolors=ec, linewidths=0.9, zorder=7)
         ax2.annotate(lbl, (r["dc"], r["top1"]), xytext=(off2[0], off2[1]), textcoords="offset points",
-                     fontsize=8.5 if is_sg else 7.9, fontweight="bold" if is_sg else "normal",
+                     fontsize=8.2 if is_sg else 7.4, fontweight="bold" if is_sg else "normal",
                      color="#1d4ed8" if is_sg else "#334155", ha=off2[2], arrowprops=kw_arr, zorder=9)
 
-    ax1.scatter([], [], marker="*", s=130, c="#2563eb", edgecolors="#1e3a8a", label="StyleGallery (0.03 img/s)")
-    ax1.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Other external baselines")
-    ax2.scatter([], [], marker="*", s=130, c="#2563eb", edgecolors="#1e3a8a", label="StyleGallery (0.03 img/s)")
-    ax2.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Other external baselines")
+    ax1.scatter([], [], marker="*", s=70, c="#2563eb", edgecolors="#1e3a8a", label="StyleGallery (30.4 s/img = 0.03 img/s)")
+    ax1.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Other baselines (size ∝ img/s)")
+    ax2.scatter([], [], marker="*", s=70, c="#2563eb", edgecolors="#1e3a8a", label="StyleGallery (30.4 s/img = 0.03 img/s)")
+    ax2.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Other baselines (size ∝ img/s)")
 
     # ---- Ours-Pareto (橙红色 #ff4500, 半径 ∝ 3060 max-batch img/s) ----
     ds_pts = [(by_arm[a], lbl, off, spd.get(eng, 3.0)) for a, lbl, off, eng in OURS_PARETO_DS if a in by_arm]
