@@ -27,6 +27,7 @@ from exp.v26 import OUT, ROOT, save_json, utc
 from exp.v26.gpu3060.train_c2nt_v26 import train_c2nt_v26
 from exp.v25.mechanism_c import assign_c2nt_refs  # A0 原样对照
 from exp.v26.sr_cfg import _eval_baseline_steps, load_sr_env
+from src.utils import load_s10_decoder
 
 L0_UPDATES = 1200
 L0_SEED = 20265700
@@ -203,6 +204,9 @@ def train_l0_arm(bundle, c21, v16_tr, arm: str, spec: dict, device: str = "cuda"
     updates, micro, accum, lambda_sw, lambda_c = 1200, 8, 4, 0.5, 1.0
     out_p = OUT / "oneshot_val" / f"{arm}.pt"
     out_p.parent.mkdir(parents=True, exist_ok=True)
+    if out_p.exists():  # 重入保护: 队列重启时跳过已完成训练
+        print(f"[L0 {arm}] Reusing {out_p}", flush=True)
+        return out_p, {"pair_matrix": [[0] * 5 for _ in range(5)], "rows": []}
 
     torch.manual_seed(seed)
     import exp.v25 as _v25

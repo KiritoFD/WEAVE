@@ -68,7 +68,7 @@ def build_teacher(pool: str, device: str = "cuda", batch: int = 25) -> Path:
     ck = torch.load(ROOT / "runs/v22/attn_flow/prism_dual_branch.pt",
                     map_location="cpu", weights_only=False)
     fm = SLFUNetV24OneShot(v_dim=192, use_conf_gate=True, use_global_fib=True).to(device).eval()
-    fm.load_state_dict(ck["fm"], strict=True)
+    fm.load_state_dict(ck["ema"], strict=False)  # 双分支 ckpt 布局: {"ema": state_dict, ...}
 
     fiber_enc = StyleFiberEncoder(in_dim=bundle["fnd"]["tr_fib"].shape[1], dim=128).to(device).eval()
     fiber_enc.load_state_dict(bundle["fnd"]["fiber_state"])
