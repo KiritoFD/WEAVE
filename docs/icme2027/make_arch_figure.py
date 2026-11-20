@@ -768,18 +768,18 @@ def build_architecture() -> None:
     ax.axis("off")
 
     # =========================================================================
-    # 0. TOP UNIFIED FACTORIZATION BANNER (Tight, balanced, centered)
+    # 0. TOP UNIFIED FACTORIZATION BANNER (Blocking Source-Style Backflow)
     # =========================================================================
-    ax.plot([0.18, 4.45], [5.03, 5.03], color="#CBD5E1", lw=1.0, zorder=1)
-    ax.plot([9.85, 14.12], [5.03, 5.03], color="#CBD5E1", lw=1.0, zorder=1)
-    card(ax, 4.52, 4.91, 5.26, 0.24, fc="#F1F5F9", ec="#64748B", lw=1.0, rad=0.09, zorder=3)
+    ax.plot([0.18, 2.55], [5.03, 5.03], color="#CBD5E1", lw=1.0, zorder=1)
+    ax.plot([11.75, 14.12], [5.03, 5.03], color="#CBD5E1", lw=1.0, zorder=1)
+    card(ax, 2.62, 4.91, 9.06, 0.24, fc="#F1F5F9", ec="#64748B", lw=1.0, rad=0.09, zorder=3)
     ax.text(
         7.15,
         5.03,
-        r"Unified PRISM Factorization:   $\hat{x} = \mathcal{D}_\star \circ \mathcal{T} \circ (\Pi_\perp, \Pi_\parallel)(x_s, x_{\mathrm{ref}})$",
+        r"Blocking Source-Style Backflow:   Source Texture Leakage ($92.3\%\!\to\!20.0\%$)  $\rightarrow$  Invariant Layout $\Pi_\perp$  $\rightarrow$  Target Style Chord $e(x_s\!\to\!\tau)$  $\rightarrow$  Controlled Transport $\mathcal{T}$",
         ha="center",
         va="center",
-        fontsize=8.65,
+        fontsize=8.05,
         weight="bold",
         color="#0F172A",
         zorder=4,
@@ -1153,7 +1153,7 @@ def build_architecture() -> None:
         halo=True,
         zorder=13,
     )
-    ax.text(6.82, 4.46, r"Quotient Layout $(C_{64}, \tilde{P}_{16}^{\perp})$", ha="center", va="bottom", fontsize=6.9, weight="bold", color="#1E40AF", zorder=14)
+    ax.text(6.82, 4.46, r"Invariant Layout $(C_{64}, Q_{32})$ · Source Texture Blocked", ha="center", va="bottom", fontsize=6.8, weight="bold", color="#1E40AF", zorder=14)
 
     # Middle Latent Highway: z_0 -> 64x64x4 Split
     rounded_ortho_arrow(ax, [(5.22, 2.755), (5.74, 2.755)], col="#0284C7", lw=1.4, halo=True, hs=8.0)
@@ -1174,7 +1174,7 @@ def build_architecture() -> None:
     rounded_ortho_arrow(ax, [(9.545, 1.37), (10.295, 1.37), (10.295, 1.68)], col="#BE123C", lw=1.2, rad=0.055, hs=7.0)
 
     card(ax, 5.88, 1.285, 2.08, 0.175, fc="#FFFBEB", ec="#F59E0B", lw=0.75, rad=0.04, zorder=13)
-    ax.text(6.92, 1.372, r"Universal Style Chord $e(x_s\!\to\!x_{\mathrm{ref}})$", ha="center", va="center", fontsize=6.65, weight="bold", color="#92400E", zorder=14)
+    ax.text(6.92, 1.372, r"Target Style Chord $e(x_s\!\to\!\tau)$ (Zero Source-ID)", ha="center", va="center", fontsize=6.55, weight="bold", color="#92400E", zorder=14)
 
     # Unified Execution Bar inside Operator II (generous horizontal margins!)
     card(ax, 5.75, 0.91, 4.92, 0.30, fc="#FEFCE8", ec="#CA8A04", lw=0.95, rad=0.06, zorder=4)

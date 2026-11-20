@@ -281,7 +281,9 @@ def plot_fig2_three_paradoxes():
     ax.set_title("(c) Counterfactual Specificity Audit", fontsize=10.6, weight="bold", color=INK, pad=10)
     ax.legend(frameon=False, fontsize=8.5, loc="upper left")
 
-    fig.tight_layout(pad=1.2)
+    fig.suptitle("More Capacity Can Preserve the Wrong Information — Source-Style Lock in Latent Transport & Decoding",
+                 fontsize=12.4, weight="bold", color=INK, y=0.995)
+    fig.tight_layout(rect=[0, 0, 1, 0.93], pad=1.1)
     _save(fig, "fig2_three_paradoxes")
 
 
@@ -396,6 +398,12 @@ def plot_fig4_specificity_frontier():
 
 
 if __name__ == "__main__":
-    plot_fig1_pareto_zoom()
+    import sys
+    repo = Path(__file__).resolve().parents[2]
+    if str(repo) not in sys.path:
+        sys.path.insert(0, str(repo))
+    from exp.v25.plot_ours_pareto import main as build_fig1
+    build_fig1()
     plot_fig2_three_paradoxes()
+    plot_fig4_specificity_frontier()
     plot_fig4_specificity_frontier()

@@ -1,39 +1,43 @@
-# ICME 2027 Story & Modular Architecture Blueprint (`STORY.md`)
+# ICME 2027 Narrative & Rebuttal Blueprint (`STORY.md`)
 
-## 1. Core Essence, Name & Title (`PRISM`)
+## 1. Title & Core Narrative
 
-- **Core Essence (方法主旨)**:
-  Compact latent style transfer fails under standard training and scaling because **source-domain style stays entangled across three stages**—noisy/raw structural conditioning, one-sided target guidance, and an over-parameterized reconstruction decoder—creating **Source-Style Lock** (where scaling a self-paired flow $260\times$ actually *lowers* cross-style accuracy from $10.67\%$ to $6.67\%$). We factor conditional editing into three clean operators $\mathcal{D}_\star \circ \mathcal{T}_{s\to t} \circ \Pi_\perp$: **project** out chrominance and spatial channel moments ($\Pi_\perp$), transport along an **antisymmetric source-to-target chord** ($\mathcal{T}_{s\to t}$, amortized into a single millisecond-scale step with exact diagonal identity), and decode through a **pruned spectral-bottleneck renderer** ($\mathcal{D}_\star$).
+- **Title**:
+  > **PRISM: Breaking Source-Style Lock to Redefine the Content–Style–Speed Frontier**
 
-- **Method Name — `PRISM`** (*Projected Invariant Style Mapping*):
-  - Natural syllable blend (**Pr**ojected **I**nvariant **S**tyle **M**apping, just as `WEAVE` blended **W**av**e**let + **VAE** without forcing every letter!).
-  - Effortless optical metaphor: a prism decomposes mixed input light into invariant structural geometry while dispersing cleanly toward the target chromatic/artistic mode.
-  - Sub-variants (all controlled in one place via `macros.tex` and `CFG` in `make_*.py`):
-    - **`PRISM-Pro`**: 3-step prior-calibrated bidirectional SPD tangent solver (`38.00%` CSD Top-1, `0.5674` Affinity, `115 ms/img` — strictly beating commercial Seedream 4.5 on **all 5** style & content metrics at $17\times$ higher speed).
-    - **`PRISM-1`**: `0.66M` single-step antisymmetric chord network (`33.83%` CSD Top-1, `28.5 ms/img` = `35.1 img/s` on one RTX 3060, dropping to `1.33%` on counterfactual wrong labels = **`+32.50pp` causal specificity**).
-    - **`PRISM-Dec`**: `10.66M` 4-stream Taylor-pruned spectral-bottleneck decoder (`-78.5%` params, `2.86×` faster, `+3.17pp` Top-1, $p<0.01$).
+- **Three Attack Propositions (Introduction)**:
+  1. **Scaling Does Not Solve Style Transfer ($260\times$ Self-Paired Scaling Paradox, Fig. 2a)**:
+     Scaling a self-paired latent flow U-Net by $260\times$ ($0.13\text{M}\to 34.2\text{M}$) improves unconditional generation ($\tau_0=0$) from $20.0\%$ to $49.3\%$, yet monotonically *degrades* cross-style SDEdit ($\tau_0=0.7$) from $10.67\%$ to $6.67\%$ ($59\%$ predicted back as source style $y_s$). Even $\tau_0=0$ flows conditioned on $64\times 64$ edges stall at $18.67\%$ because self-paired training ($x_s\mapsto x_s$) inverts 2D stroke cadence back into $y_s$.
+  2. **Reconstruction Fidelity Can Fight Stylization (Spectral-Bottleneck Decoder Paradox, Fig. 2b)**:
+     More capacity can preserve the wrong information not only in the flow, but also in the decoder. Full $49.5\text{M}$ SD-VAE synthesis filters memorize source-domain texture priors; structured $78.5\%$ channel pruning (**PRISM-Dec**, $10.66\text{M}$) accelerates decoding by $2.86\times$ while *increasing* cross-style Top-1 by $+3.17\text{pp}$ ($p<0.01$).
+  3. **Evaluation Mirages Obscure True Specificity (Fig. 2c)**:
+     Standard diagonal whitening retains $92.33\%$ off-diagonal 2nd-order Gram style leakage, while post-hoc subband scalers score higher under counterfactual *wrong* target labels than true ones ($13.0\%$ vs. $12.3\%$).
 
-- **Title (Clean, Authoritative, Zero Gimmick)**:
-  > **PRISM: Breaking Source-Style Lock for Fast Latent Style Transfer**
+- **Three Headline Contributions**:
+  1. *A Scaling Paradox in Latent Style Transfer*: Theoretical (Prop. 1) and large-scale empirical identification of **Source-Style Lock** across self-paired flows, feature normalizers, and reconstruction decoders.
+  2. *PRISM: Structure-Invariant, Style-Directed Latent Transport*: Orthogonal **Quotient–Fiber Duality** $(\Pi_\perp,\Pi_\parallel)$ (Stiefel polar projection $Q_{32}$ clamping 2nd-order Gram leakage from $92.33\%$ to $20.00\%$ exact uniform-chance floor + complementary fiber $\Pi_\parallel$ with $97.33\%$ style accuracy forming a source-label-free target chord) paired with controlled transport $\mathcal{T}$ and spectral-bottleneck decoding $\mathcal{D}_\star$.
+  3. *A New Content–Style–Compute Frontier*: Spanning real-time 1-step (**PRISM-1**: $17.0\,\text{ms}$ cached / $58.2\,\text{ms}$ batched RGB$\to$RGB on 4090; $5.97\,\text{img/s}$ E2E / $18.17\,\text{img/s}$ Flow+Dec on 12GB 3060, $44.33\%$ Top-1 beating Seedream 4.5 and StyTr$^2$ on all 5 metrics), high-content half-NFE hybrid (**PRISM-HC**: `B4 + cs_j + D6H + PRISM-1`, $0.7723$ DINO-C, $0.4564$ DINO-S, $0.4783$ LPIPS, strictly dominating PRISM-1 $\lambda 0.75$ under 150-source paired cluster bootstrap CI), and generative brushstroke flow (**PRISM-Flow**: $60.50\%$ Top-1, $0.5672$ DINO-S, $0.6584$ Affinity, surpassing diffusion cross-attention StyleGallery at $30.4\,\text{s/img}$ while running at $3.38\,\text{img/s}$ full RGB$\to$RGB on a consumer 12GB RTX 3060 under $<3.9\,\text{GB}$ VRAM).
 
 ---
 
-## 2. Multi-Layer Structural Design
+## 2. Figure Design Summary
 
-1. **Introduction (Four-Movement Arc)**:
-   - *Mvt. 1 (The Compress-Then-Edit Polarization)*: Why $1/8$-scale latent spaces should enable sub-megabyte millisecond style transfer, yet existing methods split between slow geometry-destroying diffusion (`StyleShot`, `StyleID`) and near-identity translators (`SaMam`, `CUT`, `SD-Turbo`).
-   - *Mvt. 2 (Source-Style Lock Across Three Stages)*: Unifies three controlled empirical discoveries—(a) the **$260\times$ Self-Paired Scaling Paradox** ($49.3\%$ pure gen vs. $6.67\%$ SDEdit; $18.67\%$ $\tau_0=0$ brush-inversion ceiling), (b) the **Spectral-Bottleneck Decoder Paradox** (`+3.17pp` Top-1 and `2.86×` speedup from $78.5\%$ pruning), and (c) the **Specificity Mirage** (`ArtFID` $\rho=-0.16$ with style; post-hoc scalers scoring higher on wrong labels than true ones).
-   - *Mvt. 3 (Three-Operator Factorization $\mathcal{D}_\star \circ \mathcal{T}_{s\to t} \circ \Pi_\perp$)*: Introduces `PRISM` as a principled operator decomposition rather than an ad-hoc module stack.
-   - *Mvt. 4 (Contributions)*: Three crisp, high-altitude contributions with broad takeaways for latent generative editing, tokenizer design, and counterfactual evaluation.
+- **Figure 1 (`fig1_prism_pareto.pdf`) — Computational Paradigm Confrontation**:
+  - Three explicit paradigms: `Diffusion-Heavy` ($5.0\text{--}30.4\,\text{s/img}$), `Conventional Lightweight` ($0.2\text{--}3.0\,\text{s/img}$), and `PRISM` ($0.06\text{--}0.44\,\text{s/img}$ E2E on consumer 3060).
+  - Bubble radius mapped to measured RTX 3060 max-batch E2E throughput ($\text{img/s}$), with explicit latency callouts ($\text{s/img}$) on slow baselines (`StyleGallery 30.4 s/img`, `StyleShot 24.5 s/img`, `StyleID 5.0 s/img`, `StyTr2 3.0 s/img`).
+  - Visually distinguishes **single-model continuous strength curves** (solid orange-red lines) from the **multi-regime global Pareto envelope** (dashed crimson curve).
+- **Figure 2 (`fig2_three_paradoxes.pdf`) — More Capacity Can Preserve the Wrong Information**:
+  - Unifies the $260\times$ Flow Scaling Paradox, the $78.5\%$ Spectral-Bottleneck Decoder Paradox, and the Counterfactual Specificity Audit.
+- **Figure 3 (`fig3_prism_architecture.pdf`) — Blocking Source-Style Backflow**:
+  - Top banner and stage badges highlight the causal mechanism: `Source Texture Leakage (92.3% -> 20.0%) -> Invariant Layout \Pi_\perp -> Target Style Chord e(x_s -> \tau) -> Controlled Transport \mathcal{T} -> Spectral-Bottleneck \mathcal{D}_\star`.
 
-2. **Theory & Methodology (Modular Operator Factorization)**:
-   - **Sec. III-A (Diagnosis — Prop. 1)**: Posterior Gaussian concentration under self-paired partial denoising & stroke-cadence inversion under $\tau_0=0$ edge conditioning.
-   - **Sec. III-B (Operator I: Quotient Structure Projection $\Pi_\perp$ — Prop. 2)**: Annihilates the product symmetry group $\mathcal{G}_{\mathrm{style}} = \ker(w_Y^\top) \times (\R^D \rtimes \R_+^D)$ via stabilized multi-scale luminance contrast $C_{64}$ and zero-mean spherical DINOv2 layout $\tilde{P}_{16} \in \mathcal{M}_0$ ($72.3\% \to 18.3\%$ style probe, $0.994$ layout cosine).
-   - **Sec. III-C (Operator II: Antisymmetric Chord Transport $\mathcal{T}_{s\to t}$ — Prop. 3)**: Formulates constant-content style translation as a skew-symmetric operator ($\mathcal{T}_{s\to s}=\mathrm{id}$, $e_{t\to s}=-e_{s\to t}$), pairing our prior-calibrated bidirectional SPD teacher (`PRISM-Pro`) with single-step chord amortization (`PRISM-1`). *(Solver line-search grids cleanly placed in Sec. IV-A Implementation Details!)*
-   - **Sec. III-D (Operator III: Spectral-Bottleneck Decoding $\mathcal{D}_\star$ — `PRISM-Dec`)**: Structured 4-stream Taylor pruning as a range-space regularizer suppressing source-texture retraction.
+---
 
-3. **Dual-Gate Evaluation Geometry (Sec. IV)**:
-   - **Boundary Gate (`IDT–TGT` Corridor)** + **Causal Gate (Counterfactual Cyclic Label-Shift $\Delta_{\mathrm{causal}}$)**.
+## 3. Rebuttal-Proof Defense Matrix
 
-4. **Plug-and-Play Extensibility**:
-   - Update `macros.tex` + `CFG` at top of `make_figures.py` / `make_arch_figure.py`, or swap only **Sec. III-C** if a stronger transport operator $\mathcal{T}_{s\to t}$ is discovered later; `build.sh` recompiles everything in 5 seconds.
+1. **Protocol-Cached vs. Full RGB$\to$RGB End-to-End Latency**:
+   - Table I and Section V report *both* protocol-cached latent transport ($17.0\,\text{ms}$ for PRISM-1, $67.2\,\text{ms}$ for PRISM-HC, $134.1\,\text{ms}$ for PRISM-Flow) and full $512^2$ RGB$\to$RGB end-to-end latency including A0 VAE encode, DINOv2 extraction, anchor, transport, and S10 decode on both RTX 4090 ($58.2\text{--}84.0\,\text{ms}$ batched) and a consumer 12GB RTX 3060 ($3.36\text{--}5.97\,\text{img/s}$ under $<3.9\,\text{GB}$ VRAM).
+2. **Three-Factor Attribution of `PRISM-HC` (`B4 + cs_j + D6H`)**:
+   - Under unified random seed (`20261185`) and 150-source paired cluster bootstrap CIs at $\gamma=0.55$, we isolate Anchor (`B4 vs T4`: $\Delta\text{DINO-C}=+0.0362$, $\Delta\text{LPIPS}=-0.0255$, contributing $\sim 80\%$ of the high-content gain), Solver (`D6H vs D6`: $+0.0099$ DINO-C, $-0.0060$ LPIPS), and CFG (`cs_j vs full`: $+0.0018$ DINO-S while halving flow NFE from 32 to 16 evaluations).
+3. **When is 4-Branch `full` CFG Still Needed?**:
+   - Honestly reported in Section IV-C and V: while 2-branch `cs_j` matches or exceeds 4-branch `full` globally at $2.33\times$ faster batched flow speed, `full`'s unconditional style prior term $w_p(v_{s0}-v_{00})$ is specifically beneficial for de-cluttering dense source scenes into sparse targets (*Impressionism$\to$Minimalism*: $86.7\%$ vs. $30.0\%$ at D5).
