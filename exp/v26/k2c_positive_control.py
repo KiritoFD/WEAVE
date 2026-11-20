@@ -42,9 +42,9 @@ def run_positive_control(pool: str, device: str = "cuda") -> dict:
                for x in imgs]
         return stack.extract(pil, batch=16)
 
-    refs = stack.csd_prototypes  # (5, 768) np.ndarray
+    refs = stack.csd_prototypes  # (5, 768) np.ndarray, 顺序同 STYLES
     import numpy as np
-    proto = torch.as_tensor(np.stack([refs[s] for s in STYLES])).float().to(device)
+    proto = torch.as_tensor(np.stack([refs[i] for i in range(len(STYLES))])).float().to(device)
 
     rows = []
     import torch.nn.functional as NF
