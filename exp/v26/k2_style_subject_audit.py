@@ -160,20 +160,47 @@ def k2a_discriminability(bundle, device: str) -> dict:
         for i in range(n):
             for j in range(i + 1, n):
                 (same_m if sids[i] == sids[j] else cross_m).append(float(dmat[i, j]))
+        import math
+        pooled = math.sqrt(
+            (sum((x - sum(same_m) / len(same_m)) ** 2 for x in same_m) / max(len(same_m) - 1, 1))
+            + (sum((x - sum(cross_m) / len(cross_m)) ** 2 for x in cross_m) / max(len(cross_m) - 1, 1)))
+        # AUC: P(随机异画派距离 > 随机同画派距离) + 0.5*P(相等) — 尺度无关判别力 (rank 法, O(n log n))
+        vals, labs = [], []
+        for i in range(n):
+            for j in range(i + 1, n):
+                vals.append(float(dmat[i, j]))
+                labs.append(0 if sids[i] == sids[j] else 1)
+        v = torch.tensor(vals)
+        l = torch.tensor(labs)
+        order = torch.argsort(v)
+        ranks = torch.empty_like(v)
+        ranks[order] = torch.arange(1, len(v) + 1, dtype=torch.float32)
+        # 并列值取平均秩
+        sv, sidx = torch.sort(v)
+        u, cnt = torch.unique_consecutive(sv, return_counts=True)
+        for start, c in zip(torch.cumsum(cnt, 0) - cnt, cnt):
+            ranks[sidx[start:start + c]] = (start + (c - 1) / 2 + 1)
+        n_c, n_w = int((l == 1).sum()), int((l == 0).sum())
+        auc = float((ranks[l == 1].sum() - n_c * (n_c + 1) / 2) / max(n_c * n_w, 1))
+        auc = round(min(max(auc, 0.0), 1.0), 4)
         return {"within": round(sum(same_m) / len(same_m), 5),
                 "cross": round(sum(cross_m) / len(cross_m), 5),
-                "margin": round(sum(cross_m) / len(cross_m) - sum(same_m) / len(same_m), 5)}
+                "margin": round(sum(cross_m) / len(cross_m) - sum(same_m) / len(same_m), 5),
+                "std_gap": round((sum(cross_m) / len(cross_m) - sum(same_m) / len(same_m))
+                                 / max(pooled, 1e-9), 3),
+                "auc": auc}
 
-    # 每画派可分性 (one-vs-rest margin)
+    # 逐画派 one-vs-rest margin (one-hot: 至少一端属于 s; within=两端都是 s, cross=恰一端是 s)
     per_style = {}
     for s in range(5):
         m_in, m_out = [], []
         for i in range(len(sids)):
             for j in range(i + 1, len(sids)):
-                if sids[i] != s or sids[j] != s:
+                si, sj = bool(sids[i] == s), bool(sids[j] == s)
+                if not (si or sj):
                     continue
                 d = float(d_swd[i, j])
-                (m_in if sids[i] == sids[j] else m_out).append(d)
+                (m_in if (si and sj) else m_out).append(d)
         per_style[STYLE_NAMES[s]] = round((sum(m_out) / max(len(m_out), 1))
                                           - (sum(m_in) / max(len(m_in), 1)), 5)
 
@@ -426,3 +453,17 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def save_k2a_results(a: dict) -> None:
+    """L-PC 前置修正: 更正后的 K2-A (margin bug 修复 + AUC + 标准化间隔) 覆盖入库."""
+    p = OUT / "gpu4090" / "k2_style_subject_audit.json"
+    existing = read_json(p) if p.exists() else {}
+    existing["task"] = existing.get("task", "V26-K2 style-loss discriminability & CSD subject-bias audit")
+    existing["k2a_corrected"] = a
+    existing["k2a_correction_note"] = ("one-vs-rest margin bug 修复 (原实现只保留两端同画派对, "
+                                       "m_out 恒空 → 负值); 补 AUC 与标准化间隔 (尺度无关)")
+    existing["updated_utc"] = utc()
+    save_json(p, existing)
+    print(f"[K2-A corrected] meanvgg={a['meanvgg']} gram={a['gram']} swd={a['swd']}", flush=True)
+    print(f"[K2-A corrected] per_style_swd={a['swd_per_style_margin']}", flush=True)
