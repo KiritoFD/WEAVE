@@ -53,12 +53,19 @@ STYLE_NAMES = ("Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Uk
 # ------------------------------------------------- 特征族 ----
 
 def _vgg_layers(device: str):
-    vgg = load_vgg16_features_offline(device).eval()
-    for p in vgg.parameters():
-        p.requires_grad_(False)
-    mean = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
-    std = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
-    return vgg, mean, std
+    """VGG-16 features 单例 (K2-A/B 共享, 防双份 550MB 权重)."""
+    global _VGG_SINGLETON
+    if _VGG_SINGLETON is None:
+        vgg = load_vgg16_features_offline(device).eval()
+        for p in vgg.parameters():
+            p.requires_grad_(False)
+        mean = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
+        std = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
+        _VGG_SINGLETON = (vgg, mean, std)
+    return _VGG_SINGLETON
+
+
+_VGG_SINGLETON = None
 
 
 def vgg_mean_style(imgs: torch.Tensor, vgg, mean, std, batch: int = 16) -> torch.Tensor:
@@ -171,15 +178,6 @@ def k2a_discriminability(bundle, device: str) -> dict:
                                           - (sum(m_in) / max(len(m_in), 1)), 5)
 
     # 变换敏感度: 同画派内 orig vs transform 的距离增量
-    sens = {}
-    for tname, timg in transform_variants(imgs_d, device).items():
-        if tname == "color_shift":
-            f_t = vgg_mean_style(timg, vgg, mean, std).cpu()
-            d_t = dist_matrix_feat(f_t)
-        else:
-            continue  # gram/swd 变换敏感度单独计算 (耗时控制)
-        sens[f"{tname}_meanvgg"] = margins(d_t)
-    # SWD 对纹理打乱敏感 (抽 40 对)
     tex = transform_variants(imgs_d, device)["texture_shuffle"]
     deltas = []
     g2 = torch.Generator().manual_seed(20261185)
@@ -192,6 +190,10 @@ def k2a_discriminability(bundle, device: str) -> dict:
         d1 = float(swd.loss(tex[i:i + 1], imgs_d[j:j + 1], gen=g2)["loss"].detach())
         deltas.append(d1 - d0)
     sens["texture_shuffle_swd_delta"] = round(sum(deltas) / len(deltas), 5)
+
+    # 大张量清理 (imgs/变换副本/距离矩阵 ~4GB), 防 K2-B OOM
+    del imgs_d, tex, d_swd, f_mean, f_gram
+    torch.cuda.empty_cache()
 
     return {
         "n_images": len(imgs),
