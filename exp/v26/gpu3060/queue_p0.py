@@ -64,12 +64,13 @@ def _swd_arm(pool: str, style_loss: str) -> None:
     for p in cnx.parameters():
         p.requires_grad_(False)
     v16_tr = build_or_load_train_cnx_v16(bundle, dec, cnx, device="cuda")
-    del cnx, dec  # 训练不再需要; 释放 ~0.5GB 防 3060 VRAM 顶满导致 allocator 抖动 (10x 减速)
+    del cnx, dec  # 训练不再需要; 释放 ~0.5GB 防 3060 VRAM 顶满导致 allocator 抖动
     torch.cuda.empty_cache()
 
     arm = f"V26_S1fix_{style_loss}"
+    # 600 updates 双臂匹配预算 (C2nt 4-6h 收尾预算约束; 两臂同预算 → 对照仍成立)
     ckpt = train_c2nt_v26(bundle, c21, v16_tr, arm, style_loss=style_loss, device="cuda",
-                          micro=8, accum=4)
+                          micro=8, accum=4, updates=600)
     env = load_sr_env(pool, device="cuda", ckpt_path=ckpt)
     _eval_baseline_steps(env, f"{arm}_t45", steps=10, sampler="rk2", device="cuda")
 

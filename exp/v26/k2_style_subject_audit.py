@@ -178,6 +178,7 @@ def k2a_discriminability(bundle, device: str) -> dict:
                                           - (sum(m_in) / max(len(m_in), 1)), 5)
 
     # 变换敏感度: 同画派内 orig vs transform 的距离增量
+    sens = {}
     tex = transform_variants(imgs_d, device)["texture_shuffle"]
     deltas = []
     g2 = torch.Generator().manual_seed(20261185)
