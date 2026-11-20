@@ -1,6 +1,6 @@
 {
   "task": "V26-K2 style-loss discriminability & CSD subject-bias audit",
-  "updated_utc": "2026-11-20T20:35:43.632109+00:00",
+  "updated_utc": "2026-11-20T22:53:13.475514+00:00",
   "k2a": {
     "n_images": 200,
     "meanvgg": {
@@ -56,5 +56,40 @@
       "abstract": 155
     },
     "models": {}
-  }
+  },
+  "k2a_corrected": {
+    "n_images": 200,
+    "meanvgg": {
+      "within": 0.19694,
+      "cross": 0.26056,
+      "margin": 0.06361,
+      "std_gap": 0.367,
+      "auc": 0.6728
+    },
+    "gram": {
+      "within": 0.2865,
+      "cross": 0.36111,
+      "margin": 0.07461,
+      "std_gap": 0.325,
+      "auc": 0.6487
+    },
+    "swd": {
+      "within": 3.57492,
+      "cross": 4.40158,
+      "margin": 0.82666,
+      "std_gap": 0.372,
+      "auc": 0.661
+    },
+    "swd_per_style_margin": {
+      "Early_Renaissance": 0.74117,
+      "Impressionism": 0.66494,
+      "Minimalism": 0.66783,
+      "Rococo": 1.16018,
+      "Ukiyo_e": 0.89919
+    },
+    "transform_sensitivity": {
+      "texture_shuffle_swd_delta": 0.63497
+    }
+  },
+  "k2a_correction_note": "one-vs-rest margin bug 修复 (原实现只保留两端同画派对, m_out 恒空 → 负值); 补 AUC 与标准化间隔 (尺度无关)"
 }

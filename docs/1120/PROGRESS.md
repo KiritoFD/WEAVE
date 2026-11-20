@@ -98,11 +98,22 @@ C2nt t45 × StyleGallery 25 类 125 对（`docs/v26/4090/data/sg25_c2nt_t45.json
 
 > **C2nt 训练配方正式冻结（2026-11-21）**。SWD 单轮试验记 **INCONCLUSIVE（环境：3060 外部负载竞争，非科学结论）**；队列保留后台机会性完成，若后续产出将作为补充合并，不再阻塞任何主线。C2nt 的全部科学结论（免教师参考响应 +0.0732、OOD 正迁移 +0.22、SR/注意力和速度场诊断）已归档，研究重心按 [`07_c2nt_demotion_decision.md`](07_c2nt_demotion_decision.md) 转向 PRISM-Flow 任意参考化。
 
-### K2 — SWD 判别力 / 梯度 / 题材偏置审计（✅ 完成，`docs/v26/4090/K2_STYLE_LOSS_AND_SUBJECT_AUDIT.md` + `data/k2_style_subject_audit.json` + `data/k2c_local_join.json`）
+### K2 — 审计结论更正（Agent A 前置修正，2026-11-21 完成）
+
+1. **K2-A 判别力更正**：尺度无关口径下 AUC = mean-VGG **0.673** / Gram 0.649 / SWD **0.661**——"13× 判别力"确为数值尺度伪影，**SWD 判别力与 mean-VGG 相当**；逐画派 one-vs-rest margin 实现 bug 已修复（原实现只保留两端同画派对，m_out 恒空 → 全负），修复后全为正（Rococo 1.16 最高）。SWD 的真实价值主张修正为 **K2-B 的近正交互补梯度方向**（cos=0.179，‖∇‖ 20×）而非更强判别。
+2. **K2-C 正对照完成**（`data/k2c_positive_control.json`，holdout 真图 60/画派）：CSD 天花板 ER 98.3% / Imp 96.7% / Min 100% / **Rococo 90.0%** / Uki 100%（CLIP 88.3–100%）——裁判对真 Rococo 不盲，**C2nt 的 Rococo 0% 为真实迁移失败**，题材混杂解释被正对照排除（比"全题材 0%"更直接的证据）。
+
+### V26-L 长队列启动（2026-11-20T22:48 UTC，36h 预算）
+
+- 方案：[`08_v26_long_plan.md`](08_v26_long_plan.md)｜队列：`exp/v26/gpu4090/queue_k_long.py`（两级任务 + 三态路由 + 状态 JSON `queue_long_status.json`，含 science_tasks_done / budget_remaining / gpu_compute_seconds 等七字段，禁止无依据的提前完成）
+- **L0 运行中**：A0/A1/A2 跨画派采样因果对照（4090 上 ~1.28 ups，单臂 1200 upd ≈ 16 min）——正对照与更正后 K2-A 已作为 L-PC 前置修正完成归档
+- L1 模块（PRISM-Flow 任意参考化 F1/F2，V22-Dual 闭集 core-exemplar 教师 + 严格跨画派参考 + 免标签推理）已实现并同步，L0 完成后队列自动拾取
+
+### K2 — SWD 判别力 / 梯度 / 题材偏置审计（原始读数存档；结论以上节更正为准）
 
 | 审计 | 读数 | 判读 |
 |---|---|---|
-| **K2-A 判别力** | margin：mean-VGG 0.064 / Gram 0.075 / **SWD 0.827** | **SWD 同/异画派判别间隔是 mean-VGG 的 13×** |
+| **K2-A 判别力** | margin：mean-VGG 0.064 / Gram 0.075 / **SWD 0.827** | ~~13×~~ → 尺度伪影（更正：AUC 0.673/0.649/0.661 相当） |
 | **K2-B 梯度** | ‖∇SWD64‖=2.06 vs ‖∇meanVGG‖=0.104（20×）；cos(∇SWD,∇meanVGG)=**0.179**；cos(∇SWD,∇Gram)=0.0；种子稳定性随 K 升 (0.24→0.39 @K=128) | SWD 提供与均值损失**近正交的互补纹理梯度**，K=128 最稳 |
 | **K2-C 题材偏置** | Rococo：person 0.0% / landscape 0.0% / architecture 0.0% / abstract 0.0%；ER 全题材 0–12.2% | **排除题材混杂**：困难画派失败是真实的风格迁移失败（All-subject × Roc = 0），"Top-1 不是唯一正确性"的混杂担忧对 Roc 不成立 |
 

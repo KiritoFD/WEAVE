@@ -1,0 +1,37 @@
+{
+  "task": "V26-K2C positive control: referee ceiling on TRUE style images (holdout 300)",
+  "updated_utc": "2026-11-20T22:55:20.663387+00:00",
+  "rows": [
+    {
+      "style": "Early_Renaissance",
+      "n": 60,
+      "csd_top1_true": 0.9833,
+      "clip_top1_true": 0.9667
+    },
+    {
+      "style": "Impressionism",
+      "n": 60,
+      "csd_top1_true": 0.9667,
+      "clip_top1_true": 0.9
+    },
+    {
+      "style": "Minimalism",
+      "n": 60,
+      "csd_top1_true": 1.0,
+      "clip_top1_true": 0.9833
+    },
+    {
+      "style": "Rococo",
+      "n": 60,
+      "csd_top1_true": 0.9,
+      "clip_top1_true": 0.8833
+    },
+    {
+      "style": "Ukiyo_e",
+      "n": 60,
+      "csd_top1_true": 1.0,
+      "clip_top1_true": 1.0
+    }
+  ],
+  "note": "csd_top1_true = 裁判对真实画派图像的天花板; Rococo 天花板高则模型 0% 为真实失败"
+}
