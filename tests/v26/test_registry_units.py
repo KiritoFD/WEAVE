@@ -42,3 +42,30 @@ def test_integrate_determinism_and_progression():
     assert torch.equal(a, b)
     c = integrate_sr(vel, z0, tau0, 2, "rk2")
     assert not torch.allclose(a, c), "不同步数给出相同终点 (步数无效?)"
+
+
+def test_refattn_stats_per_sample_plumbing():
+    """契约 14: K1-A 插桩统计逐样本记录 (真实 SLFUNetV24OneShot, CPU)."""
+    import torch
+    from exp.v24.p0_o1_o3_value import SLFUNetV24OneShot
+    import exp.v26.diagnose_refattn as dr
+
+    torch.manual_seed(0)
+    fm = SLFUNetV24OneShot(v_dim=192, use_conf_gate=True, use_global_fib=True).eval()
+    B = 3
+    stats = []
+    fm.ref_attn16.forward = dr.patch_refattn(fm, stats=stats, mode="R0_original")
+    z = torch.randn(B, 4, 64, 64)
+    out = fm(torch.cat([z, z], 0), torch.randn(2 * B, 1, 16, 16), torch.randn(2 * B, 384, 16, 16),
+             torch.zeros(2 * B, dtype=torch.long), torch.randn(2 * B, 128),
+             torch.full((2 * B,), 0.45),
+             drop_style=torch.cat([torch.zeros(B, dtype=torch.bool), torch.ones(B, dtype=torch.bool)]),
+             drop_content=torch.zeros(2 * B, dtype=torch.bool), layout_scale=torch.ones(2 * B),
+             d16_ref=torch.randn(2 * B, 384, 16, 16), v16_ref=torch.randn(2 * B, 192, 16, 16),
+             u_glob=torch.randn(2 * B, 795))
+    assert len(stats) == 1
+    for key in ("entropy_ratio", "max_qk", "gate", "local_norm", "global_norm", "out_rel_norm"):
+        assert stats[0][key].shape == (2 * B,), key
+        assert torch.isfinite(stats[0][key]).all(), key
+    assert torch.isfinite(out).all()
+    del fm.ref_attn16.forward

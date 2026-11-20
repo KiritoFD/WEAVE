@@ -314,7 +314,7 @@ def selfref_identity_audit(env: dict, *, n_tasks: int = 150, device: str = "cuda
     预期: v_pos - v_src ≡ 0 (恒等式) => 输出 ≈ z_src (积分误差级); 报告
     latent MAE / 解码后 DINO-C(对源内容) / dino_s(对源风格) — 无需裁判子进程.
     """
-    from src.utils._local_eval_refs import FeatureStack  # 延迟: 保持模块 CPU 可导入
+    from src.utils import FeatureStack  # 延迟: 保持模块 CPU 可导入
 
     tasks, z_src_750, _ = tasks_and_sources()
     same_ids = [i for i, t in enumerate(tasks) if t["source_style_id"] == t["target_style_id"]][:n_tasks]

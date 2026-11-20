@@ -90,20 +90,29 @@ def _instrumented_forward(self, h16, d16_c, d16_r, v16_r, u_glob, smask2, cmask4
     if stats is not None:
         with torch.no_grad():
             p = torch.softmax(sim * 12.0, dim=-1)
-            ent = float((-(p.clamp_min(1e-9) * p.log()).sum(-1) / math.log(256)).mean())
-            g_eff = g_i if self.use_conf_gate else torch.ones_like(sim.max(dim=-1, keepdim=True).values)
-            loc_norm = float((g_i * R).norm(dim=-1).mean()) if self.use_conf_gate else float(R.norm(dim=-1).mean())
-            glob_norm = float(((1.0 - g_i) * u_g).norm(dim=-1).mean()) if self.use_conf_gate else 0.0
+            ent_per = (-(p.clamp_min(1e-9) * p.log()).sum(-1).mean(-1) / math.log(256))  # (Btot,)
+            max_tok = sim.max(dim=-1).values                                             # (Btot, 256) 逐 token (与门控同口径)
+            max_per = max_tok.mean(-1)                                                   # (Btot,) 逐样本
+            if self.use_conf_gate:
+                g_tok = torch.sigmoid(self.conf_temp * (max_tok.unsqueeze(-1) + self.conf_bias))  # (Btot,256,1)
+                g_per = g_tok.squeeze(-1).mean(-1)                                       # (Btot,)
+                loc_per = (g_tok * R).norm(dim=-1).mean(-1)
+                u_g = self.glob_proj(u_glob).unsqueeze(1).expand_as(R)
+                glob_per = ((1.0 - g_tok) * u_g).norm(dim=-1).mean(-1)
+            else:
+                g_per = torch.ones_like(max_per)
+                loc_per = R.norm(dim=-1).mean(-1)
+                glob_per = torch.zeros_like(max_per)
+            out_map = self.out_proj(R.transpose(1, 2).view(B, -1, H, W))
+            out_rel_per = (out_map.flatten(1).norm(dim=1)
+                           / h16.flatten(1).norm(dim=1).clamp_min(1e-8))                 # (Btot,)
             stats.append({
-                "entropy_ratio": round(ent, 4),
-                "max_qk": round(float(max_sim.mean()), 4),
-                "gate_mean": round(float(g_eff.mean()), 4),
-                "gate_p10": round(float(torch.quantile(g_eff.flatten().float(), 0.10)), 4),
-                "gate_p90": round(float(torch.quantile(g_eff.flatten().float(), 0.90)), 4),
-                "local_norm": round(loc_norm, 4),
-                "global_norm": round(glob_norm, 4),
-                "out_rel_norm": round(float(self.out_proj(R.transpose(1, 2).view(B, -1, H, W)).norm()
-                                            / h16.norm().clamp_min(1e-8)), 5),
+                "entropy_ratio": ent_per.detach().cpu(),
+                "max_qk": max_per.detach().cpu(),
+                "gate": g_per.detach().cpu(),
+                "local_norm": loc_per.detach().cpu(),
+                "global_norm": glob_per.detach().cpu(),
+                "out_rel_norm": out_rel_per.detach().cpu(),
             })
 
     R_map = R.transpose(1, 2).view(B, -1, H, W)
@@ -152,22 +161,44 @@ def k1a_telemetry(env: dict, device: str = "cuda", n_tasks: int = N_TELEMETRY_TA
         return v
 
     integrate_sr(vel_fn, z, tau0, 10, "rk2")
-    fm.ref_attn16.forward = fm.ref_attn16.__class__.forward  # 还原
+    del fm.ref_attn16.forward  # 还原 (移除实例属性补丁, 回落类方法)
+
+    # stats: 每 fm call 一条 {key: (Btot,) 张量}; baseline CFG call 为 cat([zz,zz]) →
+    # 前 B 行 = 条件分支 (目标参考), 与 sel 任务一一对应. RK2 每步 2 次 vel_fn → 20 calls.
+    B = len(sel)
+    cond_keys = ("entropy_ratio", "max_qk", "gate", "local_norm", "global_norm", "out_rel_norm")
+    per_task = {k: {key: [] for key in cond_keys} for k in range(B)}
+    for call in stats:
+        for key in cond_keys:
+            cond = call[key][:B]
+            for k in range(B):
+                per_task[k][key].append(float(cond[k]))
+
+    def task_row(k: int) -> dict:
+        r = {key: round(sum(v) / len(v), 4) for key, v in per_task[k].items() if key != "gate"}
+        g = per_task[k]["gate"]
+        r["gate_mean"] = round(sum(g) / len(g), 4)
+        gs = sorted(g)
+        r["gate_p10"] = round(gs[int(0.10 * (len(gs) - 1))], 4)
+        r["gate_p90"] = round(gs[int(0.90 * (len(gs) - 1))], 4)
+        r["gate_low_frac"] = round(sum(1 for x in g if x < 0.2) / len(g), 4)
+        return r
 
     by_tgt, by_src = {}, {}
-    st_keys = ("entropy_ratio", "max_qk", "gate_mean", "gate_p10", "gate_p90",
-               "local_norm", "global_norm", "out_rel_norm")
     for k, i in enumerate(cross_ids):
         t = tasks[i]
-        for bucket, key in ((by_tgt, t["target_style"]), (by_src, t["source_style"])):
-            bucket.setdefault(key, []).append(stats[k])
-    agg = lambda rows: {k: round(float(sum(r[k] for r in rows) / len(rows)), 4) for k in st_keys}
+        row = task_row(k)
+        by_tgt.setdefault(t["target_style"], []).append(row)
+        by_src.setdefault(t["source_style"], []).append(row)
+    agg_keys = ("entropy_ratio", "max_qk", "gate_mean", "gate_p10", "gate_p90",
+                "gate_low_frac", "local_norm", "global_norm", "out_rel_norm")
+    agg = lambda rows: {k: round(float(sum(r[k] for r in rows) / len(rows)), 4) for k in agg_keys}
     return {
         "n_tasks": B,
-        "overall": agg(stats),
+        "n_calls": len(stats),
+        "overall": agg([task_row(k) for k in range(B)]),
         "by_target_style": {k: agg(v) for k, v in sorted(by_tgt.items())},
         "by_source_style": {k: agg(v) for k, v in sorted(by_src.items())},
-        "per_task": stats,
     }
 
 
@@ -232,7 +263,7 @@ def k1b_interventions(env: dict, device: str = "cuda", n_tasks: int = N_INTERVEN
         }
         out["arms"][mode] = row
         print(f"[K1-B {mode}] {row}", flush=True)
-    fm.ref_attn16.forward = fm.ref_attn16.__class__.forward
+    del fm.ref_attn16.forward  # 还原 (移除实例属性补丁)
     return out
 
 
