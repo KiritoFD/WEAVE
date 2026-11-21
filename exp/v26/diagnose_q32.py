@@ -110,6 +110,23 @@ def spectrum_stats(t4d: torch.Tensor) -> dict:
     }
 
 
+def structure_retention_relational(variant: torch.Tensor, raw: torch.Tensor) -> float:
+    """跨维度结构保持: token-token 相似度结构 (256×256 Gram) 与 raw dino_16 的相关.
+
+    修复原 L2-norm 度量对正交基变体的退化 (pca32 −0.09): 关系结构 (哪些 token 相似)
+    与通道基无关, 对任意 32 维投影仍有定义.
+    """
+    def _rel(f: torch.Tensor) -> torch.Tensor:
+        ff = F.normalize(f.float().flatten(2).transpose(1, 2), dim=-1)  # (N, 256, C)
+        return torch.bmm(ff, ff.transpose(1, 2)).flatten(1)             # (N, 256²)
+
+    a = _rel(variant) - _rel(variant).mean(dim=1, keepdim=True)
+    b = _rel(raw) - _rel(raw).mean(dim=1, keepdim=True)
+    num = (a * b).sum(dim=1)
+    den = (a.norm(dim=1) * b.norm(dim=1)).clamp_min(1e-8)
+    return float((num / den).mean())
+
+
 def structure_retention(variant: torch.Tensor, raw: torch.Tensor) -> float:
     """空间结构保持: 逐 token 通道 L2 结构图 (N,256) 的 Pearson 相关 (对 raw dino_16)."""
     m_var = variant.float().norm(dim=1).flatten(1)
