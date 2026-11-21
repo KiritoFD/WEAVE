@@ -91,7 +91,9 @@ def _build_ft_targets(train_ids, max_n: int = 2400) -> tuple[list[int], torch.Te
         pid = str(pid)
         if not pid.startswith("d5__"):
             continue
-        p = d5_root / pid.split("__")[1] / f"{pid}.jpg"
+        parts = pid.split("__")
+        # id 'd5__<style>__<style>__<stem>' → 文件 '<style>__<stem>.jpg' (无 d5 前缀)
+        p = d5_root / parts[1] / f"{parts[1]}__{'__'.join(parts[3:])}.jpg"
         if not p.exists():
             continue
         im = PILImage.open(p).convert("RGB")
