@@ -1,133 +1,218 @@
 # WEAVE → PRISM
 
-**Evidence-led artistic style transfer: what actually improved, what failed, and why.**
+## 风格迁移的瓶颈，不是模型太小，而是我们一直在让模型学错任务。
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-red)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Research status](https://img.shields.io/badge/Research-active-orange)
+**我们从小波传输、判别器引导、自配对 Flow，一路走到各向异性编辑与粗尺度条件生成。V0–V26 的真正发现不是“又做出了一个风格迁移网络”，而是：**
 
-> **Research snapshot: 2026-11-21 (V0–V26).** The original WEAVE wavelet/Flow-Matching submission is a historical baseline. **PRISM** denotes the later family of source-style-aware latent editors, content-preserving hybrid solvers, coarse-scale generative flows, and reference-conditioned experiments. The former AAAI-submission claims and instructions are not a description of the current models. See [the original reproduction](docs/reproduction/baseline_reproduction.md) and [legacy experiments](docs/legacy_root/EXPERIMENTS.md) for the archival system; the [ICME manuscript](docs/icme2027/README.md) may lag newer experiments.
+> **认得出风格，不代表生成得出风格；能生成一幅画，不代表能把这幅画变成另一种风格。**
+>
+> **如果监督终点永远是源图，给模型更多参数、更多注意力、更强风格编码器，只会让它更擅长把源图还原回来。**
 
-## Central finding
+PRISM 的性能跃升来自三次转向：**从去源风格转向目标风格传输；从全局限制改为“保粗结构、放细外观”；从盲目堆网络转向优化训练终点、锚点与生成轨迹。**
 
-**Recognizing a style, moving an image toward that style, and generating a target-style image while retaining the source structure are three different problems.** Much of the V0–V18 work showed why accurate reconstruction, plausible artistic texture, style classification accuracy, and a small distributional loss do **not** imply successful cross-style editing. The largest practical improvements came from **style-directed conditional transport (V19), asymmetric structure/appearance constraints and coarse-scale flow generation (V19–V20), training-trajectory corrections (V22), and better anchors/solvers at high content fidelity (V23–V25)**. The V26 studies clarify what does *not* automatically transfer to reference-conditioned generation.
+这份 README 是截至 **2026-11-21** 的研究结论与数据导航，而不是旧版 AAAI 投稿介绍。**WEAVE** 最初是 Haar/DWT + Flow Matching + AdaIN 的轻量系统；**PRISM** 是随后形成的潜空间编辑、风格条件流与参考迁移模型族。[原始 WEAVE 复现](docs/reproduction/baseline_reproduction.md)｜[PRISM 论文](docs/icme2027/README.md)｜[完整实验总台账](docs/performance/MASTER_LEDGER.md)
 
-**Read the evidence first:** [model recipes and checkpoints](docs/ours/README.md) · [historical benchmark ledger (through V21)](docs/performance/MASTER_LEDGER.md) · [V22 results](docs/v22/V22_P1_RESULTS.md) · [V23 results](docs/v23/V23_RESULTS.md) · [V24 results](docs/v24/PROGRESS.md) · [V25 audited claims](docs/v25/ABLATION_LEDGER.md) · [V26 results](docs/1120/V26_RESULTS_SUMMARY.md) · [V26-L ongoing/progress log](docs/1120/PROGRESS.md).
+---
 
-## Evaluation contract: read before comparing numbers
+## 一、六个改变研究方向的硬结果
 
-- **Main task:** frozen [750-task manifest](eval_protocol/tasks_750.json) = **Cross600** (150 sources × four *different* target movements) plus **Same150** controls, across Early Renaissance, Impressionism, Minimalism, Rococo, and Ukiyo-e. Unless a different split is explicitly shown, all modern Top-1, DINO-S, DINO-C, and LPIPS rows below refer to **Cross600** from a complete **test750** run.
-- **Style:** CSD target Top-1 (percent of generated images classified as their *target* movement); DINO-S (max cosine to 30 frozen target-style reference features); CLIP-S and their mean **Style Affinity**. **Content:** source/output DINO-C (higher is better) and LPIPS (lower is better). These are *different* axes; improving a classifier is not synonymous with improving perceptual style.
-- **Decoder:** modern results use the **S10** structured-pruned VAE decoder and isolated frozen evaluation backbones. Do **not** combine old SD-VAE, original AAAI paper, earlier Val200/Heldout400, 25-style OOD, or different timing protocols in a single unqualified ranking. See [decoder audit](docs/v6/Q2A_ORACLE_DECODER_RANKING.md), [S10 training](docs/vae/01_S10_TRAINING_FULL.md), and [cost-model audit](docs/v25/audits/a07_cost_model.md).
-- **Statistical boundary:** test750 was reused extensively for development and selection; it is a **fixed development benchmark, not a fresh blind external test**. Paired source-cluster bootstrap intervals are available only for specific comparisons. Some improvements below change both model family and content operating point; those rows are **historical jumps, not single-component causal ablations**.
-- **Runtime boundary:** a reported 17 ms protocol-batch latent/decode time is not interchangeable with fresh image-to-image latency or RTX 3060 batch-1 latency. Consult the [timing audit](docs/v25/audits/a07_cost_model.md); never infer a matched end-to-end speedup from disparate historical timings.
-
-## Representative measured operating points
-
-These are **selected positions across different content/style regimes**, not a claim that every row strictly dominates every other row. All rows below use Cross600 + S10; the five-style reference engine is evaluated separately.
-
-| Model / mode | DINO-C ↑ | DINO-S ↑ | CSD Top-1 ↑ | LPIPS ↓ | Role and evidence |
-|---|---:|---:|---:|---:|---|
-| **PRISM-1**, λ=0.75 | 0.7715 | 0.4371 | 37.67% | 0.4848 | Fast/high-content single step; [V25 strength audit](docs/v25/audits/a04_strength_report.md) |
-| **PRISM-1**, λ=1.00 | 0.7440 | 0.4430 | 44.33% | 0.5057 | Default single step; [V19](docs/next1118/V19_RESULTS.md) |
-| **HighContent R12**, γ=0.55 | **0.7723** | **0.4564** | 42.50% | **0.4783** | B4-anchored D6H + PRISM-1; *zero new training*; [R12 recipe](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) |
-| **HighContent R12**, γ=1.00 | 0.7286 | 0.4870 | 42.00% | 0.4980 | B4-anchored Flow-only high-content point; [R12 recipe](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) |
-| **V20 Flow D6** | 0.6688 | 0.5107 | 55.67% | 0.5374 | Coarse-16 flow; [V20](docs/next1118/V20_RESULTS.md) |
-| **V23 HiC-JPk** | 0.6299 | 0.5330 | 58.83% | 0.5649 | Mid-content training/CFG improvement; [V23](docs/v23/V23_RESULTS.md) |
-| **V20 Flow D2** | 0.5335 | 0.5672 | 60.50% | 0.6022 | High-style flow; [V20](docs/next1118/V20_RESULTS.md) |
-| **V22 Peak1500**, g=0.45 | 0.4779 | 0.5781 | **76.83%** | 0.6268 | Strong-style but visibly more transformative; [V22](docs/v22/V22_P1_RESULTS.md) |
-| **O3**, 1-shot reference, t=0.45 | 0.5845 | 0.5245 | 35.33% | 0.4213 | Reference-conditioned separate line; [V24](docs/v24/PROGRESS.md) |
-
-**External comparison boundary:** StyleGallery scores DINO-C **0.6113**, DINO-S **0.5604**, Top-1 **52.50%** on the historical five-style comparison. V20 D2 is stronger on style and classification but **weaker on content**; R12 operates at substantially higher content but lower DINO-S. Calling either a universal two-axis strict domination would be false. The main contribution is a **family of content–style–compute operating points**, not a single winner at every content budget. See [V20 comparison](docs/next1118/V20_RESULTS.md), [V23 high-content audit](docs/v23/V23_RESULTS.md), and [V25 strength curves](docs/v25/audits/a04_strength_report.md).
-
-## What changed model performance: quantitative historical ledger
-
-**Legend:** **TRAIN/ARCH** = learned-model or architectural change; **INFER** = no new training, different runtime/conditioning/anchor; **FIX** = an implementation correction; **DIAG/NEG** = mechanism diagnosis, non-improvement, or failed hypothesis. A **pp** is a percentage point of CSD Top-1. All comparisons identify their baseline and any material trade-off.
-
-### 1. Foundations (original WEAVE → V14)
-
-| Version and change | Measured magnitude and cost | What it actually established | Evidence |
-|---|---|---|---|
-| **Original WEAVE**, DWT bands, partial-LL style, endpoint AdaIN | Clean 15-epoch paper-era reproduction: **DINO-S 0.4867**, **DINO-C 0.8280**, LPIPS 0.2508; **not** directly comparable to later S10/Cross600 figures. | Efficient content-preserving wavelet-style transfer was the baseline, **not** the modern PRISM result. | [Reproduction](docs/reproduction/baseline_reproduction.md) |
-| **V6 direct operator compressed** (TRAIN/ARCH) | **1.882M → 0.218M parameters (−88.4%)**; Val200 CSD target shift **+0.0323 → +0.0421**; DINO-C **0.9167 → 0.9216**, LPIPS **0.3658 → 0.3403**. Yet target Top-1 only **3.0%**, below five-way chance (20%). | Smaller is sufficient for local statistics; **removing source-style evidence is not acquiring target style**. The early Val200 gain is not a later Cross600 Top-1 claim. | [V6 controlled ablations](docs/v6/V6_CONCLUSIONS.md) |
-| **V6 Score Difference vs direct** (different quality regime) | Same Heldout400: target Top-1 **2.8% → 36.7%** (+33.9 pp), while DINO-C **0.8902 → 0.5687** (−0.3215). | Style is attainable, but unconstrained style gains can destroy content. **Not** a Pareto dominance result. | [V6 Next](docs/v6/V6_NEXT_RESULTS.md) |
-| **V6 R1 critic + constrained Oracle** (INFER) | Cross600 S10: Oracle **36.3%** Top-1 vs **22.2%** for the B4 direct student (+14.1 pp as a *family comparison*); DINO-C **0.7345 vs 0.8152** (lower). | A learned style-discriminative gradient accesses useful target directions missing from DWT moment matching; this is not a matched one-factor student ablation. | [S10-era ranking](docs/LEADERBOARD.md) · [V6 Next](docs/v6/V6_NEXT_RESULTS.md) |
-| **S10 decoder pruning** (TRAIN/ENGINEERING) | Decoder **49.49M → 10.66M (−78.5%)**, decoder stage **2.86× faster**. Paired Q2A+Oracle: Top-1 **34.50% → 37.67% (+3.17 pp)**, LPIPS **0.5149 → 0.5034**; separately measured DINO-S/C effects are not universally positive. | Decoder is an **active part of the downstream style-transfer system**. Gain belongs to a decoder swap, not to a better latent flow. | [Paired decoder audit](docs/v6/Q2A_ORACLE_DECODER_RANKING.md) · [S10 training](docs/vae/01_S10_TRAINING_FULL.md) |
-| **V8 N2C → V9 LD4** (INFER, controlled within S10 Cross600) | Top-1 **32.83% → 35.17% (+2.34 pp)**; DINO-S approximately **0.4399 → 0.4401**; DINO-C **0.7715 → 0.7718**; LPIPS **0.4904 → 0.4872**. | Budgeted latent edits, spatial masks and feasible line search improve the direction already present, but only modestly. | [V9](docs/v9/V9_LD_RESULTS.md) · [V10 merged 750 comparison](docs/v10/V10_RESULTS.md) |
-| **V10/10.1/10.2 density and nearest-neighbor prescriptions** (DIAG/NEG) | Holdout restoration alignment KDE **+0.302** vs R1 **+0.054**; nevertheless target KDE's gain is **95% reproduced by a mixed-style KDE**, and best V10 Top-1 **34.00% < LD4 35.17%**. Content-based hard retrieval directions have cosine **−0.25 to −0.53** with restoration. | **Restoration alignment ≠ target-style specificity**; retrieving another painting's patch is not a generative update for the current patch. | [V10](docs/v10/V10_RESULTS.md) · [V10.1](docs/v10_1/V10_1_RESULTS.md) · [V10.2](docs/v10_2/V10_2_RESULTS.md) |
-| **V11b high-frequency wavelet flow** (TRAIN/NEG) | H2 output DINO-S **0.4401 → 0.4482 (+0.0081)**, but Top-1 **35.17% → 33.33% (−1.84 pp)** and LPIPS **0.4872 → 0.4927**. | A favorable feature gain is not automatically a better content/style Pareto point. | [V11b](docs/v11b/V11B_RESULTS.md) |
-| **V12 GCL content gates / V13 H2 contrastive / V14 representation scan** (DIAG/NEG) | V12 gates are **non-binding**; angle cosine style vs content-query gradient **0.09–0.15**. V14 five-way style accuracy: **DWT 54.4% vs DINO patch 79.3%**; adding DWT to DINO gives **79.7%** (+0.4 pp). | Local handcrafted frequency descriptors are weak **for this style-classification protocol**, and adding structural restrictions does not repair the missing generative style direction. DWT remains invertible: the finding is about the *chosen token representation*, not information-theoretic impossibility. | [V12](docs/v12/V12_GCL_RESULTS.md) · [V13](docs/v13/V13_RESULTS.md) · [V14](docs/v14/V14_RESULTS.md) |
-
-### 2. The decisive learned-transport breakthroughs (V15 → V22)
-
-| Version and change | Measured magnitude and cost | What it actually established | Evidence |
-|---|---|---|---|
-| **V15 self-paired Flow scaling** (TRAIN, paradox) | At unconditional/no-source start, Top-1 **36.33% → 49.33% (+13.00 pp)**; at source-editing τ=0.7, **10.67% → 6.67% (−4.00 pp)**, while DINO-C **0.7506 → 0.8083**. Small baseline had **4k** updates, scaled arms **8k**, so size is not an isolated causal variable. | **Generative capacity ≠ editing capacity.** A strong self-reconstruction objective can allow the model to ignore target-style conditions. | [Scaling sweep](docs/v15/WEAVE_V15_SCALING_RESULTS.md) · [V16 strict audit](docs/v16/RESULTS.md) |
-| **V15 Style-Bridge cross-style training** (TRAIN) | At τ=0.4, balanced FM Top-1 **14.67% → 17.83% (+3.16 pp)** for each P2 seed; DINO-C ~**0.4485 → 0.4428**. The larger unconditional-gain comparison is a different operating point. | Training the endpoint/bridge to encode a style change helps even when model parameters at inference are unchanged. | [Post-scale summary](docs/v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md) |
-| **V17 contextual student with source→target chord** (TRAIN/ARCH) | τ=0.7, Top-1 **10.67% base → 13.33% S4 (+2.66 pp)**; DINO-C **0.7506 → 0.7386**, LPIPS **0.2700 → 0.2845**. | Conditioning on **target minus source style**, plus DINO context, has positive but insufficient editing effect; it motivated V19. | [V17](docs/v17/V17_RESULTS_EVAL.md) |
-| **V18 stronger LD4+ / style-invariant structure** (INFER + DIAG) | Frozen baseline **34.67% / DINO-C 0.7716** → stronger ε=0.18 **38.00% / 0.7428**; ε=0.30 gives **46.17% / 0.6860**. Style leakage probe for a structure representation fell **72.33% → 18.33%** (five-way chance 20%). | Larger edits buy recognition by spending content; a style-suppressed structure representation is *feasible*, not evidence by itself that generation improved. | [V18](docs/v18/V18_RESULTS.md) |
-| **V19 continuous source-style chord + semantic routing** (ARCH/TRAIN) | One-step **V18 A2b 38.00% → PRISM-1 44.33% (+6.33 pp)** across model generations; DINO-C **0.7555 → 0.7440**. Within V19, adding spatial routing **41.00% → 44.33% (+3.33 pp)** with DINO-C **0.7511 → 0.7440**. Wrong-target control falls to **0.83%**. | Source style is inferred continuously from the image rather than supplied as a test-time true label. Style-specific target response is demonstrated; the cross-generation comparison is not a single-change ablation. | [V19](docs/next1118/V19_RESULTS.md) |
-| **V19 anisotropic chroma/structure trust region + S10-VGG/Oklab critic** (INFER, major) | Matched V19-style strong-edit comparison **R1 critic T1 → S10-VGG T4**: **Ukiyo-e Top-1 0.8% → 45.0%**; overall Top-1 **59.17% → 59.00%** (essentially unchanged), **DINO-C 0.5647 → 0.6783**, LPIPS **0.6032 → 0.5166**. Multiple coupled solver/critic changes; do not attribute all benefit to one layer. | Palette transport and structure preservation should not share one isotropic perturbation budget. RGB-decoded style supervision repairs a historical hard-style blind spot of the old latent critic. | [V19 matched diagnostics](docs/next1118/V19_RESULTS.md) · [Source-code diagnosis](docs/next1118/01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md) |
-| **V20 Coarse-16 SLFUNet + multi-prototype flow** (ARCH/TRAIN, major) | Comparable content region **V19 T4 → V20 D6**: DINO-S **0.4618 → 0.5107 (+0.0489)**, DINO-C **0.6783 → 0.6688 (−0.0095)**; Top-1 **59.00% → 55.67%**. The high-style **V20 D1** reaches **DINO-S 0.5789**, but at **DINO-C 0.5005**. | Constrain **coarse semantic layout** and allow finer appearance synthesis. Prototype selection and training/solver changes are combined, so the large historical shift is not solely a Core-kNN effect. | [V20](docs/next1118/V20_RESULTS.md) |
-| **V21 Stiefel Q32 and 1-shot attention** (DIAG/ARCH) | Hard Q32 reduces **Gram-only source-style probe 92.33% → 20.00%** (five-way chance). Same five SG references: 1-shot **DINO-S 0.6006** vs StyleGallery **0.5604**, but **DINO-C 0.3970 vs 0.6113**. | Exact whitening eliminates the *measured second-order Gram leakage*, **not all style information**, and strong reference response does not guarantee content fidelity. The independent generative necessity of Q32 remains unproven. | [V21](docs/next1118/V21_RESULTS.md) · [V26 K0](docs/v26/4090/K0_Q32_FEATURE_AUDIT.md) |
-| **V22 fixed-layout training and early stopping** (TRAIN, major) | Same inferred control setting wc=1.1: **T0 63.33% / DINO-C 0.5087 → T4 69.00% / 0.5112 (+5.67 pp)**. Peak1500 vs continued 3600 updates at wc=1.0, g=0.5: **73.67% → 65.67% (−8.00 pp overtraining)**. | Training-time layout weakening was detrimental here; stopping at the right checkpoint mattered as much as adding a module. A new **32×32 SPADE** structural injection lost **17–19 pp** under its tested budget. | [V22 controlled training/curve](docs/v22/V22_P1_RESULTS.md) |
-
-### 3. High-content frontier, reference conditioning, and corrections (V23 → V26)
-
-| Version and change | Measured magnitude and cost | What it actually established | Evidence |
-|---|---|---|---|
-| **V23 dual-CFG branch layout bug fixed** (**FIX**, not a new method) | Same weights/config after correction: V20 dual **42.50% → 50.50% (+8.00 pp)**; V22 dual **34.67% → 49.50% (+14.83 pp)**. CFG branch count can be halved in the tested settings, but V25 shows this is **not universally safe** on Minimalism routes. | A large apparent “architectural improvement” can be the removal of a silent implementation defect. | [V23](docs/v23/V23_RESULTS.md) · [V25 CI/route guard](docs/v25/ABLATION_LEDGER.md) |
-| **V23 high-content Joint/Anchor-Bridge** (TRAIN) | Against V20 D5: **HiC-JPk Top-1 55.17% → 58.83% (+3.66 pp)**, DINO-S **0.5214 → 0.5330 (+0.0116)**, DINO-C **0.6287 → 0.6299**; LPIPS worsens **0.5529 → 0.5649**. | There is a real mid/high-content improvement, **not** strict dominance across every distortion metric. The first predicted trajectory step was identified as a primary source of structure loss. | [V23](docs/v23/V23_RESULTS.md) |
-| **V23 reference-conditioned cross-pair supervision** (TRAIN) | Within the exploratory 1-shot pipeline: self-paired reference-attention R5/R6 **~19.7%** Top-1 → 25%-cross-pair M1 **28.50%** → 50%-cross-pair M2 **31.83%** → source Anchor-Bridge M3 **38.00%**. Content/fidelity and initialization also change along this chain; it is not a pure curriculum ablation. | A reference encoder alone does not teach source→*other-style* transfer. Target-conditioned endpoints and source-to-target bridge training are crucial. | [V23 1-shot lineage](docs/v23/V23_RESULTS.md) |
-| **V24 PRISM-1 + Flow latent hybrid** (**INFER**, no retraining) | Same-board **PRISM-1 λ=1.0 → γ=0.40 hybrid**: DINO-C **0.7440 → 0.7467**, DINO-S **0.4430 → 0.4600 (+0.0170)**, LPIPS **0.5057 → 0.5006**, Top-1 **44.33% → 50.17% (+5.84 pp)**. Freezing *all* Haar LL while mixing HF underperforms partial LL blending (Top-1 −1.67 pp). | The two trained model families make complementary errors; **global latent mixing** can beat both naive strength tuning and rigid frequency separation at high content fidelity. | [V24](docs/v24/PROGRESS.md) |
-| **V24 O3 RGB reference Value + global color gate** (ARCH/TRAIN) | At t=0.45, gray-DINO O1 **30.67%** → gated RGB O3 **35.33% (+4.66 pp)**; DINO-S **0.5169 → 0.5245 (+0.0076)**. Separate OOD SG-25 work showed positive reference response, but not a full 25-style benchmark claim. | Spatial semantic matching and reference appearance/color conditioning can be complementary **under a suitable training objective**. | [V24 O1/O2/O3](docs/v24/PROGRESS.md) |
-| **V25 high-content B4 anchor / R12 hybrid** (**INFER**, no new training) | Matched-board **PRISM-1 λ=0.75 → R12 γ=0.55**: DINO-C **0.7715 → 0.7723**, DINO-S **0.4371 → 0.4564 (+0.0193)**, Top-1 **37.67% → 42.50% (+4.83 pp)**, LPIPS **0.4848 → 0.4783**. A separate B4-anchored Flow-only point reaches **DINO-C 0.7286**, exceeding the **0.7055** ceiling of the *specific earlier T4-anchored D6 τ-sweep*. | **Anchor and trajectory choice, not bigger network weights**, moved the extreme-content frontier. Hybrid still incurs both models' computation when run fresh. | [R12 model recipe](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) · [V25 strength/ceiling audit](docs/v25/ABLATION_LEDGER.md) |
-| **V25 One-Shot cross-style supervision ablated** (TRAIN/NEG) | Removing O3 cross-style pairs gives Top-1 **35.33% → 12.33% (−23.00 pp)** at the t45 comparison; content improves because editing collapses toward identity. | A successful style condition is not enough if **training targets remain self-reconstruction**. | [V25 3060 evaluation](docs/v25/GPU3060_RESULTS.md) |
-| **V26 hard Q32, local RefAttn, SR-CFG** (DIAG/NEG) | Q32 Gram leakage **92.3% → 20.0%**, but no demonstrated generative gain. Disabling/zeroing/wrong-value local RefAttn **improves DINO-C by ~0.04–0.05** in C2nt; source-repulsive CFG **fails** its preset success threshold (SR0 Top-1 **42.17%**, best source-repulsion arm ~**40.3%**). | Style-feature “purity,” local reference detail, and stronger inference repulsion **do not ensure a better conditional transport field**. | [V26 summary](docs/1120/V26_RESULTS_SUMMARY.md) · [K1 attention](docs/v26/4090/K1_REFATTN_CAUSAL_AUDIT.md) |
-| **V26 C2nt 4-step inference** (**INFER**, limited to 1-shot line) | Same frozen model: **10-step RK2 ~42.17% → 4-step Euler 43.17% (+1.00 pp)** with **20 → 4 velocity evaluations (5× fewer)**; however DINO-S changes **0.5236 → 0.5112** (−0.0124). | Top-1 and compute improve here, **not** unconditional style quality or PRISM-Flow's general minimum step count. | [V26 progress](docs/1120/PROGRESS.md) |
-| **V26-L0 strictly cross-style reference sampling** (TRAIN/NEG, *matched 1,200-update probes*) | Legacy same-style neighbors **16.17%** Top-1 vs forced cross-style uniform **11.33% (−4.84 pp)** / cross-style Core **12.00% (−4.17 pp)**. These probes must **not** be conflated with the earlier 42.17% C2nt checkpoint. | Same-style sampling is a documented flaw, **but fixing it alone does not repair the transfer objective or model**. Teacher-target/transport redesign remains the main research direction. | [L0 report](docs/v26/4090/L0_CROSSSTYLE_CAUSAL.md) · [V26-L progress](docs/1120/PROGRESS.md) |
-
-## Mechanistic conclusions and corrections
-
-| Claim | Current evidence-based interpretation | Where tested |
+| 我们打破了什么直觉 | 实验给出的答案 | 证据 |
 |---|---|---|
-| **Source-style destruction ≠ target-style construction** | V6 outputs were still classified as the source style **91.4%** of the time despite measurable \(\Delta S<0\). Positive prototype displacement alone does not imply crossing the target decision boundary. | [V6](docs/v6/V6_CONCLUSIONS.md) · [negative-results ledger](docs/negative_results/README.md) |
-| **Generic artistic restoration ≠ movement-specific generation** | V10.2 mixed-style KDE explains **95%** of target-style KDE restoration direction; V6 VAE SWD has same-genre AUROC **51.1–51.4%** and can reduce loss by latent scale shrinking. These are **different losses/representations** from the newer V26 candidate SWD; do not declare all SWD useless. | [V10.2](docs/v10_2/V10_2_RESULTS.md) · [V6 VAE/SWD](docs/v6/V2_FAILURE_DIAGNOSIS.md) |
-| **A discriminative style space is not a generative transport field** | DINO patch style classification **79.3%** outperformed DWT **54.4%**; V25's 795D fiber classification needs only ~64 PCA components for similar **five-way recognition**, but this alone cannot predict directionality or editing success. Oklab encodes a partially independent palette channel. | [V14](docs/v14/V14_RESULTS.md) · [V25 feature geometry](docs/v25/audits/a05_feature_geometry.md) |
-| **Self-paired FM can learn to ignore the desired reference** | Scaling improves unconditional generation but degrades SDEdit; removing cross-style O3 training drops Top-1 **23 pp**. V26 K1 shows target-reference influence weakens near the end of a C2nt trajectory. These are mutually supportive observations, not a theorem that all self-paired methods must fail. | [V15](docs/v15/WEAVE_V15_SCALING_RESULTS.md) · [V25 ablation](docs/v25/ABLATION_LEDGER.md) · [V26 K1](docs/v26/4090/K1_REFATTN_CAUSAL_AUDIT.md) |
-| **Separate protection of structure from freedom to synthesize appearance** | V19 anisotropic constraints and V20 16×16-only layout injection beat many earlier isotropic/high-resolution locking schemes. **Neither “luminance equals content” nor “all HF equals style” is an exact factorization.** In V24 partial LL transport was better than freezing LL outright. | [V19](docs/next1118/V19_RESULTS.md) · [V20](docs/next1118/V20_RESULTS.md) · [V24](docs/v24/PROGRESS.md) |
-| **High-margin style exemplars can be bad generation targets** | V20's early class prototypes were polluted by atypical Minimalism installation photographs; kNN-core filtering corrected the particular bank. **Later V22 K4/K8/random-prototype controls were near-equivalent**, so the robust lesson is **non-centroid, diverse style exemplars**, *not* that expensive Core-kNN is universally necessary. | [V20](docs/next1118/V20_RESULTS.md) · [V22 controlled D-group](docs/v22/V22_P1_RESULTS.md) |
-| **Second-order whitening ≠ complete disentanglement** | Hard Q32 suppresses measured Gram classification to chance; PCA32 does not. The Gram probe cannot prove the resulting representation has **zero style information** or that Q32 is necessary for output quality. V26 K3 matched generative ablation is still gated. | [V21](docs/next1118/V21_RESULTS.md) · [K0 audit](docs/v26/4090/K0_Q32_FEATURE_AUDIT.md) |
-| **Inference shortcuts must survive route-level and CI tests** | V22's fixed gate and V23's corrected two-branch CFG helped in specific regimes; V25 found that deleting dynamic gating can significantly hurt high-content results and that simplified CFG may fail **Minimalism route guards** despite encouraging averages. No blanket “remove gate / halve CFG” claim survives. | [V22](docs/v22/V22_P1_RESULTS.md) · [V25 ledger](docs/v25/ABLATION_LEDGER.md) |
-| **SWD is a candidate complementary loss, not a demonstrated better teacher** | Corrected V26 normalized AUC: **mean VGG 0.673**, Gram **0.649**, SWD **0.661**; the earlier “13× discriminative” claim was a scale artifact. SWD vs mean-VGG gradient cosine **0.179** suggests possible complementary texture gradients; *generation gains remain unproven*. | [Corrected V26-L progress](docs/1120/PROGRESS.md) · [K2 audit](docs/v26/4090/K2_STYLE_LOSS_AND_SUBJECT_AUDIT.md) |
-| **C2nt is diagnostic, not the primary product** | At V26, local reference attention often damaged content, Rococo remained near zero across subject groups, and matched L0 cross-style sampling did not fix quality. SG-25 OOD reference response **ΔDINO-S +0.2216**, swap-distance **0.5349** is real, but OOD DINO-C **0.3566** is poor; **125 OOD pairs are not the full StyleGallery evaluation**. | [V26 summary](docs/1120/V26_RESULTS_SUMMARY.md) · [V26-L progress](docs/1120/PROGRESS.md) |
+| **模型越大，迁移越强？错。** | V15 自配对 Flow：纯生成 Top-1 **36.33%→49.33%**，同一编辑任务却 **10.67%→6.67%**；DINO-C 从 **0.7506→0.8083**。它更会保留源图，却更不会换风格。训练步数亦有差异，不作纯参数因果宣称。 | [V15 扩容](docs/v15/WEAVE_V15_SCALING_RESULTS.md) |
+| **去掉源风格，就等于获得目标风格？错。** | V6 直接变换后 **91.4% 仍被识别为源画派**，目标识别仅 **3.1%**。有扰动，不代表有方向。 | [V6 结论](docs/v6/V6_CONCLUSIONS.md) |
+| **风格越强，内容必然崩？我们把限制改对了。** | V19 旧 R1→S10-VGG 各向异性求解：Ukiyo-e **0.8%→45.0%**，整体 Top-1 **59.17%≈59.00%**，但 DINO-C **0.5647→0.6783**、LPIPS **0.6032→0.5166**。这是联合求解器/判别器变化，不归因于一个算子。 | [V19 消融](docs/next1118/V19_RESULTS.md) |
+| **给网络更多源图细节，就更能保内容？恰好相反。** | V20 把结构条件收紧到 **16×16 瓶颈**、把细节交给生成流：近似内容区间相对 V19 T4，DINO-S **0.4618→0.5107（+0.0489）**，DINO-C **0.6783→0.6688**。 | [V20 Flow](docs/next1118/V20_RESULTS.md) |
+| **训练久一点，总会更好？错。** | V22 同条件 T0→T4：Top-1 **63.33%→69.00%（+5.67pp）**，DINO-C **0.5087→0.5112**；最佳快照 1500 步 **73.67%**，继续到 3600 步跌至 **65.67%（−8pp）**。 | [V22 受控训练](docs/v22/V22_P1_RESULTS.md) |
+| **性能前沿只能靠重训大模型推？错。** | V25 冻结已有权重，仅优化 B4 锚点与潜空间组合：高内容工作点 DINO-S **0.4371→0.4564**、Top-1 **37.67%→42.50%**，DINO-C **0.7715→0.7723**，LPIPS **0.4848→0.4783**。 | [V25 R12](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) |
 
-## Current research priorities (not completed results)
+**一句话：风格迁移不是“改变外观的强度”问题，而是“正确的目标方向 + 正确的信息分配 + 正确的生成路径”问题。**
 
-1. **Reference-conditioned PRISM-Flow:** make the strong V20–V25 flow genuinely responsive to arbitrary images, with **cross-style supervised targets**, global style-chord conditioning, content-safe local appearance control, and source-style counterfactuals. V26-L's L1/L3/L4 modules are experiments, **not successes until measured and audited**. [V26-L plan](docs/1120/08_v26_long_plan.md) · [progress](docs/1120/PROGRESS.md).
-2. **Matched decoder and Q32 studies:** isolate the effect of S10's pruning/training recipe and test whether Q32 improves *generation* rather than only Gram-probe statistics. [V26 plan](docs/1120/08_v26_long_plan.md).
-3. **Per-route auditing, not only means:** especially source Minimalism, target Early Renaissance/Rococo/Ukiyo-e, reference swap sensitivity, Same150, and visual subject preservation. Test750 is a repeated development board; further generalization claims need an independently held-out evaluation. [V25 route audit](docs/v25/ABLATION_LEDGER.md) · [V26 mechanism report](docs/1120/V26_RESULTS_SUMMARY.md).
+---
 
-## Code, reproducibility, and documentation
+## 二、我们已经把前沿推到哪里？
 
-| Entry | Use |
+### 当前最有代表性的工作点
+
+以下为 **Cross600 / S10** 已测结果，**不是把多个模型的最好指标拼成一个模型**。↑ 越高越好；LPIPS ↓ 越低越好。每一行来自独立实测配置。
+
+| 模型 / 目标 | DINO-C ↑ | DINO-S ↑ | CSD Top-1 ↑ | LPIPS ↓ | 关键意义 |
+|---|---:|---:|---:|---:|---|
+| **PRISM-1**，λ=1 | 0.7440 | 0.4430 | 44.33% | 0.5057 | **单步、小网络、免测试期源标签**；[V19](docs/next1118/V19_RESULTS.md) |
+| **PRISM-Flow D2**，强风格 | 0.5335 | 0.5672 | 60.50% | 0.6022 | 16×16 粗尺度条件流；[V20](docs/next1118/V20_RESULTS.md) |
+| **V22 Peak1500**，强风格 | 0.4779 | **0.5781** | **76.83%** | 0.6268 | 风格极强，内容变化也更大；[V22](docs/v22/V22_P1_RESULTS.md) |
+| **V23 HiC-JPk**，中高内容 | 0.6299 | 0.5330 | 58.83% | 0.5649 | 强风格与结构保持的新平衡；[V23](docs/v23/V23_RESULTS.md) |
+| **R12 HighContent**，γ=1.0 | 0.7286 | 0.4870 | 42.00% | 0.4980 | **不混 PRISM-1 的单 Flow 高内容端**；[R12](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) |
+| **R12 HighContent**，γ=0.55 | **0.7723** | 0.4564 | 42.50% | **0.4783** | **极高内容端**，B4 锚 + Flow + PRISM-1；[R12](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) |
+| StyleGallery，外部参考模型 | 0.6113 | 0.5604 | 52.50% | 0.5576 | 严格任意参考对手；[V23 比较](docs/v23/V23_RESULTS.md) |
+
+**正面结论：我们已经能用极小的单步网络和较轻的多步 Flow，在多个不同内容预算上取得有竞争力的风格质量与推理效率。**
+
+**但更重要的战场还没有赢：** PRISM-Flow 的最强点主要使用训练画派原型或类别条件；StyleGallery 支持任意参考。二者可以展示质量—计算效率的差距，**不能把“闭集原型超过某个分数”写成“任意参考能力全面击败 StyleGallery”**。
+
+真实 One-Shot 的短板很具体：C2nt t45 为 **DINO-C 0.5448 / DINO-S 0.5235 / Top-1 42.17%**；t55 内容升到 **0.6647**，风格却降到 **0.5027 / Top-1 28.33%**。[C2nt 报告](docs/v25/audits/c2nt_no_teacher_report.md)
+
+**下一次真正的突破，不是把闭集 0.578 再刷成 0.585，而是把它的有效跨风格能力带到任意参考，同时让内容留在 0.62–0.70。**
+
+---
+
+## 三、真正让性能跃升的修改：逐代实验账本
+
+**标注：** 训练/结构＝网络学到了新能力；推理/锚点＝冻结网络释放了已有能力；修复＝纠正代码错误；诊断＝证明或否定一个科学假设。跨代数字不是自动成立的单变量因果消融。
+
+| 阶段 | 我们改了什么 | 直接测得的增益或代价 | 本质认识与链接 |
+|---|---|---|---|
+| **V0–V5** | 小波分频传输＋端点 AdaIN | 旧 WEAVE 的论文期 DINO-C **0.828**、DINO-S **0.487**；与后续 S10 新协议**不可直接排名** | 内容容易保，目标风格难生成。[旧版复现](docs/reproduction/baseline_reproduction.md) |
+| **V6-A** | 把模型从 1.882M 压到 218K | **−88.4% 参数**；早期 Val200 风格位移 **+0.0323→+0.0421**，但目标 Top-1 仅约 **3%** | 参数变小没解决“没有正确方向”。[V6](docs/v6/V6_CONCLUSIONS.md) |
+| **V6-B** | 把直接传输改为 Score Difference / R1 引导 | 同一 Heldout400：目标 Top-1 **2.8%→36.7%（+33.9pp）**，但 DINO-C **0.8902→0.5687（−0.3215）** | 第一次找到强风格方向；也第一次看到“刷风格”能怎样毁掉内容。[V6 后续](docs/v6/V6_NEXT_RESULTS.md) |
+| **V8→V9** | LD4 局部预算＋掩码＋回溯搜索 | Cross600 Top-1 **32.83%→35.17%（+2.34pp）**；DINO-C **0.7715→0.7718** | 好的约束能提纯已有方向，但造不出不存在的方向。[V9](docs/v9/V9_LD_RESULTS.md) |
+| **V10–V14** | KDE、局部检索、GCL、DWT/DINO 表征对比 | 最好 V10 Top-1 **34.0% < LD4 35.17%**；DINO patch 判别 **79.3%** vs DWT **54.4%**，DINO+DWT 仅 **79.7%** | **“像艺术”不是“像指定画派”；分类表征不是生成指令。** [V10.2](docs/v10_2/V10_2_RESULTS.md) · [V14](docs/v14/V14_RESULTS.md) |
+| **V15 扩容** | 自配对 Flow 变大、训练更久 | 无源生成 Top-1 **36.33%→49.33%**；τ=0.7 编辑却 **10.67%→6.67%** | **整个项目最重要的负结果：更会重建，不等于更会迁移。** [V15](docs/v15/WEAVE_V15_SCALING_RESULTS.md) |
+| **V15 Bridge** | 把训练终点引向目标画派 | 对应 τ=0.4：Top-1 **14.67%→17.83%（+3.16pp）** | 不扩大推理网络，也能通过正确终点提升风格。[V15 后训练](docs/v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md) |
+| **V17–V18** | DINO 内容上下文＋源→目标风格差分；受控加大编辑 | V17 Top-1 **10.67%→13.33%**；V18 LD4+ 强编辑 **34.67%→38.00%**，DINO-C **0.7716→0.7428** | 连续风格差分开始奏效，但单靠加编辑强度仍有内容代价。[V17](docs/v17/V17_RESULTS_EVAL.md) · [V18](docs/v18/V18_RESULTS.md) |
+| **V19 单步 PRISM-1** | 连续风格弦、无需源类别、语义空间路由 | V19 内“全局条件→空间路由”：Top-1 **41.00%→44.33%（+3.33pp）**，DINO-C **0.7511→0.7440**；错目标仅 **0.83%** | 真正建立了“条件改变→输出跟随”的反事实证据。[V19](docs/next1118/V19_RESULTS.md) |
+| **V19 强编辑突破** | 亮度—色度各向异性信任域＋穿过 S10 的 VGG/Oklab 判别器 | Uki **0.8%→45.0%**；整体 Top-1 **59.17%≈59.00%**，DINO-C **+0.1136**，LPIPS **−0.0866** | **内容与风格不该共用一个各向同性的改变预算。** [V19](docs/next1118/V19_RESULTS.md) |
+| **V20 粗尺度 Flow** | 16×16 内容条件、细尺度自由生成、多原型风格先验 | 相近内容区相对 V19 T4：DINO-S **+0.0489**，DINO-C **−0.0095**；V20 D1 最高风格 DINO-S **0.5789**，但内容 DINO-C **0.5005** | **锁布局，不锁笔触。** 这是最关键的生成架构转向。[V20](docs/next1118/V20_RESULTS.md) |
+| **V21 Q32 / One-Shot** | Stiefel 极分解去 Gram 风格统计＋局部参考 | Gram 探针 **92.33%→20.0%（五类随机水平）**；参考版 DINO-S **0.6006**，但 DINO-C 仅 **0.3970** | 表征去泄漏和真实内容保真是两道题，Q32 的生成必要性仍未证实。[V21](docs/next1118/V21_RESULTS.md) |
+| **V22 训练定型** | 固定训练期布局强度、合理内容 Dropout、选取 1500-step 最佳快照 | 同控制下 **+5.67pp Top-1**，DINO-C 小幅上升；额外训练到 3600 步 **−8pp** | **训练配方与停止时机能胜过堆一层网络。** [V22](docs/v22/V22_P1_RESULTS.md) |
+| **V22 锚点消融** | 冻结权重，仅换初始化锚点 | 纯噪声 **35.5%**、源图 **20.5%**、T4 锚 **55.8%**、PRISM-1 锚 **57.17%** | **起点不是无关的数值设置，而是决定传输可达性的隐含先验。** [V22](docs/v22/V22_P1_RESULTS.md) |
+| **V23 CFG 修复** | 修复双分支错误清零布局条件 | V20 双分支 **42.50%→50.50%（+8pp）**；V22 **34.67%→49.50%（+14.83pp）** | **这是 Bug 修复，不是新算法。** 修复后可减少分支开销，但不能对所有路线无条件替代 full CFG。[V23](docs/v23/V23_RESULTS.md) |
+| **V23 内容突破** | 中尺度内容损失＋Anchor-Bridge＋修正双分支 | 相对 V20 D5：Top-1 **55.17%→58.83%（+3.66pp）**，DINO-S **0.5214→0.5330**，DINO-C **0.6287→0.6299**；LPIPS **0.5529→0.5649** | 在中高内容区外扩前沿，但并非所有失真指标同时改善。[V23](docs/v23/V23_RESULTS.md) |
+| **V23 跨风格 One-Shot 训练** | 从自配对注意力改成跨风格伪目标/桥监督 | Top-1 **约19.7%→28.50%→31.83%→38.00%**；各档训练比例和锚点有变化 | **只给参考图、不改变监督终点，Attention 学不会真正换风格。** [V23](docs/v23/V23_RESULTS.md) |
+| **V24 高内容混合** | 冻结 PRISM-1 与 Flow，在 latent 混合 | PRISM-1 λ=1→γ=0.40：Top-1 **44.33%→50.17%（+5.84pp）**，DINO-S **+0.0170**，DINO-C **+0.0027**，LPIPS **−0.0051** | 两类模型误差互补；**没有新训练，但 fresh 推理要付两模型成本**。[V24](docs/v25/audits/a04_strength_report.md) |
+| **V25 R12 高内容突破** | B4 锚＋D6H＋强度混合，零新权重 | PRISM-1 λ=.75→R12 γ=.55：DINO-S **+0.0193**，Top-1 **+4.83pp**，DINO-C **+0.0008**，LPIPS **−0.0065** | **工程路径也能把 Pareto 前沿往外推。** [R12](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) |
+| **V26 减法与证伪** | SR-CFG、RefAttn 干预、SWD、4-step 测试 | SR-CFG 未超 **42.17%** 基线；在 C2nt 中去局部 Value 使 DINO-C **+0.04～0.05**；4 步 Euler Top-1 **42.17%→43.17%**，但 DINO-S **0.5236→0.5112** | **更多条件、更多注意力、更多计算，不会自动带来更好的风格。** [V26](docs/1120/V26_RESULTS_SUMMARY.md) |
+
+---
+
+## 四、六条从 V0–V26 打出来的研究结论
+
+### 01｜**去掉源风格，绝不等于生成目标风格。**
+
+早期路线反复在优化一个错误代理：减小与源图风格的距离、降低统计损失、增大改动幅度，却没有得到目标画派。
+
+V6 直接算子已经让源图风格相似度明显下降，最终 **91.4% 仍判为源画派，只有 3.1% 判为目标画派**。V10.2 更直接：目标画派 KDE 所给出的恢复梯度，**95% 的有效方向可由混合画派 KDE 复现**。它主要知道“怎样让图像更像一幅画”，而不是“怎样变成指定画派”。
+
+**结论：通用图像先验不是目标条件传输；对风格有判别力的梯度，也未必是可执行的风格生成方向。**
+
+[证据：V6](docs/v6/V6_CONCLUSIONS.md) · [V10.2](docs/v10_2/V10_2_RESULTS.md)
+
+### 02｜**自配对 Flow 的最大陷阱：监督在教网络无视目标参考。**
+
+自配对训练始终把源图作为终点。给输入换一个目标参考，却不改变监督终点，网络完全有理由学会**忽略新参考、直接复原源图**。
+
+V15 的 Scaling Paradox 是最尖锐的证据：生成 Top-1 **+13pp**，编辑 Top-1 却 **−4pp**。V25 从 O3 移走跨风格配对监督后，Top-1 **35.33%→12.33%（−23pp）**，内容反而更容易保持。
+
+**结论：先把训练目标变成跨风格传输，再谈加网络容量、Attention 和更复杂的风格编码。否则模型越强，源风格锁得越牢。**
+
+[证据：V15](docs/v15/WEAVE_V15_SCALING_RESULTS.md) · [证据：V23 监督链](docs/v23/V23_RESULTS.md) · [证据：V25 移除监督](docs/v25/GPU3060_RESULTS.md)
+
+### 03｜**保内容不等于保每个像素；锁住低维布局，才能放手生成画风。**
+
+早期各向同性约束把“改颜色”和“改建筑结构”当成同一种代价。V19 通过亮度/色度子空间的差异化预算，在**总体分类表现几乎不变**的条件下，让内容 DINO-C 提升 **+0.1136**，并打通 Ukiyo-e 的困难目标。
+
+V20 进一步把源图结构条件限制在 **16×16**。语义布局得以保留，32×32/64×64 则获得生成自由度。V22 的 32×32 SPADE 额外源结构注入在所测训练预算下反而 **−17～−19pp**。
+
+**结论：源图提供“画什么、在哪里”，目标条件决定“用什么色盘与笔触画”；把源边缘一路灌入高分辨率层，是在帮助模型复制旧画。**
+
+这里的“亮度≈结构、色度≈风格”是工程近似，不是自然图像的严格数学分解。
+
+[证据：V19](docs/next1118/V19_RESULTS.md) · [V20](docs/next1118/V20_RESULTS.md) · [V22](docs/v22/V22_P1_RESULTS.md)
+
+### 04｜**风格能分得开，并不代表能作为生成指令。**
+
+V14：DINO patch 做五画派分类 **79.3%**，DWT 仅 **54.4%**。V25：795D 风格 Fiber 用 PCA-64 做五分类已经达到 **92.0%**，DINO 单块 **92.5%**。这说明**五分类不是一个需要无限增加通道数的问题**。
+
+V21/V26：硬 Q32 将所测 Gram 风格探针 **92.3%→20.0%**，漂亮而精确；但没有证据说明它是 V25 最强生成模型的必要模块。V25 主线实际使用的是 **dino_16**，不是该硬 Q32。
+
+**结论：表征纯净度、风格识别准确率、风格生成能力是三张不同的成绩单。高分类准确率和二阶去泄漏都不能替代端到端传输消融。**
+
+[证据：V14](docs/v14/V14_RESULTS.md) · [V25 特征几何](docs/v25/audits/a05_feature_geometry.md) · [V26 K0](docs/v26/4090/K0_Q32_FEATURE_AUDIT.md)
+
+### 05｜**生成起点和解码器不是配角：它们实际决定你能到达哪条前沿。**
+
+V22 冻结 Flow 权重，仅换锚点，Top-1 就出现 **20.5%（源图锚）→57.17%（PRISM-1 锚）** 的巨大差异。V24/V25 更利用锚点、Flow 与单步网络的互补，把高内容区不断向外推，**无需再训练一套更大的 U-Net**。
+
+S10 解码器从 **49.49M→10.66M（−78.5%）**，解码阶段 **2.86×** 加速。在 Q2A+Oracle 成对对照中，换用 S10 使 Top-1 **34.50%→37.67%（+3.17pp）**。
+
+**结论：在潜空间生成中，锚点定义了“从哪里走”，解码器定义了“走到哪里看起来是什么”；它们都不是可随意替换的透明工程细节。**
+
+S10 的 **Decoder 替换收益**已经成立，但“增益独立来自剪枝频谱正则，而非绘画域微调”仍需 Full Decoder matched fine-tuning 对照。
+
+[证据：V22 锚点](docs/v22/V22_P1_RESULTS.md) · [R12](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) · [S10 对照](docs/v6/Q2A_ORACLE_DECODER_RANKING.md)
+
+### 06｜**目标风格的“典型样本”比“分类器最确信的极端样本”更适合生成；但不必迷信昂贵检索。**
+
+V20 的高 margin 目标原型被 Minimalism 的展厅装置照片污染：分类器非常确定，却不能给生成网络提供典型目标画风。换成高密度区域的多原型，结果显著改善。
+
+V22 进一步拆解：K4/K8/Core-K8/随机训练实例的表现**全部处于约 ±0.5pp**；真正关键的是**不被极端样本或单一类重心绑架**，不是 Core-kNN 那个复杂筛选过程本身。
+
+**结论：让生成模型学习“画派流形上的多种正常画法”，不要拿判别器最极端的例子冒充画派本质。**
+
+[证据：V20 原型失败](docs/next1118/V20_RESULTS.md) · [V22 D 组消融](docs/v22/V22_P1_RESULTS.md)
+
+---
+
+## 五、被我们亲手否定的“漂亮想法”
+
+这些失败不是脚注，是确定了下一步**不该再浪费算力**的研究成果。
+
+| 方向 | 被什么实验否定 | 当前裁决 |
+|---|---|---|
+| **持续扩容自配对 Flow** | V15 生成涨 **+13pp**，编辑反掉 **−4pp** | 不先修训练终点，禁止把 Scaling 当成解法。[V15](docs/v15/WEAVE_V15_SCALING_RESULTS.md) |
+| **依靠通用 KDE/检索梯度补画派** | V10.2 混合 KDE 能解释目标 KDE **95%** 的恢复方向 | 艺术流形≠指定风格流形。[V10.2](docs/v10_2/V10_2_RESULTS.md) |
+| **只增加内容门控和高分辨率源结构** | V12 门控不绑定；V22 S32 **−17～−19pp** | 内容保护要选对尺度，不能靠更多硬约束。[V12](docs/v12/V12_GCL_RESULTS.md) · [V22](docs/v22/V22_P1_RESULTS.md) |
+| **用 Stiefel Gram 零泄漏当生成成功证据** | Q32 可达到随机探针底线，但 V25 主线未必使用它 | Q32 是值得尊重的表征实验，**不是已证明的最优生成模块**。[K0](docs/v26/4090/K0_Q32_FEATURE_AUDIT.md) |
+| **无条件增加局部参考 Attention** | V26 C2nt 禁用/置零/换错 Value，使内容 DINO-C **+0.04～0.05** | 至少在该模型，局部条件拖累了内容；应优先审查 Global-only。[K1](docs/v26/4090/K1_REFATTN_CAUSAL_AUDIT.md) |
+| **靠 SR-CFG 推理差分“强行甩掉源风格”** | V26 基线 Top-1 **42.17%**，SR 扫描最高约 **40.3%**；Rococo 仍近 0 | **训练没学到的目标方向，推理差分不能凭空造出来。** [V26](docs/1120/V26_RESULTS_SUMMARY.md) |
+| **只修跨画派采样就能救 C2nt** | V26-L0 同配方 1200 步：Top-1 **16.17%→11.33%/12.00%** | 换参考池不等于换监督目标；L0 的弱风格训练与历史 C2nt 最优点不混比。[L0](docs/v26/4090/L0_CROSSSTYLE_CAUSAL.md) |
+| **SWD 在风格辨识上“13 倍更强”** | 更正后的 AUC：VGG 均值 **0.673**，SWD **0.661**，Gram **0.649** | 13× 来自距离量纲误比；SWD 的真实潜力是**互补梯度**（cos **0.179**），生成收益待训练验证。[V26 更正](docs/1120/PROGRESS.md) |
+| **减少 Flow 步数必牺牲指标** | V26 C2nt **10 步 RK2→4 步 Euler**：Top-1 **42.17%→43.17%**，速度场求值约 **5× 更少**；但 DINO-S **0.5236→0.5112** | **步数不是越多越好，但 Top-1 上升不等于全面更好。** [V26](docs/1120/PROGRESS.md) |
+
+特别注意：V23 双分支 **+8/+14.83pp** 是**修复内容条件被清零的错误**，不是新的理论模块；V22 固定门控曾经有效，但 V25 逐路线测试表明“永远删除动态门控/永远使用双分支”同样错误。[V23](docs/v23/V23_RESULTS.md) · [V25 审计](docs/v25/ABLATION_LEDGER.md)
+
+---
+
+## 六、下一场硬仗：把五画派强迁移变成真正的任意参考迁移
+
+**我们已经不缺五画派可分的风格表示，也不缺很强的闭集生成能力；现在缺的是“具体参考图 → 正确跨风格终点 → 保留内容的传输轨迹”这条完整监督链。**
+
+V26 提供了非常直接的诊断：
+
+- C2nt 局部 RefAttn 不仅没有稳定提供风格收益，反而在干预实验中损害内容；参考差分速度的影响沿生成轨迹衰减。[K1](docs/v26/4090/K1_REFATTN_CAUSAL_AUDIT.md)
+- C2nt 在 SG-25 的 125 个 OOD 配对上确实响应参考：DINO-S 增量 **+0.2216**、换参考输出距离 **0.5349**；但 OOD DINO-C **0.3566**。**有参考响应，不等于有可用的任意参考迁移器。** [V26](docs/1120/V26_RESULTS_SUMMARY.md)
+- 强制跨画派参考采样没有救回自配对训练（L0）；**条件必须与跨风格的监督终点真正一致**。[L0](docs/v26/4090/L0_CROSSSTYLE_CAUSAL.md)
+- CSD 对真实 Rococo 留出图的正确识别达到 **90%**，ER 达 **98.3%**；C2nt 的 Rococo 近零不应轻易推给“分类器不认识这个画派”。[K2-C 正对照](docs/1120/PROGRESS.md)
+
+**下一代 PRISM 的目标不是堆一套更复杂的 C2nt，而是让已经有强迁移能力的 PRISM-Flow 获得可靠的参考条件：优先全局连续风格弦，明确的跨风格训练终点，结构安全的局部外观注入，最后再做少步蒸馏。**
+
+当前 V26-L 中的 PRISM-Flow 任意参考化、Full Decoder 匹配微调、SWD 实训与 Rollout 是**正在验证的研究方向**，不是可以提前写成成功结果的模块。[V26-L 计划](docs/1120/08_v26_long_plan.md) · [实时进展](docs/1120/PROGRESS.md)
+
+---
+
+## 七、复现入口与数据出处
+
+| 入口 | 内容 |
 |---|---|
-| [Active source](src/) and [experiment packages](exp/) | PRISM inference/evaluation utilities; per-version training and ablations in exp/v8–v26 |
-| [Model assets and per-checkpoint recipes](docs/ours/README.md) | Selected configurations, provenance, expected metrics. Large weight and image files can be **gitignored/unavailable in a plain clone**. |
-| [Frozen evaluation manifest](eval_protocol/tasks_750.json) and [evaluation definitions](docs/HIGHLIGHTS.md) | Reproduce the five-style task, Cross600/Same150 split, decoder, metrics, and comparison conventions |
-| [Historic measured CSV](docs/performance/metrics.csv) | Machine-readable measurements through its documented build scope; **not** a substitute for later V22–V26 reports |
-| [V25 model lineage](docs/v25/MODEL_LINEAGE.md) and [cost audit](docs/v25/audits/a07_cost_model.md) | Checkpoint vs solver identity, cached-vs-fresh work, CFG multiplicity, and real latency accounting |
-| [All experiments index](exp/README.md) and [docs index](docs/README.md) | Code entry points and earlier scientific records (some index prose is a historical snapshot) |
-| [Original WEAVE reproduction](docs/reproduction/baseline_reproduction.md) and [legacy experiments](docs/legacy_root/EXPERIMENTS.md) | Original 8-step DWT/Flow/AdaIN baseline; **not** the active PRISM training recipe |
-| [Current ICME paper source](docs/icme2027/README.md) | Manuscript engineering; statements must be reconciled with V22–V26 before submission |
+| [模型与 checkpoint 配方](docs/ours/README.md) | 代表模型的权重、具体解码/锚点/CFG/求解器配置与图像结果 |
+| [历史指标总台账](docs/performance/MASTER_LEDGER.md) · [机器可读指标](docs/performance/metrics.csv) | 历史同协议任务的测量行；V22–V26 的后续实验以对应阶段报告为准 |
+| [完整文档索引](docs/README.md) · [实验代码索引](exp/README.md) | V6–V26 的源码、训练脚本、审计与失败实验 |
+| [S10 Decoder 与评测协议](docs/vae/README.md) · [运行成本审计](docs/v25/audits/a07_cost_model.md) | 潜变量缩放、参数量、NFE/CFG 倍数、缓存与真实端到端速度差异 |
+| [旧 WEAVE 复现](docs/reproduction/baseline_reproduction.md) · [旧版归档](docs/legacy_root/EXPERIMENTS.md) | DWT/Flow/AdaIN 初期项目，**不是**现代 PRISM 默认配方 |
+| [V25 模型血缘](docs/v25/MODEL_LINEAGE.md) · [消融证据评级](docs/v25/ABLATION_LEDGER.md) | 哪个效果是新权重、哪个是锚点变化、哪个是 bug 修复 |
+| [ICME 论文工程](docs/icme2027/README.md) · [工程约定](AGENTS.md) | 稿件与数据口径核对；以已提交的实测审计为准 |
 
-Install the declared Python dependencies with **pip install -r requirements.txt**. Run the non-GPU repository guardrails with **python -m pytest tests/test_markdown_links.py tests/test_no_absolute_paths.py -q**. Follow the specific linked model recipe before starting GPU training or inference: the selected checkpoint, encoder/decoder scaling convention, reference bank, CFG branches, solver, and evaluation seed materially affect the output. For S10, use **src.utils.load_s10_decoder** and **src.utils.decode_s10** exactly as specified in [AGENTS.md](AGENTS.md).
+**协议底线（不冲淡结论，但必须守住）：** 当前标准评测为 **test750 = Cross600 + Same150**，主表报告 Cross600；现代对照统一使用 S10 解码和冻结裁判。test750 已经多次用于模型开发与选择，**不是独立全新盲测集**。图像保真、风格分类与速度必须分别报告；cached/latent/4090/3060/单图/批量计时绝不混称。严格任意参考与五画派原型条件也绝不混为一谈。[评测定义](docs/HIGHLIGHTS.md) · [耗时审计](docs/v25/audits/a07_cost_model.md)
 
-## Scope, citation, and license
+安装依赖：**pip install -r requirements.txt**。复现时先按具体模型的 [RECIPE](docs/ours/README.md) 恢复 checkpoint 和参数，再运行 [实验脚本](exp/README.md)；无需假装整个 V0–V26 共享同一个训练入口。S10 latent 缩放与 post_quant_conv 请严格遵守 [AGENTS.md](AGENTS.md)。
 
-This repository documents a research program, including negative results and implementation corrections. A five-style classifier result is **not** general-purpose, unseen-style transfer performance. Results on repeatedly used test750 tasks are **not a held-out-paper acceptance benchmark**. No claim is made that all current methods share an identical compute budget or that V26 exploratory models supersede the strong PRISM-Flow family.
+---
 
-The original WEAVE-era submission artifacts are retained under [aaai2027_v4](aaai2027_v4/) and [legacy experiments](docs/legacy_root/EXPERIMENTS.md). For citation metadata see [CITATION.cff](CITATION.cff); check the status of any manuscript before describing it as published.
+### 我们的研究主张
 
-Licensed under [MIT](LICENSE).
+> **风格迁移不是把一张图变得“不像自己”，也不是让生成器学会画某种画派。**
+>
+> **它要保留源图“画什么”，拒绝源图“怎么画”，再根据目标参考重新生成“怎么画”。**
+>
+> **决定成败的不是模型有多少参数，而是训练目标有没有真正要求这次转换，以及网络是否给目标风格留下了可生成的自由度。**
+
+MIT License：[LICENSE](LICENSE)。历史投稿和引用信息保留在 [CITATION.cff](CITATION.cff) 与 [旧工程](aaai2027_v4/)；论文是否录用请以正式发表记录为准。
