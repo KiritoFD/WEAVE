@@ -187,6 +187,10 @@ def train_l1_arm(bundle, c21, v16_tr, teacher: dict, arm: str, *,
                  init_ckpt: Path | None = None, use_refattn: bool = False,
                  data_frac: float = 1.0, route_balance: bool = False) -> Path:
     """L1 训练臂 (label-free 条件 + 严格跨画派参考 + 自锚/教师两种监督)."""
+    out_p = OUT / "oneshot_val" / f"{arm}.pt"
+    if out_p.exists():  # 重入保护 (函数入口): 队列重启跳过已完成训练
+        print(f"[L1 {arm}] Reusing {out_p}", flush=True)
+        return out_p
     import copy
 
     import exp.v25 as _v25
@@ -397,11 +401,7 @@ def train_l1_arm(bundle, c21, v16_tr, teacher: dict, arm: str, *,
             print(f"[L1 {arm}] step {step} ({step / max(time.time() - t0, 1e-6):.3f} ups, "
                   f"{time.time() - t0:.0f}s)", flush=True)
 
-    out_p = OUT / "oneshot_val" / f"{arm}.pt"
     out_p.parent.mkdir(parents=True, exist_ok=True)
-    if out_p.exists():  # 重入保护: 队列重启跳过已完成训练
-        print(f"[L1 {arm}] Reusing {out_p}", flush=True)
-        return out_p
     torch.save({"fm": ema_fm.state_dict(), "adapter": ema_ad.state_dict(),
                 "fib_mean": fib_mean.cpu(), "fib_std": fib_std.cpu(),
                 "meta": {"arm": arm, "supervision": supervision, "local_attn": local_attn,
