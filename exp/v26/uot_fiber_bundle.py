@@ -54,8 +54,8 @@ def uot_gamma_bar(d16_src: torch.Tensor, d16_ref: torch.Tensor, *,
     无需学习 W_Q/W_K, 直接余弦代价).
     """
     B = d16_src.shape[0]
-    q_src = NF.normalize(d16_src.float().flatten(2).transpose(1, 2), dim=-1)   # (B, 256, 384)
-    q_ref = NF.normalize(d16_ref.float().flatten(2).transpose(1, 2), dim=-1)
+    q_src = F.normalize(d16_src.float().flatten(2).transpose(1, 2), dim=-1)   # (B, 256, 384)
+    q_ref = F.normalize(d16_ref.float().flatten(2).transpose(1, 2), dim=-1)
     C = 1.0 - torch.bmm(q_src, q_ref.transpose(1, 2))                          # (B, 256, 256)
     return log_domain_uot(C, eps=eps, rho1=rho1, rho2=rho2, n_iter=n_iter)
 

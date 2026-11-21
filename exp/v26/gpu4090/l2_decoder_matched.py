@@ -48,11 +48,13 @@ def _load_full_vae(device: str):
     return vae
 
 
-def wrap_decoder(name: str, model, device: str, *, enable_grad: bool = False):
+def wrap_decoder(name: str, model, device: str, *, enable_grad: bool = False,
+                 dtype: torch.dtype = torch.float16):
     """统一解码包装 fn(z_scaled) → rgb01 [0,1]; name ∈ {full*, s10*}.
 
     enable_grad: S10 路径 (decode_s10 默认 inference_mode) 训练时必须显式开启,
-    否则 D2 FT 反传无梯度路径 (v2 修复).
+    否则 D2 FT 反传无梯度路径 (v2 修复). dtype: S10 计算精度 — D2 FT 用 bfloat16
+    (fp16 无 GradScaler 梯度溢出 → loss=nan, v3 修复).
     """
     if name.startswith("full"):
         def fn(z):
@@ -60,8 +62,8 @@ def wrap_decoder(name: str, model, device: str, *, enable_grad: bool = False):
             return (out / 2 + 0.5).clamp(0.0, 1.0)
         return fn
     def fn(z):
-        return decode_s10(model, z, batch=min(len(z), 16), enable_grad=enable_grad,
-                          output_cpu=False).clamp(0.0, 1.0)
+        return decode_s10(model, z, batch=min(len(z), 16), dtype=dtype,
+                          enable_grad=enable_grad, output_cpu=False).clamp(0.0, 1.0)
     return fn
 
 
@@ -69,10 +71,11 @@ def wrap_decoder(name: str, model, device: str, *, enable_grad: bool = False):
 
 def _ft(s10_or_decoder_module, wrap_fn, train_latents: torch.Tensor, ref_fn,
         steps: int = L2_STEPS, batch: int = L2_BATCH, lr: float = L2_LR,
-        device: str = "cuda", tag: str = "") -> None:
+        device: str = "cuda", tag: str = "", amp: bool = True) -> None:
     """同域蒸馏 FT: 模型解码(latent) → 对齐 D0 (冻结 Full) 的重建输出.
 
-    与 S10 历史训练口径一致 (蒸馏到 Full VAE 重建), D1/D2 完全同配.
+    与 S10 历史训练口径一致 (蒸馏到 Full VAE 重建), D1/D2 完全同配 (batch/lr/步数).
+    amp=True: D1 bf16 autocast (Full decoder 大激活); D2 传 amp=False 走 fp32.
     """
     import exp.v25 as _v25
     _v25.seed_all(20266200)
@@ -87,7 +90,10 @@ def _ft(s10_or_decoder_module, wrap_fn, train_latents: torch.Tensor, ref_fn,
         z = train_latents[idx].to(device).float()
         with torch.no_grad():
             target = ref_fn(z)
-        with torch.autocast("cuda", torch.bfloat16):
+        if amp:
+            with torch.autocast("cuda", torch.bfloat16):
+                rgb = wrap_fn(z).float()
+        else:
             rgb = wrap_fn(z).float()
         loss = F.l1_loss(rgb, target) + 0.5 * F.mse_loss(rgb, target)
         opt.zero_grad(set_to_none=True)
@@ -195,10 +201,13 @@ def run_l2(pool: str, device: str = "cuda") -> str:
     _ft(full, wrap_decoder("full_ft", full, device), train_latents, ref_fn,
         device=device, tag="D1_full_ft")
 
-    # D2: S10 同域 FT (同同步数)
-    s10_ft = load_s10_decoder(device)
-    _ft(s10_ft, wrap_decoder("s10_ft", s10_ft, device, enable_grad=True), train_latents, ref_fn,
-        device=device, tag="D2_s10_ft")
+    # D2: S10 同域 FT (同同步数) — fp32 端到端 (fp16 反传溢出 → nan; bf16+Adam 有
+    # 舍入停滞风险; S10 仅 10.66M, batch=1 fp32 激活 ~3GB 完全安全)
+    s10_ft = load_s10_decoder(device).to(torch.float32)
+    _ft(s10_ft, wrap_decoder("s10_ft", s10_ft, device, enable_grad=True,
+                             dtype=torch.float32), train_latents, ref_fn,
+        device=device, tag="D2_s10_ft", amp=False)
+    s10_dt = next(s10_ft.parameters()).dtype
     for p in full.parameters():
         p.requires_grad_(False)
     torch.cuda.empty_cache()
@@ -206,7 +215,7 @@ def run_l2(pool: str, device: str = "cuda") -> str:
     dec_wraps = {
         "D0_full_frozen": wrap_decoder("D0", full, device),
         "D1_full_ft": wrap_decoder("D1", full, device),
-        "D2_s10_ft": wrap_decoder("D2", s10_ft, device),
+        "D2_s10_ft": wrap_decoder("D2", s10_ft, device, dtype=s10_dt),
         "S10_as_is": wrap_decoder("S10", s10_asis, device),
     }
     results = {"task": "V26-L L2 decoder matched-FT attribution",

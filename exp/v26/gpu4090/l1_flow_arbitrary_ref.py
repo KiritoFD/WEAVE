@@ -277,6 +277,7 @@ def train_l1_arm(bundle, c21, v16_tr, teacher: dict, arm: str, *,
         return c, r
 
     sw_chunk = 2
+    nan_skips = 0
     t0 = time.time()
     for step in range(1, updates + 1):
         scale = 0.2 + 0.4 * (1.0 + math.cos(math.pi * step / max(1, updates)))
@@ -398,8 +399,17 @@ def train_l1_arm(bundle, c21, v16_tr, teacher: dict, arm: str, *,
             ((lambda_sw * l_style + lambda_c * l_cont) * w_frac).backward()
 
         all_p = [p for g_ in opt.param_groups for p in g_["params"]]
-        nn.utils.clip_grad_norm_(all_p, 1.0)
-        opt.step()
+        # 非有限梯度守卫: swap 损失经 fp16 S10 decode 反传, 偶发溢出会毒化权重
+        # (nan 权重不可逆) — 检出即整步跳过并计数
+        grads = [p.grad for p in all_p if p.grad is not None]
+        if grads and not all(bool(torch.isfinite(g).all()) for g in grads):
+            nan_skips += 1
+            print(f"[L1 {arm}] step {step}: non-finite grads → step skipped "
+                  f"(累计 {nan_skips})", flush=True)
+            opt.zero_grad(set_to_none=True)
+        else:
+            nn.utils.clip_grad_norm_(all_p, 1.0)
+            opt.step()
         with torch.no_grad():
             for pe, pw in zip(ema_fm.parameters(), fm.parameters()):
                 pe.mul_(0.996).add_(pw, alpha=0.004)
@@ -415,6 +425,7 @@ def train_l1_arm(bundle, c21, v16_tr, teacher: dict, arm: str, *,
                 "meta": {"arm": arm, "supervision": supervision, "local_attn": local_attn,
                          "updates": updates, "micro": micro, "accum": accum,
                          "lambda_sw": lambda_sw, "lambda_c": lambda_c, "seed": seed,
+                         "nan_grad_skips": nan_skips,
                          "ref_sampling": "strict_cross", "label_free_inference": True,
                          "updated_utc": utc()}}, out_p)
     print(f"[L1 {arm}] saved {out_p} in {(time.time() - t0) / 60:.1f} min", flush=True)
