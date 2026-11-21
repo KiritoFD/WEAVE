@@ -1,4 +1,4 @@
-# exp/ — 实验代码包总索引（V8 → V19）
+# exp/ — 实验代码谱系（V8 → V26）
 
 > **仓库规范**：`exp/` 仅存放模块化实验代码（均以 `python -m exp.<pkg>.<mod>` 从仓库根运行，统一经 `paths.py` / 相对路径寻址，通过 `tests/test_no_absolute_paths.py` 防硬编码护栏校验）。运行时权重、缓存与评测输出一律写入 `runs/`（gitignore 隔离），跨代统一指标汇总于 [`docs/performance/`](../docs/performance/)。
 
@@ -18,8 +18,22 @@
 | `exp/v17/` | 已收尾 | 条件探针/CFG/五标签互换（`P0`，揭示 ER/Uki 先验坍缩与 59% 源锁定）、DINO 上下文 `u_tgt−u_src` 学生（`P2_S4` 达 `13.33%` 反超教师）、Signed RGB-H2（`P3`）、均衡 FM 残差（`P4`） | `python -m exp.v17.run` | [`docs/v17/V17_RESULTS_EVAL.md`](../docs/v17/V17_RESULTS_EVAL.md) |
 | `exp/v18/` | 已完成突破 | ① `Gate 0` 零色相亮度对比度 + 空间白化灰度 DINO（泄漏降至 `18.3%`）；② **Track A** 校准 `LD4+`（`38.0%–42.2%`）与纯单步 `FastDINOStudent`（`33.8%–38.0%`）；③ **Track B (`CCF`)** 确立 $\tau_0=0$ 自配对控制流的 `18.67%` 笔触几何天花板 | `python -m exp.v18.run_v18` | [`docs/v18/V18_RESULTS.md`](../docs/v18/V18_RESULTS.md) |
 | `exp/v19/` | 已收官 | **`PRISM v2` 正交商—纤维对偶 $(\Pi_\perp,\Pi_\parallel)$**：免源标签连续弦 $e(x_s\to\tau)$ + 潜色度正交分裂各向异性信任域 + 穿过可微 `S10` 的无归一化 `VGG-16+Oklab` 均衡教师（`T4` `59.00%` Top-1，救活 `Ukiyo-e 45%` / `ER 33.3%`）+ 语义路由单步网络（`PRISM-1` `44.33%–50.17%` @ `17.0 ms`） | `python -m exp.v19.run_v19` | [`docs/next1118/V19_RESULTS.md`](../docs/next1118/V19_RESULTS.md) |
-| `exp/v20/` | 已收官 | **突破 `DINO-S` / `StyleGallery` 帕累托前沿**：纯训练集 `kNN-30` 核心流形原型（剔除 WikiArt 3D 展厅离群点）+ 仅 $16\times 16$ 瓶颈层注入结构的 **Coarse-16 `SLFUNet` 分段视界流**（`DINO-S = 0.5789`, `Affinity = 0.6683`, `Top-1 = 64.00%`）+ 多尺度 `Patch-SWD`（`64.33%` Top-1）+ 零 DINO `PRISM-Flash` 消融 | `python -m exp.v20.run_v20` | [`docs/next1118/V20_RESULTS.md`](../docs/next1118/V20_RESULTS.md) |
-| **`exp/v21/`** | **最新收官** | **Stiefel 极分解正交商 + 零类别表 1-Shot 跨注意力流**：消除对角白化残留的 `92.33%` 二阶 Gram 泄漏（降至 `20.00%` 随机水平），支持任意单图 1-Shot（同 `StyleGallery` 参考图达 `0.6006` DINO-S / `0.6761` Affinity @ `135.4 ms`）与 4-Shot 画廊模式（`0.6016` DINO-S） | `python -m exp.v21.run_v21` | [`docs/next1118/05_V21_STIEFEL_ONESHOT_THEORY.md`](../docs/next1118/05_V21_STIEFEL_ONESHOT_THEORY.md) |
+| `exp/v20/` | 已收官 | **提高闭集原型条件下的 DINO-S / Pareto 工作点（非任意参考全指标支配）**：纯训练集 `kNN-30` 核心流形原型（剔除 WikiArt 3D 展厅离群点）+ 仅 $16\times 16$ 瓶颈层注入结构的 **Coarse-16 `SLFUNet` 分段视界流**（`DINO-S = 0.5789`, `Affinity = 0.6683`, `Top-1 = 64.00%`）+ 多尺度 `Patch-SWD`（`64.33%` Top-1）+ 零 DINO `PRISM-Flash` 消融 | `python -m exp.v20.run_v20` | [`docs/next1118/V20_RESULTS.md`](../docs/next1118/V20_RESULTS.md) |
+| **`exp/v21/`** | 历史完成 | **Stiefel 极分解正交商 + 零类别表 1-Shot 跨注意力流**：消除对角白化残留的 `92.33%` 二阶 Gram 泄漏（降至 `20.00%` 随机水平），支持任意单图 1-Shot（同 `StyleGallery` 参考图达 `0.6006` DINO-S / `0.6761` Affinity @ `135.4 ms`）与 4-Shot 画廊模式（`0.6016` DINO-S） | `python -m exp.v21.run_v21` | [`docs/next1118/05_V21_STIEFEL_ONESHOT_THEORY.md`](../docs/next1118/05_V21_STIEFEL_ONESHOT_THEORY.md) |
+
+## 后续实验代码（V22–V26）
+
+这一部分专门修正旧索引停在 V21 的问题。**模块存在≠实验成功**；是否有效以所列 RESULTS/审计为准，尤其 V26-L 的排队任务。
+
+| 实验包 | 状态 | 重点问题 | 关键入口 / 证据 |
+|---|---|---|---|
+| `exp/v22/` | 完成 | 固定布局强度、参考适配器、最佳 checkpoint 与初始化锚点 | [`t4.py`](v22/t4.py) · [V22 结果](../docs/v22/V22_P1_RESULTS.md) |
+| `exp/v23/` | 完成 | CFG 条件清零 Bug、Anchor-Bridge、中尺度内容损失、One-Shot 跨风格监督 | [`p1_anchor_bridge.py`](v23/p1_anchor_bridge.py) · [V23 结果](../docs/v23/V23_RESULTS.md) |
+| `exp/v24/` | 完成 | PRISM-1/Flow 组合、O1/O3 局部参考的 RGB Value 与全局门控 | [`p0_o1_o3_value.py`](v24/p0_o1_o3_value.py) · [V24 进度](../docs/v24/PROGRESS.md) |
+| `exp/v25/` | 完成 / 部分模型冻结 | R12/R13 极高内容工作点、C2nt 参考条件、端到端成本核算 | [`r13_highcontent_r12.py`](v25/r13_highcontent_r12.py) · [V25 台账](../docs/v25/ABLATION_LEDGER.md) |
+| **`exp/v26/`** | 诊断完成，V26-L 仍执行中 | Q32、RefAttn、SR-CFG、局部性 Exp1/Exp2、跨画派教师、Full Decoder matched 与少步 | [`gpu4090/`](v26/gpu4090/) · [V26 文档索引](../docs/1120/README.md) |
+
+**关键纠偏**：V25 主线多数使用 `dino_16`，不能将 V21 的硬 Q32 当作所有生成模型的统一输入；C2nt 旧局部 `V` 在 V26 K1/Exp1 被判为不值得原样继承。V26-L L1 的早期 **F2=11% 因教师目标条件反置已作废**。[当前执行记录](../docs/1120/PROGRESS.md)。
 
 ## 依赖约定
 
