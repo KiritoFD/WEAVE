@@ -113,6 +113,15 @@ C2nt t45 × StyleGallery 25 类 125 对（`docs/v26/4090/data/sg25_c2nt_t45.json
 
 **L0 定论（回答七问①）**：真实跨画派参考采样**不能修复**失败——Top-1 反而 16.17%→11.3/12.0%（异画派参考把输出拉向无关风格），内容略升。**C2nt 的主要失败不由错误参考采样造成** → 支持"改换监督目标与主模型"，L1 教师监督主线正当。参考更换敏感性（swap）因运行进程缺 decode_s10 导入被防御式跳过，待队列后用保存 ckpt 单独补算。
 
+### ⚠️ 用户核查重大修复：L1 教师条件反置（2026-11-21）
+
+L1-F2 的教师构造被发现**用源画派自身条件生成教师目标**（`s = sid_all[i]` 取同画派 core exemplar）——跨画派参考条件 + 自画派监督目标自相矛盾，会**反向强化 Source-Style Lock**。修复：
+- 教师重建为**按 (content, target_style) 索引**：教师以参考图所属画派的 core exemplar 条件生成，缓存 (N,5,·) 重索引 + 同源切目标画派的 Oklab 色彩差一致性验证；
+- 缓存更名 `l1_teacher_v22dual_crossstyle.pt`（旧名 v20d2 与实际加载的 V22-Dual 不符，一并更正）；
+- **修复前的 F2=11.00% 读数作废**（矛盾监督下的失败不能解释为任意参考表征能力不足），F2 ckpt/评测已作废待重跑；
+- 同时修复：L1→L2 路由（L2 为独立必做阶段）、train_l1_arm 缺失的 use_refattn 参数。
+- 关联发现：V26 的 S1fix 只修复 accum RNG——参考池结构性同画派问题由 L0 因果实验裁决（跨画派采样非根因）。
+
 ### V26-L 长队列启动（2026-11-20T22:48 UTC，36h 预算）
 
 - 方案：[`08_v26_long_plan.md`](08_v26_long_plan.md)｜队列：`exp/v26/gpu4090/queue_k_long.py`（两级任务 + 三态路由 + 状态 JSON `queue_long_status.json`，含 science_tasks_done / budget_remaining / gpu_compute_seconds 等七字段，禁止无依据的提前完成）
