@@ -5,8 +5,13 @@ docs/1120/08_v26_long_plan.md §四. 与已完成的 queue_k.py 完全独立 (�
 机制要点 (用户 2026-11-21 指令, 防止提前宣布完成):
 - 一级 = L0–L6 科学必做; 二级 = 预算填充任务池 (第二/三种子、训练长度、数据规模、
   路线均衡、SWD K/尺度、参考敏感性、Decoder 追加训练);
+- **子进程隔离**: 每个科学阶段 / 池任务在独立进程中运行 (v2 修复) — 单进程长队列
+  会跨阶段累积 GPU 显存 (实测 L1→L2 间累积 ~21GB 导致 L2 OOM), 子进程退出即
+  完整释放; 与 src.eval.runner 裁判隔离同一设计原则;
 - 模块未实现的任务标记 blocked 并周期重试 (Agent B 在队列运行期间持续交付新模块,
   同步后自动拾取);
+- 池任务失败上限 (v2 修复): 连续失败 2 次即永久淘汰 — 否则 KeyError 类代码错误
+  会以 ~3s/次 空转烧光全部预算;
 - 状态 JSON 实时更新: science_tasks_done / budget_remaining / gpu_compute_seconds /
   wallclock_elapsed / pending_replications / blocked_tasks / valid_results_count;
 - 每任务三态路由 (success_next / failure_next / inconclusive_next), 失败不断链;
@@ -17,17 +22,18 @@ docs/1120/08_v26_long_plan.md §四. 与已完成的 queue_k.py 完全独立 (�
 """
 from __future__ import annotations
 
-import importlib
 import importlib.util
+import os
+import subprocess
+import sys
 import time
-import traceback
-from types import ModuleType
 
-from exp.v26 import OUT, ROOT, sanitize_cuda_env, save_json, seed_all, utc
+from exp.v26 import OUT, ROOT, save_json, seed_all, utc
 
 STATUS_PATH = OUT / "gpu4090" / "queue_long_status.json"
 BUDGET_HOURS = 36.0
 BLOCKED_RETRY_SEC = 900  # 15 min
+POOL_FAIL_CAP = 2        # 连续失败 2 次永久淘汰 (防 KeyError 空转烧预算)
 POOL_TASKS = [
     "pool_seed23", "pool_seed45", "pool_len3000", "pool_len6000", "pool_len9000",
     "pool_datascale25", "pool_datascale50", "pool_routebalance",
@@ -62,124 +68,69 @@ def _budget_left() -> float:
     return BUDGET_HOURS - (time.time() - STATUS["_t0"]) / 3600.0
 
 
+# ----------------------------------------------------- 子进程执行 ----
+
+def _spawn(mod: str, pool: str, device: str, extra: list[str] | None = None) -> int:
+    """独立进程运行一个阶段模块 (退出即释放全部 GPU 显存)."""
+    cmd = [sys.executable, "-u", "-m", mod, "--pool", pool, "--device", device]
+    if extra:
+        cmd += extra
+    env = os.environ.copy()
+    env.setdefault("PYTHONUNBUFFERED", "1")
+    r = subprocess.run(cmd, cwd=str(ROOT), env=env)
+    return r.returncode
+
+
 # ----------------------------------------------------- 任务模块发现 ----
 
-def _module_ready(name: str) -> ModuleType | None:
-    """模块文件已同步到 4090 → 可导入; 否则 None (blocked)."""
+def _module_ready(name: str) -> bool:
     try:
-        return importlib.import_module(name)
+        return importlib.util.find_spec(name) is not None
     except Exception:
-        return None
+        return False
 
 
-# ----------------------------------------------------- 任务实现包装 ----
-
-def _t_lpc() -> str:
-    """前置修正: K2-A 更正重跑 (margin bug + AUC) + K2-C 真图正对照."""
-    from exp.v26.k2_style_subject_audit import k2a_discriminability, save_k2a_results
-    from exp.v26.k2c_positive_control import run_positive_control
-
-    bundle = _shared_bundle()
-    a = k2a_discriminability(bundle, device="cuda")
-    save_k2a_results(a)
-    run_positive_control(_POOL, device="cuda")
-    return "done"
-
-
-def _t_l0() -> str:
-    from exp.v26.gpu4090.l0_crossstyle_causal import run_l0
-    run_l0(_POOL, device="cuda")
-    return "done"
-
-
-def _t_l1() -> str:
-    from exp.v26.gpu4090.l1_flow_arbitrary_ref import run_l1
-    return run_l1(_POOL, device="cuda")
-
-
-def _t_l2() -> str:
-    from exp.v26.gpu4090.l2_decoder_matched import run_l2
-    return run_l2(_POOL, device="cuda")
-
-
-def _t_l3() -> str:
-    from exp.v26.gpu4090.l3_swd_branch_ablation import run_l3
-    return run_l3(_POOL, device="cuda")
-
-
-def _t_l4() -> str:
-    from exp.v26.gpu4090.l4_rollout_bound import run_l4
-    return run_l4(_POOL, device="cuda")
-
-
-def _t_l5() -> str:
-    from exp.v26.gpu4090.l5_fewstep_q32 import run_l5
-    return run_l5(_POOL, device="cuda")
-
-
-def _t_l6() -> str:
-    from exp.v26.gpu4090.l6_closeout import run_l6
-    return run_l6(_POOL, device="cuda")
-
-
-# 一级科学必做任务: (id, fn, required, success_next, failure_next, inconclusive_next)
+# 一级科学必做任务: (id, 子模块列表, required, success_next, failure_next, inconclusive_next)
 SCIENCE_TASKS = [
-    ("L-PC", _t_lpc, True, "L0", "L0", "L0"),
-    ("L0", _t_l0, True, "L1", "L1", "L1"),
-    ("L1", _t_l1, True, "L2", "L2", "L2"),
-    ("L2", _t_l2, True, "L3", "L6", "L3"),
-    ("L3", _t_l3, True, "L4", "L4", "L4"),
-    ("L4", _t_l4, True, "L5", "L5", "L5"),
-    ("L5", _t_l5, True, "L6", "L6", "L6"),
-    ("L6", _t_l6, True, None, None, None),
+    ("L-PC", ["exp.v26.gpu4090.l_pc"], True, "L0", "L0", "L0"),
+    ("L0", ["exp.v26.gpu4090.l0_crossstyle_causal"], True, "L1", "L1", "L1"),
+    ("L1", ["exp.v26.gpu4090.l1_flow_arbitrary_ref"], True, "L2", "L2", "L2"),
+    ("L2", ["exp.v26.gpu4090.l2_decoder_matched"], True, "L3", "L6", "L3"),
+    ("L3", ["exp.v26.gpu4090.l3_swd_branch_ablation"], True, "L4", "L4", "L4"),
+    ("L4", ["exp.v26.gpu4090.l4_rollout_bound"], True, "L5", "L5", "L5"),
+    ("L5", ["exp.v26.gpu4090.l5_fewstep_q32"], True, "L6", "L6", "L6"),
+    ("L6", ["exp.v26.gpu4090.l6_closeout"], True, None, None, None),
 ]
 
-# 二级预算填充池 (模块后补; blocked 时跳过并在下轮重试)
-POOL_IMPLS: dict[str, str] = {
-    "pool_seed23": "exp.v26.gpu4090.pool_tasks:run_seed23",
-    "pool_seed45": "exp.v26.gpu4090.pool_tasks:run_seed45",
-    "pool_len3000": "exp.v26.gpu4090.pool_tasks:run_len3000",
-    "pool_len6000": "exp.v26.gpu4090.pool_tasks:run_len6000",
-    "pool_len9000": "exp.v26.gpu4090.pool_tasks:run_len9000",
-    "pool_datascale25": "exp.v26.gpu4090.pool_tasks:run_datascale25",
-    "pool_datascale50": "exp.v26.gpu4090.pool_tasks:run_datascale50",
-    "pool_routebalance": "exp.v26.gpu4090.pool_tasks:run_routebalance",
-    "pool_swd_kgrid": "exp.v26.gpu4090.pool_tasks:run_swd_kgrid",
-    "pool_ref_sensitivity": "exp.v26.gpu4090.pool_tasks:run_ref_sensitivity",
-    "pool_decoder_extend": "exp.v26.gpu4090.pool_tasks:run_decoder_extend",
-}
+# 二级预算填充池 (统一由 pool_tasks 子进程按任务名执行; blocked 时跳过并在下轮重试)
+POOL_MODULE = "exp.v26.gpu4090.pool_tasks"
 
 _POOL: str = ""
-_shared_bundle_cache = None
 
 
-def _shared_bundle():
-    global _shared_bundle_cache
-    if _shared_bundle_cache is None:
-        from exp.v19.fiber_duality import build_or_load_v19_foundation
-        _shared_bundle_cache = build_or_load_v19_foundation(_POOL, device="cuda")
-    return _shared_bundle_cache
-
-
-def _run_task(tid: str, fn, required: bool) -> str:
-    """执行单任务并返回三态结果 (done / failed / inconclusive / blocked)."""
+def _run_task(tid: str, mods: list[str], required: bool) -> str:
+    """执行单科学任务 (逐子模块顺序子进程) 并返回三态结果."""
     print(f"\n[QUEUE-L] ===== {tid} start {utc()} =====", flush=True)
     t0 = time.time()
-    try:
-        outcome = fn()
-    except Exception:
-        print(f"[QUEUE-L] ===== {tid} FAILED =====\n{traceback.format_exc()}", flush=True)
-        STATUS["gpu_compute_seconds"] += time.time() - t0
-        return "failed"
+    for m in mods:
+        if not _module_ready(m):
+            print(f"[QUEUE-L] {tid} BLOCKED (module {m} not synced)", flush=True)
+            STATUS["gpu_compute_seconds"] += time.time() - t0
+            return "blocked"
+        rc = _spawn(m, _POOL, "cuda")
+        if rc != 0:
+            print(f"[QUEUE-L] ===== {tid} FAILED ({m} rc={rc}) =====", flush=True)
+            STATUS["gpu_compute_seconds"] += time.time() - t0
+            return "failed"
     STATUS["gpu_compute_seconds"] += time.time() - t0
-    outcome = str(outcome).lower() if outcome is not None else "done"
-    return outcome if outcome in ("done", "failed", "inconclusive", "blocked") else "done"
+    return "done"
 
 
 def _find_route(tid: str, outcome: str) -> str | None:
-    for t_id, _fn, _req, s_next, f_next, i_next in SCIENCE_TASKS:
+    for t_id, _m, _req, s_next, f_next, i_next in SCIENCE_TASKS:
         if t_id == tid:
-            return {"done": s_next, "failed": f_next, "inconclusive": i_next}[outcome]
+            return {"done": s_next, "failed": f_next, "inconclusive": i_next,
+                    "blocked": None}[outcome]
     return None
 
 
@@ -192,7 +143,6 @@ def main():
     args = ap.parse_args()
     _POOL = args.pool
 
-    sanitize_cuda_env()
     seed_all(20261185)
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "gpu4090").mkdir(parents=True, exist_ok=True)
@@ -200,7 +150,8 @@ def main():
     STATUS["_t0"] = time.time()
     STATUS["started_utc"] = utc()
     _save_status()
-    print(f"[QUEUE-L] V26-L 36h long queue started {utc()} (budget {BUDGET_HOURS}h)", flush=True)
+    print(f"[QUEUE-L] V26-L 36h long queue started {utc()} (budget {BUDGET_HOURS}h, "
+          f"subprocess-isolated v2)", flush=True)
 
     # ---- 一级: 科学必做任务 (顺序 + 三态路由 + blocked 重试) ----
     idx = 0
@@ -208,18 +159,8 @@ def main():
         if _budget_left() <= 0.0:
             STATUS["finish_reason"] = "budget_exhausted_mid_science"
             break
-        tid, fn, required, _, _, _ = SCIENCE_TASKS[idx]
-        # 模块未同步 → blocked, 等待 Agent B 交付 (周期重试直到预算耗尽)
-        mod_name = {
-            "L-PC": None, "L0": "exp.v26.gpu4090.l0_crossstyle_causal",
-            "L1": "exp.v26.gpu4090.l1_flow_arbitrary_ref",
-            "L2": "exp.v26.gpu4090.l2_decoder_matched",
-            "L3": "exp.v26.gpu4090.l3_swd_branch_ablation",
-            "L4": "exp.v26.gpu4090.l4_rollout_bound",
-            "L5": "exp.v26.gpu4090.l5_fewstep_q32",
-            "L6": "exp.v26.gpu4090.l6_closeout",
-        }.get(tid)
-        if mod_name and importlib.util.find_spec(mod_name) is None:
+        tid, mods, required, _, _, _ = SCIENCE_TASKS[idx]
+        if any(not _module_ready(m) for m in mods):
             if tid not in STATUS["blocked_tasks"]:
                 STATUS["blocked_tasks"].append(tid)
             print(f"[QUEUE-L] {tid} BLOCKED (module not synced) — retry in {BLOCKED_RETRY_SEC}s "
@@ -233,7 +174,7 @@ def main():
         if tid in STATUS["blocked_tasks"]:
             STATUS["blocked_tasks"].remove(tid)
 
-        outcome = _run_task(tid, fn, required)
+        outcome = _run_task(tid, mods, required)
         entry = {"task": tid, "outcome": outcome, "utc": utc(),
                  "wallclock_h": round((time.time() - STATUS["_t0"]) / 3600.0, 3)}
         STATUS["task_history"].append(entry)
@@ -248,32 +189,44 @@ def main():
         names = [t[0] for t in SCIENCE_TASKS]
         idx = names.index(nxt) if nxt in names else idx + 1
 
-    # ---- 二级: 预算填充任务池 (模块未交付 → 周期重试直至预算耗尽, 不提前 finish) ----
+    # ---- 二级: 预算填充任务池 (每任务独立子进程; 连续失败 2 次永久淘汰) ----
     pending_pool = list(POOL_TASKS)
-    while pending_pool and _budget_left() > 0.05 and not STATUS.get("hard_block"):
+    fail_counts: dict[str, int] = {}
+    while pending_pool and _budget_left() > 0.05:
         progressed = False
         for pool_id in list(pending_pool):
             if _budget_left() <= 0.05:
                 break
-            target = POOL_IMPLS.get(pool_id, "")
-            mod_path, fn_name = target.split(":")
-            mod = _module_ready(mod_path)
-            if mod is None:
+            if not _module_ready(POOL_MODULE):
                 if f"{pool_id} (module pending)" not in STATUS["blocked_tasks"]:
                     STATUS["blocked_tasks"].append(f"{pool_id} (module pending)")
                 _save_status()
                 continue
             print(f"\n[QUEUE-L] ===== {pool_id} start {utc()} =====", flush=True)
             t0 = time.time()
-            try:
-                getattr(mod, fn_name)(_POOL, device="cuda")
+            rc = _spawn(POOL_MODULE, _POOL, "cuda", extra=[pool_id])
+            STATUS["gpu_compute_seconds"] += time.time() - t0
+            if rc == 0:
                 STATUS["task_history"].append({"task": pool_id, "outcome": "done", "utc": utc()})
                 STATUS["valid_results_count"] += 1
-            except Exception:
-                STATUS["task_history"].append({"task": pool_id, "outcome": "failed", "utc": utc()})
-                print(f"[QUEUE-L] {pool_id} FAILED\n{traceback.format_exc()}", flush=True)
-            STATUS["gpu_compute_seconds"] += time.time() - t0
+                pending_pool.remove(pool_id)
+                progressed = True
+            else:
+                fail_counts[pool_id] = fail_counts.get(pool_id, 0) + 1
+                STATUS["task_history"].append(
+                    {"task": pool_id, "outcome": f"failed({fail_counts[pool_id]}/{POOL_FAIL_CAP})",
+                     "utc": utc()})
+                print(f"[QUEUE-L] {pool_id} FAILED (rc={rc}, "
+                      f"{fail_counts[pool_id]}/{POOL_FAIL_CAP})", flush=True)
+                if fail_counts[pool_id] >= POOL_FAIL_CAP:
+                    pending_pool.remove(pool_id)  # 永久淘汰, 防止空转烧预算
             _save_status()
+        if not progressed:
+            # 全部剩余任务本轮都没成功 → 等待模块同步窗口, 不热转
+            if STATUS["blocked_tasks"] or fail_counts:
+                time.sleep(60)
+            else:
+                break
 
     # ---- 完成判定 (诚实口径): budget 耗尽才允许 finish ----
     all_done = all(t[0] in STATUS["science_tasks_done"] for t in SCIENCE_TASKS if t[2])
@@ -285,6 +238,8 @@ def main():
             else "science_complete_early_budget_remaining")
     elif blocked:
         STATUS["finish_reason"] = "blocked_tasks_remaining (modules not delivered in window)"
+    else:
+        STATUS["finish_reason"] = "science_incomplete (failed tasks routed through, budget remains)"
     _save_status()
     print(f"\n[QUEUE-L] ===== QUEUE FINISHED {utc()} =====", flush=True)
     print(f"[QUEUE-L] science_done={STATUS['science_tasks_done']} "

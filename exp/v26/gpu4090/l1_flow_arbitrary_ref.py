@@ -291,8 +291,8 @@ def train_l1_arm(bundle, c21, v16_tr, teacher: dict, arm: str, *,
             else:
                 # 跨画派教师: 目标画派 = 参考图所属画派 sid[ir] (修复: 旧版用源画派 → 自相矛盾)
                 tgt_styles = sid_all[ir]
-                assert bool(teacher_valid[ic, tgt_styles].all()), "教师缓存 valid 违例"
-                z_tgt = teacher_z[ic, tgt_styles].to(device).float()
+                assert bool(teacher["valid"][ic, tgt_styles].all()), "教师缓存 valid 违例"
+                z_tgt = teacher["z"][ic, tgt_styles].to(device).float()
             za = z_all[ic].to(device).float()
             B = len(ic)
             d16 = d16_all[ic].to(device).float()

@@ -65,9 +65,10 @@ def _train_and_eval(arm: str, *, seed: int, updates: int, init_ckpt: Path | None
     del cnx
     torch.cuda.empty_cache()
     tcache = build_teacher(pool, device=device)
-    teacher_z = torch.load(tcache, map_location="cpu", weights_only=False)["z_teacher"].float()
+    tdata = torch.load(tcache, map_location="cpu", weights_only=False)
+    teacher = {"z": tdata["z"], "valid": tdata["valid"]}
 
-    ckpt = train_l1_arm(bundle, c21, v16_tr, teacher_z, arm,
+    ckpt = train_l1_arm(bundle, c21, v16_tr, teacher, arm,
                         supervision="teacher", style_loss="vgg",
                         updates=updates, micro=8, accum=4, device=device, seed=seed,
                         init_ckpt=init_ckpt, data_frac=data_frac, route_balance=route_balance)
@@ -165,10 +166,17 @@ def run_decoder_extend(pool: str = "", device: str = "cuda") -> None:
 
 
 def main():
-    import sys
-    tasks = sys.argv[1:] if len(sys.argv) > 1 else list(POOL_FUNCS)
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--pool", default=str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16"))
+    ap.add_argument("--device", default="cuda")
+    ap.add_argument("tasks", nargs="*")
+    args = ap.parse_args()
+    from exp.v26 import sanitize_cuda_env
+    sanitize_cuda_env()
+    tasks = args.tasks or list(POOL_FUNCS)
     for t in tasks:
-        POOL_FUNCS[t](pool="", device="cuda")
+        POOL_FUNCS[t](args.pool, device=args.device)
 
 
 POOL_FUNCS = {
