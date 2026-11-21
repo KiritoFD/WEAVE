@@ -34,6 +34,7 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
     l3 = _j(OUT / "gpu4090" / "l3_swd_branch_ablation.json")
     l4 = _j(OUT / "gpu4090" / "l4_rollout_bound.json")
     l5 = _j(OUT / "gpu4090" / "l5_fewstep_q32.json")
+    pool = _j(OUT / "gpu4090" / "pool_results.json")
     pc = _j(OUT / "gpu4090" / "k2c_positive_control.json")
     sr = _j(OUT / "gpu4090" / "sr_selfref_identity_audit.json")
 
@@ -82,15 +83,35 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
              f"F2 (教师) Top-1={a1_v(f2r)} — 见 ABLATIONS 判读.")
     s_best = _best2(l3, "S")
     L.append(f"3. **Global-only 是否足够?** L3: S0={a1_v(l3.get('S0_vgg_global', {}))} "
-             f"S1={a1_v(l3.get('S1_swd_global', {}))} S2={a1_v(l3.get('S2_vgg_refattn', {}))} "
-             f"S3={a1_v(l3.get('S3_swd_refattn', {}))} (细节见 ABLATIONS).")
-    L.append("4. **SWD 是否有真实 Pareto 收益?** L3 对照裁决 (K2-B 已证梯度互补; 训练收益看 L3 表).")
-    d1, d2, d0 = (l2.get("referee", {}).get(k) for k in ("D1_full_ft", "D2_s10_ft", "D0_full_frozen"))
-    L.append(f"5. **S10 优势是域适配还是剪枝?** D0={_fmt(d0)} D1={_fmt(d1)} D2={_fmt(d2)} (recon 见 ABLATIONS).")
+             f"S1={a1_v(l3.get('S1_swd_global', {}))} S4(Bary)={a1_v(l3.get('S4_bary_global', {}))} "
+             f"S2={a1_v(l3.get('S2_vgg_refattn', {}))} S3={a1_v(l3.get('S3_swd_refattn', {}))} "
+             "— Global-only 足够; RefAttn 无贡献 (S2≈S0), 回退 S0 最简配方.")
+    L.append("4. **SWD 是否有真实 Pareto 收益?** 否 — 梯度尺度校准后 (82× 差距归一) "
+             "S1/S4 低于 S0 2.0-2.2pp Top-1 (DINO-C 略升/LPIPS 略降, tradeoff 形态移动而非净增益); "
+             "簇间分化度探针 Bary 0.0133 ≤ VGG 0.0135.")
+    d1, d2, d0, s10 = (l2.get("referee", {}).get(k) for k in
+                       ("D1_full_ft", "D2_s10_ft", "D0_full_frozen", "S10_as_is"))
+    L.append(f"5. **S10 优势是域适配还是剪枝?** 同 750 生成 latent 四解码: D0={_fmt(d0)} "
+             f"D1(真图FT)={_fmt(d1)} D2(S10真图FT)={_fmt(d2)} S10={_fmt(s10)} — 真图域 FT 对生成 "
+             f"latent 解码是负迁移 (LPIPS +0.11); S10 解码 23ms vs Full 121ms (5.2×) — "
+             f"S10 非瓶颈, 现役保留 (注意: D0 的 Top-1 优势限于 C2nt 臂 latent 分布).")
     t0r, t1r, t2r = (l4.get("arms", {}).get(k) for k in ("T0_preview_1step", "T1_rollout_trunc", "T2_rollout_full"))
-    L.append(f"6. **完整 BPTT vs 截断?** T0={_fmt(t0r)} T1={_fmt(t1r)} T2={_fmt(t2r)} — GPU 成本已记录.")
-    L.append(f"7. **PRISM-Flow 免重训减步?** L5 sweep (教师距离排序): {json.dumps(l5.get('sweep', {}).get('ranked_train_probe', []))[:220]}")
-    L += ["", "## 预算与成本核算", "", "```json", json.dumps(budget, ensure_ascii=False, indent=1)[:1500], "```"]
+    L.append(f"6. **完整 BPTT vs 截断?** T0={_fmt(t0r)} T1={_fmt(t1r)} T2={_fmt(t2r)} — "
+             "T1≈T2 (Δ0.9pp<噪声) → 截断足够, 全 BPTT 无独立价值; rollout 训练把 tradeoff "
+             "推向内容 (DINO-C 0.74) 牺牲 Top-1.")
+    t750 = l5.get("test750", {})
+    t750_s = " | ".join(f"{k.split('_', 2)[-1]}: Top1={v.get('csd_top1', 0)*100:.2f}% "
+                        f"DINO-C={v.get('dino_c')}" for k, v in t750.items())
+    L.append(f"7. **PRISM-Flow 免重训减步?** 可以基本无损 — 10 步基线 16.17% → 4 步 RK2-mid "
+             f"{t750_s} (Top-1 −0.34pp, DINO-C +0.012, LPIPS −0.029, NFE −60%); "
+             "教师距离排序: rk2_04_mid 最优.")
+    L += ["", "## 口径说明", "",
+          "- 队列状态 science_tasks_done 不含 L2/L5: 两者经 4 轮修复后由**队列外独立子进程**补跑完成, "
+          "json 已入库 (l2_decoder_matched.json / l5_fewstep_q32.json) — 本文档数字以 json 为准;",
+          "- L2 评测 latent = A0_legacy_nbr_t45 (C2nt 臂) 的 750 输出; L5 init = L3 best S0_vgg_global;",
+          "- L5 Q32 gate: relational_retention 0.5749 < 0.70 → FAIL, Q32 匹配训练未消耗 4090;",
+          "- 全部评测: 完整 test750 读 cross600, S10 解码, 冻结裁判 (src/eval/measure).",
+          "", "## 预算与成本核算", "", "```json", json.dumps(budget, ensure_ascii=False, indent=1)[:1500], "```"]
     r1.write_text("\n".join(L) + "\n", encoding="utf-8")
 
     # ---- V26_LONG_ABLATIONS.md ----
@@ -109,14 +130,26 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
     A += ["", "## L2 Decoder 归因", "", "| 解码器 | DINO-C | DINO-S | LPIPS | Top-1 |", "|---|---:|---:|---:|---:|"]
     for name, c in l2.get("referee", {}).items():
         A.append(f"| {name} | {c.get('dino_c')} | {c.get('dino_s')} | {c.get('lpips')} | {c.get('csd_top1', 0)*100:.2f}% |")
-    A += ["", "## L3 SWD × 分支 2×2", "", "| 臂 | DINO-C | DINO-S | LPIPS | Top-1 |", "|---|---:|---:|---:|---:|"]
-    for arm in ("S0_vgg_global", "S1_swd_global", "S2_vgg_refattn", "S3_swd_refattn"):
+    A += ["", "## L3 SWD × 分支 (含 S4 Bary-SWD)", "", "| 臂 | DINO-C | DINO-S | LPIPS | Top-1 |", "|---|---:|---:|---:|---:|"]
+    for arm in ("S0_vgg_global", "S1_swd_global", "S4_bary_global", "S2_vgg_refattn", "S3_swd_refattn"):
         c = l3.get(arm, {})
         if c:
             A.append(f"| {arm} | {c.get('dino_c')} | {c.get('dino_s')} | {c.get('lpips')} | {c.get('csd_top1', 0)*100:.2f}% |")
+    A += ["", "## L2 真图重建 (holdout 96, 参考=S10 自身解码 — S10 平凡占优)", "",
+          "| 解码器 | PSNR dB | DINO-cos | LPIPS | 解码 ms/b16 |", "|---|---:|---:|---:|---:|"]
+    for name, c in l2.get("recon", {}).items():
+        A.append(f"| {name} | {c.get('psnr_db')} | {c.get('dino_cos_recon')} | {c.get('lpips_recon')} | {c.get('decode_ms_b16')} |")
     A += ["", "## L4 Rollout 上界", "", "| 臂 | DINO-C | DINO-S | LPIPS | Top-1 | GPU s |", "|---|---:|---:|---:|---:|---:|"]
     for arm, c in l4.get("arms", {}).items():
         A.append(f"| {arm} | {c.get('dino_c')} | {c.get('dino_s')} | {c.get('lpips')} | {c.get('csd_top1', 0)*100:.2f}% | {c.get('gpu_train_seconds')} |")
+    A += ["", "## L5 少步网格 test750 (init=L3 best S0; 10 步基线=16.17%)", "",
+          "| 网格 | DINO-C | DINO-S | LPIPS | Top-1 |", "|---|---:|---:|---:|---:|"]
+    for tag, c in l5.get("test750", {}).items():
+        A.append(f"| {tag} | {c.get('dino_c')} | {c.get('dino_s')} | {c.get('lpips')} | {c.get('csd_top1', 0)*100:.2f}% |")
+    A += ["", "## Pool 预算填充 (init=F2 教师)", "", "| 臂 | DINO-C | DINO-S | LPIPS | Top-1 |", "|---|---:|---:|---:|---:|"]
+    for arm, c in pool.items():
+        if isinstance(c, dict) and "csd_top1" in c:
+            A.append(f"| {arm} | {c.get('dino_c')} | {c.get('dino_s')} | {c.get('lpips')} | {c.get('csd_top1', 0)*100:.2f}% |")
     r2.write_text("\n".join(A) + "\n", encoding="utf-8")
 
     # ---- V26_LONG_NEGATIVE_RESULTS.md ----
@@ -150,11 +183,13 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
 
 
 def a1_v(r: dict, dict_form: bool = False):
+    """L0 臂条目为嵌套 {'cross600': {...}} — 统一下钻 (修复 0.00% 解析 bug)."""
     if not r:
         return None if dict_form else "—"
+    inner = r.get("cross600", r)
     if dict_form:
-        return r
-    return f"{r.get('csd_top1', 0)*100:.2f}%"
+        return inner
+    return f"{inner.get('csd_top1', 0)*100:.2f}%"
 
 
 def _fmt(r: dict | None) -> str:
