@@ -196,6 +196,13 @@ $$\tilde{Q}_i^{\text{ref}} = \sum_j \bar{\Gamma}_{ij} Q_j^{\text{ref}}, \qquad \
 
 **判决路径**：Exp 2 域内困难画派大幅起飞 + SG-25 OOD 同步打穿 → 纯全局推理 + 训练期 Bary-SWD = 终局架构；域内起飞但 SG-25 出现瓶颈 → 阶段 II（解码高分辨层去几何纤维调制）。
 
+> **2026-11-22 判决落地（V26-L L3 五臂 + EXP2 双探针）**：实际兑现的是**第三分支** —
+> S4 Bary-SWD (14.17%) ≈ S1 SWD (14.00%) < S0 VGG (16.17%)，且 Bary 簇间分化度探针
+> (0.0133) ≤ VGG 基线 (0.0135)。"模型局部能力够用，缺训练期局部监督"与"摊销上限被
+> 训练损失解锁"两个假说均被否定；**SG-25 OOD 瓶颈未触发**（阶段 II 无必要）。摊销式
+> 局部性成立，但其载体是模型内部条件化 + 教师监督质量（F2 +5.17pp），不是外部局部损失。
+> 详见 `docs/v26/LOCALITY_UOT_FIBER_BUNDLE.md` §2.2-2.4。
+
 已实现: `exp/v26/gpu4090/exp2_locality_probes.py`（`inter_cluster_divergence()` — DINO k-means 聚类 + 逐簇 Haar 能量/Oklab 色彩均值方差）。
 
 ## 六、参考文献
