@@ -1,6 +1,6 @@
 {
   "task": "V26-K2 style-loss discriminability & CSD subject-bias audit",
-  "updated_utc": "2026-11-20T22:53:13.475514+00:00",
+  "updated_utc": "2026-11-21T04:10:10.087170+00:00",
   "k2a": {
     "n_images": 200,
     "meanvgg": {
