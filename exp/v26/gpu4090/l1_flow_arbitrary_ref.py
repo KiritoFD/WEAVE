@@ -167,7 +167,9 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
                  supervision: str, local_attn: bool = False,
                  lambda_sw: float = 0.5, lambda_c: float = 1.0,
                  updates: int = L1_UPDATES, micro: int = L1_MICRO, accum: int = L1_ACCUM,
-                 device: str = "cuda", seed: int = L1_SEED) -> Path:
+                 device: str = "cuda", seed: int = L1_SEED,
+                 style_loss: str = "vgg", swd=None, grad_scale: float = 1.0,
+                 init_ckpt: Path | None = None) -> Path:
     """L1 训练臂 (label-free 条件 + 严格跨画派参考 + 自锚/教师两种监督)."""
     import copy
 
@@ -200,7 +202,10 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
     del fiber_enc
 
     fm = SLFUNetV24OneShot(v_dim=192, use_conf_gate=True, use_global_fib=True).to(device)
-    fm.load_state_dict(torch.load(DUAL_CKPT, map_location="cpu", weights_only=False)["ema"], strict=False)
+    init_src = init_ckpt if init_ckpt is not None else DUAL_CKPT
+    ck_init = torch.load(init_src, map_location="cpu", weights_only=False)
+    init_state = ck_init["fm"] if "fm" in ck_init else ck_init["ema"]
+    fm.load_state_dict(init_state, strict=False)
     adapter = RefAdapter(dim=128).to(device)
     feature_fn = make_train_feature_fn("vgg", device)
     dec = load_s10_decoder(device)
@@ -256,6 +261,11 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
             y16 = y16_all[ic].to(device).float()
             u_style = adapter(u_all[ir], u_all[ic])
             u_glob = fib_n_all[ir]
+            if use_refattn:
+                d16_r_arm = d16_all[ir].to(device).float()
+                v16_r_arm = v16_tr[ir].to(device).float()
+            else:
+                d16_r_arm = v16_r_arm = None
             d16_aug = d16 + 0.08 * torch.randn_like(d16)
             d16_aug = d16_aug - d16_aug.mean(dim=(2, 3), keepdim=True)
             y16_aug = (y16 * (0.85 + 0.30 * torch.rand(B, 1, 1, 1, device=device))
@@ -273,7 +283,7 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
                             drop_style=torch.zeros(B, dtype=torch.bool, device=device),
                             drop_content=torch.zeros(B, dtype=torch.bool, device=device),
                             layout_scale=torch.ones(B, device=device),
-                            d16_ref=None, v16_ref=None, u_glob=u_glob)
+                            d16_ref=d16_r_arm, v16_ref=v16_r_arm, u_glob=u_glob)
                 loss = F.mse_loss(pred_v.float(), target_v) / accum
             loss.backward()
 
@@ -305,13 +315,17 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
             c1 = min(c0 + sw_chunk, S)
             w_frac = float(c1 - c0) / float(S)
             u_style_c = adapter(u_all[ir_sw[c0:c1]], u_src[c0:c1])
+            if use_refattn:
+                d16_r_c, v16_r_c = d16_r_sw[c0:c1], v16_r_sw[c0:c1]
+            else:
+                d16_r_c = v16_r_c = None
             with autocast(device):
                 v_prev = fm(z_init_s[c0:c1], y16_aug[c0:c1], d16_aug[c0:c1], slot0[c0:c1],
                             u_style_c, tau0_s[c0:c1],
                             drop_style=torch.zeros(c1 - c0, dtype=torch.bool, device=device),
                             drop_content=torch.zeros(c1 - c0, dtype=torch.bool, device=device),
                             layout_scale=torch.ones(c1 - c0, device=device),
-                            d16_ref=None, v16_ref=None, u_glob=u_glob_sw[c0:c1]).float()
+                            d16_ref=d16_r_c, v16_ref=v16_r_c, u_glob=u_glob_sw[c0:c1]).float()
             z_prev = z_init_s[c0:c1] + v_prev * (1.0 - tau0_s[c0:c1].view(-1, 1, 1, 1))
             rgb_prev = decode_s10(dec, z_prev.clamp(-5.0, 5.0), batch=c1 - c0,
                                   enable_grad=True, output_cpu=False)
@@ -323,7 +337,13 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
                     f_src = feature_fn(rgb_s)
             with autocast(device):
                 f_gen = feature_fn(rgb_prev)
-            l_style = (1.0 - F.cosine_similarity(f_gen["style"].float(), f_ref["style"].float(), dim=-1)).mean()
+            if style_loss == "swd":
+                assert swd is not None
+                l_style = swd.loss(rgb_prev, rgb_r,
+                                   gen=torch.Generator().manual_seed(step))["loss"] * grad_scale
+            else:
+                l_style = (1.0 - F.cosine_similarity(f_gen["style"].float(),
+                                                     f_ref["style"].float(), dim=-1)).mean()
             l_cont = (1.0 - F.cosine_similarity(f_gen["content"].float(), f_src["content"].float(), dim=-1)).mean()
             ((lambda_sw * l_style + lambda_c * l_cont) * w_frac).backward()
 
