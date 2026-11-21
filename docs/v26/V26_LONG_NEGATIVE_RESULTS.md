@@ -1,6 +1,6 @@
 # V26-L 负结果与 INCONCLUSIVE 记录
 
-> 收官时间: 2026-11-21T13:57:09.156019+00:00
+> 收官时间: 2026-11-21T23:49:37.254961+00:00
 
 | 项 | 结果 | 原因 / 处置 |
 |---|---|---|
@@ -8,5 +8,5 @@
 | L-PC 前置修正 | 首轮 FAILED (prototype indexing) | 已修复并单独补跑 (正对照 90% 天花板) |
 | SR-CFG (诊断阶段) | FAIL | 排斥方向非风格增益; 免标签 uncond 替代为副产品 |
 | C2nt 训练配方 | 冻结 | docs/1120/07 + SWD 试验预算内未完成 (3060 外部竞争) |
-| Q32 | K0 INCONCLUSIVE / L5 gate: "pending" | 关系度量修复后终裁 |
+| Q32 | K0 INCONCLUSIVE / L5 gate: "FAIL \u2192 \u4e0d\u542f\u52a8 Q32 \u8bad\u7ec3 (\u4e0d\u6d88\u8017 4090)" | 关系度量修复后终裁 |
 | K0 报告度量退化 | L2-norm retention 对正交基变体失效 | 关系度量 (L5) 修复 |
