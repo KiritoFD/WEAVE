@@ -75,7 +75,7 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
     a2 = l0.get("A2_core_cross", {})
     a0 = l0.get("A0_legacy_nbr", {})
     L.append(f"1. **C2nt 失败是否由错误参考采样造成?** 否 — A1/A2 严格跨画派采样 (Top-1 "
-             f"{a1_v(a1.get('A1_strict_cross', {}))}/{a1_v(a2)} ) 反而低于 A0 同画派 ({a1_v(a0)}), "
+             f"{a1_v(l0.get('A1_strict_cross', {}))}/{a1_v(a2)} ) 反而低于 A0 同画派 ({a1_v(a0)}), "
              "失败源于监督目标与主模型 (L1 教师/主线路线正当).")
     f1r, f2r = l1.get("F1_global_self", {}), l1.get("F2_global_teacher", {})
     L.append(f"2. **PRISM-Flow 能否免类别 ID 保持强风格?** F1 (self) Top-1={a1_v(f1r)}, "

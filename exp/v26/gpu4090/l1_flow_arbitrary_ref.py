@@ -169,7 +169,8 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
                  updates: int = L1_UPDATES, micro: int = L1_MICRO, accum: int = L1_ACCUM,
                  device: str = "cuda", seed: int = L1_SEED,
                  style_loss: str = "vgg", swd=None, grad_scale: float = 1.0,
-                 init_ckpt: Path | None = None) -> Path:
+                 init_ckpt: Path | None = None,
+                 data_frac: float = 1.0, route_balance: bool = False) -> Path:
     """L1 训练臂 (label-free 条件 + 严格跨画派参考 + 自锚/教师两种监督)."""
     import copy
 
@@ -229,13 +230,30 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
     for p in list(ema_fm.parameters()) + list(ema_ad.parameters()):
         p.requires_grad_(False)
 
-    style_pool = [(sid_all == s).nonzero(as_tuple=True)[0] for s in range(5)]
+    if data_frac < 1.0:
+        g_ds = torch.Generator().manual_seed(seed + 5)
+        ds_idx = torch.randperm(n_total, generator=g_ds)[:int(n_total * data_frac)]
+    else:
+        ds_idx = torch.arange(n_total)
+    ds_set = torch.zeros(n_total, dtype=torch.bool)
+    ds_set[ds_idx] = True
+    style_pool = [((sid_all == s) & ds_set).nonzero(as_tuple=True)[0] for s in range(5)]
+
+    HARD_ROUTE_STYLES = (3, 0)  # Rococo / Early_Renaissance 目标 (困难路线)
 
     def strict_cross(gen):
-        c = int(torch.randint(0, n_total, (1,), generator=gen))
+        c = int(ds_idx[int(torch.randint(0, len(ds_idx), (1,), generator=gen))])
         sc = int(sid_all[c])
-        others = torch.cat([style_pool[s] for s in range(5) if s != sc])
-        r = int(others[int(torch.randint(0, len(others), (1,), generator=gen))])
+        if route_balance and torch.rand(1, generator=gen).item() < 0.6:
+            hard = [h for h in HARD_ROUTE_STYLES if h != sc]
+            target_s = hard[int(torch.randint(0, len(hard), (1,), generator=gen))]
+            pool_h = ((sid_all == target_s) & ds_set).nonzero(as_tuple=True)[0]
+            if len(pool_h) == 0:
+                pool_h = torch.cat([style_pool[s] for s in range(5) if s != sc])
+            r = int(pool_h[int(torch.randint(0, len(pool_h), (1,), generator=gen))])
+        else:
+            others = torch.cat([style_pool[s] for s in range(5) if s != sc])
+            r = int(others[int(torch.randint(0, len(others), (1,), generator=gen))])
         assert int(sid_all[r]) != sc, "严格跨画派采样被违反"
         return c, r
 
@@ -361,6 +379,9 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
 
     out_p = OUT / "oneshot_val" / f"{arm}.pt"
     out_p.parent.mkdir(parents=True, exist_ok=True)
+    if out_p.exists():  # 重入保护: 队列重启跳过已完成训练
+        print(f"[L1 {arm}] Reusing {out_p}", flush=True)
+        return out_p
     torch.save({"fm": ema_fm.state_dict(), "adapter": ema_ad.state_dict(),
                 "fib_mean": fib_mean.cpu(), "fib_std": fib_std.cpu(),
                 "meta": {"arm": arm, "supervision": supervision, "local_attn": local_attn,

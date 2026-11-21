@@ -248,16 +248,19 @@ def main():
         names = [t[0] for t in SCIENCE_TASKS]
         idx = names.index(nxt) if nxt in names else idx + 1
 
-    # ---- 二级: 预算填充任务池 (机会性; 模块未交付则如实标记) ----
-    if _budget_left() > 0.05 and not STATUS.get("hard_block"):
-        for pool_id in POOL_TASKS:
+    # ---- 二级: 预算填充任务池 (模块未交付 → 周期重试直至预算耗尽, 不提前 finish) ----
+    pending_pool = list(POOL_TASKS)
+    while pending_pool and _budget_left() > 0.05 and not STATUS.get("hard_block"):
+        progressed = False
+        for pool_id in list(pending_pool):
             if _budget_left() <= 0.05:
                 break
             target = POOL_IMPLS.get(pool_id, "")
             mod_path, fn_name = target.split(":")
             mod = _module_ready(mod_path)
             if mod is None:
-                STATUS["blocked_tasks"].append(f"{pool_id} (module pending)")
+                if f"{pool_id} (module pending)" not in STATUS["blocked_tasks"]:
+                    STATUS["blocked_tasks"].append(f"{pool_id} (module pending)")
                 _save_status()
                 continue
             print(f"\n[QUEUE-L] ===== {pool_id} start {utc()} =====", flush=True)
@@ -272,7 +275,7 @@ def main():
             STATUS["gpu_compute_seconds"] += time.time() - t0
             _save_status()
 
-    # ---- 完成判定 (诚实口径) ----
+    # ---- 完成判定 (诚实口径): budget 耗尽才允许 finish ----
     all_done = all(t[0] in STATUS["science_tasks_done"] for t in SCIENCE_TASKS if t[2])
     blocked = list(STATUS["blocked_tasks"])
     STATUS["finished"] = True

@@ -106,6 +106,7 @@ def fewstep_sweep(pool: str, device: str = "cuda") -> dict:
 
     g = torch.Generator().manual_seed(20266110)
     sel = torch.randperm(len(z_all), generator=g)[:96]
+    u_src_probe = u_all[sel]
     zs = z_all[sel].to(device).float()
     d16 = d16_all[sel].to(device).float()
     tau0, wj = 0.45, 2.2
@@ -125,7 +126,7 @@ def fewstep_sweep(pool: str, device: str = "cuda") -> dict:
             y16 = coarse_y16_lcn(((zs[sl] * w_l).sum(1, keepdim=True) + b_l).clamp(0.0, 1.0)).float()
             d16b = d16[sl].to(device).float()
             tid = torch.full((B,), 2, dtype=torch.long, device=device)  # 训练探针: 固定 Min 目标 (内部样本)
-            u_style = ad(env["u_sg5"][torch.full((B,), 2, dtype=torch.long)].to(device), env["u_src_750"][sel[sl]].to(device))
+            u_style = ad(env["u_sg5"][torch.full((B,), 2, dtype=torch.long)].to(device), u_src_probe[sl].to(device))
             u_glob = env["fib_n_sg5"][torch.full((B,), 2, dtype=torch.long)]
             d16_r = env["d16_sg5"][torch.full((B,), 2, dtype=torch.long)].to(device)
             v16_r = env["v16_sg5"][torch.full((B,), 2, dtype=torch.long)].to(device)
