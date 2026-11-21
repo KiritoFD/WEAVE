@@ -7,8 +7,9 @@ docs/1120/08_v26_long_plan.md §L2 (独立于 L1 成败必做).
   D2        剪枝 S10 + 同域微调 (同数据/同步数/同 lr)           — 剪枝+域适配
   S10_as_is 历史剪枝 S10 (冻结)                                 — 现役解码器
 
-匹配 FT 口径: 蒸馏到 **D0 (冻结 Full) 的域内重建** (与 S10 历史训练的蒸馏对齐) —
-D1/D2 同一批训练 latents、同 batch、同 lr、同步数. 评测: **完全相同的生成 latent**
+匹配 FT 口径: **真图重建** (d5 子集, D1/D2 同 latents/同图/同步数) — D1 与 D0
+同权重初始化, 若蒸馏到 D0 重建则自恒等必然空转; 真图目标才有域适配语义.
+评测: **完全相同的生成 latent**
 (runs/v26/raw/A0_legacy_nbr_t45 的 750 输出) 分别解码 → 四裁判 (隔离进程) +
 holdout 真图重建 PSNR/LPIPS/DINO-cos + 4090 解码耗时.
 
@@ -48,15 +49,20 @@ def _load_full_vae(device: str):
     return vae
 
 
-def wrap_decoder(name: str, model, device: str, *, enable_grad: bool = False,
-                 dtype: torch.dtype = torch.float16):
-    """统一解码包装 fn(z_scaled) → rgb01 [0,1]; name ∈ {full*, s10*}.
+def wrap_decoder(name: str, model, device: str, *, kind: str | None = None,
+                 enable_grad: bool = False, dtype: torch.dtype = torch.float16):
+    """统一解码包装 fn(z_scaled) → rgb01 [0,1].
 
-    enable_grad: S10 路径 (decode_s10 默认 inference_mode) 训练时必须显式开启,
-    否则 D2 FT 反传无梯度路径 (v2 修复). dtype: S10 计算精度 — D2 FT 用 bfloat16
-    (fp16 无 GradScaler 梯度溢出 → loss=nan, v3 修复).
+    kind: "full" (diffusers AutoencoderKL.decode) 或 "s10" (decode_s10); 缺省按
+    name 前缀推断. v4 修复: eval 臂名 ("D0"/"D1"/"D2") 不带 full 前缀, 原实现
+    按名字分派把它们全部路由进 S10 分支 → decode_s10(Half 输入) × fp32 Full VAE
+    → RuntimeError, L2 评测从未成功过.
+    enable_grad: S10 路径 (decode_s10 默认 inference_mode) 训练时必须显式开启.
+    dtype: S10 计算精度 (D2 FT=fp32; fp16 反传溢出 nan).
     """
-    if name.startswith("full"):
+    if kind is None:
+        kind = "full" if name.startswith("full") else "s10"
+    if kind == "full":
         def fn(z):
             out = model.decode(z.float().to(device) / _VAE_SCALE).sample
             return (out / 2 + 0.5).clamp(0.0, 1.0)
@@ -69,27 +75,50 @@ def wrap_decoder(name: str, model, device: str, *, enable_grad: bool = False,
 
 # ------------------------------------------------- 同域匹配 FT ----
 
-def _ft(s10_or_decoder_module, wrap_fn, train_latents: torch.Tensor, ref_fn,
-        steps: int = L2_STEPS, batch: int = L2_BATCH, lr: float = L2_LR,
-        device: str = "cuda", tag: str = "", amp: bool = True) -> None:
-    """同域蒸馏 FT: 模型解码(latent) → 对齐 D0 (冻结 Full) 的重建输出.
+def _build_ft_targets(train_ids, max_n: int = 2400) -> tuple[list[int], torch.Tensor]:
+    """真图 FT 目标 (d5 子集): 4090 无 wikiart 原图; distinct5_512 按
+    train_512clean/<Style>/<id>.jpg 布局. 返回 (latent 索引, uint8 真图 (N,3,512,512)).
 
-    与 S10 历史训练口径一致 (蒸馏到 Full VAE 重建), D1/D2 完全同配 (batch/lr/步数).
-    amp=True: D1 bf16 autocast (Full decoder 大激活); D2 传 amp=False 走 fp32.
+    v4 修复: 原实现 D1 蒸馏到 D0 冻结重建 — D1 与 D0 同权重初始化 → 自恒等
+    (loss≈0 无梯度, 必然空转). 计划 "WikiArt 同域微调" 的语义 = 真图重建;
+    D1/D2 共用同一 d5 子集 (协议匹配).
     """
+    from PIL import Image as PILImage
+    import numpy as np
+    d5_root = ROOT / "datasets/distinct5_512/train_512clean"
+    idxs, imgs = [], []
+    for i, pid in enumerate(train_ids[:max_n]):
+        pid = str(pid)
+        if not pid.startswith("d5__"):
+            continue
+        p = d5_root / pid.split("__")[1] / f"{pid}.jpg"
+        if not p.exists():
+            continue
+        im = PILImage.open(p).convert("RGB")
+        if im.size != (512, 512):
+            im = im.resize((512, 512))
+        idxs.append(i)
+        imgs.append(torch.from_numpy(np.asarray(im).copy()).permute(2, 0, 1))
+    return idxs, torch.stack(imgs) if imgs else torch.zeros(0, 3, 512, 512, dtype=torch.uint8)
+
+
+def _ft(s10_or_decoder_module, wrap_fn, train_latents: torch.Tensor, targets: torch.Tensor,
+        ft_idx: list[int], steps: int = L2_STEPS, batch: int = L2_BATCH, lr: float = L2_LR,
+        device: str = "cuda", tag: str = "", amp: bool = True) -> None:
+    """同域真图重建 FT: decoder(z_i) → 真图 x_i (D1/D2 同一 latents/真图/batch/lr/步数)."""
     import exp.v25 as _v25
     _v25.seed_all(20266200)
     params = [p for p in s10_or_decoder_module.parameters() if p.requires_grad]
     assert params, f"[L2 FT {tag}] 无可训练参数 (requires_grad 全 False)"
     opt = torch.optim.AdamW(params, lr=lr)
-    order = torch.randperm(len(train_latents), generator=torch.Generator().manual_seed(20266200))
+    order = torch.randperm(len(ft_idx), generator=torch.Generator().manual_seed(20266200))
     t0 = time.time()
     for step in range(1, steps + 1):
         start = ((step - 1) * batch) % max(len(order) - batch, 1)
-        idx = order[start:start + batch]
+        sel = order[start:start + batch]
+        idx = torch.tensor([ft_idx[j] for j in sel], dtype=torch.long)
         z = train_latents[idx].to(device).float()
-        with torch.no_grad():
-            target = ref_fn(z)
+        target = targets[sel].to(device).float() / 255.0
         if amp:
             with torch.autocast("cuda", torch.bfloat16):
                 rgb = wrap_fn(z).float()
@@ -178,13 +207,21 @@ def run_l2(pool: str, device: str = "cuda") -> str:
     _v25.seed_all(20266200)
 
     bundle = build_or_load_bundle(pool, device)
-    train_latents = bundle["v18_cache"]["train"]["z"][:2400].clone()
+    tr_cache = bundle["v18_cache"]["train"]
+    train_latents = tr_cache["z"][:2400].clone()
+    ft_idx, ft_imgs = _build_ft_targets(tr_cache["ids"])
+    assert len(ft_idx) >= 512, f"d5 真图 FT 目标不足: {len(ft_idx)}"
+    print(f"[L2] FT 目标: {len(ft_idx)} 张 d5 真图 (真图重建, 非 D0 自蒸馏)", flush=True)
+    torch.cuda.empty_cache()
 
     s10_asis = load_s10_decoder(device)
     for p in s10_asis.parameters():
         p.requires_grad_(False)
 
     full = _load_full_vae(device)
+    # v4 修复: 独立冻结副本作蒸馏参考 — 原实现 ref_fn 与 D1 共享同一 full 对象,
+    # target 随训练同步漂移 → D1 loss 自恒等 (0.0008 空转), D2 目标被污染
+    full_ref = _load_full_vae(device)
     try:
         full.enable_gradient_checkpointing()  # 反传激活重计算, 显存大头 (v2 修复)
         print("[L2] full VAE gradient checkpointing ON", flush=True)
@@ -192,34 +229,33 @@ def run_l2(pool: str, device: str = "cuda") -> str:
         print(f"[L2] gradient checkpointing unavailable ({exc}) — 依赖 batch=1+bf16", flush=True)
     out_p = OUT / "gpu4090" / "l2_decoder_matched.json"
 
-    # D0 基线 (冻结) 蒸馏参考
-    ref_fn = wrap_decoder("full_ref", full, device)
-
-    # D1: Full 同域 FT (只解冻 decoder 子模块, 编码器冻结省显存)
+    # D1: Full 同域真图 FT (只解冻 decoder 子模块, 编码器冻结省显存)
     for n, p in full.named_parameters():
         p.requires_grad_(n.startswith("decoder") or n.startswith("post_quant_conv"))
-    _ft(full, wrap_decoder("full_ft", full, device), train_latents, ref_fn,
-        device=device, tag="D1_full_ft")
+    _ft(full, wrap_decoder("full_ft", full, device, kind="full"), train_latents, ft_imgs,
+        ft_idx, device=device, tag="D1_full_ft")
 
-    # D2: S10 同域 FT (同同步数) — fp32 端到端 (fp16 反传溢出 → nan; bf16+Adam 有
-    # 舍入停滞风险; S10 仅 10.66M, batch=1 fp32 激活 ~3GB 完全安全)
+    # D2: S10 同域真图 FT (同同步数/同图) — fp32 端到端 (fp16 反传溢出 → nan;
+    # S10 仅 10.66M, batch=1 fp32 激活 ~3GB 完全安全)
     s10_ft = load_s10_decoder(device).to(torch.float32)
-    _ft(s10_ft, wrap_decoder("s10_ft", s10_ft, device, enable_grad=True,
-                             dtype=torch.float32), train_latents, ref_fn,
-        device=device, tag="D2_s10_ft", amp=False)
+    _ft(s10_ft, wrap_decoder("s10_ft", s10_ft, device, kind="s10", enable_grad=True,
+                             dtype=torch.float32), train_latents, ft_imgs,
+        ft_idx, device=device, tag="D2_s10_ft", amp=False)
     s10_dt = next(s10_ft.parameters()).dtype
     for p in full.parameters():
         p.requires_grad_(False)
     torch.cuda.empty_cache()
 
     dec_wraps = {
-        "D0_full_frozen": wrap_decoder("D0", full, device),
-        "D1_full_ft": wrap_decoder("D1", full, device),
-        "D2_s10_ft": wrap_decoder("D2", s10_ft, device, dtype=s10_dt),
-        "S10_as_is": wrap_decoder("S10", s10_asis, device),
+        "D0_full_frozen": wrap_decoder("D0", full_ref, device, kind="full"),
+        "D1_full_ft": wrap_decoder("D1", full, device, kind="full"),
+        "D2_s10_ft": wrap_decoder("D2", s10_ft, device, kind="s10", dtype=s10_dt),
+        "S10_as_is": wrap_decoder("S10", s10_asis, device, kind="s10"),
     }
     results = {"task": "V26-L L2 decoder matched-FT attribution",
                "steps": L2_STEPS, "updated_utc": utc(),
+               "ft_target": {"kind": "real_images_d5", "n_images": len(ft_idx),
+                             "note": "真图重建 (d5 子集); D0 冻结基座仅作 eval 臂, 不作蒸馏目标"},
                "referee": eval_referee(bundle, dec_wraps, device),
                "recon": eval_recon(bundle, dec_wraps, device)}
     save_json(out_p, results)
