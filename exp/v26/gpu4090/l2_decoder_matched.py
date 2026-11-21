@@ -37,12 +37,12 @@ _VAE_SCALE = 0.18215
 # ------------------------------------------------- 解码器包装 ----
 
 def _load_full_vae(device: str):
-    """HF SD-VAE ft-ema 基座 (4090 联网下载, 本地缓存)."""
+    """Full VAE 基座: 本地 SD0 全量 VAE (deliver/checkpoints/sd0_vae → 上传至 4090
+    runs/v26/cache/sd0_vae_full). HF 在 4090/本机均被网络阻断, 弃用在线下载."""
     from diffusers import AutoencoderKL
-    import paths
-    cache = str(paths.eval_cache_root("hf") / "hub")
-    vae = AutoencoderKL.from_pretrained("stabilityai/sd-vae-ft-ema",
-                                        cache_dir=cache).to(device).eval()
+    local_dir = OUT / "cache" / "sd0_vae_full"
+    assert local_dir.exists(), f"本地 Full VAE 缺失: {local_dir} (先上传 sd0_vae_full)"
+    vae = AutoencoderKL.from_pretrained(str(local_dir), local_files_only=True).to(device).eval()
     for p in vae.parameters():
         p.requires_grad_(False)
     return vae
