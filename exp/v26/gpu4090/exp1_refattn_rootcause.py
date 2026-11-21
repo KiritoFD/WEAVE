@@ -48,8 +48,11 @@ def _make_instrumented(mode: str, temp: float = 12.0, use_uot: bool = False):
             V = V.mean(dim=1, keepdim=True).expand_as(V)
         sim = torch.bmm(Q, K.transpose(1, 2))
         if use_uot:
-            from exp.v26.uot_fiber_bundle import uot_gamma_bar
-            A = uot_gamma_bar(d16_c, d16_r, eps=0.05, n_iter=6)  # (B, 256, 256) 行归一
+            from exp.v26.uot_fiber_bundle import log_domain_uot
+            q_src_n = torch.nn.functional.normalize(d16_c.float().flatten(2).transpose(1, 2), dim=-1)
+            q_ref_n = torch.nn.functional.normalize(d16_r.float().flatten(2).transpose(1, 2), dim=-1)
+            Cst = 1.0 - torch.bmm(q_src_n, q_ref_n.transpose(1, 2))
+            A = log_domain_uot(Cst, eps=0.05, n_iter=6)  # (B, 256, 256) 行归一
             R = torch.bmm(A, V)
         else:
             R = torch.bmm(torch.softmax(sim * temp, dim=-1), V)
