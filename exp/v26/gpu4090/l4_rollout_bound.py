@@ -22,7 +22,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from exp.v26 import OUT, ROOT, save_json, utc
+from exp.v26 import OUT, ROOT, sanitize_cuda_env, save_json, utc
 
 L4_SEED = 20266000
 L4_UPDATES = 600

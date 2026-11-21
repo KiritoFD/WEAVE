@@ -23,7 +23,7 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
-from exp.v26 import OUT, ROOT, save_json, utc
+from exp.v26 import OUT, ROOT, sanitize_cuda_env, save_json, utc
 from exp.v26.gpu3060.train_c2nt_v26 import train_c2nt_v26
 from exp.v25.mechanism_c import assign_c2nt_refs  # A0 原样对照
 from exp.v26.sr_cfg import _eval_baseline_steps, load_sr_env

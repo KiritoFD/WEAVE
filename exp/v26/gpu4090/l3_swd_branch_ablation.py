@@ -20,7 +20,7 @@ import argparse
 
 import torch
 
-from exp.v26 import OUT, ROOT, read_json, save_json, utc
+from exp.v26 import OUT, ROOT, read_json, sanitize_cuda_env, save_json, utc
 from exp.v26.sr_cfg import _eval_baseline_steps, load_sr_env
 
 L3_SEED = 20265900

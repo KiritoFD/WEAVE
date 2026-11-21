@@ -21,7 +21,7 @@ import json
 import torch
 import torch.nn.functional as NF
 
-from exp.v26 import OUT, ROOT, save_json, utc
+from exp.v26 import OUT, ROOT, sanitize_cuda_env, save_json, utc
 from exp.v26.sr_cfg import load_sr_env
 
 GRIDS_4 = {

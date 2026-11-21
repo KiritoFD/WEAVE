@@ -33,7 +33,7 @@ import torch.nn.functional as F
 
 from src.utils import decode_s10  # noqa: F401 (build_teacher verify 使用)
 
-from exp.v26 import OUT, ROOT, save_json, utc
+from exp.v26 import OUT, ROOT, sanitize_cuda_env, save_json, utc
 from exp.v26.sr_cfg import _eval_baseline_steps, load_sr_env
 
 L1_SEED = 20265800
