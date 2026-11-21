@@ -183,8 +183,8 @@ def eval_recon(bundle, dec_wraps: dict, device: str, n: int = 96) -> dict:
         return [PILImage.fromarray((x.permute(1, 2, 0).cpu().numpy() * 255).round().clip(0, 255).astype("uint8"))
                 for x in imgs]
 
-    imgs_true = torch.cat([decode_s10(dec_s10, z_all[i:i + 16], batch=16).clamp(0.0, 1.0)
-                           for i in range(0, len(z_all), 16)])
+    imgs_true = torch.cat([decode_s10(dec_s10, z_all[i:i + 16], batch=16, output_cpu=False)
+                           .clamp(0.0, 1.0) for i in range(0, len(z_all), 16)])
     f_true = stack.extract(to_pil(imgs_true), batch=16)["dino"].cpu()
     res = {}
     for name, fn in dec_wraps.items():
