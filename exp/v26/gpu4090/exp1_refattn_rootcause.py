@@ -110,6 +110,7 @@ def run_exp1(pool: str, device: str = "cuda", n_tasks: int = N_TASKS) -> dict:
     f_content = dino_of(rgb_src)
     f_ref5 = dino_of(rgb_ref5)[tid_cpu]
 
+    @torch.no_grad()
     def run_arm(tag: str, mode: str, temp: float = 12.0, use_uot: bool = False) -> dict:
         fwd = _make_instrumented(mode, temp=temp, use_uot=use_uot)
         fm.ref_attn16.forward = MethodType(fwd, fm.ref_attn16)
