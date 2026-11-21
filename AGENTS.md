@@ -1,11 +1,16 @@
 # WEAVE — Agent Memory（必读）
 
+> **研究状态更新（2026-11-21，优先于下方 2026-11-14 研究快照）**：当前主线是 **V26-L PRISM-Flow 任意参考化**；C2nt 旧训练配方冻结，V26 L1 修复前的 F2=11.00% 已作废。工程/解码接口契约继续执行，但历史性能比较、目录最新版本与待测状态请以 [根 README](README.md)、[文档总导航](docs/README.md)、[V26 进度](docs/1120/PROGRESS.md) 为准。当前 [metrics.csv](docs/performance/metrics.csv) 有 **531 条记录**，下面的“265 条 / V21 最新”是历史快照。
+>
+> **S10 边界**：统一研究评测默认用 S10，是**协议选择**；在固定 latent 的 Cross600 对照中 Top-1 +3.17pp、LPIPS 更低，但 DINO-C/S 约下降 0.01，不能写“所有指标全面更优”。旧 S10 的主要训练是剪枝＋L1/LPIPS，**不是教师蒸馏**；C1 响应蒸馏没有超过旧 S10 的下游 Top-1。[Decoder 证据](docs/v6/Q2A_ORACLE_DECODER_RANKING.md) · [训练链](docs/vae/01_S10_TRAINING_FULL.md)。
+
+
 ## 决策协议（2026-11-14 起，覆盖一切历史文档的相反约定）
 
 ### 解码器：一律用 S10，不用原版 SD-VAE decoder
 
 - **所有评测/出图解码使用 S10**（`deliver/checkpoints/runs/vae_decoder_prune/s10_p5_lowlr/decoder.pt`，10.66M 剪枝 decoder，自带 `post_quant_conv`）。
-- 历史文档里"正式质量用标准 SD-VAE 口径；S10 仅作部署对照"（docs/v8/README.md 等）**已作废**——实测 S10 在同协议下全面更优，属必须铭记的结论。
+- 历史文档里"正式质量用标准 SD-VAE 口径；S10 仅作部署对照"（docs/v8/README.md 等）**已作废**——S10 在同协议下的目标 Top-1、Margin 与 LPIPS 更优，但 DINO-C/S 略低；其地位是**统一研究解码协议**，而不是无条件全指标支配。
 - **原版 decoder 文件已删除**：`G:\eval_cache\hf\hub\models--stabilityai--sd-vae-ft-ema`（含 encoder+decoder）。如需重新编码 latent 要重新下载；解码永远不需要它。
 
 ### S10 使用契约（错了会出垃圾图，历史上踩过）
@@ -20,7 +25,7 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 2. `post_quant_conv` 用 checkpoint 自带的，**恰好应用一次**（StudentDecoder 内部已含，勿再手动套）。
 3. 不调 `AutoencoderKL.decode()`/`vae.decode()`——那是原版 decoder 路径，文件已删。
 
-### 为什么 S10 更好（证据，勿再质疑）
+### S10 的实证收益与代价（固定协议，不应混淆）
 
 - Q2A+Oracle1 × 750 任务配对评测（`deliver/q2a_oracle_scores_baseline_protocol.json`，cross600）：
   - CSD Top-1：old_s10 **.3767** vs sdvae .3450（**+3.2pp**，bootstrap CI 排除 0）
@@ -32,17 +37,17 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 
 ## 仓库布局（2026-11-14 重组后）
 
-- **活跃代码**：`src/`（统一门面与基础设施层：S10 解码、自包含 Haar/LCN/Oklab 结构层 `src.utils.structure`、3060 自适应微批分块 `tier_micro_accum`、清理 `expandable_segments` 的进程隔离裁判执行器 `src.eval.runner`、无碰撞错标签与协议辅助 `src.utils.protocol`）+ `exp/v8`、`exp/v9_local`、`exp/v10`..`exp/v21`（实验包，`python -m exp.*` 从仓库根运行，索引见 `exp/README.md`）。全仓活跃代码受 `tests/test_no_absolute_paths.py`（`KNOWN_DEBT = set()`）与 `tests/test_markdown_links.py` 保护。
-- **性能与论文中心**：`docs/performance/`（唯一权威数据台账 `metrics.{csv,json}` 含 **265 条**实验臂与外部基线 / **104 个帕累托点**、总台账 `MASTER_LEDGER.md`、多维矢量图表 `figures/*.svg`、750 生成图库 `images/`）；`docs/icme2027/`（独立论文 `PRISM` 完整 7 页 `IEEEtran` 工程 `paper.tex/pdf`，含 6 页正文 + 第 7 页 References）；`docs/next1118/`（`V19`、`V20`、`V21` 理论与实测报告）；阶段交付总览 `docs/DELIVERY_20261118.md`。
+- **活跃代码**：`src/`（统一门面与基础设施层：S10 解码、自包含 Haar/LCN/Oklab 结构层 `src.utils.structure`、3060 自适应微批分块 `tier_micro_accum`、清理 `expandable_segments` 的进程隔离裁判执行器 `src.eval.runner`、无碰撞错标签与协议辅助 `src.utils.protocol`）+ `exp/v8`、`exp/v9_local`、`exp/v10`..`exp/v26`（实验包，`python -m exp.*` 从仓库根运行，索引见 `exp/README.md`）。全仓活跃代码受 `tests/test_no_absolute_paths.py`（`KNOWN_DEBT = set()`）与 `tests/test_markdown_links.py` 保护。
+- **性能与论文中心**：`docs/performance/`（历史台账正文以 V6–V21 为主；`metrics.csv` 截至 2026-11-21 **531 条记录**，后续 V22–V26 的阶段报告另行归档、总台账 `MASTER_LEDGER.md`、多维矢量图表 `figures/*.svg`、750 生成图库 `images/`）；`docs/icme2027/`（独立论文 `PRISM` 完整 7 页 `IEEEtran` 工程 `paper.tex/pdf`，含 6 页正文 + 第 7 页 References）；`docs/next1118/`（`V19`、`V20`、`V21` 理论与实测报告）；阶段交付总览 `docs/DELIVERY_20261118.md`。
 - **tools/** = 历史代码归档，但内含**钉住子包**（`vae_suite/decoder_prune.py`、`v6*`、`v7*`、`pseudo_gt`、`12h/csd_model.py` 等）被 src 依赖，**不要移动/重构**——清单见 `tools/README.md`。
 - `tools/legacy_root/` = 论文期根目录平铺模块（model.py/trainer.py/run.py…）+ 一次性脚本；自举包，flat import 仍可用；根 `__init__.py`/`__main__.py` 是兼容 shim。
 - `tools/legacy_utils/` = 原 `utils/` 包，全仓以 `tools.legacy_utils.*` 引用。
 - **`paths.py` 在仓库根，位置定义 `WEAVE_ROOT`，不要移动。**
 - `archives/` = 冷存（_tmp、EXPERIMENT_ARCHAEOLOGY、agent 工作区、exp 历史输出等；gitignore）。
-- 文档入口：`docs/README.md`（索引）→ `docs/HIGHLIGHTS.md`（两大进展：S10 decoder、Q2A+Oracle）→ 阶段目录。根目录 README/REPRODUCE 是论文口径，与当前研究线并存。
+- 文档入口：`docs/README.md`（索引）→ `docs/HIGHLIGHTS.md`（两大进展：S10 decoder、Q2A+Oracle）→ 阶段目录。根目录 README 现为 **V0–V26 研究结论总览**；REPRODUCE 等旧论文期文件保留为历史口径。
 - 无关项目 `foi26/`（复旦校赛）已移出仓库至 `G:\foi26\`，与本仓库无关。
 
-## 当前进行中的工作
+## 历史研究决策与实验快照（以下主要记录至 V21；当前工作见页首）
 
 - **V10 已收尾**（2026-11-14）：真实画作条件 KDE score 路线——score 级验证全过（方向 .302 vs r1 .054），750 口径最优臂 E4（cross600 Top-1 .3400 vs LD0 .3283，dino_s .4415/affinity .5616 全场最高）但未超 LD4；DSM < KDE（保留闭式）。主表与结论 `docs/v10/V10_RESULTS.md`；代码 `exp/v10/`，产物 `runs/v10_local_4070/`（untracked）。
 - **V10.1 局部匹配已判负**（2026-11-14）：StyleGallery 式"内容条件检索目标 + 距离损失"在恢复代理上反向对齐（q 检索 −0.25~−0.53 vs KDE +0.30）——处方式目标形态错误，KDE 密度梯度才是对的形态；详见 `docs/v10_1/V10_1_RESULTS.md`。
@@ -51,7 +56,7 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
 - **当前最优交付模型族（2026-11-18，V19–V20 / `PRISM` 全量实测收官）**：
   - **`PRISM-1` (`V19_S2_prism1_v2`, `exp/v19/`)**：`1.50M` 活跃潜参数纯单步前馈（`17.0 ms/img` = `58.7 img/s` @ 4090，`~29 ms` @ 3060），**100% 免测试期源标签 `sid`**，Cross600 **CSD Top-1 = `44.33%`**（`DINO-C = 0.7440`, `LPIPS = 0.5057`，反事实错标签 `0.83%`，全盲 Same150 `99.3%`；1-Shot 单参考图达 **`45.50%`**；$\lambda=1.3$ 达 **`50.17%`**），在全部五项风格与内容指标上严格支配商业 `Seedream 4.5`（`37.30%`）与 `StyTr2`（`39.50%`）。
   - **`PRISM-Pro` / `PRISM-Pro+` (`V19_T4` / `V20_A1_t4_patchswd`)**：穿过可微 `S10` 的无归一化 `VGG-16+Oklab` + 多尺度 `ConvNeXt+RGB Patch-SWD` 各向异性求解器，Cross600 **CSD Top-1 = `59.00%` → `64.33%`**（`DINO-C = 0.6783` / `0.6392`, `LPIPS = 0.5166` / `0.5332`）。
-  - **`PRISM-Flow` (`V20_D1..D7`, `exp/v20/`)**：纯训练集内部 `kNN-30` 核心流形原型 + 仅 $16\times 16$ 瓶颈层注入结构语义的 Coarse-16 `SLFUNet` 分段视界流（`76.6–134.1 ms/img`，12GB 3060 训练峰值仅 `4.06 GB`），全面超越扩散跨注意力强基线 **`StyleGallery`**（`DINO-S = 0.5604`, `Affinity = 0.6432`, `Top-1 = 52.50%`）：`V20_D1` 达 **`DINO-S = 0.5789`、`CLIP-S = 0.7576`、`Style Affinity = 0.6683`、`CSD Top-1 = 64.00%`**（`Minimalism = 100.0%`）；`V20_D2` 达 **`DINO-S = 0.5672`、`Affinity = 0.6584`、`Top-1 = 60.50%`**（错标签控制 `2.33%`，因果差 `+58.17pp`）。
+  - **`PRISM-Flow` (`V20_D1..D7`, `exp/v20/`)**：纯训练集内部 `kNN-30` 核心流形原型 + 仅 $16\times 16$ 瓶颈层注入结构语义的 Coarse-16 `SLFUNet` 分段视界流（`76.6–134.1 ms/img`，12GB 3060 训练峰值仅 `4.06 GB`），在闭集原型风格指标上超越强基线 **`StyleGallery`** 的部分读数（**不是严格任意参考、内容—风格双维全面支配**）（`DINO-S = 0.5604`, `Affinity = 0.6432`, `Top-1 = 52.50%`）：`V20_D1` 达 **`DINO-S = 0.5789`、`CLIP-S = 0.7576`、`Style Affinity = 0.6683`、`CSD Top-1 = 64.00%`**（`Minimalism = 100.0%`）；`V20_D2` 达 **`DINO-S = 0.5672`、`Affinity = 0.6584`、`Top-1 = 60.50%`**（错标签控制 `2.33%`，因果差 `+58.17pp`）。
   - 完整证据链见 `docs/next1118/V20_RESULTS.md`、`docs/next1118/V19_RESULTS.md`、`docs/performance/MASTER_LEDGER.md` 与 `docs/icme2027/paper.pdf`。
 - V11b（波let Flow）代码/修复版在 `exp/v13/`（8 bug 修复，sigma √2 精确验证），3060 上有远程重建脚本。
 - **评测口径（2026-11-14 用户决定）**：任务级评测/决策一律用完整 test750（读数 cross600），不用 dev 预览集；LD 基线 = v9 dev+test eval 行合并重算。

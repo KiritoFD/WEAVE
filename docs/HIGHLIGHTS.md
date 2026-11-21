@@ -1,14 +1,13 @@
 # WEAVE 两大进展（2026-11）
 
-> 本文是"当前最值得记住的两件事"的一页纸索引。所有数字都有出处（见文内链接），
-> 协议级结论以根目录 `AGENTS.md` 的决策协议（2026-11-14）为准。
+> **2026-11-14 历史快照**：本文记录 S10＋Q2A/Oracle 这两项当时的关键突破，不再代表 V19–V26 的“当前最强”。最新看 [根 README](../README.md)、[VAE 专题](vae/README.md) 和 [文档索引](README.md)。旧测量、阈值与复现记录仍保留。
 
 ---
 
 ## 1. S10 剪枝 Decoder —— 已取代原版 SD-VAE decoder，成为全仓唯一解码口径
 
 **一句话**：把 SD-VAE decoder 从 49.49M 剪到 **10.66M（−78.5%）**，2.86× 加速，
-且在同协议评测里**全面优于**原版 decoder——因此不是"部署替换"，而是协议级选择。
+且在固定 latent 的 Cross600 中**提高 Top-1 和 Margin、改善 LPIPS，但 DINO-C/S 各下降约 0.01**——其价值是统一研究协议下的**实际加速和质量权衡**，不是无损全指标支配。
 
 | 证据（Q2A+Oracle1 × 750，cross600，配对 bootstrap） | S10 (old_s10) | 原版 sdvae | 结论 |
 |---|---:|---:|---|
@@ -22,7 +21,7 @@
 
 - 剪枝方法：按 4 条通道流做结构化剪枝（一阶 Taylor |ΣW·dW| 流内重要性），宽度
   [64,128,192,256]，5 阶段恢复训练（P1→P3，L1+0.5·LPIPS），重建 LPIPS 0.0926。
-- 速度：decoder 段 15.57ms（4090，B8），**2.86×**；onnx/TRT 部署已验证。
+- 速度：decoder 段 15.57ms（4090，B1），**2.86×**；onnx/TRT 部署已验证。
 - S10B（`deliver/checkpoints/s10b_standalone/`）与 `s10_p5_lowlr` **字节级同一权重**，
   只是为 SD0 未缩放 latent 打包的独立加载器。
 - 历史文档中"正式质量用标准 SD-VAE 口径；S10 仅部署对照"（docs/v8 系列）**已作废**。
@@ -50,7 +49,7 @@ rgb01 = decode_s10(s10, z_scaled)  # z 是 repo 存储的 scaled latent；内部
 
 ---
 
-## 2. Q2A + Oracle —— 当前最强风格控制路线 + 冻结的 750 任务评测协议
+## 2. Q2A + Oracle —— 早期强风格控制基线与 750 任务协议起点
 
 **一句话**：218K 参数的内容条件化 latent 算子（Q2a embed-style）+ 推理期沿 R1 风格
 critic 的 target-margin 方向做**一步有约束梯度步**（Oracle 路线），在 32 方法排行榜上
