@@ -97,12 +97,14 @@ def fewstep_sweep(pool: str, device: str = "cuda") -> dict:
         u_all = fiber_enc.encode(fib_tr.to(device))
     del fiber_enc
 
-    tcache = ROOT / "runs/v26/cache/l1_teacher_v20d2.pt"
+    tcache = ROOT / "runs/v26/cache/l1_teacher_v22dual_crossstyle.pt"
     if not tcache.exists():
         print("[L5] teacher cache 缺失 — 跳过训练内部选优 (网格扫描仍跑 test750)", flush=True)
         teacher = None
     else:
-        teacher = torch.load(tcache, map_location="cpu", weights_only=False)["z_teacher"].float()
+        # v2 修复: 旧路径 l1_teacher_v20d2.pt 已废弃; 新缓存 (N,5,4,64,64) 按
+        # (content, target_style) 索引 — 训练探针固定 Min 目标 (tid=2)
+        teacher = torch.load(tcache, map_location="cpu", weights_only=False)["z"][:, 2].float()
 
     g = torch.Generator().manual_seed(20266110)
     sel = torch.randperm(len(z_all), generator=g)[:96]
@@ -195,17 +197,89 @@ def q32_relational_gate(pool: str, device: str = "cuda") -> dict:
     return out
 
 
+@torch.no_grad()
+def _eval_grid_test750(env: dict, arm: str, steps: int, grid: str, device: str) -> dict:
+    """通用网格 test750 评测 (协议与 _eval_baseline_steps 逐项一致, 非均匀网格走 integrate_grid)."""
+    import time as _time
+
+    from exp.v18 import tasks_and_sources
+    from exp.v20.slf_flow import coarse_y16_lcn
+    from exp.v26 import config_hash, run_measure_v26
+    from exp.v26.sr_cfg import (BATCH, EVAL_SEED_750, TAU0, WJ, RawWriterV26,
+                                integrate_sr, sr_velocity, validate_raw_meta)
+    from src.utils import load_s10_decoder
+
+    tasks, z_src_750, _ = tasks_and_sources()
+    dec = load_s10_decoder(device)
+    fm, ad = env["fm"], env["ad"]
+    w_l, b_l = env["w_l"].to(device), env["b_l"].to(device)
+    y16_750 = coarse_y16_lcn(((z_src_750.float().to(device) * w_l).sum(1, keepdim=True)
+                              + b_l).clamp(0.0, 1.0)).half()
+    eps_750 = torch.randn(z_src_750.shape, generator=torch.Generator().manual_seed(EVAL_SEED_750))
+    d16_750 = env["bundle"]["test_struct"]["dino_16"]
+    fracs = GRIDS_4.get(grid, [1.0 / steps] * steps)
+
+    if (OUT / "raw" / arm / "meta.json").exists() and validate_raw_meta((OUT / "raw" / arm / "meta.json")):
+        return run_measure_v26(arm, device=device)
+    wr = RawWriterV26(arm, dec=dec, device=device)
+    t0 = _time.time()
+    for st in range(0, 750, BATCH):
+        sl = slice(st, min(st + BATCH, 750))
+        grp = tasks[sl]
+        B = len(grp)
+        zs = z_src_750[sl].to(device).float()
+        sid_p = torch.tensor([t["source_style_id"] for t in grp], device=device)
+        tid_t = torch.tensor([t["target_style_id"] for t in grp], device=device)
+        u_style_t = ad(env["u_sg5"][tid_t.cpu()].to(device), env["u_src_750"][sl].to(device))
+        u_glob_t = env["fib_n_sg5"][tid_t.cpu()]
+        d16 = d16_750[sl].to(device).float()
+        d16_r_t = env["d16_sg5"][tid_t.cpu()].to(device)
+        v16_r_t = env["v16_sg5"][tid_t.cpu()].to(device)
+        y16 = y16_750[sl].to(device).float()
+        z = (1.0 - TAU0) * eps_750[sl].to(device).float() + TAU0 * zs
+
+        def vel_fn(zz, prog):
+            tv = torch.full((B,), TAU0 + prog * (1.0 - TAU0), device=device)
+            v, _ = sr_velocity(fm, ad, u_style_t, None, u_glob_t, None,
+                               d16, d16_r_t, v16_r_t, None, None, y16, zz, tv,
+                               mode="baseline", w=0.0, wj=WJ, device=device)
+            return v
+
+        if grid == "uniform":
+            z_gen = integrate_sr(vel_fn, z, TAU0, steps, "rk2")
+        else:
+            z_gen = integrate_grid(vel_fn, z, TAU0, fracs, "rk2")
+        same = sid_p == tid_t
+        z_out = torch.where(same.view(B, 1, 1, 1), zs, z_gen)
+        wr.write_batch(z_out, grp)
+    meta = wr.finalize(cfg_hash=config_hash({"arm": arm, "grid": grid, "steps": steps,
+                                             "tau0": TAU0, "wj": WJ}),
+                       tau0=TAU0, wj=WJ, steps=steps, sampler=grid)
+    assert validate_raw_meta(meta)
+    print(f"[L5 {arm}] generated in {_time.time() - t0:.0f}s", flush=True)
+    return run_measure_v26(arm, device=device)
+
+
 def run_l5(pool: str, device: str = "cuda") -> str:
     sweep, init_ckpt = fewstep_sweep(pool, device=device)
     gate = q32_relational_gate(pool, device=device)
-    # 最优 2 变体 → 全量 test750 (跳过 10 步基线: 已有 SR0/A0 读数)
-    ranked = [k for _, k in sweep.get("ranked_train_probe", []) if k != "rk2_10_uniform"]
+    # 最优 2 变体 (教师 latent 距离排序, 排除 10 步基线) → 全量 test750
+    ranked_all = sweep.get("ranked_train_probe") or []
+    var_map = {k: (v["steps"], v["sampler"]) for k, v in sweep.get("variants", {}).items()}
+    if ranked_all:
+        picks = [k for _, k in ranked_all if k != "rk2_10_uniform"][:2]
+    else:
+        picks = ["rk2_04_uniform", "rk2_04_mid"]  # 排序不可用时先验兜底
     env = load_sr_env(pool, device=device, ckpt_path=init_ckpt)
-    from exp.v26.sr_cfg import SR_ARMS  # noqa: F401
-    from exp.v26.sr_cfg import _eval_baseline_steps  # noqa: F401
-
-    # _eval_baseline_steps 按 SR_ARMS 取 spec — 这里直接用通用路径:
-    results = {"sweep": sweep, "q32_gate": gate, "updated_utc": utc()}
+    print(f"[L5] test750 picks: {picks} (init={sweep.get('init_note')})", flush=True)
+    evals = {}
+    for tag in picks:
+        steps, grid = var_map[tag]
+        evals[tag] = _eval_grid_test750(env, f"L5_{tag}_t45", steps, grid, device)
+        c = evals[tag]["cross600"]
+        print(f"[L5 test750] {tag}: dino_c={c['dino_c']} dino_s={c['dino_s']} "
+              f"lpips={c['lpips']} top1={c['csd_top1']}", flush=True)
+    results = {"sweep": sweep, "q32_gate": gate, "test750": evals, "updated_utc": utc()}
     save_json(OUT / "gpu4090" / "l5_fewstep_q32.json", results)
     return "done"
 
