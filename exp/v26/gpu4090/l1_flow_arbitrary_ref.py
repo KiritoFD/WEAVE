@@ -31,6 +31,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from src.utils import decode_s10  # noqa: F401 (build_teacher verify 使用)
+
 from exp.v26 import OUT, ROOT, save_json, utc
 from exp.v26.sr_cfg import _eval_baseline_steps, load_sr_env
 
@@ -144,19 +146,25 @@ def build_teacher(pool: str, device: str = "cuda", batch: int = 25) -> Path:
     from exp.v19.fiber_duality import extract_color_fiber_27d
     sample_src = [int(torch.randint(0, N, (1,), generator=g)) for _ in range(8)]
     diffs = []
-    for i in sample_src:
-        s_i = int(sid_all[i])
-        ts = [t for t in range(5) if t != s_i and bool(valid[i, t])]
-        if len(ts) < 2:
-            continue
-        rgb_a = decode_s10(dec_v, z_t[i, ts[0]].float().to(device), batch=1).clamp(0.0, 1.0)
-        rgb_b = decode_s10(dec_v, z_t[i, ts[-1]].float().to(device), batch=1).clamp(0.0, 1.0)
-        ca = extract_color_fiber_27d(rgb_a)
-        cb = extract_color_fiber_27d(rgb_b)
-        diffs.append(float((ca - cb).abs().mean()))
+    try:
+        for i in sample_src:
+            s_i = int(sid_all[i])
+            ts = [t for t in range(5) if t != s_i and bool(valid[i, t])]
+            if len(ts) < 2:
+                continue
+            rgb_a = decode_s10(dec_v, z_t[i, ts[0]].float().to(device), batch=1).clamp(0.0, 1.0)
+            rgb_b = decode_s10(dec_v, z_t[i, ts[-1]].float().to(device), batch=1).clamp(0.0, 1.0)
+            ca = extract_color_fiber_27d(rgb_a)
+            cb = extract_color_fiber_27d(rgb_b)
+            diffs.append(float((ca - cb).abs().mean()))
+        ver_err = None
+    except Exception as exc:
+        ver_err = f"verify skipped: {exc}"[:120]
+        print(f"[L1 teacher] verify error: {ver_err}", flush=True)
     ver = {"n_sources": len(diffs),
            "mean_color_diff": round(sum(diffs) / max(len(diffs), 1), 5) if diffs else None,
-           "note": "同源切目标画派 → Oklab 色彩差; 显著 >0 即教师确实换了风格"}
+           "note": "同源切目标画派 → Oklab 色彩差; 显著 >0 即教师确实换了风格",
+           **({"verify_error": ver_err} if ver_err else {})}
     del dec_v, fm
     torch.cuda.empty_cache()
 
