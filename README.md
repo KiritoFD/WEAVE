@@ -1,228 +1,133 @@
-# WEAVE
-**W**avelet-based **E**ntanglement-**A**ugmented **V**ision **E**xchange — a frequency-native framework for artistic style transfer.
+# WEAVE → PRISM
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red)
-![AAAI 2027](https://img.shields.io/badge/AAAI-2027%20Submission-purple)
+**Evidence-led artistic style transfer: what actually improved, what failed, and why.**
+
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-red)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Status](https://img.shields.io/badge/Status-Anonymous%20Double--Blind-lightgrey)
+![Research status](https://img.shields.io/badge/Research-active-orange)
 
-> **Anonymous Authors — AAAI 2027 Submission (Double-Blind)**
->
-> This repository is released anonymously for the purpose of double-blind review.
-> Author identities, affiliations, and identifying URLs have been intentionally
-> omitted. They will be populated in the camera-ready version upon acceptance.
+> **Research snapshot: 2026-11-21 (V0–V26).** The original WEAVE wavelet/Flow-Matching submission is a historical baseline. **PRISM** denotes the later family of source-style-aware latent editors, content-preserving hybrid solvers, coarse-scale generative flows, and reference-conditioned experiments. The former AAAI-submission claims and instructions are not a description of the current models. See [the original reproduction](docs/reproduction/baseline_reproduction.md) and [legacy experiments](docs/legacy_root/EXPERIMENTS.md) for the archival system; the [ICME manuscript](docs/icme2027/README.md) may lag newer experiments.
 
----
+## Central finding
 
-## 🧭 Current research state (2026-11)
+**Recognizing a style, moving an image toward that style, and generating a target-style image while retaining the source structure are three different problems.** Much of the V0–V18 work showed why accurate reconstruction, plausible artistic texture, style classification accuracy, and a small distributional loss do **not** imply successful cross-style editing. The largest practical improvements came from **style-directed conditional transport (V19), asymmetric structure/appearance constraints and coarse-scale flow generation (V19–V20), training-trajectory corrections (V22), and better anchors/solvers at high content fidelity (V23–V25)**. The V26 studies clarify what does *not* automatically transfer to reference-conditioned generation.
 
-> The paragraph above describes the original AAAI-2027 submission snapshot.
-> Research has since moved on; the paper-era flat modules referenced below now
-> live in `tools/legacy_root/` (root `__init__.py`/`__main__.py` are thin
-> compatibility shims). For the current research state, read in order:
->
-> 1. [`AGENTS.md`](AGENTS.md) — active engineering protocol: **all decoding uses the
->    S10 pruned VAE decoder** (10.66M params, −78.5%, 2.86× faster; +3.17pp Cross600
->    CSD Top-1 over full SD-VAE under paired cluster bootstrap), with strict subprocess
->    referee isolation and automatic 12GB/24GB VRAM tiering.
-> 2. [`docs/performance/MASTER_LEDGER.md`](docs/performance/MASTER_LEDGER.md) — single
->    authoritative ledger across **215+ evaluated arms & external baselines** on the
->    750-task benchmark, six validated laws, and publication vector figures.
-> 3. [`docs/icme2027/README.md`](docs/icme2027/README.md) & [`docs/next1118/README.md`](docs/next1118/README.md) —
->    standalone `PRISM` manuscript (`paper.tex` / `paper.pdf`) and `PRISM v2 / V19`
->    orthogonal quotient–fiber duality blueprint.
-> 4. [`docs/README.md`](docs/README.md) — unified master documentation index.
->
-> Active code lives in `src/` (unified facade, S10 decoding, 3060-safe evaluation
-> runner, and protocol helpers) + `exp/v8`..`exp/v19` (modular experiment packages,
-> indexed in [`exp/README.md`](exp/README.md)); historical code is archived under `tools/` and `archives/`.
+**Read the evidence first:** [model recipes and checkpoints](docs/ours/README.md) · [historical benchmark ledger (through V21)](docs/performance/MASTER_LEDGER.md) · [V22 results](docs/v22/V22_P1_RESULTS.md) · [V23 results](docs/v23/V23_RESULTS.md) · [V24 results](docs/v24/PROGRESS.md) · [V25 audited claims](docs/v25/ABLATION_LEDGER.md) · [V26 results](docs/1120/V26_RESULTS_SUMMARY.md) · [V26-L ongoing/progress log](docs/1120/PROGRESS.md).
 
-## 📖 Introduction
+## Evaluation contract: read before comparing numbers
 
-Artistic style transfer must balance two competing objectives: faithfully
-preserving the *content* of a source image while convincingly rendering the
-*style* of a reference artwork. Classical moment-matching methods (AdaIN, WCT)
-operate in pixel or VGG feature space and tend to either over-stylize (collapsing
-content) or under-stylize (failing to capture texture). Modern diffusion priors
-(SD-Turbo, IP-Adapter) inherit powerful generative priors but at the cost of
-billions of parameters and limited controllability over the content–style
-trade-off.
+- **Main task:** frozen [750-task manifest](eval_protocol/tasks_750.json) = **Cross600** (150 sources × four *different* target movements) plus **Same150** controls, across Early Renaissance, Impressionism, Minimalism, Rococo, and Ukiyo-e. Unless a different split is explicitly shown, all modern Top-1, DINO-S, DINO-C, and LPIPS rows below refer to **Cross600** from a complete **test750** run.
+- **Style:** CSD target Top-1 (percent of generated images classified as their *target* movement); DINO-S (max cosine to 30 frozen target-style reference features); CLIP-S and their mean **Style Affinity**. **Content:** source/output DINO-C (higher is better) and LPIPS (lower is better). These are *different* axes; improving a classifier is not synonymous with improving perceptual style.
+- **Decoder:** modern results use the **S10** structured-pruned VAE decoder and isolated frozen evaluation backbones. Do **not** combine old SD-VAE, original AAAI paper, earlier Val200/Heldout400, 25-style OOD, or different timing protocols in a single unqualified ranking. See [decoder audit](docs/v6/Q2A_ORACLE_DECODER_RANKING.md), [S10 training](docs/vae/01_S10_TRAINING_FULL.md), and [cost-model audit](docs/v25/audits/a07_cost_model.md).
+- **Statistical boundary:** test750 was reused extensively for development and selection; it is a **fixed development benchmark, not a fresh blind external test**. Paired source-cluster bootstrap intervals are available only for specific comparisons. Some improvements below change both model family and content operating point; those rows are **historical jumps, not single-component causal ablations**.
+- **Runtime boundary:** a reported 17 ms protocol-batch latent/decode time is not interchangeable with fresh image-to-image latency or RTX 3060 batch-1 latency. Consult the [timing audit](docs/v25/audits/a07_cost_model.md); never infer a matched end-to-end speedup from disparate historical timings.
 
-**WEAVE** approaches the problem from the wavelet domain. The source and target
-signals are decomposed into Haar subbands, and a Flow Matching objective is
-applied *per subband*: low-frequency (LL) coefficients carry global color and
-illumination and receive a mild Channel-wise AdaIN migration, while
-high-frequency (LH/HL/HH) coefficients carry structural texture and are
-transported by a learned velocity field conditioned on style tokens. The
-reconstruction is performed by an inverse DWT that is exact by construction
-(`IDWT(DWT(x)) = x`), so no spectral information is lost across the forward /
-backward pass.
+## Representative measured operating points
 
-The endpoint of the transport is sharpened by a **Channel-wise AdaIN** pass
-controlled by the `endpoint_adain_scale` field — set to `1.0` during training
-and `2.0` at inference (see `inference.json`). This decoupling lets the model
-learn a stable velocity field while still producing crisp stylizations at
-evaluation time.
+These are **selected positions across different content/style regimes**, not a claim that every row strictly dominates every other row. All rows below use Cross600 + S10; the five-style reference engine is evaluated separately.
 
-### 🎯 Contributions
+| Model / mode | DINO-C ↑ | DINO-S ↑ | CSD Top-1 ↑ | LPIPS ↓ | Role and evidence |
+|---|---:|---:|---:|---:|---|
+| **PRISM-1**, λ=0.75 | 0.7715 | 0.4371 | 37.67% | 0.4848 | Fast/high-content single step; [V25 strength audit](docs/v25/audits/a04_strength_report.md) |
+| **PRISM-1**, λ=1.00 | 0.7440 | 0.4430 | 44.33% | 0.5057 | Default single step; [V19](docs/next1118/V19_RESULTS.md) |
+| **HighContent R12**, γ=0.55 | **0.7723** | **0.4564** | 42.50% | **0.4783** | B4-anchored D6H + PRISM-1; *zero new training*; [R12 recipe](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) |
+| **HighContent R12**, γ=1.00 | 0.7286 | 0.4870 | 42.00% | 0.4980 | B4-anchored Flow-only high-content point; [R12 recipe](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) |
+| **V20 Flow D6** | 0.6688 | 0.5107 | 55.67% | 0.5374 | Coarse-16 flow; [V20](docs/next1118/V20_RESULTS.md) |
+| **V23 HiC-JPk** | 0.6299 | 0.5330 | 58.83% | 0.5649 | Mid-content training/CFG improvement; [V23](docs/v23/V23_RESULTS.md) |
+| **V20 Flow D2** | 0.5335 | 0.5672 | 60.50% | 0.6022 | High-style flow; [V20](docs/next1118/V20_RESULTS.md) |
+| **V22 Peak1500**, g=0.45 | 0.4779 | 0.5781 | **76.83%** | 0.6268 | Strong-style but visibly more transformative; [V22](docs/v22/V22_P1_RESULTS.md) |
+| **O3**, 1-shot reference, t=0.45 | 0.5845 | 0.5245 | 35.33% | 0.4213 | Reference-conditioned separate line; [V24](docs/v24/PROGRESS.md) |
 
-- A **frequency-native ODE solver** that performs style transport directly on
-  Haar wavelet coefficients, with an exact inverse transform guaranteeing
-  perfect reconstruction.
-- A **per-subband Flow Matching objective** (FC-SB) that weights LL color
-  migration and HF texture transport differently (`w_ll=0.3`, `w_lh=w_hl=1.0`),
-  combined with a Structure-Aligned Target (SAT) and the brk_a LL partial-style
-  mechanism.
-- A **Channel-wise AdaIN endpoint** (`endpoint_adain_scale`) that decouples
-  training stability from inference-time style strength.
-- State-of-the-art **content preservation** on the D5-512 benchmark while
-  remaining competitive on style alignment — trained from scratch on a single
-  RTX 3060 12 GB.
+**External comparison boundary:** StyleGallery scores DINO-C **0.6113**, DINO-S **0.5604**, Top-1 **52.50%** on the historical five-style comparison. V20 D2 is stronger on style and classification but **weaker on content**; R12 operates at substantially higher content but lower DINO-S. Calling either a universal two-axis strict domination would be false. The main contribution is a **family of content–style–compute operating points**, not a single winner at every content budget. See [V20 comparison](docs/next1118/V20_RESULTS.md), [V23 high-content audit](docs/v23/V23_RESULTS.md), and [V25 strength curves](docs/v25/audits/a04_strength_report.md).
 
----
+## What changed model performance: quantitative historical ledger
 
-## 🏆 Key Results (Table 1, D5-512)
+**Legend:** **TRAIN/ARCH** = learned-model or architectural change; **INFER** = no new training, different runtime/conditioning/anchor; **FIX** = an implementation correction; **DIAG/NEG** = mechanism diagnosis, non-improvement, or failed hypothesis. A **pp** is a percentage point of CSD Top-1. All comparisons identify their baseline and any material trade-off.
 
-WEAVE vs. representative baselines on the D5-512 hold-out test set
-(5 distinct styles × 150 source images, n = 750 style-transfer pairs).
-**↑** = higher is better, **↓** = lower is better.
+### 1. Foundations (original WEAVE → V14)
 
-| Method            | Class      | DINO-C ↑ | DINO-S ↑ | CLIP-S ↑ | LPIPS ↓ |
-|-------------------|------------|---------:|---------:|---------:|--------:|
-| Identity          | identity   |        — |        — |    0.693 |   0.000 |
-| AdaIN             | classical  |        — |        — |    0.668 |   0.743 |
-| WCT (VGG19)       | classical  |        — |        — |    0.706 |   0.635 |
-| SD-Turbo          | diffusion  |        — |        — |    0.693 |   0.003 |
-| IP-Adapter        | diffusion  |        — |        — |    0.829 |   0.636 |
-| **WEAVE (ours)**  | —          | **0.810**| **0.492**| **0.713**| **0.259**|
+| Version and change | Measured magnitude and cost | What it actually established | Evidence |
+|---|---|---|---|
+| **Original WEAVE**, DWT bands, partial-LL style, endpoint AdaIN | Clean 15-epoch paper-era reproduction: **DINO-S 0.4867**, **DINO-C 0.8280**, LPIPS 0.2508; **not** directly comparable to later S10/Cross600 figures. | Efficient content-preserving wavelet-style transfer was the baseline, **not** the modern PRISM result. | [Reproduction](docs/reproduction/baseline_reproduction.md) |
+| **V6 direct operator compressed** (TRAIN/ARCH) | **1.882M → 0.218M parameters (−88.4%)**; Val200 CSD target shift **+0.0323 → +0.0421**; DINO-C **0.9167 → 0.9216**, LPIPS **0.3658 → 0.3403**. Yet target Top-1 only **3.0%**, below five-way chance (20%). | Smaller is sufficient for local statistics; **removing source-style evidence is not acquiring target style**. The early Val200 gain is not a later Cross600 Top-1 claim. | [V6 controlled ablations](docs/v6/V6_CONCLUSIONS.md) |
+| **V6 Score Difference vs direct** (different quality regime) | Same Heldout400: target Top-1 **2.8% → 36.7%** (+33.9 pp), while DINO-C **0.8902 → 0.5687** (−0.3215). | Style is attainable, but unconstrained style gains can destroy content. **Not** a Pareto dominance result. | [V6 Next](docs/v6/V6_NEXT_RESULTS.md) |
+| **V6 R1 critic + constrained Oracle** (INFER) | Cross600 S10: Oracle **36.3%** Top-1 vs **22.2%** for the B4 direct student (+14.1 pp as a *family comparison*); DINO-C **0.7345 vs 0.8152** (lower). | A learned style-discriminative gradient accesses useful target directions missing from DWT moment matching; this is not a matched one-factor student ablation. | [S10-era ranking](docs/LEADERBOARD.md) · [V6 Next](docs/v6/V6_NEXT_RESULTS.md) |
+| **S10 decoder pruning** (TRAIN/ENGINEERING) | Decoder **49.49M → 10.66M (−78.5%)**, decoder stage **2.86× faster**. Paired Q2A+Oracle: Top-1 **34.50% → 37.67% (+3.17 pp)**, LPIPS **0.5149 → 0.5034**; separately measured DINO-S/C effects are not universally positive. | Decoder is an **active part of the downstream style-transfer system**. Gain belongs to a decoder swap, not to a better latent flow. | [Paired decoder audit](docs/v6/Q2A_ORACLE_DECODER_RANKING.md) · [S10 training](docs/vae/01_S10_TRAINING_FULL.md) |
+| **V8 N2C → V9 LD4** (INFER, controlled within S10 Cross600) | Top-1 **32.83% → 35.17% (+2.34 pp)**; DINO-S approximately **0.4399 → 0.4401**; DINO-C **0.7715 → 0.7718**; LPIPS **0.4904 → 0.4872**. | Budgeted latent edits, spatial masks and feasible line search improve the direction already present, but only modestly. | [V9](docs/v9/V9_LD_RESULTS.md) · [V10 merged 750 comparison](docs/v10/V10_RESULTS.md) |
+| **V10/10.1/10.2 density and nearest-neighbor prescriptions** (DIAG/NEG) | Holdout restoration alignment KDE **+0.302** vs R1 **+0.054**; nevertheless target KDE's gain is **95% reproduced by a mixed-style KDE**, and best V10 Top-1 **34.00% < LD4 35.17%**. Content-based hard retrieval directions have cosine **−0.25 to −0.53** with restoration. | **Restoration alignment ≠ target-style specificity**; retrieving another painting's patch is not a generative update for the current patch. | [V10](docs/v10/V10_RESULTS.md) · [V10.1](docs/v10_1/V10_1_RESULTS.md) · [V10.2](docs/v10_2/V10_2_RESULTS.md) |
+| **V11b high-frequency wavelet flow** (TRAIN/NEG) | H2 output DINO-S **0.4401 → 0.4482 (+0.0081)**, but Top-1 **35.17% → 33.33% (−1.84 pp)** and LPIPS **0.4872 → 0.4927**. | A favorable feature gain is not automatically a better content/style Pareto point. | [V11b](docs/v11b/V11B_RESULTS.md) |
+| **V12 GCL content gates / V13 H2 contrastive / V14 representation scan** (DIAG/NEG) | V12 gates are **non-binding**; angle cosine style vs content-query gradient **0.09–0.15**. V14 five-way style accuracy: **DWT 54.4% vs DINO patch 79.3%**; adding DWT to DINO gives **79.7%** (+0.4 pp). | Local handcrafted frequency descriptors are weak **for this style-classification protocol**, and adding structural restrictions does not repair the missing generative style direction. DWT remains invertible: the finding is about the *chosen token representation*, not information-theoretic impossibility. | [V12](docs/v12/V12_GCL_RESULTS.md) · [V13](docs/v13/V13_RESULTS.md) · [V14](docs/v14/V14_RESULTS.md) |
 
-**Reading the table.** `DINO-C` measures content preservation, `DINO-S` and
-`CLIP-S` measure style alignment, and `LPIPS` measures perceptual distance to
-the source (lower = more content preserved). SD-Turbo's near-zero LPIPS
-indicates it barely alters the source; WEAVE delivers genuine style transfer
-while keeping the highest DINO-C and the lowest LPIPS among true stylizers.
-Baseline DINO-C/DINO-S are not reported by the original `main_table.csv` and
-are marked `—`.
+### 2. The decisive learned-transport breakthroughs (V15 → V22)
 
----
+| Version and change | Measured magnitude and cost | What it actually established | Evidence |
+|---|---|---|---|
+| **V15 self-paired Flow scaling** (TRAIN, paradox) | At unconditional/no-source start, Top-1 **36.33% → 49.33% (+13.00 pp)**; at source-editing τ=0.7, **10.67% → 6.67% (−4.00 pp)**, while DINO-C **0.7506 → 0.8083**. Small baseline had **4k** updates, scaled arms **8k**, so size is not an isolated causal variable. | **Generative capacity ≠ editing capacity.** A strong self-reconstruction objective can allow the model to ignore target-style conditions. | [Scaling sweep](docs/v15/WEAVE_V15_SCALING_RESULTS.md) · [V16 strict audit](docs/v16/RESULTS.md) |
+| **V15 Style-Bridge cross-style training** (TRAIN) | At τ=0.4, balanced FM Top-1 **14.67% → 17.83% (+3.16 pp)** for each P2 seed; DINO-C ~**0.4485 → 0.4428**. The larger unconditional-gain comparison is a different operating point. | Training the endpoint/bridge to encode a style change helps even when model parameters at inference are unchanged. | [Post-scale summary](docs/v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md) |
+| **V17 contextual student with source→target chord** (TRAIN/ARCH) | τ=0.7, Top-1 **10.67% base → 13.33% S4 (+2.66 pp)**; DINO-C **0.7506 → 0.7386**, LPIPS **0.2700 → 0.2845**. | Conditioning on **target minus source style**, plus DINO context, has positive but insufficient editing effect; it motivated V19. | [V17](docs/v17/V17_RESULTS_EVAL.md) |
+| **V18 stronger LD4+ / style-invariant structure** (INFER + DIAG) | Frozen baseline **34.67% / DINO-C 0.7716** → stronger ε=0.18 **38.00% / 0.7428**; ε=0.30 gives **46.17% / 0.6860**. Style leakage probe for a structure representation fell **72.33% → 18.33%** (five-way chance 20%). | Larger edits buy recognition by spending content; a style-suppressed structure representation is *feasible*, not evidence by itself that generation improved. | [V18](docs/v18/V18_RESULTS.md) |
+| **V19 continuous source-style chord + semantic routing** (ARCH/TRAIN) | One-step **V18 A2b 38.00% → PRISM-1 44.33% (+6.33 pp)** across model generations; DINO-C **0.7555 → 0.7440**. Within V19, adding spatial routing **41.00% → 44.33% (+3.33 pp)** with DINO-C **0.7511 → 0.7440**. Wrong-target control falls to **0.83%**. | Source style is inferred continuously from the image rather than supplied as a test-time true label. Style-specific target response is demonstrated; the cross-generation comparison is not a single-change ablation. | [V19](docs/next1118/V19_RESULTS.md) |
+| **V19 anisotropic chroma/structure trust region + S10-VGG/Oklab critic** (INFER, major) | Matched V19-style strong-edit comparison **R1 critic T1 → S10-VGG T4**: **Ukiyo-e Top-1 0.8% → 45.0%**; overall Top-1 **59.17% → 59.00%** (essentially unchanged), **DINO-C 0.5647 → 0.6783**, LPIPS **0.6032 → 0.5166**. Multiple coupled solver/critic changes; do not attribute all benefit to one layer. | Palette transport and structure preservation should not share one isotropic perturbation budget. RGB-decoded style supervision repairs a historical hard-style blind spot of the old latent critic. | [V19 matched diagnostics](docs/next1118/V19_RESULTS.md) · [Source-code diagnosis](docs/next1118/01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md) |
+| **V20 Coarse-16 SLFUNet + multi-prototype flow** (ARCH/TRAIN, major) | Comparable content region **V19 T4 → V20 D6**: DINO-S **0.4618 → 0.5107 (+0.0489)**, DINO-C **0.6783 → 0.6688 (−0.0095)**; Top-1 **59.00% → 55.67%**. The high-style **V20 D1** reaches **DINO-S 0.5789**, but at **DINO-C 0.5005**. | Constrain **coarse semantic layout** and allow finer appearance synthesis. Prototype selection and training/solver changes are combined, so the large historical shift is not solely a Core-kNN effect. | [V20](docs/next1118/V20_RESULTS.md) |
+| **V21 Stiefel Q32 and 1-shot attention** (DIAG/ARCH) | Hard Q32 reduces **Gram-only source-style probe 92.33% → 20.00%** (five-way chance). Same five SG references: 1-shot **DINO-S 0.6006** vs StyleGallery **0.5604**, but **DINO-C 0.3970 vs 0.6113**. | Exact whitening eliminates the *measured second-order Gram leakage*, **not all style information**, and strong reference response does not guarantee content fidelity. The independent generative necessity of Q32 remains unproven. | [V21](docs/next1118/V21_RESULTS.md) · [V26 K0](docs/v26/4090/K0_Q32_FEATURE_AUDIT.md) |
+| **V22 fixed-layout training and early stopping** (TRAIN, major) | Same inferred control setting wc=1.1: **T0 63.33% / DINO-C 0.5087 → T4 69.00% / 0.5112 (+5.67 pp)**. Peak1500 vs continued 3600 updates at wc=1.0, g=0.5: **73.67% → 65.67% (−8.00 pp overtraining)**. | Training-time layout weakening was detrimental here; stopping at the right checkpoint mattered as much as adding a module. A new **32×32 SPADE** structural injection lost **17–19 pp** under its tested budget. | [V22 controlled training/curve](docs/v22/V22_P1_RESULTS.md) |
 
-## 🗂 Repository Structure
+### 3. High-content frontier, reference conditioning, and corrections (V23 → V26)
 
-```text
-WEAVE/
-├── src/                    # ACTIVE: facade layer (model/infer/eval/utils)
-├── exp/                    # ACTIVE experiment packages: v8 (arm matrix), v9_local (V9-LD)
-├── tools/                  # Historical code archive; PINNED subpackages used by src/
-│   │                       # (see tools/README.md), incl. legacy_root/ = paper-era flat modules
-│   │                       # (model.py, trainer.py, run.py, config_schema.py, ...)
-├── scripts/                # Submission / reproduction scripts
-├── tests/                  # Pytest suite (layout guards, spectral ODE, infra, dynamics)
-├── configs → tools/configs_retired/   # retired experiment variants (moved 2026-11-14)
-│
-├── config.json             # Canonical training / model / data config
-├── inference.json          # Canonical 8-step inference & evaluation protocol
-├── paths.py                # Central path resolver (WEAVE_ROOT / asset roots)
-│
-├── eval_protocol/          # Frozen 750-task benchmark (Cross600 + Same150)
-├── deliver/                # Delivery package incl. the S10 decoder checkpoints
-├── runs/                   # Run outputs (mostly gitignored)
-├── docs/                   # Documentation (start at docs/README.md)
-├── archives/               # Cold storage (scratch, IDE workspaces, old outputs)
-├── aaai2027_v4/            # LaTeX paper build
-│
-├── requirements.txt / requirements-dev.txt / pytest.ini
-├── INSTALL.md / CHANGELOG.md / CITATION.cff / LICENSE
-└── __init__.py / __main__.py   # compatibility shims → tools.legacy_root
-```
+| Version and change | Measured magnitude and cost | What it actually established | Evidence |
+|---|---|---|---|
+| **V23 dual-CFG branch layout bug fixed** (**FIX**, not a new method) | Same weights/config after correction: V20 dual **42.50% → 50.50% (+8.00 pp)**; V22 dual **34.67% → 49.50% (+14.83 pp)**. CFG branch count can be halved in the tested settings, but V25 shows this is **not universally safe** on Minimalism routes. | A large apparent “architectural improvement” can be the removal of a silent implementation defect. | [V23](docs/v23/V23_RESULTS.md) · [V25 CI/route guard](docs/v25/ABLATION_LEDGER.md) |
+| **V23 high-content Joint/Anchor-Bridge** (TRAIN) | Against V20 D5: **HiC-JPk Top-1 55.17% → 58.83% (+3.66 pp)**, DINO-S **0.5214 → 0.5330 (+0.0116)**, DINO-C **0.6287 → 0.6299**; LPIPS worsens **0.5529 → 0.5649**. | There is a real mid/high-content improvement, **not** strict dominance across every distortion metric. The first predicted trajectory step was identified as a primary source of structure loss. | [V23](docs/v23/V23_RESULTS.md) |
+| **V23 reference-conditioned cross-pair supervision** (TRAIN) | Within the exploratory 1-shot pipeline: self-paired reference-attention R5/R6 **~19.7%** Top-1 → 25%-cross-pair M1 **28.50%** → 50%-cross-pair M2 **31.83%** → source Anchor-Bridge M3 **38.00%**. Content/fidelity and initialization also change along this chain; it is not a pure curriculum ablation. | A reference encoder alone does not teach source→*other-style* transfer. Target-conditioned endpoints and source-to-target bridge training are crucial. | [V23 1-shot lineage](docs/v23/V23_RESULTS.md) |
+| **V24 PRISM-1 + Flow latent hybrid** (**INFER**, no retraining) | Same-board **PRISM-1 λ=1.0 → γ=0.40 hybrid**: DINO-C **0.7440 → 0.7467**, DINO-S **0.4430 → 0.4600 (+0.0170)**, LPIPS **0.5057 → 0.5006**, Top-1 **44.33% → 50.17% (+5.84 pp)**. Freezing *all* Haar LL while mixing HF underperforms partial LL blending (Top-1 −1.67 pp). | The two trained model families make complementary errors; **global latent mixing** can beat both naive strength tuning and rigid frequency separation at high content fidelity. | [V24](docs/v24/PROGRESS.md) |
+| **V24 O3 RGB reference Value + global color gate** (ARCH/TRAIN) | At t=0.45, gray-DINO O1 **30.67%** → gated RGB O3 **35.33% (+4.66 pp)**; DINO-S **0.5169 → 0.5245 (+0.0076)**. Separate OOD SG-25 work showed positive reference response, but not a full 25-style benchmark claim. | Spatial semantic matching and reference appearance/color conditioning can be complementary **under a suitable training objective**. | [V24 O1/O2/O3](docs/v24/PROGRESS.md) |
+| **V25 high-content B4 anchor / R12 hybrid** (**INFER**, no new training) | Matched-board **PRISM-1 λ=0.75 → R12 γ=0.55**: DINO-C **0.7715 → 0.7723**, DINO-S **0.4371 → 0.4564 (+0.0193)**, Top-1 **37.67% → 42.50% (+4.83 pp)**, LPIPS **0.4848 → 0.4783**. A separate B4-anchored Flow-only point reaches **DINO-C 0.7286**, exceeding the **0.7055** ceiling of the *specific earlier T4-anchored D6 τ-sweep*. | **Anchor and trajectory choice, not bigger network weights**, moved the extreme-content frontier. Hybrid still incurs both models' computation when run fresh. | [R12 model recipe](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) · [V25 strength/ceiling audit](docs/v25/ABLATION_LEDGER.md) |
+| **V25 One-Shot cross-style supervision ablated** (TRAIN/NEG) | Removing O3 cross-style pairs gives Top-1 **35.33% → 12.33% (−23.00 pp)** at the t45 comparison; content improves because editing collapses toward identity. | A successful style condition is not enough if **training targets remain self-reconstruction**. | [V25 3060 evaluation](docs/v25/GPU3060_RESULTS.md) |
+| **V26 hard Q32, local RefAttn, SR-CFG** (DIAG/NEG) | Q32 Gram leakage **92.3% → 20.0%**, but no demonstrated generative gain. Disabling/zeroing/wrong-value local RefAttn **improves DINO-C by ~0.04–0.05** in C2nt; source-repulsive CFG **fails** its preset success threshold (SR0 Top-1 **42.17%**, best source-repulsion arm ~**40.3%**). | Style-feature “purity,” local reference detail, and stronger inference repulsion **do not ensure a better conditional transport field**. | [V26 summary](docs/1120/V26_RESULTS_SUMMARY.md) · [K1 attention](docs/v26/4090/K1_REFATTN_CAUSAL_AUDIT.md) |
+| **V26 C2nt 4-step inference** (**INFER**, limited to 1-shot line) | Same frozen model: **10-step RK2 ~42.17% → 4-step Euler 43.17% (+1.00 pp)** with **20 → 4 velocity evaluations (5× fewer)**; however DINO-S changes **0.5236 → 0.5112** (−0.0124). | Top-1 and compute improve here, **not** unconditional style quality or PRISM-Flow's general minimum step count. | [V26 progress](docs/1120/PROGRESS.md) |
+| **V26-L0 strictly cross-style reference sampling** (TRAIN/NEG, *matched 1,200-update probes*) | Legacy same-style neighbors **16.17%** Top-1 vs forced cross-style uniform **11.33% (−4.84 pp)** / cross-style Core **12.00% (−4.17 pp)**. These probes must **not** be conflated with the earlier 42.17% C2nt checkpoint. | Same-style sampling is a documented flaw, **but fixing it alone does not repair the transfer objective or model**. Teacher-target/transport redesign remains the main research direction. | [L0 report](docs/v26/4090/L0_CROSSSTYLE_CAUSAL.md) · [V26-L progress](docs/1120/PROGRESS.md) |
 
----
+## Mechanistic conclusions and corrections
 
-## 🚀 Quick Start
+| Claim | Current evidence-based interpretation | Where tested |
+|---|---|---|
+| **Source-style destruction ≠ target-style construction** | V6 outputs were still classified as the source style **91.4%** of the time despite measurable \(\Delta S<0\). Positive prototype displacement alone does not imply crossing the target decision boundary. | [V6](docs/v6/V6_CONCLUSIONS.md) · [negative-results ledger](docs/negative_results/README.md) |
+| **Generic artistic restoration ≠ movement-specific generation** | V10.2 mixed-style KDE explains **95%** of target-style KDE restoration direction; V6 VAE SWD has same-genre AUROC **51.1–51.4%** and can reduce loss by latent scale shrinking. These are **different losses/representations** from the newer V26 candidate SWD; do not declare all SWD useless. | [V10.2](docs/v10_2/V10_2_RESULTS.md) · [V6 VAE/SWD](docs/v6/V2_FAILURE_DIAGNOSIS.md) |
+| **A discriminative style space is not a generative transport field** | DINO patch style classification **79.3%** outperformed DWT **54.4%**; V25's 795D fiber classification needs only ~64 PCA components for similar **five-way recognition**, but this alone cannot predict directionality or editing success. Oklab encodes a partially independent palette channel. | [V14](docs/v14/V14_RESULTS.md) · [V25 feature geometry](docs/v25/audits/a05_feature_geometry.md) |
+| **Self-paired FM can learn to ignore the desired reference** | Scaling improves unconditional generation but degrades SDEdit; removing cross-style O3 training drops Top-1 **23 pp**. V26 K1 shows target-reference influence weakens near the end of a C2nt trajectory. These are mutually supportive observations, not a theorem that all self-paired methods must fail. | [V15](docs/v15/WEAVE_V15_SCALING_RESULTS.md) · [V25 ablation](docs/v25/ABLATION_LEDGER.md) · [V26 K1](docs/v26/4090/K1_REFATTN_CAUSAL_AUDIT.md) |
+| **Separate protection of structure from freedom to synthesize appearance** | V19 anisotropic constraints and V20 16×16-only layout injection beat many earlier isotropic/high-resolution locking schemes. **Neither “luminance equals content” nor “all HF equals style” is an exact factorization.** In V24 partial LL transport was better than freezing LL outright. | [V19](docs/next1118/V19_RESULTS.md) · [V20](docs/next1118/V20_RESULTS.md) · [V24](docs/v24/PROGRESS.md) |
+| **High-margin style exemplars can be bad generation targets** | V20's early class prototypes were polluted by atypical Minimalism installation photographs; kNN-core filtering corrected the particular bank. **Later V22 K4/K8/random-prototype controls were near-equivalent**, so the robust lesson is **non-centroid, diverse style exemplars**, *not* that expensive Core-kNN is universally necessary. | [V20](docs/next1118/V20_RESULTS.md) · [V22 controlled D-group](docs/v22/V22_P1_RESULTS.md) |
+| **Second-order whitening ≠ complete disentanglement** | Hard Q32 suppresses measured Gram classification to chance; PCA32 does not. The Gram probe cannot prove the resulting representation has **zero style information** or that Q32 is necessary for output quality. V26 K3 matched generative ablation is still gated. | [V21](docs/next1118/V21_RESULTS.md) · [K0 audit](docs/v26/4090/K0_Q32_FEATURE_AUDIT.md) |
+| **Inference shortcuts must survive route-level and CI tests** | V22's fixed gate and V23's corrected two-branch CFG helped in specific regimes; V25 found that deleting dynamic gating can significantly hurt high-content results and that simplified CFG may fail **Minimalism route guards** despite encouraging averages. No blanket “remove gate / halve CFG” claim survives. | [V22](docs/v22/V22_P1_RESULTS.md) · [V25 ledger](docs/v25/ABLATION_LEDGER.md) |
+| **SWD is a candidate complementary loss, not a demonstrated better teacher** | Corrected V26 normalized AUC: **mean VGG 0.673**, Gram **0.649**, SWD **0.661**; the earlier “13× discriminative” claim was a scale artifact. SWD vs mean-VGG gradient cosine **0.179** suggests possible complementary texture gradients; *generation gains remain unproven*. | [Corrected V26-L progress](docs/1120/PROGRESS.md) · [K2 audit](docs/v26/4090/K2_STYLE_LOSS_AND_SUBJECT_AUDIT.md) |
+| **C2nt is diagnostic, not the primary product** | At V26, local reference attention often damaged content, Rococo remained near zero across subject groups, and matched L0 cross-style sampling did not fix quality. SG-25 OOD reference response **ΔDINO-S +0.2216**, swap-distance **0.5349** is real, but OOD DINO-C **0.3566** is poor; **125 OOD pairs are not the full StyleGallery evaluation**. | [V26 summary](docs/1120/V26_RESULTS_SUMMARY.md) · [V26-L progress](docs/1120/PROGRESS.md) |
 
-```bash
-# 1. Create and activate a Python 3.10+ environment (conda recommended)
-conda create -n weave python=3.10 -y
-conda activate weave
+## Current research priorities (not completed results)
 
-# 2. Install runtime dependencies
-pip install -r requirements.txt
+1. **Reference-conditioned PRISM-Flow:** make the strong V20–V25 flow genuinely responsive to arbitrary images, with **cross-style supervised targets**, global style-chord conditioning, content-safe local appearance control, and source-style counterfactuals. V26-L's L1/L3/L4 modules are experiments, **not successes until measured and audited**. [V26-L plan](docs/1120/08_v26_long_plan.md) · [progress](docs/1120/PROGRESS.md).
+2. **Matched decoder and Q32 studies:** isolate the effect of S10's pruning/training recipe and test whether Q32 improves *generation* rather than only Gram-probe statistics. [V26 plan](docs/1120/08_v26_long_plan.md).
+3. **Per-route auditing, not only means:** especially source Minimalism, target Early Renaissance/Rococo/Ukiyo-e, reference swap sensitivity, Same150, and visual subject preservation. Test750 is a repeated development board; further generalization claims need an independently held-out evaluation. [V25 route audit](docs/v25/ABLATION_LEDGER.md) · [V26 mechanism report](docs/1120/V26_RESULTS_SUMMARY.md).
 
-# 3. Verify the package imports (paper-era modules live in tools/legacy_root/)
-python -c "import tools.legacy_root.model as m; print('WEAVE model OK:', m.WEAVE.__name__)"
+## Code, reproducibility, and documentation
 
-# 4. Train the canonical 15-epoch run (single RTX 3060 12 GB, batch size 8)
-python tools/legacy_root/run.py --config config.json
+| Entry | Use |
+|---|---|
+| [Active source](src/) and [experiment packages](exp/) | PRISM inference/evaluation utilities; per-version training and ablations in exp/v8–v26 |
+| [Model assets and per-checkpoint recipes](docs/ours/README.md) | Selected configurations, provenance, expected metrics. Large weight and image files can be **gitignored/unavailable in a plain clone**. |
+| [Frozen evaluation manifest](eval_protocol/tasks_750.json) and [evaluation definitions](docs/HIGHLIGHTS.md) | Reproduce the five-style task, Cross600/Same150 split, decoder, metrics, and comparison conventions |
+| [Historic measured CSV](docs/performance/metrics.csv) | Machine-readable measurements through its documented build scope; **not** a substitute for later V22–V26 reports |
+| [V25 model lineage](docs/v25/MODEL_LINEAGE.md) and [cost audit](docs/v25/audits/a07_cost_model.md) | Checkpoint vs solver identity, cached-vs-fresh work, CFG multiplicity, and real latency accounting |
+| [All experiments index](exp/README.md) and [docs index](docs/README.md) | Code entry points and earlier scientific records (some index prose is a historical snapshot) |
+| [Original WEAVE reproduction](docs/reproduction/baseline_reproduction.md) and [legacy experiments](docs/legacy_root/EXPERIMENTS.md) | Original 8-step DWT/Flow/AdaIN baseline; **not** the active PRISM training recipe |
+| [Current ICME paper source](docs/icme2027/README.md) | Manuscript engineering; statements must be reconciled with V22–V26 before submission |
 
-# 5. Evaluate a checkpoint with the 8-step inference protocol
-python tools/legacy_root/run_evaluation.py --checkpoint runs/submission/canonical_oriented_epoch4/epoch_0004.pt \
-                                           --inference inference.json
-```
+Install the declared Python dependencies with **pip install -r requirements.txt**. Run the non-GPU repository guardrails with **python -m pytest tests/test_markdown_links.py tests/test_no_absolute_paths.py -q**. Follow the specific linked model recipe before starting GPU training or inference: the selected checkpoint, encoder/decoder scaling convention, reference bank, CFG branches, solver, and evaluation seed materially affect the output. For S10, use **src.utils.load_s10_decoder** and **src.utils.decode_s10** exactly as specified in [AGENTS.md](AGENTS.md).
 
-> 💡 The first time you run training or evaluation, latent caches will be built
-> under `runs/cache/`. See [INSTALL.md](INSTALL.md) for GPU memory tuning and
-> [docs/legacy_root/DATA.md](docs/legacy_root/DATA.md) for dataset layout.
+## Scope, citation, and license
 
----
+This repository documents a research program, including negative results and implementation corrections. A five-style classifier result is **not** general-purpose, unseen-style transfer performance. Results on repeatedly used test750 tasks are **not a held-out-paper acceptance benchmark**. No claim is made that all current methods share an identical compute budget or that V26 exploratory models supersede the strong PRISM-Flow family.
 
-## 📚 Documentation
+The original WEAVE-era submission artifacts are retained under [aaai2027_v4](aaai2027_v4/) and [legacy experiments](docs/legacy_root/EXPERIMENTS.md). For citation metadata see [CITATION.cff](CITATION.cff); check the status of any manuscript before describing it as published.
 
-| Document | Description | Status |
-|----------|-------------|--------|
-| [INSTALL.md](INSTALL.md)         | System requirements, environment setup, troubleshooting | ✅ |
-| [CHANGELOG.md](CHANGELOG.md)     | Versioned release history (Keep a Changelog format)    | ✅ |
-| [CITATION.cff](CITATION.cff)     | Citation metadata in CFF 1.2 format                    | ✅ |
-| [LICENSE](LICENSE)               | MIT license                                            | ✅ |
-| [REPRODUCE.md](REPRODUCE.md)     | Step-by-step reproduction of all paper tables          | ✅ |
-| [docs/README.md](docs/README.md) | Current documentation index (research state, highlights)| ✅ |
-| [docs/legacy_root/DATA.md](docs/legacy_root/DATA.md) | Dataset layout (D5-512, R5-512, P2A-256) and preparation | 📝 archived |
-| [docs/legacy_root/EXPERIMENTS.md](docs/legacy_root/EXPERIMENTS.md) | Ablation and rebuttal experiment index | 📝 archived |
-| [docs/legacy_root/CHECKPOINT.md](docs/legacy_root/CHECKPOINT.md) | Checkpoint conventions and download mirrors | 📝 archived |
-
----
-
-## 📝 Citation
-
-If you use WEAVE in your research, please cite it using the metadata in
-[`CITATION.cff`](CITATION.cff). A BibTeX entry is provided below; author names
-are anonymized pending the end of double-blind review.
-
-```bibtex
-@inproceedings{weave2027,
-  title     = {WEAVE: Wavelet-based Entanglement-Augmented Vision Exchange},
-  author    = {Anonymous Authors},
-  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence (AAAI)},
-  year      = {2027},
-  note      = {Anonymous double-blind submission},
-  url       = {https://anonymous.4open.science/r/weave}
-}
-```
-
----
-
-## ⚖️ License
-
-Released under the [MIT License](LICENSE).
-
-```
-MIT License
-
-Copyright (c) 2026 Anonymous Authors (AAAI 2027 Submission)
-```
-
----
-
-## 🙏 Acknowledgments
-
-WEAVE builds on a number of open-source efforts in the style-transfer,
-flow-matching, and wavelet-analysis communities. We thank the maintainers of
-PyTorch, the Stable Diffusion VAE, the DINO and CLIP metric backbones, and the
-WikiArt dataset curators. Detailed credits will be added in the camera-ready
-version following the double-blind review period.
-
----
-
-<sub>
-  🔒 This is an anonymous release for AAAI 2027 double-blind review.
-  All identifying information has been redacted and will be restored upon acceptance.
-</sub>
+Licensed under [MIT](LICENSE).
