@@ -103,6 +103,16 @@ C2nt t45 × StyleGallery 25 类 125 对（`docs/v26/4090/data/sg25_c2nt_t45.json
 1. **K2-A 判别力更正**：尺度无关口径下 AUC = mean-VGG **0.673** / Gram 0.649 / SWD **0.661**——"13× 判别力"确为数值尺度伪影，**SWD 判别力与 mean-VGG 相当**；逐画派 one-vs-rest margin 实现 bug 已修复（原实现只保留两端同画派对，m_out 恒空 → 全负），修复后全为正（Rococo 1.16 最高）。SWD 的真实价值主张修正为 **K2-B 的近正交互补梯度方向**（cos=0.179，‖∇‖ 20×）而非更强判别。
 2. **K2-C 正对照完成**（`data/k2c_positive_control.json`，holdout 真图 60/画派）：CSD 天花板 ER 98.3% / Imp 96.7% / Min 100% / **Rococo 90.0%** / Uki 100%（CLIP 88.3–100%）——裁判对真 Rococo 不盲，**C2nt 的 Rococo 0% 为真实迁移失败**，题材混杂解释被正对照排除（比"全题材 0%"更直接的证据）。
 
+### L0 裁决（✅ 完成，`docs/v26/4090/L0_CROSSSTYLE_CAUSAL.md`）
+
+| 臂 | 参考采样 | DINO-C ↑ | DINO-S ↑ | LPIPS ↓ | Top-1 ↑ |
+|---|---|---:|---:|---:|---:|
+| A0 旧同画派近邻 | 同画派 | 0.6795 | 0.4934 | 0.3944 | **16.17%** |
+| A1 严格跨画派均匀 | 跨画派 | 0.6992 | 0.4776 | 0.3727 | 11.33% |
+| A2 跨画派+Core 典型 | 跨画派+Core | 0.6972 | 0.4805 | 0.3762 | 12.00% |
+
+**L0 定论（回答七问①）**：真实跨画派参考采样**不能修复**失败——Top-1 反而 16.17%→11.3/12.0%（异画派参考把输出拉向无关风格），内容略升。**C2nt 的主要失败不由错误参考采样造成** → 支持"改换监督目标与主模型"，L1 教师监督主线正当。参考更换敏感性（swap）因运行进程缺 decode_s10 导入被防御式跳过，待队列后用保存 ckpt 单独补算。
+
 ### V26-L 长队列启动（2026-11-20T22:48 UTC，36h 预算）
 
 - 方案：[`08_v26_long_plan.md`](08_v26_long_plan.md)｜队列：`exp/v26/gpu4090/queue_k_long.py`（两级任务 + 三态路由 + 状态 JSON `queue_long_status.json`，含 science_tasks_done / budget_remaining / gpu_compute_seconds 等七字段，禁止无依据的提前完成）
