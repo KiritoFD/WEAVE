@@ -4,7 +4,7 @@ docs/1120/08_v26_long_plan.md §L1. 主线实验:
 
   F0  闭集上界 (V20_D2 已测 60.50% Top-1, 不重训, 不参与严格 One-Shot 比较)
   F1  全局参考 Fiber + 原训练配方 (自配对 flow-MSE + VGG swap)  — 无跨画派目标
-  F2  全局参考 Fiber + 跨画派 Flow 教师监督 (锚桥插值到 V20_D2 闭集教师 latent)
+  F2  全局参考 Fiber + 跨画派 Flow 教师监督 (锚桥插值到**目标画派**教师 latent)
   F3  F2 + 局部 RefAttn (仅 F2 有价值后触发, 本模块预留 run_l1(arms="F3"))
 
 共同约束:
@@ -12,7 +12,7 @@ docs/1120/08_v26_long_plan.md §L1. 主线实验:
     天然 Global-only (ref_attn16 被跳过), F3 才传入 (结构保护待实现);
   - **推理完全免目标画派 ID**: sid 槽位恒零, 条件 = (内容, 参考图全局纤维);
   - **训练参考严格跨画派** (复用 L0 采样器, 禁止静默回退), S1 accum-RNG 修复保持;
-  - 教师 = V20_D2 闭集求解器 (真画派条件, 训练期用标签, 论文如实声明), 预计算缓存;
+  - 教师 = V22-Dual 闭集模式 (以**目标参考画派** core exemplar 条件; 缓存按 (content, target_style) 索引);
   - 训练冻结主干大部, 训练 cond_mlp/dec/out + ref_attn16 (F3) + adapter.
 
 评测: 全量 test750 (t45) — `_eval_baseline_steps` 同 SR0 协议 (2 分支 CFG, u_style
@@ -38,27 +38,31 @@ L1_SEED = 20265800
 L1_UPDATES = 2000
 L1_MICRO = 8
 L1_ACCUM = 4
-TEACHER_CACHE = ROOT / "runs/v26/cache/l1_teacher_v20d2.pt"
+TEACHER_CACHE = ROOT / "runs/v26/cache/l1_teacher_v22dual_crossstyle.pt"
 
 
 # ------------------------------------------------- 教师 (V20_D2 闭集) ----
 
 @torch.no_grad()
 def build_teacher(pool: str, device: str = "cuda", batch: int = 25) -> Path:
-    """闭集教师: V22 Dual (SLFUNetV24OneShot) 的真画派 core-exemplar 条件模式.
+    """跨画派教师: **按 (content, target_style) 索引** — 教师必须以目标参考所属画派
+    的 core exemplar 为条件生成, 而非源图画派 (2026-11-21 用户核查修复).
 
-    条件 = 真画派 core 典型样本的全局纤维 (无 adapter, 闭集语义), sid 槽位恒零
-    (V24OneShot 结构性置零), 积分协议与 SR0/评测完全一致 (tau0=0.45, 10 步 RK2,
-    CFG wj=2.2). 训练期使用真画派标签选择 core exemplar — 论文如实声明.
+    旧实现用 sid_all[i] (源画派) 条件生成 → 教师目标 ≈ 自画派, 与跨画派参考条件
+    矛盾, 会反向强化 Source-Style Lock. 已作废.
+
+    存储: {"z": (N, 5, 4, 64, 64) fp16, "valid": (N, 5) bool} — slot = 目标画派 id,
+    仅 sid[t] != sid[i] 的 slot 有效. 训练期 z_tgt = z[ic, sid[ir]].
+    附带跨画派一致性验证: 同源图切目标画派 → 教师输出的 Oklab 色彩差必须显著.
     """
     if TEACHER_CACHE.exists():
         print(f"[L1] teacher cache hit {TEACHER_CACHE}", flush=True)
         return TEACHER_CACHE
-    from exp.v18 import tasks_and_sources  # noqa: F401 (保证数据集就绪检查)
     import exp.v25 as _v25
     from exp.v19.fiber_duality import StyleFiberEncoder, build_or_load_v19_foundation
     from exp.v24.p0_o1_o3_value import SLFUNetV24OneShot
     from exp.v26.sr_cfg import integrate_sr, sr_velocity
+    from src.utils import load_s10_decoder
 
     _v25.seed_all(20261185)
     bundle = build_or_load_v19_foundation(pool, device=device)
@@ -70,14 +74,14 @@ def build_teacher(pool: str, device: str = "cuda", batch: int = 25) -> Path:
     fm = SLFUNetV24OneShot(v_dim=192, use_conf_gate=True, use_global_fib=True).to(device).eval()
     fm.load_state_dict(ck["ema"], strict=False)  # 双分支 ckpt 布局: {"ema": state_dict, ...}
 
-    fib_tr = bundle["fnd"]["tr_fib"].float()
-    fib_mean = fib_tr.mean(0, keepdim=True).to(device)
-    fib_std = fib_tr.std(0, keepdim=True).clamp_min(1e-4).to(device)
     fiber_enc = StyleFiberEncoder(in_dim=bundle["fnd"]["tr_fib"].shape[1], dim=128).to(device).eval()
     fiber_enc.load_state_dict(bundle["fnd"]["fiber_state"])
     tr = bundle["v18_cache"]["train"]
     z_all, sid_all = tr["z"], tr["sid"].long()
     u_all = fiber_enc.encode(bundle["fnd"]["tr_fib"].to(device).float())
+    fib_tr = bundle["fnd"]["tr_fib"].float()
+    fib_mean = fib_tr.mean(0, keepdim=True).to(device)
+    fib_std = fib_tr.std(0, keepdim=True).clamp_min(1e-4).to(device)
     fib_n_all = (bundle["fnd"]["tr_fib"].to(device).float() - fib_mean) / fib_std
     del fiber_enc
 
@@ -88,82 +92,85 @@ def build_teacher(pool: str, device: str = "cuda", batch: int = 25) -> Path:
     d16_all = tr["dino_16"]
     g = torch.Generator().manual_seed(20261185)
     eps_all = torch.randn(z_all.shape, generator=g)
-    eps_all = torch.randn(z_all.shape, generator=g)
 
-    # 每样本的闭集条件: 同画派随机 core 典型样本 (排除自身)
+    # 闭集条件: **目标画派 t 的 core 典型样本** 纤维池
     core_idx = [c.clone() for c in c21["train"]["core_idx_per_style"]]
-    u_closed = torch.empty_like(u_all)
-    glob_closed = torch.empty_like(fib_n_all)
-    for i in range(len(z_all)):
-        s = int(sid_all[i])
-        cand = core_idx[s].to(u_all.device)
-        cand = cand[cand != i]
-        if len(cand) == 0:
-            cand = (sid_all == s).nonzero(as_tuple=True)[0]
-            cand = cand[cand != i]
-        j = int(cand[int(torch.randint(0, len(cand), (1,), generator=g))])
-        u_closed[i] = u_all[j]
-        glob_closed[i] = fib_n_all[j]
 
-    z_t = torch.empty_like(z_all)
+    N = len(z_all)
+    z_t = torch.zeros(N, 5, 4, 64, 64, dtype=torch.float16)
+    valid = torch.zeros(N, 5, dtype=torch.bool)
     tau0, wj = 0.45, 2.2
-    for st in range(0, len(z_all), batch):
-        sl = slice(st, min(st + batch, len(z_all)))
-        zs = z_all[sl].to(device).float()
-        B = len(zs)
-        y16 = y16_all[sl].to(device).float()
-        d16 = d16_all[sl].to(device).float()
-        u_style = u_closed[sl].to(device)
-        u_glob = glob_closed[sl].to(device)
-        z = (1.0 - tau0) * eps_all[sl].to(device).float() + tau0 * zs
-        slot = torch.zeros(B, dtype=torch.long, device=device)
-        f0 = torch.zeros(B, dtype=torch.bool, device=device)
-        f1 = torch.ones(B, dtype=torch.bool, device=device)
-        l1 = torch.ones(B, device=device)
+    dec_v = load_s10_decoder(device)
 
-        def vel_fn(zz, prog):
-            tv = torch.full((B,), tau0 + prog * (1.0 - tau0), device=device)
-            out = fm(torch.cat([zz, zz], 0), y16.repeat(2, 1, 1, 1), d16.repeat(2, 1, 1, 1),
-                     slot.repeat(2), torch.cat([u_style, u_style], 0), tv.repeat(2),
-                     drop_style=torch.cat([f0, f1], 0),
-                     drop_content=torch.zeros(2 * B, dtype=torch.bool, device=device),
-                     layout_scale=l1.repeat(2),
-                     d16_ref=None, v16_ref=None, u_glob=u_glob.repeat(2, 1)).float()
-            v_cond, v_unc = out.chunk(2, 0)
-            return v_unc + wj * (v_cond - v_unc)
+    for t in range(5):  # 目标画派
+        core_t = core_idx[t].to(u_all.device)
+        for st in range(0, N, batch):
+            sl = slice(st, min(st + batch, N))
+            idx = torch.arange(sl.start, sl.stop)
+            m = sid_all[idx] != t
+            if not bool(m.any()):
+                continue
+            idx_m = idx[m]
+            B = len(idx_m)
+            zs = z_all[idx_m].to(device).float()
+            y16 = y16_all[idx_m].to(device).float()
+            d16 = d16_all[idx_m].to(device).float()
+            pick = torch.randint(0, len(core_t), (B,), generator=g)
+            u_style = u_all[core_t[pick]]
+            u_glob = fib_n_all[core_t[pick]]
+            z = (1.0 - tau0) * eps_all[idx_m].to(device).float() + tau0 * zs
+            slot = torch.zeros(B, dtype=torch.long, device=device)
+            f0 = torch.zeros(B, dtype=torch.bool, device=device)
+            f1 = torch.ones(B, dtype=torch.bool, device=device)
+            l1 = torch.ones(B, device=device)
 
-        z_t[sl] = integrate_sr(vel_fn, z, tau0, 10, "rk2").cpu()
-        print(f"[L1 teacher] {st + B}/{len(z_all)}", flush=True)
+            def vel_fn(zz, prog):
+                tv = torch.full((B,), tau0 + prog * (1.0 - tau0), device=device)
+                out = fm(torch.cat([zz, zz], 0), y16.repeat(2, 1, 1, 1), d16.repeat(2, 1, 1, 1),
+                         slot.repeat(2), torch.cat([u_style, u_style], 0), tv.repeat(2),
+                         drop_style=torch.cat([f0, f1], 0),
+                         drop_content=torch.zeros(2 * B, dtype=torch.bool, device=device),
+                         layout_scale=l1.repeat(2),
+                         d16_ref=None, v16_ref=None, u_glob=u_glob.repeat(2, 1)).float()
+                v_cond, v_unc = out.chunk(2, 0)
+                return v_unc + wj * (v_cond - v_unc)
+
+            z_gen = integrate_sr(vel_fn, z, tau0, 10, "rk2").cpu()
+            z_t[idx_m, t] = z_gen.half()
+            valid[idx_m, t] = True
+        print(f"[L1 teacher] target style {t} done ({int(valid[:, t].sum())} contents)", flush=True)
+
+    # 跨画派一致性验证: 8 源图 × 2 不同目标画派 → Oklab 色彩差 (教师确实换了风格)
+    from exp.v19.fiber_duality import extract_color_fiber_27d
+    sample_src = [int(torch.randint(0, N, (1,), generator=g)) for _ in range(8)]
+    diffs = []
+    for i in sample_src:
+        s_i = int(sid_all[i])
+        ts = [t for t in range(5) if t != s_i and bool(valid[i, t])]
+        if len(ts) < 2:
+            continue
+        rgb_a = decode_s10(dec_v, z_t[i, ts[0]].float().to(device), batch=1).clamp(0.0, 1.0)
+        rgb_b = decode_s10(dec_v, z_t[i, ts[-1]].float().to(device), batch=1).clamp(0.0, 1.0)
+        ca = extract_color_fiber_27d(rgb_a)
+        cb = extract_color_fiber_27d(rgb_b)
+        diffs.append(float((ca - cb).abs().mean()))
+    ver = {"n_sources": len(diffs),
+           "mean_color_diff": round(sum(diffs) / max(len(diffs), 1), 5) if diffs else None,
+           "note": "同源切目标画派 → Oklab 色彩差; 显著 >0 即教师确实换了风格"}
+    del dec_v, fm
+    torch.cuda.empty_cache()
+
     TEACHER_CACHE.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"z_teacher": z_t.half(), "recipe": "V22Dual_closedset_core_exemplar",
+    torch.save({"z": z_t, "valid": valid, "verify_crossstyle": ver,
+                "recipe": "V22Dual_closedset_core_exemplar_TARGET_STYLE",
                 "updated_utc": utc()}, TEACHER_CACHE)
-    print(f"[L1] teacher cached → {TEACHER_CACHE}", flush=True)
+    print(f"[L1] teacher cached → {TEACHER_CACHE} verify={ver}", flush=True)
     return TEACHER_CACHE
-
-
-_CORE_BANK: dict | None = None
-
-
-def _core_bank_for(device: str) -> dict:
-    """core bank = c21 的 core 索引/统计的运行时视图 (integrate_slf_core_batch 兼容)."""
-    global _CORE_BANK
-    if _CORE_BANK is None:
-        import torch.nn.functional as NF
-
-        c21 = torch.load(ROOT / "runs/v21/cache/v21_stiefel_ref_cache.pt",
-                         map_location="cpu", weights_only=False)
-        tr = torch.load(ROOT / "runs/v18/…", weights_only=False) if False else None
-        # core bank 字段 (与 build_or_load_core_knn_bank 的消费字段对齐):
-        _CORE_BANK = {
-            "core_idx_per_style": c21["train"]["core_idx_per_style"],
-            "mid_dsd": c21["mid_dsd"],
-        }
-    return _CORE_BANK
 
 
 # ------------------------------------------------- L1 训练臂 ----
 
-def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
+def train_l1_arm(bundle, c21, v16_tr, teacher: dict, arm: str, *,
                  supervision: str, local_attn: bool = False,
                  lambda_sw: float = 0.5, lambda_c: float = 1.0,
                  updates: int = L1_UPDATES, micro: int = L1_MICRO, accum: int = L1_ACCUM,
@@ -271,8 +278,13 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
                 c, r = strict_cross(gen)
                 ic.append(c); ir.append(r)
             ic = torch.tensor(ic, dtype=torch.long); ir = torch.tensor(ir, dtype=torch.long)
-            z_tgt = (z_all[ic].to(device).float() if supervision == "self"
-                     else teacher_z[ic].to(device).float())
+            if supervision == "self":
+                z_tgt = z_all[ic].to(device).float()
+            else:
+                # 跨画派教师: 目标画派 = 参考图所属画派 sid[ir] (修复: 旧版用源画派 → 自相矛盾)
+                tgt_styles = sid_all[ir]
+                assert bool(teacher_valid[ic, tgt_styles].all()), "教师缓存 valid 违例"
+                z_tgt = teacher_z[ic, tgt_styles].to(device).float()
             za = z_all[ic].to(device).float()
             B = len(ic)
             d16 = d16_all[ic].to(device).float()
@@ -397,7 +409,9 @@ def run_l1(pool: str, device: str = "cuda") -> str:
     """L1 主入口: 教师预计算 → F1 (self) → F2 (teacher) → 各自全量 test750 评测."""
     results = {}
     tcache = build_teacher(pool, device=device)
-    teacher_z = torch.load(tcache, map_location="cpu", weights_only=False)["z_teacher"].float()
+    tdata = torch.load(tcache, map_location="cpu", weights_only=False)
+    teacher_z = tdata["z"]        # (N, 5, 4, 64, 64) — 按 (content, target_style) 索引
+    teacher_valid = tdata["valid"]
     bundle = _bundle_for(pool, device)
     c21 = torch.load(ROOT / "runs/v21/cache/v21_stiefel_ref_cache.pt",
                      map_location="cpu", weights_only=False)
@@ -415,7 +429,7 @@ def run_l1(pool: str, device: str = "cuda") -> str:
     torch.cuda.empty_cache()
 
     for arm, sup in (("F1_global_self", "self"), ("F2_global_teacher", "teacher")):
-        ckpt = train_l1_arm(bundle, c21, v16_tr, teacher_z, arm, supervision=sup, device=device)
+        ckpt = train_l1_arm(bundle, c21, v16_tr, {"z": teacher_z, "valid": teacher_valid}, arm, supervision=sup, device=device)
         env = load_sr_env(pool, device=device, ckpt_path=ckpt)
         s = _eval_baseline_steps(env, f"{arm}_t45", steps=10, sampler="rk2", device=device)
         c = s["cross600"]
