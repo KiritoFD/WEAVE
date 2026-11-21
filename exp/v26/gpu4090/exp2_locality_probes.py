@@ -76,16 +76,20 @@ def inter_cluster_divergence(env: dict, ckpt_p: Path, device: str = "cuda",
     eps = torch.randn(B, 4, 64, 64, generator=torch.Generator().manual_seed(20261185)).to(device)
     z = (1.0 - tau0) * eps + tau0 * zs
 
-    def vel_fn(zz, prog):
-        tv = torch.full((B,), tau0 + prog * (1.0 - tau0), device=device)
-        v, _ = sr_velocity(fm, ad, u_style, None, u_glob, None, d16, d16_r, v16_r,
-                           None, None, y16, zz, tv, mode="baseline", w=0.0, wj=wj, device=device)
-        return v
-
-    # 分块积分 (150 任务一次性 batch=150 会 OOM)
+    # 分块积分 (150 任务一次性 batch=150 会 OOM); vel_fn 按块切片条件张量
+    # (v5 修复: 原实现用全局 B 的条件张量 → 分块 16 与全局 48 形状不匹配)
     z_chunks = []
     for st in range(0, B, 16):
         sl = slice(st, min(st + 16, B))
+
+        def vel_fn(zz, prog, sl=sl):
+            nb = zz.shape[0]
+            tv = torch.full((nb,), tau0 + prog * (1.0 - tau0), device=device)
+            v, _ = sr_velocity(fm, ad, u_style[sl], None, u_glob[sl], None, d16[sl],
+                               d16_r[sl], v16_r[sl], None, None, y16[sl], zz, tv,
+                               mode="baseline", w=0.0, wj=wj, device=device)
+            return v
+
         z_chunks.append(integrate_sr(vel_fn, z[sl], tau0, 10, "rk2"))
     z_gen = torch.cat(z_chunks, 0)
     rgb_gen = decode_s10(dec, z_gen, batch=16).clamp(0.0, 1.0)
