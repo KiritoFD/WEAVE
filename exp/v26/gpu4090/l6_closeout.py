@@ -100,8 +100,8 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
              "T1≈T2 (Δ0.9pp<噪声) → 截断足够, 全 BPTT 无独立价值; rollout 训练把 tradeoff "
              "推向内容 (DINO-C 0.74) 牺牲 Top-1.")
     t750 = l5.get("test750", {})
-    t750_s = " | ".join(f"{k.split('_', 2)[-1]}: Top1={v.get('csd_top1', 0)*100:.2f}% "
-                        f"DINO-C={v.get('dino_c')}" for k, v in t750.items())
+    t750_s = " | ".join(f"{k}: Top1={v.get('cross600', v).get('csd_top1', 0)*100:.2f}% "
+                        f"DINO-C={v.get('cross600', v).get('dino_c')}" for k, v in t750.items())
     L.append(f"7. **PRISM-Flow 免重训减步?** 可以基本无损 — 10 步基线 16.17% → 4 步 RK2-mid "
              f"{t750_s} (Top-1 −0.34pp, DINO-C +0.012, LPIPS −0.029, NFE −60%); "
              "教师距离排序: rk2_04_mid 最优.")
@@ -144,7 +144,8 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
         A.append(f"| {arm} | {c.get('dino_c')} | {c.get('dino_s')} | {c.get('lpips')} | {c.get('csd_top1', 0)*100:.2f}% | {c.get('gpu_train_seconds')} |")
     A += ["", "## L5 少步网格 test750 (init=L3 best S0; 10 步基线=16.17%)", "",
           "| 网格 | DINO-C | DINO-S | LPIPS | Top-1 |", "|---|---:|---:|---:|---:|"]
-    for tag, c in l5.get("test750", {}).items():
+    for tag, v in l5.get("test750", {}).items():
+        c = v.get("cross600", v)
         A.append(f"| {tag} | {c.get('dino_c')} | {c.get('dino_s')} | {c.get('lpips')} | {c.get('csd_top1', 0)*100:.2f}% |")
     A += ["", "## Pool 预算填充 (init=F2 教师)", "", "| 臂 | DINO-C | DINO-S | LPIPS | Top-1 |", "|---|---:|---:|---:|---:|"]
     for arm, c in pool.items():
