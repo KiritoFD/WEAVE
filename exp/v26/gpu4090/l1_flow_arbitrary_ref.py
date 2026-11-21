@@ -383,6 +383,14 @@ def train_l1_arm(bundle, c21, v16_tr, teacher: dict, arm: str, *,
                 assert swd is not None
                 l_style = swd.loss(rgb_prev, rgb_r,
                                    gen=torch.Generator().manual_seed(step))["loss"] * grad_scale
+            elif style_loss == "bary":
+                # UOT Bary-SWD (V26-L Exp2/S4): Γ̄ 用干净 d16 (非增广) 计算匹配 plan
+                assert swd is not None
+                from exp.v26.uot_fiber_bundle import uot_gamma_bar
+                with torch.no_grad():
+                    gbar = uot_gamma_bar(d16_c[c0:c1], d16_r_sw[c0:c1])
+                l_style = swd.loss_bary(rgb_prev, rgb_r, gbar,
+                                        gen=torch.Generator().manual_seed(step))["loss"] * grad_scale
             else:
                 l_style = (1.0 - F.cosine_similarity(f_gen["style"].float(),
                                                      f_ref["style"].float(), dim=-1)).mean()

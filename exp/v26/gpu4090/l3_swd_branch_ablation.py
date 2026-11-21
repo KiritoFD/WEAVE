@@ -45,8 +45,8 @@ def _l1_best_init(device: str) -> tuple[Path | None, str]:
     return None, "L1 json 缺失 → DUAL_CKPT 初始化"
 
 
-def calibrate_grad_scale(bundle, v16_tr, device: str, swd) -> float:
-    """梯度尺度校准: 同一 batch 上 ‖∇SWD_style‖ vs ‖∇VGG_style‖ → 缩放比."""
+def calibrate_grad_scale(bundle, v16_tr, device: str, swd) -> dict:
+    """梯度尺度校准: 同一 batch 上 ‖∇风格损失‖ vs ‖∇VGG_style‖ → 缩放比 (SWD 与 Bary 各自独立)."""
     import torch.nn.functional as F
     from exp.v24.p0_o1_o3_value import DUAL_CKPT, SLFUNetV24OneShot
     from exp.v19.fiber_duality import StyleFiberEncoder
@@ -110,7 +110,13 @@ def calibrate_grad_scale(bundle, v16_tr, device: str, swd) -> float:
         if loss_kind == "vgg":
             loss = (1.0 - F.cosine_similarity(f_gen["style"].float(), f_ref["style"].float(), dim=-1)).mean()
         else:
-            loss = swd.loss(rgb_prev, rgb_r, gen=torch.Generator().manual_seed(L3_SEED))["loss"]
+            if loss_kind == "bary":
+                from exp.v26.uot_fiber_bundle import uot_gamma_bar
+                gbar = uot_gamma_bar(d16_c, d16_r)
+                loss = swd.loss_bary(rgb_prev, rgb_r, gbar,
+                                     gen=torch.Generator().manual_seed(L3_SEED))["loss"]
+            else:
+                loss = swd.loss(rgb_prev, rgb_r, gen=torch.Generator().manual_seed(L3_SEED))["loss"]
         loss.backward()
         g = z_in.grad.detach().clone()
         z_in.grad = None
@@ -118,11 +124,13 @@ def calibrate_grad_scale(bundle, v16_tr, device: str, swd) -> float:
 
     n_vgg = style_grad("vgg")
     n_swd = style_grad("swd")
-    scale = n_vgg / max(n_swd, 1e-8)
-    print(f"[L3 calib] ‖∇VGG‖={n_vgg:.4f} ‖∇SWD‖={n_swd:.4f} → grad_scale={scale:.4f}", flush=True)
+    n_bary = style_grad("bary")
+    print(f"[L3 calib] ‖∇VGG‖={n_vgg:.4f} ‖∇SWD‖={n_swd:.4f} ‖∇Bary‖={n_bary:.4f} → "
+          f"scale(swd)={n_vgg / max(n_swd, 1e-8):.4f} scale(bary)={n_vgg / max(n_bary, 1e-8):.4f}",
+          flush=True)
     del fm, adapter, feature_fn, dec
     torch.cuda.empty_cache()
-    return scale
+    return {"swd": n_vgg / max(n_swd, 1e-8), "bary": n_vgg / max(n_bary, 1e-8)}
 
 
 def run_l3(pool: str, device: str = "cuda") -> str:
@@ -147,28 +155,30 @@ def run_l3(pool: str, device: str = "cuda") -> str:
     torch.cuda.empty_cache()
 
     tcache = build_teacher(pool, device=device)
-    teacher_z = torch.load(tcache, map_location="cpu", weights_only=False)["z_teacher"].float()
+    tdata = torch.load(tcache, map_location="cpu", weights_only=False)
+    teacher = {"z": tdata["z"], "valid": tdata["valid"]}
     init_ckpt, init_note = _l1_best_init(device)
     print(f"[L3] init: {init_note}", flush=True)
 
     swd = DynamicSWD(device=device, n_proj=64, dtype=torch.float32)
-    grad_scale = calibrate_grad_scale(bundle, v16_tr, device, swd)
+    scales = calibrate_grad_scale(bundle, v16_tr, device, swd)
 
     arms = {
         "S0_vgg_global": dict(supervision="teacher", style_loss="vgg", use_refattn=False),
         "S1_swd_global": dict(supervision="teacher", style_loss="swd", use_refattn=False),
+        "S4_bary_global": dict(supervision="teacher", style_loss="bary", use_refattn=False),
         "S2_vgg_refattn": dict(supervision="teacher", style_loss="vgg", use_refattn=True),
         "S3_swd_refattn": dict(supervision="teacher", style_loss="swd", use_refattn=True),
     }
     results = {}
     for arm, spec in arms.items():
         print(f"\n[L3] ===== {arm} train start {utc()} =====", flush=True)
-        ckpt = train_l1_arm(bundle, c21, v16_tr, teacher_z, arm,
+        ckpt = train_l1_arm(bundle, c21, v16_tr, teacher, arm,
                             supervision=spec["supervision"],
                             local_attn=spec["use_refattn"],
                             style_loss=spec["style_loss"],
-                            swd=swd if spec["style_loss"] == "swd" else None,
-                            grad_scale=grad_scale if spec["style_loss"] == "swd" else 1.0,
+                            swd=swd if spec["style_loss"] in ("swd", "bary") else None,
+                            grad_scale=scales[spec["style_loss"]] if spec["style_loss"] in ("swd", "bary") else 1.0,
                             updates=L3_UPDATES, micro=L3_MICRO, accum=L3_ACCUM,
                             device=device, seed=L3_SEED + 1 + list(arms).index(arm),
                             init_ckpt=init_ckpt)
@@ -177,7 +187,7 @@ def run_l3(pool: str, device: str = "cuda") -> str:
         c = s["cross600"]
         results[arm] = {k: round(c[k], 5) for k in ("dino_c", "dino_s", "lpips", "style_affinity", "csd_top1")}
         results["init_note"] = init_note
-        results["grad_scale_swd"] = round(grad_scale, 5)
+        results["grad_scale"] = {k: round(v, 5) for k, v in scales.items()}
         save_json(OUT / "gpu4090" / "l3_swd_branch_ablation.json", results)
         print(f"[L3] {arm}: {results[arm]}", flush=True)
     _write_l3_report(results)
@@ -189,18 +199,20 @@ def _write_l3_report(results: dict) -> None:
     p = ROOT / "docs/v26/4090/L3_SWD_BRANCH_ABLATION.md"
     p.parent.mkdir(parents=True, exist_ok=True)
     L = ["# L3 — 动态 SWD × 全局/局部参考分支消融 (V26-L)", "",
-         f"> 生成时间: {utc()} ｜ init: {results.get('init_note')} ｜ SWD 梯度尺度校准: {results.get('grad_scale_swd')}",
+         f"> 生成时间: {utc()} ｜ init: {results.get('init_note')} ｜ 梯度尺度校准: {results.get('grad_scale')}",
          "", "| 臂 | 风格损失 | 参考注入 | DINO-C ↑ | DINO-S ↑ | LPIPS ↓ | Top-1 ↑ |",
          "|---|---|---|---:|---:|---:|---:|"]
     spec_map = {"S0_vgg_global": ("VGG均值", "Global"), "S1_swd_global": ("SWD", "Global"),
+                "S4_bary_global": ("UOT Bary-SWD", "Global"),
                 "S2_vgg_refattn": ("VGG均值", "Global+RefAttn"), "S3_swd_refattn": ("SWD", "Global+RefAttn")}
     for arm, r in results.items():
         if arm not in spec_map:
             continue
         sl, inj = spec_map[arm]
         L.append(f"| {arm} | {sl} | {inj} | {r['dino_c']} | {r['dino_s']} | {r['lpips']} | {r['csd_top1']*100:.2f}% |")
-    L += ["", "## 判读 (docs/1120/08 §L3)", "",
-          "- S1>S0: 分布级风格监督有效;  S2>S0: 局部注入有效;  S3>S1: SWD 下局部有额外价值;",
+    L += ["", "## 判读 (docs/1120/08 §L3 + 局部性理论 §5.2)", "",
+          "- S1>S0: 分布级风格监督有效;  S4>S0 且困难画派起飞: 摊销式局部性 (Bary-SWD) 有效;",
+          "- S2>S0: 局部注入有效;  S3>S1: SWD 下局部有额外价值;",
           "- 全部无收益: 回退最简 Global-only. 不能只看 DINO-S — 必须同看 DINO-C/LPIPS/困难风格/灰化."]
     p.write_text("\n".join(L) + "\n", encoding="utf-8")
     print(f"[L3] Report → {p}", flush=True)

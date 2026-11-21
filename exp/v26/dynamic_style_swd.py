@@ -41,6 +41,7 @@ class DynamicSWD:
         self._mean = _MEAN.to(device, dtype)
         self._std = _STD.to(device, dtype)
         self._layer_scales = None  # 首次调用时按参考特征幅度初始化层归一
+        self._layer_scales_bary = None  # Bary-SWD 独立层归一 (与全局 SWD 尺度不可混)
 
     def _feats(self, rgb01: torch.Tensor) -> list[torch.Tensor]:
         x = (rgb01.to(self.device).to(self.dtype) - self._mean) / self._std
@@ -93,6 +94,41 @@ class DynamicSWD:
         scaled = [l / s for l, s in zip(losses_per_layer, self._layer_scales)]
         loss = torch.stack(scaled).sum()
         return {"loss": loss, "per_layer": [float(l.detach().mean()) for l in losses_per_layer]}
+
+    def loss_bary(self, rgb_out: torch.Tensor, rgb_ref: torch.Tensor,
+                  gamma_bar: torch.Tensor, *, gen: torch.Generator | None = None) -> dict:
+        """UOT Bary-SWD (V26-L Exp2 / L3-S4): 摊销式局部性训练目标.
+
+        与 loss() 同一 VGG 管线/动态投影/层归一, 仅目标不同: 全局 1-D 边际 →
+        **逐 DINO 格 (16×16) 分位数**, 参考侧按 Γ̄ (uot_gamma_bar, 行归一) 做
+        1D W2 重心线性组合 (Agueh-Carlier 闭式). 格内排序天然去几何 (边缘/透视
+        100% 保持原位); gamma_bar 为常量侧 (无梯度).
+        """
+        g = gen if gen is not None else torch.Generator(device="cpu")
+        imgs = torch.cat([rgb_out, rgb_ref], 0)
+        feats = self._feats(imgs)
+        k = rgb_out.shape[0]
+        losses_per_layer = []
+        for f in feats:
+            B, C, H, W = f.shape
+            ph, pw = H // 16, W // 16
+            assert ph * 16 == H and pw * 16 == W, f"特征分辨率 {H} 须为 16 整数倍"
+            proj = torch.randn(C, self.n_proj, generator=g).to(self.device, self.dtype)
+            proj = F.normalize(proj.float(), dim=0).to(self.dtype)
+            # 逐格分位数: (2k, 256, P, C) @ proj → (2k, 256, P, K), P = ph*pw
+            x = f.view(B, C, 16, ph, 16, pw).permute(0, 2, 4, 3, 5, 1).reshape(B, 256, ph * pw, C)
+            p_all = (x @ proj).float()
+            q = torch.sort(p_all, dim=2).values
+            q_out, q_ref = q[:k], q[k:]
+            # 1D W2 重心闭式: Γ̄ 加权参考格分位数 (常量侧, detach)
+            q_tgt = torch.einsum("bij,bjpk->bipk", gamma_bar.to(q_ref.dtype).detach(), q_ref)
+            w1 = (q_out - q_tgt).abs().mean(dim=(1, 2, 3))  # (k,)
+            losses_per_layer.append(w1)
+        if self._layer_scales_bary is None:
+            self._layer_scales_bary = [max(float(l.detach().mean()), 1e-4) for l in losses_per_layer]
+        scaled = [l / s for l, s in zip(losses_per_layer, self._layer_scales_bary)]
+        return {"loss": torch.stack(scaled).sum(),
+                "per_layer": [float(l.detach().mean()) for l in losses_per_layer]}
 
 
 def swd_distance_matrix(imgs: torch.Tensor, extractor, n_pairs_round: int = 256,

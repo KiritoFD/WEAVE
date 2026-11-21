@@ -24,13 +24,13 @@ from exp.v26 import OUT, ROOT, read_json, save_json, utc
 from exp.v26.sr_cfg import load_sr_env
 
 ARM_PAIRS = [
-    ("V0_vgg_global", OUT / "oneshot_val" / "V0_vgg_global.pt"),
-    ("V1_swd_global", OUT / "oneshot_val" / "V1_swd_global.pt"),
-    ("V2_bary_global", OUT / "oneshot_val" / "V2_bary_global.pt"),
-    # 兜底: 如果 V0-V2 尚未产出, 用 L0/L1 已有臂做基线对照
-    ("A0_legacy_nbr", OUT / "oneshot_val" / "A0_legacy_nbr.pt"),
-    ("F1_global_self", OUT / "oneshot_val" / "F1_global_self.pt"),
+    # L3 矩阵臂 (S0=VGG均值 / S1=Global-SWD / S4=UOT Bary-SWD, 全部教师监督同配)
+    ("S0_vgg_global", OUT / "oneshot_val" / "S0_vgg_global.pt"),
+    ("S1_swd_global", OUT / "oneshot_val" / "S1_swd_global.pt"),
+    ("S4_bary_global", OUT / "oneshot_val" / "S4_bary_global.pt"),
+    # 兜底: L1 臂 (F2 教师监督 ≈ V0 配方)
     ("F2_global_teacher", OUT / "oneshot_val" / "F2_global_teacher.pt"),
+    ("F1_global_self", OUT / "oneshot_val" / "F1_global_self.pt"),
 ]
 
 

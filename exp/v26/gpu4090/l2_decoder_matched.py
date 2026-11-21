@@ -28,7 +28,7 @@ from exp.v26 import OUT, ROOT, read_json, sanitize_cuda_env, save_json, utc
 from src.utils import decode_s10, load_s10_decoder
 
 L2_STEPS = 1000
-L2_BATCH = 8
+L2_BATCH = 1   # v2 修复: batch=8 fp32 全量 decoder FT 激活 ~21GB → OOM; batch=1 + bf16 + ckpt
 L2_LR = 5e-5
 GEN_RAW = OUT / "raw" / "A0_legacy_nbr_t45"
 _VAE_SCALE = 0.18215
@@ -48,15 +48,20 @@ def _load_full_vae(device: str):
     return vae
 
 
-def wrap_decoder(name: str, model, device: str):
-    """统一解码包装 fn(z_scaled) → rgb01 [0,1]; name ∈ {full*, s10*}."""
+def wrap_decoder(name: str, model, device: str, *, enable_grad: bool = False):
+    """统一解码包装 fn(z_scaled) → rgb01 [0,1]; name ∈ {full*, s10*}.
+
+    enable_grad: S10 路径 (decode_s10 默认 inference_mode) 训练时必须显式开启,
+    否则 D2 FT 反传无梯度路径 (v2 修复).
+    """
     if name.startswith("full"):
         def fn(z):
             out = model.decode(z.float().to(device) / _VAE_SCALE).sample
             return (out / 2 + 0.5).clamp(0.0, 1.0)
         return fn
     def fn(z):
-        return decode_s10(model, z, batch=min(len(z), 16), output_cpu=False).clamp(0.0, 1.0)
+        return decode_s10(model, z, batch=min(len(z), 16), enable_grad=enable_grad,
+                          output_cpu=False).clamp(0.0, 1.0)
     return fn
 
 
@@ -72,8 +77,7 @@ def _ft(s10_or_decoder_module, wrap_fn, train_latents: torch.Tensor, ref_fn,
     import exp.v25 as _v25
     _v25.seed_all(20266200)
     params = [p for p in s10_or_decoder_module.parameters() if p.requires_grad]
-    for p in s10_or_decoder_module.parameters():
-        p.requires_grad_(True)
+    assert params, f"[L2 FT {tag}] 无可训练参数 (requires_grad 全 False)"
     opt = torch.optim.AdamW(params, lr=lr)
     order = torch.randperm(len(train_latents), generator=torch.Generator().manual_seed(20266200))
     t0 = time.time()
@@ -83,7 +87,8 @@ def _ft(s10_or_decoder_module, wrap_fn, train_latents: torch.Tensor, ref_fn,
         z = train_latents[idx].to(device).float()
         with torch.no_grad():
             target = ref_fn(z)
-        rgb = wrap_fn(z)
+        with torch.autocast("cuda", torch.bfloat16):
+            rgb = wrap_fn(z).float()
         loss = F.l1_loss(rgb, target) + 0.5 * F.mse_loss(rgb, target)
         opt.zero_grad(set_to_none=True)
         loss.backward()
@@ -174,6 +179,11 @@ def run_l2(pool: str, device: str = "cuda") -> str:
         p.requires_grad_(False)
 
     full = _load_full_vae(device)
+    try:
+        full.enable_gradient_checkpointing()  # 反传激活重计算, 显存大头 (v2 修复)
+        print("[L2] full VAE gradient checkpointing ON", flush=True)
+    except Exception as exc:
+        print(f"[L2] gradient checkpointing unavailable ({exc}) — 依赖 batch=1+bf16", flush=True)
     out_p = OUT / "gpu4090" / "l2_decoder_matched.json"
 
     # D0 基线 (冻结) 蒸馏参考
@@ -187,7 +197,7 @@ def run_l2(pool: str, device: str = "cuda") -> str:
 
     # D2: S10 同域 FT (同同步数)
     s10_ft = load_s10_decoder(device)
-    _ft(s10_ft, wrap_decoder("s10_ft", s10_ft, device), train_latents, ref_fn,
+    _ft(s10_ft, wrap_decoder("s10_ft", s10_ft, device, enable_grad=True), train_latents, ref_fn,
         device=device, tag="D2_s10_ft")
     for p in full.parameters():
         p.requires_grad_(False)
