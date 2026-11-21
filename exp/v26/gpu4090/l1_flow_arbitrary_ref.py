@@ -169,7 +169,7 @@ def train_l1_arm(bundle, c21, v16_tr, teacher_z: torch.Tensor, arm: str, *,
                  updates: int = L1_UPDATES, micro: int = L1_MICRO, accum: int = L1_ACCUM,
                  device: str = "cuda", seed: int = L1_SEED,
                  style_loss: str = "vgg", swd=None, grad_scale: float = 1.0,
-                 init_ckpt: Path | None = None,
+                 init_ckpt: Path | None = None, use_refattn: bool = False,
                  data_frac: float = 1.0, route_balance: bool = False) -> Path:
     """L1 训练臂 (label-free 条件 + 严格跨画派参考 + 自锚/教师两种监督)."""
     import copy

@@ -126,7 +126,7 @@ def _t_l6() -> str:
 SCIENCE_TASKS = [
     ("L-PC", _t_lpc, True, "L0", "L0", "L0"),
     ("L0", _t_l0, True, "L1", "L1", "L1"),
-    ("L1", _t_l1, True, "L3", "L3", "L3"),
+    ("L1", _t_l1, True, "L2", "L2", "L2"),
     ("L2", _t_l2, True, "L3", "L6", "L3"),
     ("L3", _t_l3, True, "L4", "L4", "L4"),
     ("L4", _t_l4, True, "L5", "L5", "L5"),
