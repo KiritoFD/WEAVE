@@ -92,7 +92,7 @@ def inter_cluster_divergence(env: dict, ckpt_p: Path, device: str = "cuda",
 
         z_chunks.append(integrate_sr(vel_fn, z[sl], tau0, 10, "rk2"))
     z_gen = torch.cat(z_chunks, 0)
-    rgb_gen = decode_s10(dec, z_gen, batch=16).clamp(0.0, 1.0)
+    rgb_gen = decode_s10(dec, z_gen, batch=16, output_cpu=False).clamp(0.0, 1.0)
 
     # DINO k-means 聚类 (每张图独立, K=k_clusters)
     f_dino = d16.flatten(2).transpose(1, 2)  # (B, 256, 384)
