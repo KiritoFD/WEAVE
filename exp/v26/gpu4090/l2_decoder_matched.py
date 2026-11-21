@@ -64,8 +64,12 @@ def wrap_decoder(name: str, model, device: str, *, kind: str | None = None,
         kind = "full" if name.startswith("full") else "s10"
     if kind == "full":
         def fn(z):
-            out = model.decode(z.float().to(device) / _VAE_SCALE).sample
-            return (out / 2 + 0.5).clamp(0.0, 1.0)
+            # 分块解码 (v6 修复: raw 文件多 latent 一次解码 → 6.25GB 单次分配 OOM)
+            outs = []
+            for i in range(0, z.shape[0], 4):
+                out = model.decode(z[i:i + 4].float().to(device) / _VAE_SCALE).sample
+                outs.append((out / 2 + 0.5).clamp(0.0, 1.0))
+            return torch.cat(outs, 0)
         return fn
     def fn(z):
         return decode_s10(model, z, batch=min(len(z), 16), dtype=dtype,
@@ -208,7 +212,9 @@ def run_l2(pool: str, device: str = "cuda") -> str:
     import exp.v25 as _v25
     _v25.seed_all(20266200)
 
-    bundle = build_or_load_bundle(pool, device)
+    # bundle 留 CPU (v6 修复: train 缓存 ~6-8GB 驻留 GPU + pool 并发 → eval OOM);
+    # FT 用 train_latents/ft_imgs (CPU) 逐步搬运, eval_recon 的 holdout 切片 .to(device)
+    bundle = build_or_load_bundle(pool, "cpu")
     tr_cache = bundle["v18_cache"]["train"]
     train_latents = tr_cache["z"][:2400].clone()
     ft_idx, ft_imgs = _build_ft_targets(tr_cache["ids"])
