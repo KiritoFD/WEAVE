@@ -1,37 +1,41 @@
-# WEAVE / PRISM Documentation Master Index
+# 研究档案｜结论有首页，证据有出处
 
-**Last updated:** 2026-11-18（统一单源权威索引；历史快照与中间进度日志均已归档至 `docs/archive/`）
+WEAVE → PRISM 的研究不是一份越积越长的实验流水账。我们把文档分成四层：**研究结论、可复现模型、原始证据、未完成假设**。原始实验报告不改写；后续实验推翻了旧结论时，在索引中标明。
 
----
+> **快照：2026-11-21。** [根 README](../README.md) 负责回答“发现了什么”；本页负责回答“证据在哪儿”。V26-L 长队列仍在执行中，不能把排队、代码完成写成质量收益。
 
-## 一、核心必读入口（Start Here）
+## 从这里进入
 
-| 顺序 | 文档 | 定位与内容 |
+| 目标 | 权威入口 | 阅读建议 |
 |---|---|---|
-| **1** | [`../AGENTS.md`](../AGENTS.md) | **工程与科学铁律协议**：一律使用 `S10` 解码、四裁判子进程隔离、12GB(3060)/24GB(4090) 显存规范、当前活跃主线 |
-| **1b** | [**`DELIVERY_20261118.md`**](DELIVERY_20261118.md) | **阶段交付总览（2026-11-18）**：最终模型产物、4090/3060 实测性能与 VRAM、复现入口与审计结论 |
-| **2** | [**`performance/MASTER_LEDGER.md`**](performance/MASTER_LEDGER.md) | **全仓唯一数据与结论总台账**：V6→V21 全部 265 条实验臂 750 任务实测数据（`metrics.csv` / `metrics.json`）与八条方法论铁律 |
-| **3** | [**`icme2027/README.md`**](icme2027/README.md) · [`STORY.md`](icme2027/STORY.md) | **ICME 2027 独立论文工程（`PRISM`）**：6 页双栏 `IEEEtran` 完整手稿（`paper.tex` / `paper.pdf`）、可插拔宏 `macros.tex` 与全套矢量生成脚本 |
-| **4** | [**`19_pull_together/README.md`**](19_pull_together/README.md) | **V25 当前活跃计划（12h 双卡）**：前 2h `Minimal PRISM` 收敛消融（τ≤0.78 截断修正、非劣性判定）+ 后 10h `V25-M` 三机制（空间自适应混合 / 多强度蒸馏 / One-Shot 监督解耦）与排程 ETA |
-| **4a** | [**`ours/README.md`**](ours/README.md) | **WEAVE/PRISM 核心模型资产库（9 个代表模型独立打包）**：每目录含 checkpoint (`.pt`) + 750 评测图 + `config.json` + `RECIPE.md`（含 `PRISM-HighContent-R12`、`PRISM-1`、`O3 One-Shot` 等） |
-| **4b** | [**`next1118/README.md`**](next1118/README.md) | **`PRISM v2 / V19` 正交商—纤维对偶与各向异性谱传输蓝图**：源码级病灶剖析、完整数学推导与 4090 执行方案 |
-| **5** | [`HIGHLIGHTS.md`](HIGHLIGHTS.md) · [`vae/README.md`](vae/README.md) | **基石设施档案**：`S10` 剪枝解码器（`10.66M`，`2.86×` 加速，`+3.17pp` Top-1）与冻结 `tasks_750` 四裁判协议 |
-| **6** | [`../exp/README.md`](../exp/README.md) | **实验代码包总索引**：`exp/v8` → `exp/v20` 模块入口、职责与文档映射 |
+| **研究主张与定量跃升** | [根 README](../README.md) | 两条主线：潜空间传输与 S10 Decoder |
+| **模型与复现** | [模型资产库](ours/README.md) · [实验源码](../exp/README.md) | 先确认 checkpoint、推理锚点、CFG、Decoder |
+| **Decoder 为什么改变了全系统？** | [VAE 专题](vae/README.md) | Taylor 剪枝 → LPIPS 恢复 → C0/C1 蒸馏 → S10B |
+| **V26 的阶段裁决与长队列** | [V26 导航](1120/README.md) · [执行日志](1120/PROGRESS.md) | 结果 / 作废 / 待测分别看 |
+| **局部性真的有用吗？** | [K1](v26/4090/K1_REFATTN_CAUSAL_AUDIT.md) · [Exp 1/2 专题](v26/LOCALITY_UOT_FIBER_BUNDLE.md) | 现有局部 Value 污染内容；Bary-SWD 尚待实训 |
+| **模型是否真的推前沿？** | [V25 消融台账](v25/ABLATION_LEDGER.md) · [模型血缘](v25/MODEL_LINEAGE.md) | 区分新权重、锚点、解码器与 Bug 修复 |
+| **历史数据与负结果** | [历史 Master Ledger](performance/MASTER_LEDGER.md) · [metrics.csv](performance/metrics.csv) · [负结果](negative_results/README.md) | Ledger 正文是 V6–V21 快照；CSV 后续有追加 |
+| **论文与早期 WEAVE** | [ICME 论文工程](icme2027/README.md) · [早期复现](reproduction/baseline_reproduction.md) | 正式发表前需复核最新证据 |
 
----
+## 历史拐点：找到最关键的原始实验
 
-## 二、分代结论档案导航（Clean Per-Generation Index）
-
-| 目录 / 文档 | 状态 | 核心结论摘要 |
+| 版本 | 真正改变认识的结果 | 原文 |
 |---|---|---|
-| [`next1118/`](next1118/README.md) · [`V20_RESULTS`](next1118/V20_RESULTS.md) | **最新收官 (`exp/v19`–`v20`)** | `V19` 建立 $(\Pi_\perp, \Pi_\parallel)$ 正交对偶（单步 `17ms` `44.3%–50.2%`）；`V20` 引入训练集 `Core-kNN` 核心流形与 Coarse-16 `SLFUNet`（`DINO-S = 0.5789`, `Affinity = 0.6683`, `Top-1 = 64.0%–64.5%`），正面全面超越 `StyleGallery` |
-| [`v18/V18_RESULTS.md`](v18/V18_RESULTS.md) | 已完成突破 | Gate-0 去风格结构（泄漏 `72.3%→18.3%`）；Track A `LD4+`（`38.0%–42.2%`）与纯单步 `FastStudent`（`33.8%–38.0%`）；Track B 确立 $\tau_0=0$ 自配对控制流 `18.67%` 天花板 |
-| [`v17/V17_RESULTS_EVAL.md`](v17/V17_RESULTS_EVAL.md) | 已收尾 | 揭示 SDEdit 59% 源锁定与 Impressionism 先验坍缩；`P2_S4`（DINO 上下文 + `u_tgt−u_src`）解决单步残差拟合 |
-| [`v16/RESULTS.md`](v16/RESULTS.md) · [`v15/`](v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md) | 已收尾 | 确立 **260× 自配对扩容悖论**（$0.13\text{M}\to 34.2\text{M}$ 纯生成升至 `49.3%`，$\tau_0=0.7$ 编辑退化至 `6.67%`） |
-| [`v14/V14_RESULTS.md`](v14/V14_RESULTS.md) · [`v13/V13_RESULTS.md`](v13/V13_RESULTS.md) | 诊断定论 | 确立 224px DINOv2 16×16 patch（NCM `.793` >> DWT `.544`）为最优语义布局载体 |
-| [`v12/V12_GCL_RESULTS.md`](v12/V12_GCL_RESULTS.md) · [`v11b/V11B_RESULTS.md`](v11b/V11B_RESULTS.md) | 已收尾 | 证明复杂内容 Query 门控与风格梯度近正交（不 binding），瓶颈在判别器域与表示 |
-| [`v10/V10_RESULTS.md`](v10/V10_RESULTS.md) · [`v9/V9_LD_RESULTS.md`](v9/V9_LD_RESULTS.md) · [`v8/`](v8/README.md) | 早期基石 | 产出 `N2C`（`32.83%`）、`LD4`（`35.17%`）、`E4`（DINO-S `0.4415`），证伪检索目标与手工 KDE 特异性 |
-| [`vae/`](vae/README.md) · [`v6/`](v6/Q2A_ORACLE_BASELINE_RANKING.md) | **协议权威** | `S10` 00–14 完整训练与测速卷宗；`Q2A+Oracle` 750 任务四裁判冻结基准 |
-| [`baseline/`](baseline/README.md) · [`LEADERBOARD.md`](LEADERBOARD.md) | 外部对照 | 19 外部方法评测图档与复现记录（`LEADERBOARD.md` 为早期 32 行冻结快照，全量数据以 `performance/MASTER_LEDGER.md` 为准） |
-| [`negative_results/`](negative_results/README.md) · [`1111/`](1111/README.md) | 证伪与回溯 | L1–L4 负结果分类账本、早期 54 路线回顾与纠错边界（`04_bugs_corrections_and_invalid_claims.md`） |
-| [`legacy_root/`](legacy_root/) · [`archive/`](archive/README.md) | 历史冷存 | AAAI 投稿期文档与所有历史中间阶段计划、进度快照 |
+| **V6–V14** | 去源风格≠到目标风格；通用艺术恢复梯度≠目标画派方向 | [V6](v6/V6_CONCLUSIONS.md) · [V10.2](v10_2/V10_2_RESULTS.md) · [V14](v14/V14_RESULTS.md) |
+| **V15–V18** | 扩大自配对 Flow 的生成能力，可能反而损害编辑能力 | [V15](v15/WEAVE_V15_SCALING_RESULTS.md) · [V18](v18/V18_RESULTS.md) |
+| **V19–V20** | **各向异性内容预算＋16×16 粗尺度结构条件**，带来真正的跨风格质量跃升 | [V19](next1118/V19_RESULTS.md) · [V20](next1118/V20_RESULTS.md) |
+| **V21–V23** | 去泄漏不等于生成；早停、锚点、跨风格监督和 CFG 实现至关重要 | [V21](next1118/V21_RESULTS.md) · [V22](v22/V22_P1_RESULTS.md) · [V23](v23/V23_RESULTS.md) |
+| **V24–V25** | 不重训，仅靠锚点与潜变量组合仍能推动高内容 Pareto | [V24](v24/PROGRESS.md) · [R12](ours/02_PRISM_HighContent_R12/RECIPE.md) |
+| **V26** | C2nt 局部 Value 判负；SR-CFG、跨画派采样单独使用都没有解决根因 | [六问总结](1120/V26_RESULTS_SUMMARY.md) · [L0](v26/4090/L0_CROSSSTYLE_CAUSAL.md) |
+
+## Decoder 独立研究线
+
+从 [VAE 总览](vae/00_OVERVIEW.md) 阅读完整决策；再看 [原始 S10 训练](vae/01_S10_TRAINING_FULL.md)、[3060 端到端实测](vae/08_STAGED_PROFILE_AND_TRT.md)、[固定 latent 的 Decoder 对照](v6/Q2A_ORACLE_DECODER_RANKING.md)、[蒸馏与 C0/C1](vae/05_SD0_S10_V2_FINAL.md)、[S10B 最终交付](vae/10_S10B_FINAL.md)。
+
+**务必分清：旧 S10 的成功主要来自剪枝＋真实图感知恢复；C1 才是响应蒸馏，且未取得更高的下游风格 Top-1。**
+
+## 证据层级
+
+**已测数据**以原始输出、对应 RESULTS/审计报告为准；**计划**以 [V26-L 长队列](1120/08_v26_long_plan.md) 为准，不能当成实测；**历史观点**可在 [旧交付总结](DELIVERY_20261118.md) 和 [legacy_root](legacy_root/EXPERIMENTS.md) 中追溯，但“最新”“全面超越”须重新检查任务、硬件与参考条件。
+
+评测基准：**test750 = Cross600＋Same150**、S10 解码和冻结裁判。test750 已用于反复模型选择，**不是全新盲测集**。计时必须明确 GPU、batch 和 Decoder 分段还是完整 RGB→RGB。[工程约束](../AGENTS.md)
