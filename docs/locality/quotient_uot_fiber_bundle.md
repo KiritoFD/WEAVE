@@ -182,6 +182,22 @@ $$\tilde{Q}_i^{\text{ref}} = \sum_j \bar{\Gamma}_{ij} Q_j^{\text{ref}}, \qquad \
 
 ---
 
+## 五.5 信息论分界线：域内摊销 vs. 极端 OOD 硬上限
+
+砍掉 RefAttnV24 的局部 V 通路后，推理期只剩全局弦 $e$ 与源图局部语义 $Q(x_s)$。信息论分界线：
+
+- **域内画派与常规语义先验**：Bary-SWD 训练将 $(Q_i, e) \mapsto$ 该区域典型笔触完整摊销进 U-Net 权重 → 推理零匹配开销。
+- **极端 OOD 任意参考**：训练从未见过的参考图，其局部风格绑定违背常规先验（如同一套整体色盘下"厚重油画涂天空、水彩留人物"）→ 压缩为单一 $e$ 时实例级局部绑定**永久丢失**。
+
+**Exp 2 一锤定音判别法（两个轻量化探针，<2 min）**：
+
+1. **Bary-SWD 训练收敛残差**：Global-SWD vs Bary-SWD 训练集局部损失降幅。若 Bary-SWD 在训练集都压不下去 → 表达/信息瓶颈（$e$ 无法区分同色系参考图的局部多模态差异）。
+2. **语义簇间纹理分化度**（Inter-Cluster Texture Divergence）：冻结 DINO 将输出图划 K=3–4 语义簇 → 同图内不同簇间 Haar 高频能量与色彩均值方差。若 Bary-SWD 臂的簇间分化度显著高于 Global-SWD 且 ER/Roc 同步拉升 → "模型局部能力够用，缺的只是训练期局部监督"彻底坐实。
+
+**判决路径**：Exp 2 域内困难画派大幅起飞 + SG-25 OOD 同步打穿 → 纯全局推理 + 训练期 Bary-SWD = 终局架构；域内起飞但 SG-25 出现瓶颈 → 阶段 II（解码高分辨层去几何纤维调制）。
+
+已实现: `exp/v26/gpu4090/exp2_locality_probes.py`（`inter_cluster_divergence()` — DINO k-means 聚类 + 逐簇 Haar 能量/Oklab 色彩均值方差）。
+
 ## 六、参考文献
 
 - Chizat et al., "Faster Wasserstein distance-type estimators," JMLR 2021.
