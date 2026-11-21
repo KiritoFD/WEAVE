@@ -165,7 +165,7 @@ def eval_referee(bundle, dec_wraps: dict, device: str) -> dict:
 @torch.no_grad()
 def eval_recon(bundle, dec_wraps: dict, device: str, n: int = 96) -> dict:
     """holdout 真图重建: PSNR / LPIPS / DINO-cos (每解码器一致的真图目标)."""
-    from src.utils._local_eval_refs import FeatureStack
+    from src.utils import FeatureStack
     from PIL import Image as PILImage
 
     ho = bundle["v18_cache"]["holdout"]

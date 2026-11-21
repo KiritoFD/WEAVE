@@ -220,5 +220,5 @@ def main():
 
 
 if __name__ == "__main__":
-    from . import sanitize_cuda_env  # noqa
+    pass  # (已移除: 误从 exp.v26.gpu4090 导入 sanitize_cuda_env — 顶层 line24 已导入)
     main()

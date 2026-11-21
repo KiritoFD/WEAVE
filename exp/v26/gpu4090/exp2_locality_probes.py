@@ -46,7 +46,7 @@ def inter_cluster_divergence(env: dict, ckpt_p: Path, device: str = "cuda",
     from exp.v26.sr_cfg import integrate_sr, sr_velocity
     from exp.v26.uot_fiber_bundle import geometry_free_fiber_stats
     from src.utils import decode_s10, load_s10_decoder
-    from src.utils._local_eval_refs import FeatureStack
+    from src.utils import FeatureStack
 
     tasks, z_src_750, _ = tasks_and_sources()
     cross_ids = [i for i, t in enumerate(tasks) if t["source_style_id"] != t["target_style_id"]][:n_tasks]
