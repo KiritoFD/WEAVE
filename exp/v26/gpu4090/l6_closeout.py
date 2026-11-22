@@ -17,6 +17,7 @@ from exp.v26 import OUT, ROOT, read_json, save_json, utc
 
 STATUS = OUT / "gpu4090" / "queue_long_status.json"
 DELIV = ROOT / "docs/v26"
+STYLES = ("Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e")
 
 
 def _j(p: Path) -> dict:
