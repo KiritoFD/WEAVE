@@ -213,7 +213,7 @@ def run_fuse(pool: str, device: str = "cuda") -> dict:
         pred_all += cs.argmax(1).tolist()
         want_stems = [tasks[i]["source_stem"] for i in sel][st:st + 24]
         f_src = torch.stack([torch.as_tensor(src_dino["raw_dino"][s]) for s in want_stems])
-        dc_all += torch.diagonal(feats["dino"] @ f_src.T).tolist()
+        dc_all += torch.diagonal(feats["dino"] @ f_src.to(feats["dino"].device).T).tolist()
     per_style = {STYLES[t]: round(sum(1 for p, w in zip(pred_all, tid.tolist())
                                       if w == t and p == t) / N_FUSE_PER_STYLE, 4) for t in range(5)}
     top1 = round(sum(int(p == w) for p, w in zip(pred_all, tid.tolist())) / len(pred_all), 4)
