@@ -34,7 +34,7 @@ EVAL_SEED = 20261185
 # ------------------------------------------------- 增广与统计 ----
 
 def _luma(z: torch.Tensor, w_l: torch.Tensor, b_l: torch.Tensor) -> torch.Tensor:
-    return (z * w_l.view(1, 4, 1, 1)).sum(1, keepdim=True) + b_l.view(1, 4, 1, 1)
+    return (z * w_l).sum(1, keepdim=True) + b_l
 
 
 def haar_energy(y: torch.Tensor) -> torch.Tensor:
