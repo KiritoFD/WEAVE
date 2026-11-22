@@ -79,7 +79,7 @@ class AnisotropicS10RefTeacher:
         del base
 
     def _desc(self, rgb: torch.Tensor) -> torch.Tensor:
-        return self.vgg_ext(rgb, multi_scale=True).float()
+        return self.vgg_ext(rgb.to(self.device), multi_scale=True).float()
 
     def ref_distance(self, rgb: torch.Tensor, d_ref: torch.Tensor) -> torch.Tensor:
         return F.pairwise_distance(self._desc(rgb), d_ref)
