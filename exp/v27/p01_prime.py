@@ -193,7 +193,7 @@ class V27PrimeUNet(nn.Module):
         # 空间路由: A 在 16×16 只算一次, R16 上采样复用至 dec32/dec64
         r16 = None
         if self.use_router and k_ref_tok is not None and v_ref_tok is not None:
-            r16 = self.router(q_src_16 * lscale4, k_ref_tok * smask2.view(B, 1, 1),
+            r16 = self.router(q32_src * lscale4, k_ref_tok * smask2.view(B, 1, 1),
                               v_ref_tok * smask2.view(B, 1, 1))
         r32 = F.interpolate(r16, size=(32, 32), mode="bilinear", align_corners=False) if r16 is not None else None
         r64 = F.interpolate(r16, size=(64, 64), mode="bilinear", align_corners=False) if r16 is not None else None
