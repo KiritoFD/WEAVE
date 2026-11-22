@@ -159,7 +159,7 @@ def precompute_ref_feats(bundle, c21, device: str = "cuda") -> dict:
     from exp.v19.fiber_duality import extract_color_fiber_27d
     from src.utils import decode_s10, load_s10_decoder
 
-    w_l = bundle["v18_cache"]["luma_proj"]["w"].float().view(1, 4, 1, 1).to(device)
+    luma_w = torch.tensor([0.299, 0.587, 0.114], device=device).view(1, 3, 1, 1)
     dec = load_s10_decoder(device)
     out = {}
     for split, zs, vref in (
@@ -174,7 +174,7 @@ def precompute_ref_feats(bundle, c21, device: str = "cuda") -> dict:
             rgb = decode_s10(dec, zs[st:st + 24].to(device).float(), batch=24).clamp(0.0, 1.0)
             for j in range(len(rgb)):
                 ok27 = extract_color_fiber_27d(rgb[j][None].to(device))[0]
-                y = (rgb[j].to(device) * w_l).sum(1, keepdim=True).clamp(0.0, 1.0)
+                y = (rgb[j].to(device) * luma_w).sum(1, keepdim=True).clamp(0.0, 1.0)
                 h12 = haar2_feats(y[None])[0]
                 feats.append(torch.cat([dino_mu[st + j].to(device),
                                         dino_sd[st + j].to(device),
