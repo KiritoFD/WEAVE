@@ -8,7 +8,7 @@ S0_vgg_global 与 F2_global_teacher 重复同一 125-pair 协议.
 125 对 (dino_s 正确参考 vs 参考更换) → delta_dino_s. ckpt 需含
 fm/adapter/fib_mean/fib_std (train_l1_arm 落盘格式).
 
-用法:  python -m exp.v26.gpu3060.sg25_v26l  (3060, I:\\Latent_Style\\WEAVE)
+用法 (3060 仓库根):  python -m exp.v26.gpu3060.sg25_v26l
 """
 from __future__ import annotations
 
