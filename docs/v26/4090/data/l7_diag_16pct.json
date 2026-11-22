@@ -1,0 +1,40 @@
+{
+  "task": "V26-L 16% hard-ceiling root-cause diagnostics",
+  "updated_utc": "2026-11-22T03:32:42.092964+00:00",
+  "D1_teacher_direct": {
+    "arm": "teacher_direct",
+    "n_pairs": 600,
+    "top1_overall": 0.1167,
+    "top1_per_target_style": {
+      "Early_Renaissance": 0.025,
+      "Impressionism": 0.4667,
+      "Minimalism": 0.0583,
+      "Rococo": 0.025,
+      "Ukiyo_e": 0.0083
+    }
+  },
+  "D1b_tau0_sweep": {
+    "tau0_0.0": {
+      "top1": 0.1562,
+      "dino_c_vs_src": 0.6715
+    },
+    "tau0_0.15": {
+      "top1": 0.125,
+      "dino_c_vs_src": 0.6904
+    },
+    "tau0_0.45": {
+      "top1": 0.125,
+      "dino_c_vs_src": 0.7644
+    }
+  },
+  "D2_prototype_probe": {
+    "exemplar": 0.25,
+    "prototype": 0.2396
+  },
+  "D4_static_audit": [
+    "教师锚点: build_teacher L123 z=(1-0.45)*eps+0.45*z_src — 45% 源图锚 (V22 消融: 源锚 20.5% vs PRISM-1 锚 57.17%)",
+    "学生 CFG dropout: train_l1_arm drop_style=torch.zeros — 全程无 Style Dropout → 推理 2-branch CFG 的 uncond 分支 OOD",
+    "学生锚定项: flow-MSE 轨迹起点 z_init=源锚混合 (L314) + swap 损失 λ_sw=0.5 λ_c=1.0 (L390) — 源图内容项双路锚定",
+    "swap 损失以 1 步预览 decode (L372) — 弱轨迹下格内排序分位数趋坍缩 (S4 失效的另一技术原因, 用户 2026-11-22 分析)"
+  ]
+}
