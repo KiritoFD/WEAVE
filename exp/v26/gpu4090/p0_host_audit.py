@@ -188,11 +188,12 @@ def part3_teacher_rebuild(pool: str, device: str = "cuda") -> dict:
     for t in range(5):
         pool_i = (sid_tr != t).nonzero(as_tuple=True)[0]
         pick = pool_i[torch.randperm(len(pool_i), generator=g)[:120]]
-        tid_true = torch.full((len(pick),), t, dtype=torch.long, device=device)
+        tid_full = torch.full((len(pick),), t, dtype=torch.long, device=device)
         lat_by_style[t] = []
         for st in range(0, len(pick), 24):
             chunk = pick[st:st + 24].tolist()
             B = len(chunk)
+            tid_true = tid_full[st:st + 24]
             eps = torch.randn(B, 4, 64, 64, generator=g).to(device)
             y16 = y16_tr[chunk].to(device).float()
             d16 = d16_tr[chunk].to(device).float()
