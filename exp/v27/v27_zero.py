@@ -171,14 +171,16 @@ def precompute_ref_feats(bundle, c21, device: str = "cuda") -> dict:
         dino_sd = vref.std(dim=1).clamp_min(1e-4)
         feats = []
         for st in range(0, len(zs), 24):
-            rgb = decode_s10(dec, zs[st:st + 24].to(device).float(), batch=24).clamp(0.0, 1.0)
+            rgb = decode_s10(dec, zs[st:st + 24].to(device).float(), batch=24)
+            rgb = torch.nan_to_num(rgb, nan=0.5, posinf=1.0, neginf=0.0).clamp(0.0, 1.0)
             for j in range(len(rgb)):
                 ok27 = extract_color_fiber_27d(rgb[j][None].to(device))[0]
                 y = (rgb[j].to(device) * luma_w).sum(1, keepdim=True).clamp(0.0, 1.0)
-                h12 = haar2_feats(y[None])[0]
-                feats.append(torch.cat([dino_mu[st + j].to(device),
-                                        dino_sd[st + j].to(device),
-                                        ok27, h12]))
+                h12 = torch.nan_to_num(haar2_feats(y[None])[0], nan=0.0, posinf=1.0, neginf=-1.0)
+                fv = torch.cat([dino_mu[st + j].to(device),
+                                dino_sd[st + j].to(device),
+                                ok27, h12])
+                feats.append(torch.nan_to_num(fv, nan=0.0, posinf=1.0, neginf=-1.0))
         out[split] = torch.stack(feats, 0)
         print(f"[V27 Feats] {split}: {tuple(out[split].shape)}", flush=True)
     return out
