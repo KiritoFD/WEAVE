@@ -63,7 +63,7 @@ def pollute(z_x: torch.Tensor, z_alien: torch.Tensor, w_l: torch.Tensor, b_l: to
     """异图色度交换 + Haar 高频随机缩放 → 伪源 z̃_s (布局/亮度锁定)."""
     B = z_x.shape[0]
     z_p = chroma_align_anchor(z_x, z_alien)  # ch0 亮度锁源, ch1..3 对齐异图
-    hf = torch.empty(B, 1, 1, 1, device=z_x.device).uniform_(0.5, 1.5, generator=g)
+    hf = torch.empty(B, 1, 1, 1, device=z_x.device).uniform_(0.5, 1.5)
     y = _luma(z_p, w_l, b_l)
     y_src = _luma(z_x, w_l, b_l)
     detail = y - F.avg_pool2d(y, 3, stride=1, padding=1)
