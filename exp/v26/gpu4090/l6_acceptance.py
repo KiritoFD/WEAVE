@@ -61,7 +61,7 @@ def _kmeans(feats: torch.Tensor, k: int, iters: int = 25, seed: int = 20266124) 
     centers = [x[idx0]]
     for _ in range(k - 1):
         d2 = 1.0 - torch.stack([x @ c for c in centers], 1).max(dim=1).values
-        centers.append(x[torch.multinomial(d2.clamp_min(1e-6), 1, generator=g)])
+        centers.append(x[int(torch.multinomial(d2.clamp_min(1e-6), 1, generator=g))])
     C = torch.stack(centers, 0)
     for _ in range(iters):
         assign = (x @ C.T).argmax(1)
