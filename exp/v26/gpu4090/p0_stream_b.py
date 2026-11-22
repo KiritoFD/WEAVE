@@ -205,7 +205,8 @@ def train_stream_b(pool: str, updates: int = 1500, device: str = "cuda",
             qi_i, qi_j = int(torch.randint(0, 2, (1,), generator=g)), int(torch.randint(0, 2, (1,), generator=g))
             zq = zx[:, :, qi_i * H // 2:(qi_i + 1) * H // 2, qi_j * H // 2:(qi_j + 1) * H // 2]
             u_ref = eref(ref_stats(zq, w_l, b_l))
-            # Bridge 起点: 源亮度(降级)+异图色度场; 参考 = 同画象限; 目标 = 原画 z_x
+            # Bridge 起点: 源亮度(降级)+异图色度场, 色度矩对齐参考象限; 目标 = 原画 z_x
+            z0p = chroma_align_anchor(zt, zq)
             # 直连目标 = 原画 z_x; v_target = z_x − z0⊥
             tau = torch.rand(micro, device=device)
             z_tau = (1.0 - tau.view(-1, 1, 1, 1)) * z0p + tau.view(-1, 1, 1, 1) * zx
