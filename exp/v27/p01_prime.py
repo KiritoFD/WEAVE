@@ -33,7 +33,7 @@ from exp.v21.prism_attn_flow import (
     chroma_align_to_exemplar,
     sinusoidal_time_emb,
 )
-from exp.v27 import OUT, ROOT, RawWriterV27, run_measure_v27, save_json, utc
+from exp.v27 import OUT, ROOT, RawWriterV27, run_measure_v27, save_json, utc, read_json
 from src.utils.runtime import seed_all
 
 STYLES = ("Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e")
@@ -229,6 +229,9 @@ def train_prime(arm: str, bundle, c21, feats_train: torch.Tensor,
     ckpt_dir = OUT / f"prime_{arm}"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     final_p = ckpt_dir / "final.pt"
+    if final_p.exists():
+        print(f"[{arm}] Reusing {final_p}", flush=True)
+        return final_p
     tr = bundle["v18_cache"]["train"]
     tr21 = c21["train"]
     w_luma = bundle["v18_cache"]["luma_proj"]["w"].to(device).float()
@@ -429,7 +432,11 @@ def eval_prime(arm: str, ckpt_p, bundle, c21, feats, tasks, z_src_750, device: s
     ]
     out = {}
     for arm_name, ref_mode, kw in arms:
-        with torch.no_grad():
+        if (OUT / f"raw/{arm_name}/meta.json").exists() and                 (OUT / f"measured/{arm_name}/summary_v27.json").exists():
+            print(f"[{arm}] eval reuse {arm_name}", flush=True)
+            s = read_json(OUT / f"measured/{arm_name}/summary_v27.json")
+        else:
+          with torch.no_grad():
             wr = RawWriterV27(arm_name, dec=dec, device=device)
             is_wrong = "wrong" in arm_name
             for st in range(0, 750, 25):
