@@ -112,11 +112,13 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
     sg_f2 = _j(OUT / "gpu3060" / "sg25_F2_global_teacher.json")
     sg_c2 = _j(OUT / "gpu3060" / "sg25_c2nt_t45.json")
     if sg_s0 or sg_f2:
+        c2_ds = (sg_c2.get("rows") or [{}])[0].get("delta_dino_s") if sg_c2 else None
         L.append("8. **SG-25 OOD (最终候选臂, 125 对)**: "
                  f"S0={sg_s0.get('swap_dist', '—')} / δs={sg_s0.get('delta_dino_s', '—')}; "
                  f"F2={sg_f2.get('swap_dist', '—')} / δs={sg_f2.get('delta_dino_s', '—')} "
-                 f"(C2nt 基线: swap={sg_c2.get('swap_dist')}, δs=+{sg_c2['rows'][0].get('delta_dino_s')}) — "
-                 "参考响应外推到训练五画派之外." if (sg_s0 or sg_f2) else "pending")
+                 + (f"(C2nt 基线: swap={sg_c2.get('swap_dist')}, δs=+{c2_ds}) — "
+                    "参考响应外推到训练五画派之外." if c2_ds else
+                    "(C2nt 基线 json 未入 runs/v26/gpu3060 — 见 docs/v26/4090/data)."))
     if acc:
         rt = acc.get("route_matrix", {})
         ci = acc.get("cluster_bootstrap_ci", {})
