@@ -282,6 +282,10 @@ def train_v27(bundle, c21, feats_train: torch.Tensor, nbr: torch.Tensor,
                 w_tau = (tau > 0.25).float() * lscale.square()
                 st_loss = ((y16_hat - y16).abs().mean(dim=(1, 2, 3)) * w_tau).sum() / w_tau.sum().clamp_min(1.0)
                 loss = (fm_loss + 0.12 * st_loss) / accum
+            if step == 1 and _ == 0:
+                print(f"[V27 DIAG] pred_v.rg={pred_v.requires_grad} fm.rg={fm_loss.requires_grad} "
+                      f"st.rg={st_loss.requires_grad} loss.rg={loss.requires_grad} "
+                      f"y16_hat.rg={y16_hat.requires_grad} z1_hat.rg={z1_hat.requires_grad}", flush=True)
             loss.backward()
             loss_fm_v += float(fm_loss.item()) / accum
             loss_st_v += float(st_loss.item()) / accum
