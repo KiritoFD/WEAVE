@@ -122,7 +122,7 @@ def hard_examples_grid(arm: str, k: int = 12, device: str = "cuda") -> dict:
     dec = load_s10_decoder(device)
     c21 = torch.load(ROOT / "runs/v21/cache/v21_stiefel_ref_cache.pt",
                      map_location="cpu", weights_only=False)
-    z_ref5 = c21["sg5"]["z"].float()  # (5, 4, 64, 64) — 5 画派 core exemplar
+    z_ref5 = c21["sg5"]["z"].float().to(device)  # (5, 4, 64, 64) — 5 画派 core exemplar
     rgb_ref5 = decode_s10(dec, z_ref5, batch=5)
     out_dir = OUT / "gpu4090" / "hard_examples"
     out_dir.mkdir(parents=True, exist_ok=True)
