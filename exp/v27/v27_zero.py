@@ -67,7 +67,7 @@ class V27ZeroUNet(nn.Module):
         self.enc64 = nn.ModuleList([PureStyleResBlock(w0, cond_dim), PureStyleResBlock(w0, cond_dim)])
         self.down32 = nn.Conv2d(w0, w1, 3, stride=2, padding=1)
         self.enc32 = nn.ModuleList([PureStyleResBlock(w1, cond_dim), PureStyleResBlock(w1, cond_dim)])
-        self.down16 = nn.Conv2d(w1, w2, 3, padding=1)
+        self.down16 = nn.Conv2d(w1, w2, 3, stride=2, padding=1)
         s16_ch = 1 + q_proj_ch
         self.mid1 = SPADEStyleBlock(w2, s16_ch, cond_dim)
         self.mid_self_attn = BottleneckAttention(w2, heads=8)
