@@ -185,7 +185,8 @@ def train_stream_b(pool: str, updates: int = 1500, device: str = "cuda",
             zt = pollute(zx, za, w_l, b_l, g)
             # 参考: 同画非本象限块 (latent) → 去几何统计 + Bridge 色度锚
             H = zx.shape[-1]
-            qi_i, qi_j = int(torch.randint(0, 2, (1,), generator=g)), int(torch.randint(0, 2, (1,), generator=g))
+            qi_i = int(torch.randint(0, 2, (1,), generator=torch.Generator().manual_seed(g.initial_seed() + 17 + ai)))
+            qi_j = int(torch.randint(0, 2, (1,), generator=torch.Generator().manual_seed(g.initial_seed() + 31 + ai)))
             zq = zx[:, :, qi_i * H // 2:(qi_i + 1) * H // 2, qi_j * H // 2:(qi_j + 1) * H // 2]
             u_ref = eref(ref_stats(zq, w_l, b_l))
             # Bridge 起点: P_Y 锁污染源, P_C 矩对齐参考象限
