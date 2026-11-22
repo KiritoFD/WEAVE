@@ -238,12 +238,14 @@ def d2_prototype_probe(pool: str, device: str = "cuda") -> dict:
             d16 = d16_750[sel[sl]].to(device).float()
             u_glob_b = u_glob_ref.to(device)[tid[sl]]
             u_style_b = ad(u_style_ref.to(device)[tid[sl]], env["u_src_750"][sel[sl]].to(device))
+            d16_r_b = env["d16_sg5"].to(device)[tid[sl]]
+            v16_r_b = env["v16_sg5"].to(device)[tid[sl]]
             z = (1.0 - TAU0) * eps_750[sel[sl]].to(device).float() + TAU0 * zs
 
             def vel_fn(zz, prog):
                 tv = torch.full((B,), TAU0 + prog * (1.0 - TAU0), device=device)
                 v, _ = sr_velocity(fm, ad, u_style_b, None, u_glob_b, None,
-                                   d16, None, None, None, None, y16, zz, tv,
+                                   d16, d16_r_b, v16_r_b, None, None, y16, zz, tv,
                                    mode="baseline", w=0.0, wj=WJ, device=device)
                 return v
 
