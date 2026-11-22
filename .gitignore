@@ -67,6 +67,7 @@ exp/*
 !exp/v24/
 !exp/v25/
 !exp/v26/
+!exp/v27/
 experiments/
 state/
 archives/
