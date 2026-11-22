@@ -159,7 +159,7 @@ def precompute_ref_feats(bundle, c21, device: str = "cuda") -> dict:
     from exp.v19.fiber_duality import extract_color_fiber_27d
     from src.utils import decode_s10, load_s10_decoder
 
-    luma_w = torch.tensor([0.299, 0.587, 0.114], device=device).view(1, 3, 1, 1)
+    luma_w = torch.tensor([0.299, 0.587, 0.114], device=device).view(3, 1, 1)
     dec = load_s10_decoder(device)
     out = {}
     for split, zs, vref in (
