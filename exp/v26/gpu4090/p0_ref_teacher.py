@@ -70,7 +70,6 @@ class AnisotropicS10RefTeacher:
         self.w_luma, self.b_luma = base.w_luma, base.b_luma
         self.dec_fp16, self.dec_bf16 = base.dec_fp16, base.dec_bf16
         self.vgg_ext = base.vgg_ext
-        self.bundle = base.bundle
         self._aniso_rms_direction = aniso_rms_direction
         self._project = project_anisotropic_trust
         self._lcn_cost = latent_lcn_cost
