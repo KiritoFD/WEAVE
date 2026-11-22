@@ -105,6 +105,30 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
     L.append(f"7. **PRISM-Flow 免重训减步?** 可以基本无损 — 10 步基线 16.17% → 4 步 RK2-mid "
              f"{t750_s} (Top-1 −0.34pp, DINO-C +0.012, LPIPS −0.029, NFE −60%); "
              "教师距离排序: rk2_04_mid 最优.")
+
+    # ---- 最终验收补齐 (SG-25 × 最终候选臂 / 路线矩阵 / 聚类 CI / 难例) ----
+    acc = _j(OUT / "gpu4090" / "l6_acceptance.json")
+    sg_s0 = _j(OUT / "gpu3060" / "sg25_S0_vgg_global.json")
+    sg_f2 = _j(OUT / "gpu3060" / "sg25_F2_global_teacher.json")
+    sg_c2 = _j(OUT / "gpu3060" / "sg25_c2nt_t45.json")
+    if sg_s0 or sg_f2:
+        L.append("8. **SG-25 OOD (最终候选臂, 125 对)**: "
+                 f"S0={sg_s0.get('swap_dist', '—')} / δs={sg_s0.get('delta_dino_s', '—')}; "
+                 f"F2={sg_f2.get('swap_dist', '—')} / δs={sg_f2.get('delta_dino_s', '—')} "
+                 f"(C2nt 基线: swap={sg_c2.get('swap_dist')}, δs=+{sg_c2['rows'][0].get('delta_dino_s')}) — "
+                 "参考响应外推到训练五画派之外." if (sg_s0 or sg_f2) else "pending")
+    if acc:
+        rt = acc.get("route_matrix", {})
+        ci = acc.get("cluster_bootstrap_ci", {})
+        L.append("9. **20 条有向迁移路线 (Top-1 均值)**: "
+                 + "; ".join(f"{k.replace('S0_vgg_global', 'S0').replace('F2_global_teacher', 'F2')}"
+                             f"={v.get('directed_top1_mean')}" for k, v in rt.items())
+                 + " — 逐路线矩阵见 ABLATIONS.")
+        for k, v in ci.items():
+            L.append(f"   CI[{k.replace('_vgg_global', '').replace('_global_teacher', '')}] "
+                     f"Δ={v['mean_diff']} 95%[{v['ci95'][0]},{v['ci95'][1]}] p>0={v['p_gt0']}")
+        L.append(f"10. **难例对比图**: {acc.get('hard_examples', {}).get('png', '—')} "
+                 f"(worst routes: {acc.get('hard_examples', {}).get('worst_routes')}).")
     L += ["", "## 口径说明", "",
           "- 队列状态 science_tasks_done 不含 L2/L5: 两者经 4 轮修复后由**队列外独立子进程**补跑完成, "
           "json 已入库 (l2_decoder_matched.json / l5_fewstep_q32.json) — 本文档数字以 json 为准;",
@@ -151,6 +175,21 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
     for arm, c in pool.items():
         if isinstance(c, dict) and "csd_top1" in c:
             A.append(f"| {arm} | {c.get('dino_c')} | {c.get('dino_s')} | {c.get('lpips')} | {c.get('csd_top1', 0)*100:.2f}% |")
+    if acc:
+        A += ["", "## 20 条有向迁移路线矩阵 (Top-1, 行=源画派, 列=目标画派)", ""]
+        for arm, v in acc.get("route_matrix", {}).items():
+            short = arm.replace("S0_vgg_global", "S0").replace("F2_global_teacher", "F2")
+            A.append(f"**{short}** (有向均值 {v.get('directed_top1_mean')}, "
+                     f"最差路线 {'→'.join(v.get('directed_argmin', []))} = {v.get('directed_min')}):")
+            A.append("| 源\\目标 | " + " | ".join(s[:6] for s in STYLES) + " |")
+            A.append("|---|" + "---:|" * 5)
+            for i, row in enumerate(v.get("matrix", [])):
+                A.append(f"| {STYLES[i][:6]} | " + " | ".join(f"{x*100:.1f}%" for x in row) + " |")
+            A.append("")
+        A += ["", "## 源图聚类配对 bootstrap CI (k=10 簇, 2000 次整簇重采样)", "",
+              "| 配对 | ΔTop-1 | 95% CI | p(Δ>0) |", "|---|---:|---|---:|"]
+        for k, v in acc.get("cluster_bootstrap_ci", {}).items():
+            A.append(f"| {k} | {v['mean_diff']} | [{v['ci95'][0]}, {v['ci95'][1]}] | {v['p_gt0']} |")
     r2.write_text("\n".join(A) + "\n", encoding="utf-8")
 
     # ---- V26_LONG_NEGATIVE_RESULTS.md ----
@@ -176,7 +215,11 @@ def run_l6(pool: str = "", device: str = "cuda") -> str:
          "- **训练配方**: 见 runs/v26/oneshot_val/<best>/meta (strict-cross 参考采样 + accum-RNG 修复 + "
          "VGG-mean swap λ_sw=0.5 λ_c=1.0" + (" + 跨画派 Flow 教师监督" if "teacher" in best_arm else "") + ")",
          "- **解码器**: S10 (10.66M) — L2 归因结论见 ABLATIONS",
-         "- **诚实声明**: F2 类臂训练期教师使用真画派标签生成跨画派目标; 推理完全免标签"]
+         "- **诚实声明**: F2 类臂训练期教师使用真画派标签生成跨画派目标; 推理完全免标签",
+         "- **种子复验**: S0_vgg_global 三份独立读数 16.17%/16.17%(seed23)/16.00%(seed45); "
+         "F2_global_teacher 16.00%/16.17%(seed23)/16.00%(seed45) — 聚类配对 bootstrap CI 全部含 0 "
+         "(S0−F2 Δ=+0.10pp CI95 [−0.98,+1.01]pp), 两候选统计不可区分, 归类依据 = Top-1 相同下的最简机制 (无 SWD/无 RefAttn)",
+         "- **SG-25 OOD**: 见 RESULTS 八 (3060 125 对, swap_dist/δs 与 C2nt 基线同口径)"]
     r4.write_text("\n".join(R) + "\n", encoding="utf-8")
 
     print(f"[L6] Deliverables → {r1}, {r2}, {r3}, {r4}", flush=True)
