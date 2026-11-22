@@ -169,7 +169,7 @@ def run_acceptance(pool: str, device: str = "cuda") -> dict:
                      map_location="cpu", weights_only=False)
     tasks = json.loads((ROOT / "eval_protocol/tasks_750.json").read_text(encoding="utf-8"))["tasks"]
     stems = [t["source_stem"] for t in tasks]
-    feats = torch.stack([src["raw_dino"][s] for s in stems])
+    feats = torch.stack([torch.as_tensor(src["raw_dino"][s]) for s in stems])
     clusters = _kmeans(feats, K_CLUSTERS)
     task_clusters = {t["task_id"]: int(c) for t, c in zip(tasks, clusters)}
 
