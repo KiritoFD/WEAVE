@@ -96,9 +96,9 @@ def part2_anchor_decouple(pool: str, device: str = "cuda") -> dict:
     from exp.v19.fiber_duality import extract_color_fiber_27d, extract_dino_rgb_moments_768d
     from src.utils._local_eval_refs import load_dino_model
     dino_m = load_dino_model(device=device)
-    fib_ref5 = torch.cat([extract_color_fiber_27d(x[None]) for x in rgb_ref5], 0)
+    fib_ref5 = torch.cat([extract_color_fiber_27d(x[None]) for x in rgb_ref5], 0).to(device)
     fib_ref5 = torch.cat([fib_ref5, extract_dino_rgb_moments_768d(
-        dino_m, rgb_ref5, batch=5, device=device).to(device)], dim=-1)
+        dino_m, rgb_ref5.to(device), batch=5, device=device).to(device)], dim=-1)
     u_ref_emb = enc.encode(fib_ref5.to(device))  # (5,128) — 每画派 exemplar 的单参考向量
     tid_pred_ex = (F.normalize(u_ref_emb) @ F.normalize(bary).T).argmax(1)  # (5,) 由参考预测
     tid_pred = tid_pred_ex[tid_true]  # 任务的参考 (目标画派 exemplar) 所预测的画派 id
