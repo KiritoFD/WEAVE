@@ -190,7 +190,7 @@ def run_fuse(pool: str, device: str = "cuda") -> dict:
     z0 = cache["z0"][sel_t].to(device).float()
     z_src = z_src_750[sel_t].to(device).float()
     rgb_ref5 = decode_s10(load_s10_decoder(device), z_ref5, batch=5).clamp(0.0, 1.0)
-    d_ref_all = torch.stack([teacher.prepare_ref(rgb) for rgb in rgb_ref5])
+    d_ref_all = teacher.prepare_ref(rgb_ref5)  # (5, D) — vgg_ext 支持批
     outs = []
     for st in range(0, len(sel), 24):
         sl = slice(st, min(st + 24, len(sel)))
