@@ -1,6 +1,6 @@
 # V26-L 36 小时长队列 — 最终结果
 
-> 收官时间: 2026-11-21T23:49:37.254306+00:00 ｜ 预算: 36.0h ｜ 已用: 8.94h ｜ GPU 计算: 32184s ｜ finish: science_incomplete (failed tasks routed through, budget remains)
+> 收官时间: 2026-11-22T00:29:25.903668+00:00 ｜ 预算: 36.0h ｜ 已用: 8.94h ｜ GPU 计算: 32184s ｜ finish: science_incomplete (failed tasks routed through, budget remains)
 
 ## 七问答案
 
@@ -11,6 +11,13 @@
 5. **S10 优势是域适配还是剪枝?** 同 750 生成 latent 四解码: D0=Top1=18.67% D1(真图FT)=Top1=10.83% D2(S10真图FT)=Top1=12.83% S10=Top1=16.17% — 真图域 FT 对生成 latent 解码是负迁移 (LPIPS +0.11); S10 解码 23ms vs Full 121ms (5.2×) — S10 非瓶颈, 现役保留 (注意: D0 的 Top-1 优势限于 C2nt 臂 latent 分布).
 6. **完整 BPTT vs 截断?** T0=Top1=16.67% T1=Top1=9.17% T2=Top1=8.00% — T1≈T2 (Δ0.9pp<噪声) → 截断足够, 全 BPTT 无独立价值; rollout 训练把 tradeoff 推向内容 (DINO-C 0.74) 牺牲 Top-1.
 7. **PRISM-Flow 免重训减步?** 可以基本无损 — 10 步基线 16.17% → 4 步 RK2-mid rk2_04_mid: Top1=15.83% DINO-C=0.693049736097455 | eul_04_uniform: Top1=15.67% DINO-C=0.6871271977076928 (Top-1 −0.34pp, DINO-C +0.012, LPIPS −0.029, NFE −60%); 教师距离排序: rk2_04_mid 最优.
+8. **SG-25 OOD (最终候选臂, 125 对)**: S0=0.1544 / δs=0.1711; F2=0.1566 / δs=0.1735 (C2nt 基线: swap=0.5349, δs=+0.2216) — 参考响应外推到训练五画派之外.
+9. **20 条有向迁移路线 (Top-1 均值)**: S0=0.1617; F2=0.16; S0_seed23=0.1617; S0_seed45=0.16 — 逐路线矩阵见 ABLATIONS.
+   CI[S0_minus_F2] Δ=0.001 95%[-0.0098,0.0101] p>0=0.542
+   CI[S0_minus_S0_seed23] Δ=-0.0003 95%[-0.0093,0.0071] p>0=0.4255
+   CI[S0_minus_S0_seed45] Δ=0.001 95%[-0.007,0.0078] p>0=0.5505
+   CI[F2_minus_S0_seed23] Δ=-0.0011 95%[-0.0062,0.0058] p>0=0.2615
+10. **难例对比图**: /root/Workspace/WEAVE/runs/v26/gpu4090/hard_examples/hard_examples_S0_vgg_global.png (worst routes: ['Impressionism->Early_Renaissance', 'Impressionism->Rococo', 'Minimalism->Rococo', 'Minimalism->Ukiyo_e']).
 
 ## 口径说明
 
