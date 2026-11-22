@@ -60,6 +60,7 @@ def part2_anchor_decouple(pool: str, device: str = "cuda") -> dict:
     from exp.v20.slf_flow import coarse_y16_lcn
     from exp.v22.core import CFGConfig, GateConfig, PrismCore
     from exp.v20.submode_patchswd import build_or_load_core_knn_bank
+    from exp.v19.fiber_duality import build_or_load_v19_foundation
     from src.utils import FeatureStack, load_s10_decoder
 
     bundle = build_or_load_v19_foundation(pool, device=device)
