@@ -33,7 +33,7 @@ from exp.v21.prism_attn_flow import (
     chroma_align_to_exemplar,
     sinusoidal_time_emb,
 )
-from exp.v27 import OUT, ROOT, RawWriterV27, run_measure_v27, save_json
+from exp.v27 import OUT, ROOT, RawWriterV27, run_measure_v27, save_json, utc
 from src.utils.runtime import seed_all
 
 STYLES = ("Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e")
