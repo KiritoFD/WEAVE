@@ -1,0 +1,53 @@
+{
+  "task": "P0-1' Dec-QR-AdaGN dual-arm",
+  "gates": {
+    "sg5": 0.5,
+    "ho": 0.4,
+    "dino_c": 0.55
+  },
+  "arms": {
+    "A1": {
+      "A1_SG5_s14": {
+        "top1": 0.25,
+        "dino_c": 0.5605,
+        "dino_s": 0.5144,
+        "lpips": 0.4773,
+        "per_target": {
+          "Early_Renaissance": 0.0,
+          "Impressionism": 0.775,
+          "Minimalism": 0.4583,
+          "Rococo": 0.0167,
+          "Ukiyo_e": 0.0
+        }
+      },
+      "A1_Holdout_s14": {
+        "top1": 0.25,
+        "dino_c": 0.5984,
+        "dino_s": 0.5046,
+        "lpips": 0.4311,
+        "per_target": {
+          "Early_Renaissance": 0.0,
+          "Impressionism": 0.6917,
+          "Minimalism": 0.4167,
+          "Rococo": 0.1417,
+          "Ukiyo_e": 0.0
+        }
+      },
+      "A1_Holdout_wrong_s14": {
+        "top1": 0.095,
+        "dino_c": 0.6066,
+        "dino_s": 0.4847,
+        "lpips": 0.423,
+        "per_target": {
+          "Early_Renaissance": 0.0167,
+          "Impressionism": 0.225,
+          "Minimalism": 0.1833,
+          "Rococo": 0.05,
+          "Ukiyo_e": 0.0
+        }
+      }
+    }
+  },
+  "updated_utc": "2026-11-22T17:33:09.276259+00:00",
+  "gate_pass": false
+}
