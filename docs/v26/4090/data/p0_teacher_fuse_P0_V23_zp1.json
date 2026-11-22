@@ -1,0 +1,18 @@
+{
+  "tag": "P0_V23_zp1",
+  "n_pairs": 150,
+  "top1": 0.1733,
+  "per_style": {
+    "Early_Renaissance": 0.1667,
+    "Impressionism": 0.5333,
+    "Minimalism": 0.1333,
+    "Rococo": 0.0333,
+    "Ukiyo_e": 0.0
+  },
+  "gate": {
+    "top1": 0.5,
+    "min_style": 0.2
+  },
+  "updated_utc": "2026-11-22T05:41:50.860039+00:00",
+  "gate_pass": false
+}
