@@ -94,11 +94,10 @@ class ERefMLP(torch.nn.Module):
             torch.nn.Linear(in_dim, 128), torch.nn.SiLU(),
             torch.nn.Linear(128, 128), torch.nn.SiLU(),
             torch.nn.Linear(128, dim),
-            torch.nn.Normalize(dim=-1),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net(x)
+        return F.normalize(self.net(x), dim=-1)
 
 
 class BridgeSLFUNet(torch.nn.Module):
