@@ -1,0 +1,20 @@
+{
+  "arm": "RefTeacher_fuse",
+  "n_pairs": 150,
+  "top1": 0.3667,
+  "per_style": {
+    "Early_Renaissance": 0.0,
+    "Impressionism": 0.7667,
+    "Minimalism": 0.6,
+    "Rococo": 0.4333,
+    "Ukiyo_e": 0.0333
+  },
+  "dino_c": 0.7379,
+  "gate": {
+    "top1": 0.45,
+    "min_style": 0.2,
+    "dino_c": 0.62
+  },
+  "updated_utc": "2026-11-22T13:45:53.577114+00:00",
+  "gate_pass": false
+}
