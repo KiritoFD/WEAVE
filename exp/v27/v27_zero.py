@@ -282,10 +282,6 @@ def train_v27(bundle, c21, feats_train: torch.Tensor, nbr: torch.Tensor,
                 w_tau = (tau > 0.25).float() * lscale.square()
                 st_loss = ((y16_hat - y16).abs().mean(dim=(1, 2, 3)) * w_tau).sum() / w_tau.sum().clamp_min(1.0)
                 loss = (fm_loss + 0.12 * st_loss) / accum
-            if step == 1 and _ == 0:
-                print(f"[V27 DIAG] pred_v.rg={pred_v.requires_grad} fm.rg={fm_loss.requires_grad} "
-                      f"st.rg={st_loss.requires_grad} loss.rg={loss.requires_grad} "
-                      f"y16_hat.rg={y16_hat.requires_grad} z1_hat.rg={z1_hat.requires_grad}", flush=True)
             loss.backward()
             loss_fm_v += float(fm_loss.item()) / accum
             loss_st_v += float(st_loss.item()) / accum
@@ -368,7 +364,6 @@ def _pil_rgb(rgb: torch.Tensor):
                               .round().clip(0, 255).astype("uint8"))
 
 
-@torch.no_grad()
 def run_gate1(pool: str, device: str = "cuda", updates: int = 3800,
               reuse_ckpt: bool = True) -> dict:
     from exp.v19.fiber_duality import build_or_load_v19_foundation
@@ -408,7 +403,7 @@ def run_gate1(pool: str, device: str = "cuda", updates: int = 3800,
     ]
     verdict = {"gates": {"sg5_top1": 0.45, "holdout_top1": 0.38, "dino_c": 0.55}, "arms": {}}
     for arm_name, ref_mode, kw in arms:
-        if not (OUT / f"raw/{arm_name}/meta.json").exists():
+        with torch.no_grad():
             wr = RawWriterV27(arm_name, dec=dec, device=device)
             is_wrong = "wrong" in arm_name
             for st in range(0, 750, 25):
