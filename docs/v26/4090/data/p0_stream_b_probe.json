@@ -1,0 +1,23 @@
+{
+  "updated_utc": "2026-11-22T14:14:08.558281+00:00",
+  "updates": 1500,
+  "probe": {
+    "arm": "P0_StreamB_probe",
+    "updated_utc": "2026-11-22T14:14:08.469485+00:00",
+    "cross600": {
+      "top1": 0.0417,
+      "dino_c": 0.8906,
+      "dino_s": null,
+      "lpips": null,
+      "top1_per_target_style": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.0,
+        "Minimalism": 0.125,
+        "Rococo": 0.0,
+        "Ukiyo_e": 0.0417
+      },
+      "top1_min_style": 0.0
+    },
+    "sg25_ood": null
+  }
+}
