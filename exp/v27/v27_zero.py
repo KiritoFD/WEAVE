@@ -120,16 +120,16 @@ class V27ZeroUNet(nn.Module):
         h16 = self.mid1(h16, s16, cond)
         h16 = self.mid_self_attn(h16)
         h16 = self.mid2(h16, s16, cond)
-        h32d = self.up32(h16)
+        h32d = self.up32(h16.repeat_interleave(2, dim=-2).repeat_interleave(2, dim=-1))
         h32d = self.skip32(torch.cat([h32d, h32], dim=1))
         h32d = self.dec32_spade(h32d, s32, cond)
         for blk in self.dec32:
             h32d = blk(h32d, cond)
-        h64d = self.up64(h32d)
+        h64d = self.up64(h32d.repeat_interleave(2, dim=-2).repeat_interleave(2, dim=-1))
         h64d = self.skip64(torch.cat([h64d, h64], dim=1))
         for blk in self.dec64:
             h64d = blk(h64d, cond)
-        return self.out_conv(self.out_norm(h64d))
+        return self.out_conv(F.silu(self.out_norm(h64d)))
 
 
 # ------------------------------------------------- 特征 ----
