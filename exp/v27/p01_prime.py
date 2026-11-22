@@ -33,7 +33,7 @@ from exp.v21.prism_attn_flow import (
     chroma_align_to_exemplar,
     sinusoidal_time_emb,
 )
-from exp.v27 import OUT, RawWriterV27, run_measure_v27
+from exp.v27 import OUT, ROOT, RawWriterV27, run_measure_v27, save_json
 from src.utils.runtime import seed_all
 
 STYLES = ("Early_Renaissance", "Impressionism", "Minimalism", "Rococo", "Ukiyo_e")
@@ -517,7 +517,7 @@ def main():
     if sg:
         verdict["gate_pass"] = bool(sg["top1"] >= 0.50 and ho["top1"] >= 0.40 and sg["dino_c"] >= 0.55)
     save_json(OUT / "p01_prime_verdict.json", verdict)
-    print(f"[P0-1'] verdict saved, A1 gate_pass={verdict.get('gate_pass')}", flush=True)
+    print(f"[P0-1p] verdict saved, A1 gate_pass={verdict.get('gate_pass')}", flush=True)
 
 
 if __name__ == "__main__":
