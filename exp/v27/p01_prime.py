@@ -473,6 +473,7 @@ def eval_prime(arm: str, ckpt_p, bundle, c21, feats, tasks, z_src_750, device: s
                                         k_tok, v_tok, **kw)
                 z_out = torch.where(same.view(B, 1, 1, 1), zs, z_gen)
                 wr.write_batch(z_out, grp)
+            wr.finalize(arm=arm_name, ref_mode=ref_mode, **kw)
         s = run_measure_v27(arm_name, device=device)
         c = s["cross600"]
         five = {k: round(v["csd_top1"], 4) for k, v in s.get("per_target_cross120", {}).items()}
