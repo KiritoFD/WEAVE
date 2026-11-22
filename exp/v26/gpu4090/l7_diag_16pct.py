@@ -237,7 +237,7 @@ def d2_prototype_probe(pool: str, device: str = "cuda") -> dict:
             y16 = y16_750[sl].to(device).float()
             d16 = d16_750[sel[sl]].to(device).float()
             u_glob_b = u_glob_ref.to(device)[tid[sl]]
-            u_style_b = ad(u_style_ref.to(device)[tid[sl]], env["u_src_750"][sel[sl]])
+            u_style_b = ad(u_style_ref.to(device)[tid[sl]], env["u_src_750"][sel[sl]].to(device))
             z = (1.0 - TAU0) * eps_750[sel[sl]].to(device).float() + TAU0 * zs
 
             def vel_fn(zz, prog):
