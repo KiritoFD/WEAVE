@@ -200,7 +200,7 @@ def d2_prototype_probe(pool: str, device: str = "cuda") -> dict:
     from exp.v18 import tasks_and_sources
     from exp.v19.fiber_duality import StyleFiberEncoder
     from exp.v26.sr_cfg import TAU0, WJ, integrate_sr, load_sr_env, sr_velocity
-    from src.utils import FeatureStack, load_s10_decoder
+    from src.utils import FeatureStack, decode_s10, load_s10_decoder
 
     env = load_sr_env(pool, device=device, ckpt_path=OUT / "oneshot_val" / "S0_vgg_global.pt")
     fm, ad = env["fm"], env["ad"]
