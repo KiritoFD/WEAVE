@@ -59,19 +59,35 @@ def ref_stats(z_ref: torch.Tensor, w_l: torch.Tensor, b_l: torch.Tensor) -> torc
 
 
 def pollute(z_x: torch.Tensor, z_alien: torch.Tensor, w_l: torch.Tensor, b_l: torch.Tensor,
-            g: torch.Generator) -> torch.Tensor:
-    """异图色度交换 + Haar 高频随机缩放 → 伪源 z̃_s (布局/亮度锁定)."""
+            g: torch.Generator, priors: dict | None = None) -> torch.Tensor:
+    """流 B' 强污染: 异图完整色度场搬运 (P_C 场直取异图, 非矩匹配) + 亮度结构锁源."""
+    if priors is None:
+        B = z_x.shape[0]
+        z_p = chroma_align_anchor(z_x, z_alien)
+        hf = torch.empty(B, 1, 1, 1, device=z_x.device).uniform_(0.5, 1.5)
+        y = _luma(z_p, w_l, b_l)
+        y_src = _luma(z_x, w_l, b_l)
+        detail = y - F.avg_pool2d(y, 3, stride=1, padding=1)
+        y_new = y_src + detail * hf
+        z_p = z_p.clone()
+        z_p[:, 0:1] = z_p[:, 0:1] + (y_new - y)
+        return z_p
+    P_Y = priors["P_Y"].to(z_x.device)
+    P_C = priors["P_C"].to(z_x.device)
     B = z_x.shape[0]
-    z_p = chroma_align_anchor(z_x, z_alien)  # ch0 亮度锁源, ch1..3 对齐异图
-    hf = torch.empty(B, 1, 1, 1, device=z_x.device).uniform_(0.5, 1.5)
-    y = _luma(z_p, w_l, b_l)
-    y_src = _luma(z_x, w_l, b_l)
+    zy = torch.einsum("ij,bjhw->bihw", P_Y, z_x.float())
+    zc_alien = torch.einsum("ij,bjhw->bihw", P_C, z_alien.float())
+    # 亮度笔触破坏: 每样本随机 [模糊 pool 2/3 | 高频衰减 0.3-0.6]
+    y = zy
+    r = torch.rand(B, 1, 1, 1, device=z_x.device)
+    k = 2 + (torch.rand(B, 1, 1, 1, device=z_x.device) > 0.5).long()
+    y_blur = F.interpolate(F.avg_pool2d(y, 2, 1, 1) if False else F.avg_pool2d(y, 4, 1, 1),
+                           size=y.shape[-2:], mode="bilinear", align_corners=False)
     detail = y - F.avg_pool2d(y, 3, stride=1, padding=1)
-    y_new = y_src + detail * hf  # 亮度细节随机缩放 (异于源)
-    # 把新亮度写回 ch0 (近似): ch0' = ch0 + (y_new − y)
-    z_p = z_p.clone()
-    z_p[:, 0:1] = z_p[:, 0:1] + (y_new - y)
-    return z_p
+    y_att = y - detail * (0.3 + 0.4 * torch.rand_like(r))
+    y_deg = torch.where(r > 0.5, y_blur, y_att)
+    # 色度场 = 异图完整 P_C 场 (笔触统计整体替换)
+    return y_deg + zc_alien
 
 
 def quadrant_stats(z: torch.Tensor, w_l: torch.Tensor, b_l: torch.Tensor) -> torch.Tensor:
@@ -142,6 +158,7 @@ def train_stream_b(pool: str, updates: int = 1500, device: str = "cuda",
     N = len(z_all)
     w_l = bundle["v18_cache"]["luma_proj"]["w"].float().view(1, 4, 1, 1).to(device)
     b_l = bundle["v18_cache"]["luma_proj"]["b"].float().to(device)
+    priors = {k: v.to(device) if torch.is_tensor(v) else v for k, v in bundle["fnd"]["priors"].items()}
     y16_all = coarse_y16_lcn(((z_all.to(device) * w_l).sum(1, keepdim=True) + b_l)
                              .clamp(0.0, 1.0)).half()
 
@@ -182,15 +199,13 @@ def train_stream_b(pool: str, updates: int = 1500, device: str = "cuda",
             alien = torch.randint(0, N, (micro,), generator=g).tolist()
             zx = z_all[idx].to(device).float()
             za = z_all[alien].to(device).float()
-            zt = pollute(zx, za, w_l, b_l, g)
+            zt = pollute(zx, za, w_l, b_l, g, priors=priors)
             # 参考: 同画非本象限块 (latent) → 去几何统计 + Bridge 色度锚
             H = zx.shape[-1]
-            qi_i = int(torch.randint(0, 2, (1,), generator=torch.Generator().manual_seed(g.initial_seed() + 17 + ai)))
-            qi_j = int(torch.randint(0, 2, (1,), generator=torch.Generator().manual_seed(g.initial_seed() + 31 + ai)))
+            qi_i, qi_j = int(torch.randint(0, 2, (1,), generator=g)), int(torch.randint(0, 2, (1,), generator=g))
             zq = zx[:, :, qi_i * H // 2:(qi_i + 1) * H // 2, qi_j * H // 2:(qi_j + 1) * H // 2]
             u_ref = eref(ref_stats(zq, w_l, b_l))
-            # Bridge 起点: P_Y 锁污染源, P_C 矩对齐参考象限
-            z0p = chroma_align_anchor(zt, zq)
+            # Bridge 起点: 源亮度(降级)+异图色度场; 参考 = 同画象限; 目标 = 原画 z_x
             # 直连目标 = 原画 z_x; v_target = z_x − z0⊥
             tau = torch.rand(micro, device=device)
             z_tau = (1.0 - tau.view(-1, 1, 1, 1)) * z0p + tau.view(-1, 1, 1, 1) * zx
