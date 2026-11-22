@@ -1,0 +1,63 @@
+{
+ "gates": {
+  "sg5_top1": 0.45,
+  "holdout_top1": 0.38,
+  "dino_c": 0.55
+ },
+ "arms": {
+  "V27_1Shot_SG5_s6": {
+   "top1": 0.2167,
+   "dino_c": 0.5751,
+   "dino_s": 0.5095,
+   "lpips": 0.4997,
+   "per_target": {
+    "Early_Renaissance": 0.0,
+    "Impressionism": 0.758,
+    "Minimalism": 0.325,
+    "Rococo": 0.0,
+    "Ukiyo_e": 0.0
+   }
+  },
+  "V27_1Shot_SG5_s14": {
+   "top1": 0.2167,
+   "dino_c": 0.5744,
+   "dino_s": 0.5105,
+   "lpips": 0.5007,
+   "per_target": {
+    "Early_Renaissance": 0.0,
+    "Impressionism": 0.767,
+    "Minimalism": 0.317,
+    "Rococo": 0.0,
+    "Ukiyo_e": 0.0
+   }
+  },
+  "V27_1Shot_Holdout_s14": {
+   "top1": 0.2167,
+   "dino_c": 0.6145,
+   "dino_s": 0.5044,
+   "lpips": 0.4402,
+   "per_target": {
+    "Early_Renaissance": 0.008,
+    "Impressionism": 0.742,
+    "Minimalism": 0.283,
+    "Rococo": 0.05,
+    "Ukiyo_e": 0.0
+   }
+  },
+  "V27_1Shot_Holdout_wrong_s14": {
+   "top1": 0.0883,
+   "dino_c": 0.6174,
+   "dino_s": 0.4945,
+   "lpips": 0.433,
+   "per_target": {
+    "Early_Renaissance": 0.0,
+    "Impressionism": 0.267,
+    "Minimalism": 0.15,
+    "Rococo": 0.025,
+    "Ukiyo_e": 0.0
+   }
+  }
+ },
+ "gate_pass": false,
+ "verdict_note": "DINO-C gate PASS (0.575 vs V21 0.397) — 加性 RefAttn 删除证实内容修复; Top-1 FAIL 21.67% 且 ER/Roc/Uki 坍缩 (第五次同模式) — 纯全局向量条件缺乏空间笔触信息"
+}
