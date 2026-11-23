@@ -1,0 +1,89 @@
+"""Unit and isolation tests for exp.v28_unified."""
+from __future__ import annotations
+
+import ast
+from pathlib import Path
+
+import torch
+
+from exp.v28_unified import atomic_save, recipe_hash
+from exp.v28_unified.data_map import resolve_train_rgb_paths
+from exp.v28_unified.student_models import UnifiedHybridUNet
+from exp.v28_unified.train_student import _compute_targets, _sample_strengths_and_targets
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_unet_params_and_lambda_zero_exact_identity() -> None:
+    model = UnifiedHybridUNet(stats_dim=417).eval()
+    n_params = sum(p.numel() for p in model.parameters())
+    assert 10_000_000 <= n_params <= 13_000_000, f"Unexpected param count: {n_params:,}"
+
+    B = 4
+    source = torch.randn(B, 4, 64, 64)
+    c64 = torch.randn(B, 4, 64, 64)
+    q32 = torch.randn(B, 32, 16, 16)
+    tid = torch.tensor([0, 1, 2, 4])
+    noise = torch.randn(B, 4, 64, 64)
+    raw_stats = torch.randn(5, 417)
+    priors = {
+        "P_Y": torch.eye(4)[:1].repeat(4, 1) * 0.25,
+        "P_C": torch.eye(4) - 0.25,
+        "mu_c": torch.randn(5, 4, 1, 1),
+        "std_c": torch.ones(5, 4, 1, 1),
+    }
+
+    with torch.no_grad():
+        out_zero = model(source, c64, q32, tid, torch.zeros(B), raw_stats, priors, noise=noise)
+    assert float((out_zero - source).abs().max()) == 0.0
+
+
+def test_three_tier_no_midrange_linear_blend() -> None:
+    gen = torch.Generator().manual_seed(42)
+    modes = torch.tensor([0, 1, 2, 3, 0, 1, 2, 3])
+    strengths, tc = _sample_strengths_and_targets(modes, len(modes), gen, "3tier")
+    src = torch.zeros(len(modes), 4, 4, 4)
+    hic = torch.ones(len(modes), 4, 4, 4) * 1.0
+    mid = torch.ones(len(modes), 4, 4, 4) * 5.0
+    his = torch.ones(len(modes), 4, 4, 4) * 9.0
+    tgt = _compute_targets(src, hic, mid, his, strengths, tc, "3tier")
+    assert torch.allclose(tgt[modes == 0], hic[modes == 0])
+    assert torch.allclose(tgt[modes == 1], mid[modes == 1])
+    assert torch.allclose(tgt[modes == 2], his[modes == 2])
+    assert (tgt[modes == 3] > 0.0).all() and (tgt[modes == 3] <= 1.0).all()
+
+
+def test_atomic_save_and_recipe_hash(tmp_path: Path) -> None:
+    p = tmp_path / "sub/shard.pt"
+    atomic_save({"x": torch.tensor([1, 2, 3])}, p)
+    assert p.exists() and not p.with_suffix(".pt.tmp").exists()
+    h1 = recipe_hash({"a": 1, "b": [2, 3]})
+    h2 = recipe_hash({"b": [2, 3], "a": 1})
+    assert h1 == h2 and len(h1) == 16
+
+
+def test_referee_isolation_in_teacher_and_selector() -> None:
+    """Strictly forbid CSD / DINO / CLIP / LPIPS imports in teacher candidate selection & T2/T4."""
+    banned = ("csd_model", "csd_prototypes", "load_dino_model", "encode_dino", "FeatureStack", "lpips")
+    for rel in ("exp/v28_unified/referee_free.py", "exp/v28_unified/teacher_routes.py"):
+        src = (ROOT / rel).read_text(encoding="utf-8")
+        tree = ast.parse(src)
+        names = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                if node.module:
+                    names.add(node.module)
+                for alias in node.names:
+                    names.add(alias.name)
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    names.add(alias.name)
+        for bad in banned:
+            assert bad not in names and bad not in src, f"Forbidden referee symbol {bad!r} found in {rel}"
+
+
+def test_resolve_train_rgb_paths_fails_on_missing() -> None:
+    import pytest
+
+    with pytest.raises(RuntimeError, match="Incomplete train RGB mapping"):
+        resolve_train_rgb_paths(["nonexistent_sample_xyz_12345"], [0], require_full=True)
