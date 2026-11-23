@@ -393,12 +393,11 @@ def eval_v25_decqr(arm: str, ckpt_p: str, bundle: dict, c21: dict,
 
                 # 100% 免标签热启动: 直接在干净源图 latent 上做 P_C 色度矩对齐 (不用潜模糊!)
                 z_anc = chroma_align_to_exemplar(zs, z_r1, P_Y, P_C, alpha=0.55)
-                g_tau, g_layout, g_guid, _ = effective_gate_components(dsd_r, gate, mid_dsd)
+                g_tau, _, g_guid, _ = effective_gate_components(dsd_r, gate, mid_dsd)
                 tau_v = (solver["tau_min"] + (solver["tau_hi"] - solver["tau_min"]) * g_tau).clamp(0.0, 0.78)
-                lscale = (solver["lscale_abs"] + (1.0 - solver["lscale_abs"]) * g_layout).clamp(0.15, 1.0)
-                c8_w = (1.0 - g_layout).clamp(0.0, 0.85)
-                y_in = (1.0 - c8_w.view(B, 1, 1, 1)) * y16 + c8_w.view(B, 1, 1, 1) * F.avg_pool2d(y16, 2, 2).repeat_interleave(2, -2).repeat_interleave(2, -1)
-                d_in = (1.0 - c8_w.view(B, 1, 1, 1)) * d16 + c8_w.view(B, 1, 1, 1) * F.avg_pool2d(d16, 2, 2).repeat_interleave(2, -2).repeat_interleave(2, -1)
+                # 固定 layout=1.0 (匹配 V25_Tr_T1 训练口径; sg5 dsd 低于 mid_dsd 会误触发 c8_w 8x8 池化摧毁 Imp DINO-C)
+                lscale = torch.ones(B, device=device)
+                y_in, d_in = y16, d16
 
                 z = (1.0 - tau_v.view(B, 1, 1, 1)) * ep + tau_v.view(B, 1, 1, 1) * z_anc
                 steps = int(solver["steps"])
