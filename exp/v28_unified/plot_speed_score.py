@@ -138,8 +138,8 @@ def render_chart() -> tuple[Path, Path, dict]:
     ax_l.plot(xs, lse_norm, marker="D", lw=2.2, color="#0f766e",
               label="Neg-Log LSE Score: peaks in balanced zone (λ=0.45–0.85)")
     for x, y_lse, s_raw in zip(xs, lse_norm, lse_vals):
-        dy = -13 if x in (0.7,) else (10 if x == 0.0 else 7)
-        dx = 14 if x == 0.0 else 0
+        dy = -13 if x == 0.7 else (10 if x == 0.0 else 7)
+        dx = 0
         ax_l.annotate(f"{s_raw:+.2f}", (x, y_lse), xytext=(dx, dy), textcoords="offset points",
                       ha="center", fontsize=8, color="#0f766e", fontweight="bold")
     seed_pt = next(p for p in ext_pts if p["name"] == "Seedream 4.5")
@@ -151,7 +151,7 @@ def render_chart() -> tuple[Path, Path, dict]:
              ylabel="Normalized Score within Sweep [0, 1]",
              title="A. Balanced Tiers Under Linear vs Neg-Log LSE Score")
     ax_l.grid(alpha=0.22)
-    ax_l.legend(loc="lower left", bbox_to_anchor=(0.06, 0.01), frameon=True, facecolor="white", framealpha=0.94, fontsize=7.8)
+    ax_l.legend(loc="lower center", bbox_to_anchor=(0.52, 0.01), frameon=True, facecolor="white", framealpha=0.94, fontsize=7.6)
     ax_l.set_ylim(-0.10, 1.15)
 
     # ---- Right panel: Inference Speed (img/s, log) vs Neg-Log LSE Composite Score ----
@@ -167,8 +167,8 @@ def render_chart() -> tuple[Path, Path, dict]:
         "StyleShot": (8, -6, "left"),
         "StyleID": (8, -4, "left"),
         "StyTr2": (8, 5, "left"),
-        "Seedream 4.5": (10, 6, "left"),
-        "AesPA": (-8, -11, "right"),
+        "Seedream 4.5": (-12, -20, "right"),
+        "AesPA": (-12, 2, "right"),
         "SaMAM": (8, -10, "left"),
         "SaMST": (8, 4, "left"),
         "CUT": (8, -4, "left"),
@@ -199,14 +199,14 @@ def render_chart() -> tuple[Path, Path, dict]:
 
     w_offsets = {
         "PRISM-1 (λ=0.75)": (-10, 6, "right"),
-        "PRISM-1 (λ=1.0)": (-10, -3, "right"),
-        "PRISM-1 (λ=1.30)": (-10, -14, "right"),
+        "PRISM-1 (λ=1.0)": (-10, -2, "right"),
+        "PRISM-1 (λ=1.30)": (-10, -8, "right"),
         "PRISM-Pro (T4)": (-10, 8, "right"),
-        "PRISM-Flow (D6)": (0, 12, "center"),
-        "PRISM-Flow (D5)": (-10, -8, "right"),
+        "PRISM-Flow (D6)": (8, -3, "left"),
+        "PRISM-Flow (D5)": (8, -3, "left"),
         "PRISM-Flow (D2)": (8, 4, "left"),
         "PRISM-Flow (D1)": (8, -10, "left"),
-        "PRISM-Pro+ (A1)": (-8, 6, "right"),
+        "PRISM-Pro+ (A1)": (-10, 8, "right"),
     }
     for p in weave_pts:
         is_p1 = "PRISM-1 (λ=1.0)" in p["name"]
@@ -229,8 +229,8 @@ def render_chart() -> tuple[Path, Path, dict]:
              title="B. Inference Speed vs Neg-Log Balanced Score (Cross600)")
     ax_r.set_ylim(-6.0, 3.6)
     ax_r.set_xlim(0.022, 95.0)
-    ax_r.text(0.02, 0.02, "Note: WCT (−18.38 @ 3.4 img/s) & SaMST (−9.14 @ 1.25 img/s) below y-axis range.",
-              transform=ax_r.transAxes, fontsize=7.2, color="#64748b")
+    ax_r.text(0.02, 0.02, "Note: WCT (−18.4 @ 3.4 img/s), SaMST (−9.1 @ 1.3 img/s) < −6",
+              transform=ax_r.transAxes, fontsize=7.1, color="#64748b")
     ax_r.grid(alpha=0.22, which="both")
     ax_r.legend(loc="lower right", frameon=True, facecolor="white", framealpha=0.92, fontsize=8)
 
