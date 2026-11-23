@@ -71,7 +71,7 @@ def bench_3060_e2e(device: str = "cuda") -> dict:
             return round(float(np.percentile(ts, 50)), 2)
 
         def _enc():
-            _ = a0.encode((rgb_in * 2 - 1).float()).latent_dist.mean * 0.18215
+            _ = a0.encode((rgb_in * 2 - 1).half()).latent_dist.mean * 0.18215
 
         def _dino():
             x = torch.nn.functional.interpolate(rgb_in.mean(1, keepdim=True).repeat(1, 3, 1, 1), size=(224, 224), mode="bilinear")
