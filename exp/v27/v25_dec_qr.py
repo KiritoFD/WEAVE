@@ -164,7 +164,7 @@ def _pack_ref_tokens(q32_src_set: torch.Tensor, vref_set: torch.Tensor, r_ids: t
 
 def train_v25_decqr(arm: str, bundle: dict, c21: dict, *, updates: int = 1500,
                     micro: int = 60, device: str = "cuda", seed: int = 20267300,
-                    use_router: bool = True, ab_prob: float = 0.50,
+                    use_router: bool = True, ab_prob: float = 0.30,
                     freeze_mid: bool = True, smoke: bool = False) -> str:
     ckpt_dir = OUT / f"v25_{arm}"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
@@ -275,11 +275,10 @@ def train_v25_decqr(arm: str, bundle: dict, c21: dict, *, updates: int = 1500,
 
             is_ab = torch.rand(B, device=device) < ab_prob
             if is_ab.any():
-                # 免标签去风格伪源锚: 模糊削弱源笔触 + 异色度扰动再对齐目标参考图色度
+                # 免标签色度热启动 (不用 avg_pool3x3 模糊 — 实测 64x64 潜空间模糊会把 DINO-C 从 0.96 毁至 0.32!)
                 z_ref1 = z_all[r_ids[:, 0]].to(device, non_blocking=True).float()
-                z_blur = F.avg_pool2d(F.pad(z1, (1, 1, 1, 1), mode="replicate"), 3, 1)
-                z_anc = chroma_align_to_exemplar(z_blur, z_ref1, P_Y, P_C, alpha=0.55)
-                tau0 = 0.32 + 0.32 * torch.rand(B, device=device)  # U(0.32, 0.64) 匹配 cs_j 推理区间
+                z_anc = chroma_align_to_exemplar(z1, z_ref1, P_Y, P_C, alpha=0.65)
+                tau0 = 0.20 + 0.35 * torch.rand(B, device=device)  # U(0.20, 0.55) 匹配有效推理区间
                 z_init = (1.0 - tau0).view(B, 1, 1, 1) * eps + tau0.view(B, 1, 1, 1) * z_anc
                 tau_ab = tau0 + (1.0 - tau0) * torch.rand(B, device=device)
                 frac = ((tau_ab - tau0) / (1.0 - tau0).clamp_min(1e-4)).view(B, 1, 1, 1)
@@ -350,10 +349,10 @@ def eval_v25_decqr(arm: str, ckpt_p: str, bundle: dict, c21: dict,
     dec = load_s10_decoder(device)
 
     specs = [
-        (f"{arm}_SG5_d5w65", "sg5", dict(D5_SOLVER, tau_min=0.34, tau_hi=0.68, ws_fig=6.5), False),
-        (f"{arm}_SG5_d6h", "sg5", dict(D6H_SOLVER, ws_fig=4.4), False),
-        (f"{arm}_Holdout_d5w65", "ho", dict(D5_SOLVER, tau_min=0.34, tau_hi=0.68, ws_fig=6.5), False),
-        (f"{arm}_Holdout_wrong", "ho", dict(D5_SOLVER, tau_min=0.34, tau_hi=0.68, ws_fig=6.5), True),
+        (f"{arm}_SG5_t20_50", "sg5", dict(D5_SOLVER, tau_min=0.20, tau_hi=0.50, ws_fig=6.5), False),
+        (f"{arm}_SG5_t34_68", "sg5", dict(D5_SOLVER, tau_min=0.34, tau_hi=0.68, ws_fig=6.5), False),
+        (f"{arm}_Holdout_t20_50", "ho", dict(D5_SOLVER, tau_min=0.20, tau_hi=0.50, ws_fig=6.5), False),
+        (f"{arm}_Holdout_wrong", "ho", dict(D5_SOLVER, tau_min=0.20, tau_hi=0.50, ws_fig=6.5), True),
     ]
     out = {}
     gate = GateConfig(mode="original")
@@ -392,9 +391,8 @@ def eval_v25_decqr(arm: str, ckpt_p: str, bundle: dict, c21: dict,
                     k_tok = ho21["q32"][hi].float().flatten(2).transpose(1, 2).to(device)
                     v_tok = ho21["vref"][hi].float().to(device)
 
-                # 100% 免标签热启动: blur 弱化源笔触 + 色度矩对齐单张参考图
-                z_blur = F.avg_pool2d(F.pad(zs, (1, 1, 1, 1), mode="replicate"), 3, 1)
-                z_anc = chroma_align_to_exemplar(z_blur, z_r1, P_Y, P_C, alpha=0.55)
+                # 100% 免标签热启动: 直接在干净源图 latent 上做 P_C 色度矩对齐 (不用潜模糊!)
+                z_anc = chroma_align_to_exemplar(zs, z_r1, P_Y, P_C, alpha=0.55)
                 g_tau, g_layout, g_guid, _ = effective_gate_components(dsd_r, gate, mid_dsd)
                 tau_v = (solver["tau_min"] + (solver["tau_hi"] - solver["tau_min"]) * g_tau).clamp(0.0, 0.78)
                 lscale = (solver["lscale_abs"] + (1.0 - solver["lscale_abs"]) * g_layout).clamp(0.15, 1.0)
