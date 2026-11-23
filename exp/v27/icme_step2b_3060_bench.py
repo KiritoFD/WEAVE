@@ -19,6 +19,7 @@ import numpy as np
 import torch
 
 from exp.v18 import tasks_and_sources
+from exp.v18.structure import extract_whitened_dino_layout
 from exp.v19.fiber_duality import build_or_load_v19_foundation
 from exp.v20.run_v20 import get_test750_y16_and_d16
 from exp.v20.slf_flow import SLFUNet, coarse_y16_lcn
@@ -74,9 +75,7 @@ def bench_3060_e2e(device: str = "cuda") -> dict:
             _ = a0.encode((rgb_in * 2 - 1).half()).latent_dist.mean * 0.18215
 
         def _dino():
-            x = torch.nn.functional.interpolate(rgb_in.mean(1, keepdim=True).repeat(1, 3, 1, 1), size=(224, 224), mode="bilinear")
-            with autocast(device):
-                _ = dino.forward_features(x)
+            _ = extract_whitened_dino_layout(dino, rgb_in, batch=bs, device=device)
 
         def _flow_step_2b():
             with autocast(device):
