@@ -1,0 +1,15 @@
+{
+  "updated_utc": "2026-11-23T09:24:01.605222+00:00",
+  "audit": {
+    "m_parts": 32,
+    "smooth_2x2": false,
+    "mean_norm_entropy": 0.9927,
+    "min_norm_entropy": 0.9819,
+    "max_single_style_share": 0.2902,
+    "cluster_sizes_min_max": [
+      27553,
+      51025
+    ],
+    "pass_gate": true
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "task": "Fix Q32 wrong-ID + Stage 1A cheap anchor replacement on 6k Q32 flagship",
+  "updated_utc": "2026-11-23T09:12:29.146771+00:00",
+  "arms": {
+    "Q32_s6_csj_wrong_fixed": {
+      "csd_top1": 0.015,
+      "dino_s": 0.4823,
+      "dino_c": 0.594,
+      "style_affinity": 0.5834,
+      "clip_s": 0.6845,
+      "lpips": 0.5801,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.0,
+      "per_target": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.0667,
+        "Minimalism": 0.0083,
+        "Rococo": 0.0,
+        "Ukiyo_e": 0.0
+      }
+    },
+    "Q32_s6_e2full_wrong_fixed": {
+      "csd_top1": 0.0117,
+      "dino_s": 0.4794,
+      "dino_c": 0.5671,
+      "style_affinity": 0.5815,
+      "clip_s": 0.6835,
+      "lpips": 0.5948,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.0,
+      "per_target": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.05,
+        "Minimalism": 0.0083,
+        "Rococo": 0.0,
+        "Ukiyo_e": 0.0
+      }
+    },
+    "S1A_Ap1_e2full_d5": {
+      "csd_top1": 0.5617,
+      "dino_s": 0.5544,
+      "dino_c": 0.5464,
+      "style_affinity": 0.6472,
+      "clip_s": 0.74,
+      "lpips": 0.6089,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.9333,
+      "per_target": {
+        "Early_Renaissance": 0.2,
+        "Impressionism": 0.9417,
+        "Minimalism": 0.9833,
+        "Rococo": 0.6417,
+        "Ukiyo_e": 0.0417
+      }
+    },
+    "S1A_Ab4_e2full_d5": {
+      "csd_top1": 0.5067,
+      "dino_s": 0.5415,
+      "dino_c": 0.5937,
+      "style_affinity": 0.6367,
+      "clip_s": 0.7318,
+      "lpips": 0.5733,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.9333,
+      "per_target": {
+        "Early_Renaissance": 0.1333,
+        "Impressionism": 0.9083,
+        "Minimalism": 0.975,
+        "Rococo": 0.45,
+        "Ukiyo_e": 0.0667
+      }
+    },
+    "S1A_Achroma_e2full_d5": {
+      "csd_top1": 0.2483,
+      "dino_s": 0.4939,
+      "dino_c": 0.6851,
+      "style_affinity": 0.599,
+      "clip_s": 0.7041,
+      "lpips": 0.4255,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.3667,
+      "per_target": {
+        "Early_Renaissance": 0.0417,
+        "Impressionism": 0.6917,
+        "Minimalism": 0.4667,
+        "Rococo": 0.0333,
+        "Ukiyo_e": 0.0083
+      }
+    },
+    "S1A_Ap1_csj_d5": {
+      "csd_top1": 0.5783,
+      "dino_s": 0.5458,
+      "dino_c": 0.5777,
+      "style_affinity": 0.6396,
+      "clip_s": 0.7334,
+      "lpips": 0.593,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.8667,
+      "per_target": {
+        "Early_Renaissance": 0.25,
+        "Impressionism": 0.9417,
+        "Minimalism": 0.95,
+        "Rococo": 0.675,
+        "Ukiyo_e": 0.075
+      }
+    },
+    "S1A_Ab4_csj_d5": {
+      "csd_top1": 0.485,
+      "dino_s": 0.5282,
+      "dino_c": 0.6299,
+      "style_affinity": 0.6261,
+      "clip_s": 0.7241,
+      "lpips": 0.5538,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.6667,
+      "per_target": {
+        "Early_Renaissance": 0.1583,
+        "Impressionism": 0.875,
+        "Minimalism": 0.8667,
+        "Rococo": 0.4167,
+        "Ukiyo_e": 0.1083
+      }
+    },
+    "S1A_Achroma_csj_d5": {
+      "csd_top1": 0.2083,
+      "dino_s": 0.4779,
+      "dino_c": 0.7277,
+      "style_affinity": 0.5862,
+      "clip_s": 0.6945,
+      "lpips": 0.3958,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.1333,
+      "per_target": {
+        "Early_Renaissance": 0.0083,
+        "Impressionism": 0.6667,
+        "Minimalism": 0.325,
+        "Rococo": 0.0333,
+        "Ukiyo_e": 0.0083
+      }
+    },
+    "S1A_Ap1_csj_d6h": {
+      "csd_top1": 0.56,
+      "dino_s": 0.526,
+      "dino_c": 0.6305,
+      "style_affinity": 0.6245,
+      "clip_s": 0.7231,
+      "lpips": 0.5666,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.7,
+      "per_target": {
+        "Early_Renaissance": 0.2667,
+        "Impressionism": 0.9083,
+        "Minimalism": 0.9,
+        "Rococo": 0.6583,
+        "Ukiyo_e": 0.0667
+      }
+    }
+  }
+}

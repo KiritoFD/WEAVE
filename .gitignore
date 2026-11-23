@@ -44,6 +44,7 @@ runs/*
 !runs/v8_speed.json
 data/
 !docs/v26/4090/data/
+!docs/exp1123/data/
 datasets/
 results/
 exp/*
@@ -68,6 +69,7 @@ exp/*
 !exp/v25/
 !exp/v26/
 !exp/v27/
+!exp/v27_mainline/
 experiments/
 state/
 archives/
