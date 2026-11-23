@@ -25,6 +25,7 @@ import time
 from pathlib import Path
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 from exp.v18 import tasks_and_sources
