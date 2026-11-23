@@ -240,24 +240,24 @@ def plot_fig2_three_paradoxes():
     ax.set_title("(a) 260× Self-Paired Scaling Paradox", fontsize=10.6, weight="bold", color=INK, pad=10)
     ax.legend(frameon=False, fontsize=8.5, loc="upper left")
 
-    # (b) Pruned Decoder Regularization Paradox
+    # (b) Pruned Decoder Regularization Paradox (Closed-Set PRISM-Flow Latents, Step 1 Attribution)
     ax = axes[1]
-    models_b = ["Full SD-VAE Dec\n(49.5M, 1.0×)", f"{DEC_NAME}\n(10.7M, 3.15×)"]
-    top1_b = [34.50, 37.67]
-    lpips_b = [51.49, 50.34]
-    x = np.arange(2)
+    models_b = ["Full SD-VAE\n(Frozen, 49.5M)", "Full SD-VAE\n(WikiArt FT, 49.5M)", f"{DEC_NAME}\n(10.7M, 3.15×)"]
+    top1_b = [53.50, 55.83, 60.33]
+    lpips_b = [60.27, 66.61, 60.22]
+    x = np.arange(3)
     w = 0.34
-    b1 = ax.bar(x - w/2, top1_b, w, color=[GREY, CRIMSON], edgecolor=INK, lw=0.9, label="CSD Top-1 (%) ↑")
-    b2 = ax.bar(x + w/2, lpips_b, w, color=["#D0D7DE", TEAL], edgecolor=INK, lw=0.9, label="LPIPS ×100 ↓")
+    b1 = ax.bar(x - w/2, top1_b, w, color=[GREY, "#8FA2B2", CRIMSON], edgecolor=INK, lw=0.9, label="CSD Top-1 (%) ↑")
+    b2 = ax.bar(x + w/2, lpips_b, w, color=["#D0D7DE", "#B8C4CE", TEAL], edgecolor=INK, lw=0.9, label="LPIPS ×100 ↓")
     for bar, val in zip(b1, top1_b):
-        ax.text(bar.get_x() + bar.get_width()/2, val + 0.9, f"{val:.2f}%", ha="center", va="bottom", fontsize=9, weight="bold", color=INK)
+        ax.text(bar.get_x() + bar.get_width()/2, val + 0.9, f"{val:.2f}%", ha="center", va="bottom", fontsize=8.3, weight="bold", color=INK)
     for bar, val in zip(b2, lpips_b):
-        ax.text(bar.get_x() + bar.get_width()/2, val + 0.9, f"{val/100:.3f}", ha="center", va="bottom", fontsize=9, weight="bold", color=TEAL)
+        ax.text(bar.get_x() + bar.get_width()/2, val + 0.9, f"{val/100:.3f}", ha="center", va="bottom", fontsize=8.3, weight="bold", color=TEAL)
     ax.set_xticks(x)
-    ax.set_xticklabels(models_b, fontsize=9.3, weight="bold", color=INK)
-    ax.set_ylim(0, 68)
-    ax.set_title("(b) Spectral Bottleneck Decoder (+3.17pp, p<0.01)", fontsize=10.6, weight="bold", color=INK, pad=10)
-    ax.legend(frameon=False, fontsize=8.6, loc="upper left")
+    ax.set_xticklabels(models_b, fontsize=8.3, weight="bold", color=INK)
+    ax.set_ylim(0, 78)
+    ax.set_title("(b) Spectral Bottleneck Decoder (+4.49pp vs FT, p<0.05)", fontsize=10.3, weight="bold", color=INK, pad=10)
+    ax.legend(frameon=False, fontsize=8.4, loc="upper left")
 
     # (c) Counterfactual Causal Specificity Ladder
     ax = axes[2]
@@ -272,8 +272,8 @@ def plot_fig2_three_paradoxes():
         ax.text(bar.get_x() + bar.get_width()*0.40, val + 0.9, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.0, weight="bold", color=CRIMSON)
     for bar, val in zip(b_w, wrong_v):
         ax.text(bar.get_x() + bar.get_width()*0.62, val + 0.9, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.0, weight="bold", color=MUTED)
-    ax.annotate("+58.2pp Causal\nSpecificity!", xy=(3 - w_c/2 - 0.04, 56.0), xytext=(1.35, 48.0),
-                fontsize=8.6, weight="bold", color=CRIMSON, ha="center",
+    ax.annotate("+58.2pp Causal\nSpecificity!", xy=(3 - w_c/2 - 0.04, 56.0), xytext=(1.05, 53.0),
+                fontsize=8.4, weight="bold", color=CRIMSON, ha="center",
                 arrowprops=dict(arrowstyle="->", color=CRIMSON, lw=1.4))
     ax.set_xticks(xc)
     ax.set_xticklabels(arms_c, fontsize=8.6, weight="bold", color=INK)

@@ -33,31 +33,33 @@ ORANGE_RED = "#ff4500"
 ORANGE_DARK = "#9a3412"
 ORANGE_FILL = "#fed7aa"
 
-# 左面板 (DINO-C vs DINO-S): 5 个非支配前沿代表点 + PRISM-1 (共 6 个代表点)
+# 保留全量真实帕累托最优点 (先不砍优胜点: DINO-S=0.5789, Top1=76.83%, PatchSWD 64.33%, 6步JPk 59.0%@0.631, D6 55.2%@0.704, HC 0.772)
 OURS_PARETO_DS = [
-    ("T4Pg45_wc10",               "PRISM-Flow (Max-Style)", (-6, 14, "left"),    "d5_full_10s"),
-    ("V20.D2_core_slf_bal",       "PRISM-Flow (Balanced)",  (-6, -20, "right"),  "prism_flow_d2"),
-    ("HiC_JPk_csj65_t4",          "PRISM-Flow (Hi-C)",      (14, 10, "left"),    "d5_csj_10s"),
+    ("V20.D1_core_slf_hiS",       "PRISM-Flow (Max-Style)", (-6, 14, "left"),    "prism_flow_d2"),
+    ("V20.D2_core_slf_bal",       "PRISM-Flow (Bal-16s)",   (-10, -20, "right"), "prism_flow_d2"),
+    ("ICME_JPk_s6_csj",           "PRISM-Flow (6-Step)",    (14, 10, "left"),    "d6_csj_s6"),
+    ("V25_Tr_T1_d6hcsj",          "PRISM-Flow (Hi-C)",      (14, 10, "left"),    "d6_csj_b4"),
+    ("B_d6_t070",                 "PRISM-Flow (D6-τ0.7)",   (12, 10, "left"),    "d6_full_b4"),
     ("HC_R12_g100",               "PRISM-HC (γ=1.0)",       (14, 12, "left"),    "d6_csj_b4"),
     ("MechA_B4anc_A0_global_g55", "PRISM-HC (γ=0.55)",      (14, 6, "left"),     "prism_hc_r12"),
 ]
 
-# 右面板 (DINO-C vs CSD Top-1): 5 个非支配前沿代表点 + PRISM-1 (共 6 个代表点)
+# 右面板 (DINO-C vs CSD Top-1): 完整真实帕累托包络
 OURS_PARETO_T1 = [
-    ("T4Pg45_wc10",               "PRISM-Flow (Max-Style)", (12, 8, "left"),     "d5_full_10s"),
-    ("V20.A1_t4_patchswd",        "PRISM-Flow (Strong)",    (14, 8, "left"),     "d6_full_b4"),
-    ("B_d6_t070",                 "PRISM-Flow (Hi-C)",      (10, 16, "left"),    "d6_full_b4"),
-    ("M1_lin_g55",                "PRISM-Hybrid (γ=0.55)",  (16, 4, "left"),     "prism_hc_r12"),
+    ("T4Pg45_wc10",               "PRISM-Flow (76.8%)",     (12, 6, "left"),     "d5_full_10s"),
+    ("V20.A1_t4_patchswd",        "PRISM-Pro+ (64.3%)",     (14, 10, "left"),    "d6_full_b4"),
+    ("B_d6_t070",                 "PRISM-Flow (D6-τ0.7)",   (12, 12, "left"),    "d6_full_b4"),
+    ("M1_lin_g55",                "PRISM-Hybrid (γ=0.55)",  (14, 6, "left"),     "prism_hc_r12"),
     ("MechA_B4anc_A0_global_g55", "PRISM-HC (γ=0.55)",      (14, -4, "left"),    "prism_hc_r12"),
 ]
 
-# 第 6 个突出代表点: PRISM-1 (消费级 3060 最高吞吐 5.97 img/s)
+# 突出代表点: PRISM-1 (消费级 3060 最高吞吐 5.97 img/s)
 PRISM1_HIGHLIGHT = ("M0_prism1_l100", "PRISM-1 (5.97 img/s)", (-14, -22, "right"), (-24, -10, "right"), "prism1")
 
 DIFFUSION_BASELINES = {
     "StyleShot":    ("StyleShot\n(24.5 s/img)",            (8, 6, "left"),     (10, -10, "left"),  24480.0),
     "StyleID":      ("StyleID (5.0 s/img)",                (8, 10, "left"),    (10, -4, "left"),    5040.0),
-    "StyleGallery": ("StyleGallery\n(CVPR26, 30.4 s/img)", (14, 12, "left"),   (-16, 14, "right"), 30400.0),
+    "StyleGallery": ("StyleGallery\n(CVPR26, 30.4 s/img)", (14, 10, "left"),   (-16, -16, "right"), 30400.0),
 }
 
 CONVENTIONAL_BASELINES = {
@@ -92,7 +94,16 @@ def load_data():
                 "top1": float(r["target_top1"]) * 100.0,
                 "ms": float(r["ms_per_img"]) if r.get("ms_per_img") else None,
             })
-    return rows, {r["arm"]: r for r in rows}
+    by_arm = {r["arm"]: r for r in rows}
+    step2b_p = ROOT / "docs/v26/4090/data/icme_step2b_3060.json"
+    if step2b_p.exists():
+        d2b = json.load(open(step2b_p, encoding="utf-8"))
+        for k, v in d2b.get("arms", {}).items():
+            rec = {"arm": k, "group": "ICME_Step2b", "dc": float(v["dino_c"]),
+                   "ds": float(v["dino_s"]), "top1": float(v["csd_top1"]) * 100.0, "ms": None}
+            rows.append(rec)
+            by_arm[k] = rec
+    return rows, by_arm
 
 
 def load_3060_speeds() -> dict[str, float]:
@@ -110,6 +121,12 @@ def load_3060_speeds() -> dict[str, float]:
         ]
         if d2_speeds:
             spd["prism_flow_d2"] = max(d2_speeds)
+    step2b_p = ROOT / "docs/v26/4090/data/icme_step2b_3060.json"
+    if step2b_p.exists():
+        b16 = json.load(open(step2b_p, encoding="utf-8")).get("bench_3060", {}).get("b16", {})
+        if b16.get("e2e_s6_csj_with_t4anc_ms"):
+            spd["d6_csj_s6"] = 1000.0 / float(b16["e2e_s6_csj_with_t4anc_ms"])
+    spd.setdefault("d6_csj_s6", 1.85)
     spd.setdefault("prism_flow_d2", 1.47)
     return spd
 
@@ -231,16 +248,16 @@ def main():
         ax2.annotate(lbl, (r["dc"], r["top1"]), xytext=(off2[0], off2[1]), textcoords="offset points",
                      fontsize=7.5, color="#334155", ha=off2[2], zorder=9)
 
-    ax1.scatter([], [], marker="*", s=75, c="#2563eb", edgecolors="#1e3a8a", label="Diffusion-Heavy (5.0–30.4 s/img)")
-    ax1.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Conventional Lightweight (0.2–3.0 s/img)")
-    ax2.scatter([], [], marker="*", s=75, c="#2563eb", edgecolors="#1e3a8a", label="Diffusion-Heavy (5.0–30.4 s/img)")
-    ax2.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Conventional Lightweight (0.2–3.0 s/img)")
+    ax1.scatter([], [], marker="*", s=75, c="#2563eb", edgecolors="#1e3a8a", label="Arbitrary-Ref Diffusion (5.0–30.4 s/img)")
+    ax1.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Arbitrary-Ref Lightweight (0.2–3.0 s/img)")
+    ax2.scatter([], [], marker="*", s=75, c="#2563eb", edgecolors="#1e3a8a", label="Arbitrary-Ref Diffusion (5.0–30.4 s/img)")
+    ax2.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Arbitrary-Ref Lightweight (0.2–3.0 s/img)")
 
-    # 3) 单一橙红色全局 PRISM Pareto 线 + 6 个代表点
+    # 3) 单一橙红色全局 PRISM Pareto 线 + 收束代表点
     ds_pts = [(by_arm[a], lbl, off, spd.get(eng, 3.0)) for a, lbl, off, eng in OURS_PARETO_DS if a in by_arm]
     ax1.plot([p[0]["dc"] for p in ds_pts], [p[0]["ds"] for p in ds_pts],
              color=ORANGE_RED, linestyle="-", linewidth=2.9, alpha=0.94, zorder=8,
-             label="PRISM Global Pareto Frontier")
+             label="PRISM (5-Style Amortized Frontier)")
     ax1.fill_between([p[0]["dc"] for p in ds_pts], [p[0]["ds"] for p in ds_pts], 0.35,
                      color=ORANGE_FILL, alpha=0.14, zorder=1)
     for r, lbl, off, isp in ds_pts:
@@ -253,7 +270,7 @@ def main():
     t1_pts = [(by_arm[a], lbl, off, spd.get(eng, 3.0)) for a, lbl, off, eng in OURS_PARETO_T1 if a in by_arm]
     ax2.plot([p[0]["dc"] for p in t1_pts], [p[0]["top1"] for p in t1_pts],
              color=ORANGE_RED, linestyle="-", linewidth=2.9, alpha=0.94, zorder=8,
-             label="PRISM Global Pareto Frontier")
+             label="PRISM (5-Style Amortized Frontier)")
     ax2.fill_between([p[0]["dc"] for p in t1_pts], [p[0]["top1"] for p in t1_pts], 0.0,
                      color=ORANGE_FILL, alpha=0.13, zorder=1)
     for r, lbl, off, isp in t1_pts:
@@ -297,8 +314,8 @@ def main():
     ax2.legend(loc="upper right", frameon=True, facecolor="white", edgecolor="#cbd5e1", fontsize=8.0, framealpha=0.95)
 
     fig.suptitle(
-        "Content–Style–Compute Paradigm Confrontation (Cross600, RTX 3060) — PRISM Global Frontier vs. External Baselines",
-        fontsize=13.2, fontweight="bold", color="#0f172a", y=0.985,
+        "5-Style Amortized PRISM vs. Arbitrary-Ref Baselines (Cross600, RTX 3060) — StyleGallery 750-img Infer: 6.33h vs. PRISM Train+Infer: <0.25h",
+        fontsize=12.4, fontweight="bold", color="#0f172a", y=0.985,
     )
     plt.tight_layout(rect=[0, 0, 1, 0.945])
 
