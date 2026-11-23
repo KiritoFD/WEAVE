@@ -1,0 +1,39 @@
+{
+  "task": "ICME Step3 (RTX 3060): Q32 vs dino_16 closed-set single-variable ablation",
+  "updates": 1800,
+  "updated_utc": "2026-11-23T04:04:24.166965+00:00",
+  "arms": {
+    "DINO16_ctrl": {
+      "csd_top1": 0.5033,
+      "dino_s": 0.5494,
+      "dino_c": 0.5787,
+      "style_affinity": 0.6382,
+      "clip_s": 0.7269,
+      "lpips": 0.5783,
+      "same150_top1": 0.9667,
+      "per_target": {
+        "Early_Renaissance": 0.075,
+        "Impressionism": 0.9083,
+        "Minimalism": 0.9667,
+        "Rococo": 0.5417,
+        "Ukiyo_e": 0.025
+      }
+    },
+    "Q32_test": {
+      "csd_top1": 0.5117,
+      "dino_s": 0.5554,
+      "dino_c": 0.566,
+      "style_affinity": 0.6418,
+      "clip_s": 0.7282,
+      "lpips": 0.5901,
+      "same150_top1": 0.9667,
+      "per_target": {
+        "Early_Renaissance": 0.0583,
+        "Impressionism": 0.95,
+        "Minimalism": 0.9917,
+        "Rococo": 0.525,
+        "Ukiyo_e": 0.0333
+      }
+    }
+  }
+}

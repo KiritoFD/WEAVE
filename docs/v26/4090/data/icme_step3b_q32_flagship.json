@@ -1,0 +1,137 @@
+{
+  "task": "ICME Step3b: Q32 Flagship (6000 steps) operating points + D1_full_ft decoder check",
+  "updated_utc": "2026-11-23T05:45:33.395340+00:00",
+  "arms": {
+    "ICME_Q32_s6_csj_d5": {
+      "csd_top1": 0.57,
+      "dino_s": 0.5478,
+      "dino_c": 0.5919,
+      "style_affinity": 0.6392,
+      "clip_s": 0.7306,
+      "lpips": 0.5803,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.8,
+      "per_target": {
+        "Early_Renaissance": 0.2333,
+        "Impressionism": 0.9333,
+        "Minimalism": 0.9,
+        "Rococo": 0.5917,
+        "Ukiyo_e": 0.1917
+      }
+    },
+    "ICME_Q32_s6_csj_d6h": {
+      "csd_top1": 0.5583,
+      "dino_s": 0.5313,
+      "dino_c": 0.6361,
+      "style_affinity": 0.6265,
+      "clip_s": 0.7216,
+      "lpips": 0.5565,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.6667,
+      "per_target": {
+        "Early_Renaissance": 0.2167,
+        "Impressionism": 0.925,
+        "Minimalism": 0.85,
+        "Rococo": 0.5583,
+        "Ukiyo_e": 0.2417
+      }
+    },
+    "ICME_Q32_s6_e2full_d5": {
+      "csd_top1": 0.5583,
+      "dino_s": 0.5561,
+      "dino_c": 0.5628,
+      "style_affinity": 0.6467,
+      "clip_s": 0.7373,
+      "lpips": 0.595,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.9333,
+      "per_target": {
+        "Early_Renaissance": 0.1917,
+        "Impressionism": 0.95,
+        "Minimalism": 0.975,
+        "Rococo": 0.5583,
+        "Ukiyo_e": 0.1167
+      }
+    },
+    "ICME_Q32_s6_csj_wrong": {
+      "csd_top1": 0.43,
+      "dino_s": 0.5294,
+      "dino_c": 0.5982,
+      "style_affinity": 0.6246,
+      "clip_s": 0.7198,
+      "lpips": 0.577,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.4667,
+      "per_target": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.8667,
+        "Minimalism": 0.7417,
+        "Rococo": 0.5333,
+        "Ukiyo_e": 0.0083
+      }
+    }
+  },
+  "decoder_check": {
+    "S10_on_Q32": {
+      "csd_top1": 0.57,
+      "dino_s": 0.5478,
+      "dino_c": 0.5919,
+      "style_affinity": 0.6392,
+      "clip_s": 0.7306,
+      "lpips": 0.5803,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.8,
+      "per_target": {
+        "Early_Renaissance": 0.2333,
+        "Impressionism": 0.9333,
+        "Minimalism": 0.9,
+        "Rococo": 0.5917,
+        "Ukiyo_e": 0.1917
+      }
+    },
+    "D1_full_ft_on_Q32": {
+      "csd_top1": 0.585,
+      "dino_s": 0.483,
+      "dino_c": 0.5497,
+      "lpips": 0.6631,
+      "same150_top1": 0.9
+    },
+    "S10_minus_D1_ci": {
+      "target_top1": {
+        "mean_diff": -0.01515,
+        "ci95": [
+          -0.055,
+          0.02333
+        ]
+      },
+      "target_margin": {
+        "mean_diff": 0.01576,
+        "ci95": [
+          0.00547,
+          0.02553
+        ]
+      },
+      "lpips": {
+        "mean_diff": -0.08288,
+        "ci95": [
+          -0.0935,
+          -0.07178
+        ]
+      },
+      "dino_s": {
+        "mean_diff": 0.06472,
+        "ci95": [
+          0.05948,
+          0.06962
+        ]
+      },
+      "dino_c": {
+        "mean_diff": 0.04223,
+        "ci95": [
+          0.0339,
+          0.05027
+        ]
+      }
+    }
+  }
+}

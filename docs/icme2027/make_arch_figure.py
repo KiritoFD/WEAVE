@@ -848,17 +848,17 @@ def build_architecture() -> None:
     framed_image(ax, zca_src_img, 4.05, m_y, m_s, m_s, ec="#1E3A8A", lw=1.1, interp="nearest", zorder=7)
     card(ax, 4.89, m_y + 0.50, 0.34, 0.17, fc="#DBEAFE", ec="#3B82F6", lw=0.7, rad=0.04, zorder=8)
     ax.text(5.06, m_y + 0.585, r"$Q, K$", ha="center", va="center", fontsize=6.5, weight="bold", color="#1E40AF", zorder=9)
-    ax.text(4.50, 3.37, r"Polar-ZCA $16{\times}16\;\tilde{P}_{16}^{\perp}$", ha="center", va="center", fontsize=7.0, weight="bold", color="#1E3A8A", zorder=6)
+    ax.text(4.50, 3.37, r"Stiefel Polar $16{\times}16\;Q_{32}$", ha="center", va="center", fontsize=7.0, weight="bold", color="#1E3A8A", zorder=6)
 
     # Leakage Audit Badge
     card(ax, 1.84, 3.03, 3.38, 0.22, fc="#DBEAFE", ec="#2563EB", lw=0.9, rad=0.05, zorder=5)
     ax.text(
         3.53,
         3.14,
-        r"1st & 2nd-Order Style Leak: $18.3\%$ ($\sim\!20\%$ Chance) $\cdot$ $0.994$ Layout",
+        r"Linear / 2nd-Order Gram Leak: $18.3\% / 20.0\%$ (Chance) $\cdot$ $0.994$ Layout",
         ha="center",
         va="center",
-        fontsize=7.05,
+        fontsize=6.55,
         weight="bold",
         color="#1E3A8A",
         zorder=6,
@@ -1087,8 +1087,8 @@ def build_architecture() -> None:
 
     card(ax, 7.82, 2.05, 1.30, 0.65, fc="#FFFFFF", ec="#818CF8", lw=0.85, rad=0.05, zorder=5)
     ax.text(8.47, 2.54, r"$Q\!=\!\Pi_\perp(x_s),\;K\!=\!\Pi_\perp(x_{\mathrm{ref}})$", ha="center", va="center", fontsize=6.6, color="#1E293B", zorder=6)
-    ax.text(8.47, 2.34, r"$V\!=\!\mathrm{Style}\;\oplus\;(\tilde{P}_{16}^{\perp}\!\otimes e)$", ha="center", va="center", fontsize=6.65, color="#312E81", weight="bold", zorder=6)
-    ax.text(8.47, 2.15, r"$\to (\Gamma_{64}, B_{64})$ spatial mod.", ha="center", va="center", fontsize=6.45, color="#7C2D12", zorder=6)
+    ax.text(8.47, 2.34, r"$V\!=\!\mathrm{Style}\;\oplus\;(Q_{32}\!\otimes e)$", ha="center", va="center", fontsize=6.65, color="#312E81", weight="bold", zorder=6)
+    ax.text(8.47, 2.15, r"$\to (\Gamma_{64}, B_{64})$ norm mod.", ha="center", va="center", fontsize=6.45, color="#7C2D12", zorder=6)
 
     card(ax, 7.82, 1.75, 1.30, 0.23, fc="#DCFCE7", ec="#16A34A", lw=0.85, rad=0.05, zorder=5)
     ax.text(8.47, 1.865, r"No $64^2$ Source-Edge Lock!", ha="center", va="center", fontsize=6.7, weight="bold", color="#166534", zorder=6)
@@ -1182,10 +1182,10 @@ def build_architecture() -> None:
         8.21,
         1.06,
         r"1-Step (PRISM-1): $1.50\mathrm{M}\cdot 58.5\,\mathrm{ms}$ cached ($5.97\,\mathrm{img/s}$ E2E)"
-        r"  |  Bottleneck Flow: $541\,\mathrm{ms}$ ($0.567$ DINO-S)",
+        r"  |  $Q_{32}$ Flow: $173\,\mathrm{ms}$ (6s) / $541\,\mathrm{ms}$ (16s)",
         ha="center",
         va="center",
-        fontsize=6.55,
+        fontsize=6.4,
         weight="bold",
         color="#713F12",
         zorder=5,
