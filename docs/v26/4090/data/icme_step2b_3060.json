@@ -1,0 +1,74 @@
+{
+  "task": "ICME Step 2b (RTX 3060): host consolidation + real 3060 timing",
+  "updated_utc": "2026-11-23T03:46:09.111636+00:00",
+  "bench_3060": {
+    "b1": {
+      "enc_ms": 78.79,
+      "dino_ms": 246.26,
+      "dec_s10_ms": 51.51,
+      "step_2b_ms": 24.29,
+      "step_4b_ms": 22.57,
+      "flow_s6_csj_ms": 291.48,
+      "flow_s6_e2full_ms": 284.6,
+      "flow_s6_full_ms": 270.84,
+      "flow_s16_full_ms": 722.24,
+      "cached_s6_csj_ms": 342.99,
+      "cached_s6_e2full_ms": 336.11,
+      "e2e_s6_csj_ms": 668.04,
+      "e2e_s6_csj_with_t4anc_ms": 832.87
+    },
+    "b16": {
+      "enc_ms": 71.43,
+      "dino_ms": 57.94,
+      "dec_s10_ms": 74.24,
+      "step_2b_ms": 8.21,
+      "step_4b_ms": 16.25,
+      "flow_s6_csj_ms": 98.52,
+      "flow_s6_e2full_ms": 130.68,
+      "flow_s6_full_ms": 195.0,
+      "flow_s16_full_ms": 520.0,
+      "cached_s6_csj_ms": 172.76,
+      "cached_s6_e2full_ms": 204.92,
+      "e2e_s6_csj_ms": 302.13,
+      "e2e_s6_csj_with_t4anc_ms": 539.7
+    }
+  },
+  "arms": {
+    "ICME_D2_d5_s6_csj": {
+      "csd_top1": 0.555,
+      "dino_s": 0.5236,
+      "dino_c": 0.6519,
+      "style_affinity": 0.6223,
+      "clip_s": 0.721,
+      "lpips": 0.5489,
+      "imp_to_min_top1": 0.4
+    },
+    "ICME_D2_d5_s6_e2full": {
+      "csd_top1": 0.58,
+      "dino_s": 0.5278,
+      "dino_c": 0.6283,
+      "style_affinity": 0.628,
+      "clip_s": 0.7282,
+      "lpips": 0.5563,
+      "imp_to_min_top1": 0.8
+    },
+    "ICME_JPk_s6_csj": {
+      "csd_top1": 0.59,
+      "dino_s": 0.5332,
+      "dino_c": 0.6305,
+      "style_affinity": 0.6303,
+      "clip_s": 0.7273,
+      "lpips": 0.5647,
+      "imp_to_min_top1": 0.7
+    },
+    "ICME_TrT1_s6_csj": {
+      "csd_top1": 0.585,
+      "dino_s": 0.5321,
+      "dino_c": 0.6284,
+      "style_affinity": 0.6298,
+      "clip_s": 0.7274,
+      "lpips": 0.5597,
+      "imp_to_min_top1": 0.8
+    }
+  }
+}

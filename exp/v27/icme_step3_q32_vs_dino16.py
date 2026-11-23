@@ -68,14 +68,8 @@ def train_closedset_arm(arm: str, use_q32: bool, bundle: dict, c21: dict, bank: 
     sid_all = tr["sid"].long()
     feat_all = c21["train"]["q32"] if use_q32 else tr["dino_16"]
     y16_all = coarse_y16_lcn(tr["y_64"].float()).half()
-    u_ex_all = bank["sample_sub_u"]  # (4400, 128)
-    from exp.v19.fiber_duality import StyleFiberEncoder
-    fnd = bundle["fnd"]
-    enc = StyleFiberEncoder(in_dim=fnd["tr_fib"].shape[1], dim=128).to(device).eval()
-    enc.load_state_dict(fnd["fiber_state"])
-    with torch.no_grad():
-        u_exact = enc.encode(fnd["tr_fib"].to(device).float()).cpu().half()
-    del enc
+    u_ex_all = bank["u_exact_all"]  # (4400, 128)
+    u_exact = u_ex_all
 
     all_cls = [(sid_all == s).nonzero(as_tuple=True)[0] for s in range(5)]
     core_cls = [ci.long() for ci in bank["core_idx_per_style"]]
@@ -109,8 +103,7 @@ def train_closedset_arm(arm: str, use_q32: bool, bundle: dict, c21: dict, bank: 
             sid = sid_all[idx].to(device, non_blocking=True)
             f16 = feat_all[idx].to(device, non_blocking=True).float()
             y16 = y16_all[idx].to(device, non_blocking=True).float()
-            uv = torch.where(torch.rand(B, 1, device=device) < 0.75,
-                             u_exact[idx].to(device).float(), u_ex_all[idx].to(device).float())
+            uv = u_exact[idx].to(device, non_blocking=True).float()
 
             f16_aug = f16 + (0.06 if use_q32 else 0.08) * torch.randn_like(f16)
             f16_aug = f16_aug - f16_aug.mean(dim=(2, 3), keepdim=True)
