@@ -1,4 +1,4 @@
-"""Plot Inference Speed vs Negative-Log DINO-C/DINO-S Composite Score."""
+"""Plot Inference Speed vs Composite DINO-C/DINO-S Scores (Neg-Log LSE zoom-in + Power Mean M_-4)."""
 from __future__ import annotations
 
 import csv
@@ -10,7 +10,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-from src.eval.pareto import composite_dino_lse, frontier_indices, is_public_literature
+from src.eval.pareto import (
+    composite_dino_lse,
+    composite_dino_power_mean,
+    frontier_indices,
+    is_public_literature,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 LEDGER = ROOT / "docs/performance/metrics.csv"
@@ -32,7 +37,7 @@ EXT_LATENCY_MS = {
 }
 
 
-def load_points() -> tuple[list[dict], list[dict], list[dict]]:
+def load_points(score_fn) -> tuple[list[dict], list[dict], list[dict]]:
     with LEDGER.open(encoding="utf-8-sig", newline="") as f:
         rows = list(csv.DictReader(f))
     by_arm = {
@@ -57,7 +62,7 @@ def load_points() -> tuple[list[dict], list[dict], list[dict]]:
             "ms": ms_val,
             "img_s": 1000.0 / ms_val,
             "linear": dc + ds,
-            "score": composite_dino_lse(dc, ds),
+            "score": score_fn(dc, ds),
             "is_public": is_public_literature(name),
         })
 
@@ -87,13 +92,13 @@ def load_points() -> tuple[list[dict], list[dict], list[dict]]:
             "ms": ms_val,
             "img_s": 1000.0 / ms_val,
             "linear": dc + ds,
-            "score": composite_dino_lse(dc, ds),
+            "score": score_fn(dc, ds),
         })
 
     unified_curve = []
     if UNIFIED_S4000.exists():
         arms = json.loads(UNIFIED_S4000.read_text(encoding="utf-8"))["arms"]
-        for k, a in arms.items():
+        for _, a in arms.items():
             if a.get("wrong"):
                 continue
             dc, ds = float(a["dino_c"]), float(a["dino_s"])
@@ -103,15 +108,27 @@ def load_points() -> tuple[list[dict], list[dict], list[dict]]:
                 "dc": dc,
                 "ds": ds,
                 "linear": dc + ds,
-                "score": composite_dino_lse(dc, ds),
+                "score": score_fn(dc, ds),
             })
         unified_curve.sort(key=lambda x: x["strength"])
 
     return ext_pts, weave_pts, unified_curve
 
 
-def render_chart() -> tuple[Path, Path, dict]:
-    ext_pts, weave_pts, unified_curve = load_points()
+def render_pair(
+    *,
+    stem: str,
+    score_fn,
+    score_name: str,
+    suptitle: str,
+    y_label: str,
+    y_lim: tuple[float, float],
+    exclude_ext: set[str],
+    footnote: str,
+    ext_offsets: dict,
+    w_offsets: dict,
+) -> tuple[Path, Path, dict]:
+    ext_pts, weave_pts, unified_curve = load_points(score_fn)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     plt.rcParams.update({
@@ -121,94 +138,71 @@ def render_chart() -> tuple[Path, Path, dict]:
         "axes.spines.right": False,
         "svg.fonttype": "none",
     })
-    fig, (ax_l, ax_r) = plt.subplots(1, 2, figsize=(14.4, 5.8), dpi=220, layout="constrained")
+    fig, (ax_l, ax_r) = plt.subplots(1, 2, figsize=(14.6, 5.8), dpi=220, layout="constrained")
     fig.patch.set_facecolor("white")
 
-    # ---- Left panel: Why Linear penalizes balanced tiers vs Neg-Log LSE recovers them ----
+    # ---- Left panel: Linear vs Composite across Unified lambda tiers ----
     xs = [u["strength"] for u in unified_curve]
     lin_vals = [u["linear"] for u in unified_curve]
-    lse_vals = [u["score"] for u in unified_curve]
-    lin_min, lin_max = min(lin_vals), max(lin_vals)
-    lse_min, lse_max = min(lse_vals), max(lse_vals)
-    lin_norm = [(v - lin_min) / max(1e-6, lin_max - lin_min) for v in lin_vals]
-    lse_norm = [(v - lse_min) / max(1e-6, lse_max - lse_min) for v in lse_vals]
+    sc_vals = [u["score"] for u in unified_curve]
+    lin_norm = [(v - min(lin_vals)) / max(1e-6, max(lin_vals) - min(lin_vals)) for v in lin_vals]
+    sc_norm = [(v - min(sc_vals)) / max(1e-6, max(sc_vals) - min(sc_vals)) for v in sc_vals]
 
     ax_l.plot(xs, lin_norm, marker="o", ls="--", lw=1.7, color="#64748b",
               label="Naive Linear (DINO-C + DINO-S): peaks at λ=0 (no edit!)")
-    ax_l.plot(xs, lse_norm, marker="D", lw=2.2, color="#0f766e",
-              label="Neg-Log LSE Score: peaks in balanced zone (λ=0.45–0.85)")
-    for x, y_lse, s_raw in zip(xs, lse_norm, lse_vals):
+    ax_l.plot(xs, sc_norm, marker="D", lw=2.2, color="#0f766e",
+              label=f"{score_name}: peaks in balanced working zone")
+    for x, y_sc, s_raw in zip(xs, sc_norm, sc_vals):
         dy = -13 if x == 0.7 else (10 if x == 0.0 else 7)
-        dx = 0
-        ax_l.annotate(f"{s_raw:.2f}", (x, y_lse), xytext=(dx, dy), textcoords="offset points",
-                      ha="center", fontsize=8, color="#0f766e", fontweight="bold")
+        ax_l.annotate(f"{s_raw:.3f}" if abs(s_raw) < 1.5 else f"{s_raw:.2f}",
+                      (x, y_sc), xytext=(0, dy), textcoords="offset points",
+                      ha="center", fontsize=7.8, color="#0f766e", fontweight="bold")
     seed_pt = next(p for p in ext_pts if p["name"] == "Seedream 4.5")
-    seed_lse_norm = (seed_pt["score"] - lse_min) / max(1e-6, lse_max - lse_min)
-    ax_l.axhline(seed_lse_norm, color="#d97706", ls=":", lw=1.4,
-                 label=f"Seedream 4.5 S_LSE ({seed_pt['score']:.2f})")
+    seed_norm = (seed_pt["score"] - min(sc_vals)) / max(1e-6, max(sc_vals) - min(sc_vals))
+    ax_l.axhline(seed_norm, color="#d97706", ls=":", lw=1.4,
+                 label=f"Seedream 4.5 {score_name} ({seed_pt['score']:.3f})")
     ax_l.axvspan(0.40, 1.02, color="#ccfbf1", alpha=0.35, zorder=0, label="Balanced working zone")
     ax_l.set(xlabel="Editing Strength λ (PRISM-1-Unified ema_s4000)",
              ylabel="Normalized Score within Sweep [0, 1]",
-             title="A. Balanced Tiers Under Linear vs Neg-Log LSE Score")
+             title=f"A. Balanced Tiers Under Linear vs {score_name}")
     ax_l.grid(alpha=0.22)
     ax_l.legend(loc="lower center", bbox_to_anchor=(0.52, 0.01), frameon=True, facecolor="white", framealpha=0.94, fontsize=7.6)
     ax_l.set_ylim(-0.18, 1.15)
 
-    # ---- Right panel: Inference Speed (img/s, log) vs Neg-Log LSE Composite Score ----
-    pub = [p for p in ext_pts if p["is_public"]]
+    # ---- Right panel: Zoomed Inference Speed vs Composite Score ----
+    kept_ext = [p for p in ext_pts if p["name"] not in exclude_ext and y_lim[0] <= p["score"] <= y_lim[1]]
+    pub = [p for p in kept_ext if p["is_public"]]
     pub_xy = [(p["img_s"], p["score"]) for p in pub]
     f_idx = frontier_indices(pub_xy)
     if f_idx:
         ax_r.plot(*zip(*(pub_xy[i] for i in f_idx)), color="#475569", ls="--", lw=1.3,
                   label="External Public Literature Pareto", zorder=2)
 
-    ext_offsets = {
-        "StyleGallery": (8, 5, "left"),
-        "StyleShot": (8, 4, "left"),
-        "StyleID": (8, 4, "left"),
-        "StyTr2": (-8, 8, "right"),
-        "Seedream 4.5": (-10, -14, "right"),
-        "AesPA": (8, 8, "left"),
-        "SaMAM": (8, -4, "left"),
-        "CUT": (-8, -11, "right"),
-        "Hist2Style": (-8, -12, "right"),
-    }
-    for p in ext_pts:
-        if p["score"] < 3.2:
-            continue
+    for p in kept_ext:
         is_seed = p["name"] == "Seedream 4.5"
         if is_seed:
             ax_r.scatter([p["img_s"]], [p["score"]], marker="*", s=260, c="#f59e0b",
                          edgecolors="#92400e", linewidths=1.0, zorder=8,
                          label="Seedream 4.5 (Commercial, 2.0 s/img)")
         else:
-            ax_r.scatter([p["img_s"]], [p["score"]], marker="o", s=52, c="#94a3b8",
+            ax_r.scatter([p["img_s"]], [p["score"]], marker="o", s=54, c="#94a3b8",
                          edgecolors="#334155", linewidths=0.8, zorder=4)
         dx, dy, ha = ext_offsets.get(p["name"], (6, 4, "left"))
-        ax_r.annotate(f"{p['name']} ({p['score']:.2f})", (p["img_s"], p["score"]),
+        val_txt = f"{p['score']:.3f}" if abs(p["score"]) < 1.5 else f"{p['score']:.2f}"
+        ax_r.annotate(f"{p['name']} ({val_txt})", (p["img_s"], p["score"]),
                       xytext=(dx, dy), textcoords="offset points", ha=ha,
-                      fontsize=7.6 if not is_seed else 8.4,
+                      fontsize=7.8 if not is_seed else 8.5,
                       fontweight="bold" if is_seed else "normal",
                       color="#92400e" if is_seed else "#334155", zorder=9)
 
-    w_xy = [(p["img_s"], p["score"]) for p in weave_pts]
+    kept_w = [p for p in weave_pts if p["score"] >= y_lim[0]]
+    w_xy = [(p["img_s"], p["score"]) for p in kept_w]
     w_front = frontier_indices(w_xy)
     if w_front:
         ax_r.plot(*zip(*(w_xy[i] for i in w_front)), color="#dc2626", lw=1.9,
                   label="WEAVE / PRISM Measured 4090 Frontier", zorder=6)
 
-    w_offsets = {
-        "PRISM-1 (λ=0.75)": (-10, 9, "right"),
-        "PRISM-1 (λ=1.0)": (-10, -3, "right"),
-        "PRISM-1 (λ=1.30)": (-10, -16, "right"),
-        "PRISM-Pro (T4)": (-10, 9, "right"),
-        "PRISM-Flow (D6)": (0, 11, "center"),
-        "PRISM-Flow (D5)": (-8, -13, "right"),
-        "PRISM-Flow (D2)": (8, 4, "left"),
-        "PRISM-Flow (D1)": (8, -4, "left"),
-        "PRISM-Pro+ (A1)": (0, -14, "center"),
-    }
-    for p in weave_pts:
+    for p in kept_w:
         is_p1 = "PRISM-1 (λ=1.0)" in p["name"]
         ax_r.scatter([p["img_s"]], [p["score"]],
                      marker="D" if is_p1 else "s",
@@ -219,28 +213,24 @@ def render_chart() -> tuple[Path, Path, dict]:
             dx, dy, ha = w_offsets[p["name"]]
             ax_r.annotate(f"{p['name']} ({p['img_s']:.1f} img/s)", (p["img_s"], p["score"]),
                           xytext=(dx, dy), textcoords="offset points", ha=ha,
-                          fontsize=7.4, fontweight="bold" if is_p1 else "normal",
+                          fontsize=7.6, fontweight="bold" if is_p1 else "normal",
                           color="#991b1b" if is_p1 else "#9a3412", zorder=9)
 
     ax_r.set_xscale("log")
     ax_r.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:g}"))
     ax_r.set(xlabel="Inference Throughput (img/s ↑, log scale; 4090 measured / API)",
-             ylabel="Neg-Log LSE Score −log(e^−10C + e^−15S) ↑",
-             title="B. Inference Speed vs Neg-Log Balanced Score (Cross600)")
-    ax_r.set_ylim(3.2, 6.72)
+             ylabel=y_label,
+             title=f"B. Inference Speed vs {score_name} (Cross600)")
+    ax_r.set_ylim(*y_lim)
     ax_r.set_xlim(0.022, 95.0)
-    ax_r.text(0.02, 0.02, "Off-scale (< 3.2): SaMST (1.55 @ 1.3 img/s), WCT (0.11 @ 3.4 img/s)",
-              transform=ax_r.transAxes, fontsize=7.2, color="#64748b")
+    if footnote:
+        ax_r.text(0.02, 0.015, footnote, transform=ax_r.transAxes, fontsize=7.0, color="#64748b")
     ax_r.grid(alpha=0.22, which="both")
     ax_r.legend(loc="lower right", frameon=True, facecolor="white", framealpha=0.92, fontsize=8)
 
-    fig.suptitle(
-        r"S_LSE(C, S) = −log(exp(−10C) + exp(−15S))  ·  Balanced Quality × Speed",
-        fontsize=11.5, fontweight="bold",
-    )
-
-    png_p = OUT_DIR / "speed_composite_score.png"
-    svg_p = OUT_DIR / "speed_composite_score.svg"
+    fig.suptitle(suptitle, fontsize=11.5, fontweight="bold")
+    png_p = OUT_DIR / f"{stem}.png"
+    svg_p = OUT_DIR / f"{stem}.svg"
     fig.savefig(png_p, dpi=220, facecolor="white")
     fig.savefig(svg_p, facecolor="white")
     lines = svg_p.read_text(encoding="utf-8").splitlines()
@@ -255,12 +245,81 @@ def render_chart() -> tuple[Path, Path, dict]:
     return png_p, svg_p, summary
 
 
+def render_all() -> None:
+    # 1. Zoomed Neg-Log LSE (top cluster separated, bottom outliers removed from plot)
+    p1, s1, sum1 = render_pair(
+        stem="speed_composite_score",
+        score_fn=composite_dino_lse,
+        score_name="Neg-Log LSE",
+        suptitle=r"S_LSE(C, S) = −log(exp(−10C) + exp(−15S))  ·  Zoomed Quality × Speed",
+        y_label="Neg-Log LSE Score −log(e^−10C + e^−15S) ↑",
+        y_lim=(5.12, 6.50),
+        exclude_ext={"StyleID", "StyleShot", "SaMST", "WCT"},
+        footnote="Below y-min: StyleID (3.86), StyleShot (3.56), SaMST (1.55), WCT (0.11)",
+        ext_offsets={
+            "StyleGallery": (8, 6, "left"),
+            "StyTr2": (-8, 8, "right"),
+            "Seedream 4.5": (-10, -14, "right"),
+            "AesPA": (8, 8, "left"),
+            "SaMAM": (8, -6, "left"),
+            "CUT": (-8, -11, "right"),
+            "Hist2Style": (-8, -12, "right"),
+        },
+        w_offsets={
+            "PRISM-1 (λ=0.75)": (-10, 9, "right"),
+            "PRISM-1 (λ=1.0)": (-10, -3, "right"),
+            "PRISM-1 (λ=1.30)": (-10, -16, "right"),
+            "PRISM-Pro (T4)": (-10, 9, "right"),
+            "PRISM-Flow (D6)": (0, 11, "center"),
+            "PRISM-Flow (D5)": (-10, -10, "right"),
+            "PRISM-Flow (D3)": (8, -4, "left"),
+            "PRISM-Flow (D2)": (8, 4, "left"),
+            "PRISM-Pro+ (A1)": (-10, -10, "right"),
+        },
+    )
+
+    # 2. Parameter-free non-log Holder Generalized Mean M_-4(C, S)
+    p2, s2, sum2 = render_pair(
+        stem="speed_power_mean",
+        score_fn=composite_dino_power_mean,
+        score_name="Power Mean M_-4",
+        suptitle=r"M_−4(C, S) = ((C^−4 + S^−4) / 2)^(−1/4)  ·  Parameter-Free Non-Log Quality × Speed",
+        y_label="Generalized Power Mean M_−4(DINO-C, DINO-S) ↑",
+        y_lim=(0.395, 0.598),
+        exclude_ext={"SaMST", "WCT"},
+        footnote="No params/logs. Off-scale: SaMST (0.190), WCT (0.028)",
+        ext_offsets={
+            "StyleGallery": (8, 5, "left"),
+            "StyTr2": (-8, 8, "right"),
+            "AesPA": (-8, 8, "right"),
+            "Seedream 4.5": (-10, -12, "right"),
+            "SaMAM": (8, 5, "left"),
+            "CUT": (-8, -11, "right"),
+            "Hist2Style": (-8, -12, "right"),
+            "StyleID": (8, 4, "left"),
+            "StyleShot": (8, 4, "left"),
+        },
+        w_offsets={
+            "PRISM-Flow (D6)": (8, 4, "left"),
+            "PRISM-Flow (D2)": (8, -4, "left"),
+            "PRISM-Flow (D1)": (8, -10, "left"),
+            "PRISM-Pro (T4)": (-10, 7, "right"),
+            "PRISM-Pro+ (A1)": (0, -14, "center"),
+            "PRISM-1 (λ=1.30)": (-10, 10, "right"),
+            "PRISM-1 (λ=1.0)": (-10, -2, "right"),
+            "PRISM-1 (λ=0.75)": (-10, -14, "right"),
+        },
+    )
+
+    print(f"Saved Zoomed LSE -> {p1} & {s1}")
+    print(f"Saved Power Mean M_-4 -> {p2} & {s2}")
+    print("\n--- External ranking (M_-4 non-log, parameter-free) ---")
+    for i, p in enumerate(sum2["ext"], 1):
+        print(f"{i:2d}. {p['name']:15s} img/s={p['img_s']:6.2f} dc={p['dc']:.4f} ds={p['ds']:.4f} M_-4={p['score']:.4f} S_LSE={composite_dino_lse(p['dc'], p['ds']):.3f}")
+    print("\n--- Unified sweep M_-4 ---")
+    for u in sum2["unified"]:
+        print(f"  λ={u['strength']:<4g} dc={u['dc']:.4f} ds={u['ds']:.4f} M_-4={u['score']:.4f}")
+
+
 if __name__ == "__main__":
-    png_p, svg_p, summary = render_chart()
-    print(f"Saved -> {png_p} and {svg_p}")
-    print("\n--- External ranking (Neg-Log LSE) ---")
-    for i, p in enumerate(summary["ext"], 1):
-        print(f"{i:2d}. {p['name']:15s} img/s={p['img_s']:6.2f} dc={p['dc']:.4f} ds={p['ds']:.4f} lin={p['linear']:.4f} S_LSE={p['score']:+.3f}")
-    print("\n--- Top WEAVE measured ---")
-    for p in summary["weave"][:6]:
-        print(f"    {p['name']:20s} img/s={p['img_s']:6.2f} dc={p['dc']:.4f} ds={p['ds']:.4f} S_LSE={p['score']:+.3f}")
+    render_all()

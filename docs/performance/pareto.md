@@ -34,10 +34,9 @@ python -m exp.v28_unified.plot_speed_score
 
 ## 均衡档位综合得分与推理速度图
 
-线性组合（如 `DINO-C + DINO-S`）会在无编辑端点（`λ=0`, `C=0.959, S=0.3735`）或内容坍缩端点达到极值，压低均衡工作点。引入无截断门槛、仅按两指标典型尺度（`~0.70` vs `~0.47`，即 `2:3`）加权的负对数平滑最小值（`composite_dino_lse` in [pareto.py](../../src/eval/pareto.py)）：
+线性组合（如 `DINO-C + DINO-S`）会在无编辑端点（`λ=0`, `C=0.959, S=0.3735`）或内容坍缩端点达到极值，压低均衡工作点。提供两类简洁、无门槛的综合指标（定义于 [pareto.py](../../src/eval/pareto.py)）：
 
-$$S_{\mathrm{LSE}}(C, S) = -\log\!\big(e^{-10 C} + e^{-15 S}\big)$$
-
-该凹聚合函数惩罚任一维度塌缩，使 `PRISM-1-Unified` 均衡档位（`λ=0.45–1.00`, `6.18–6.31`）严格高于无编辑端（`λ=0: 5.58`）和过拟合端（`λ=1.15: 5.69`），同时商业参考 `Seedream 4.5`（`5.63`, `0.50 img/s`）稳居高分区且显著领先极端的 `StyleID (3.86)` 与 `StyleShot (3.56)`。对应速度图生成至 [速度-综合得分图](figures/speed_composite_score.png)。
+1. **负对数平滑最小值** `composite_dino_lse`：$S_{\mathrm{LSE}}(C, S) = -\log\!\big(e^{-10 C} + e^{-15 S}\big)$，以 `2:3` 整数比对齐 `DINO-C (~0.70)` 与 `DINO-S (~0.47)` 的自然量级。Zoom-in 主图 [速度-负对数得分图](figures/speed_composite_score.png) 聚焦 `[5.20, 6.48]` 上簇区间（剔除下方离群点 `StyleID=3.86`, `StyleShot=3.56`, `SaMST=1.55`, `WCT=0.11` 以拉开纵坐标间距）。
+2. **零参数负幂广义均值（无对数）** `composite_dino_power_mean`：$M_{-4}(C, S) = \big(\tfrac{1}{2}(C^{-4} + S^{-4})\big)^{-1/4} \in [0, 1]$，完全对称且无需任何超参或对数变换，在 [速度-负幂均值图](figures/speed_power_mean.png) 中使 `Seedream 4.5` 升至外部第 4（`0.4534`）、`λ=0` 垫底（`0.4417`）。
 
 台账绘图命令读取现有 CSV，保留原始数据。V25 默认输出到性能图目录。冻结稿的图单独保管，需要明确指定 `--paper-figures` 才写入论文图目录。

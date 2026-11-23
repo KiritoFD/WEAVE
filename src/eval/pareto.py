@@ -46,3 +46,15 @@ def composite_dino_lse(
     u_s = -beta * float(dino_s)
     m = max(u_c, u_s)
     return -(m + math.log(math.exp(u_c - m) + math.exp(u_s - m)))
+
+
+def composite_dino_power_mean(dino_c: float, dino_s: float, *, p: float = -4.0) -> float:
+    """Zero-parameter symmetric Holder generalized mean ((C^p + S^p) / 2)^(1/p), p < 0.
+
+    Without logarithms or arbitrary constants, negative power means (e.g. p=-4)
+    remain bounded in [0, 1] and penalize whichever of (DINO-C, DINO-S) is weaker,
+    so balanced editing regimes outscore unedited or structure-collapsed extremes.
+    """
+    c = max(1e-6, float(dino_c))
+    s = max(1e-6, float(dino_s))
+    return ((c ** p + s ** p) * 0.5) ** (1.0 / p)
