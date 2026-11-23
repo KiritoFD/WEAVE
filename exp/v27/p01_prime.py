@@ -28,6 +28,7 @@ from exp.v21 import autocast
 from exp.v21.prism_attn_flow import (
     BottleneckAttention,
     PureStyleResBlock,
+    QuotientRefCrossAttention,
     SPADEStyleBlock,
     _project_latent_y16,
     chroma_align_to_exemplar,
@@ -119,12 +120,13 @@ class V27PrimeUNet(nn.Module):
 
     def __init__(self, base_dim: int = 144, e_dim: int = 128, v_dim: int = 192,
                  cond_dim: int = 288, y32_scale: float = 1.0, feat_dim: int = 423,
-                 use_router: bool = True):
+                 use_router: bool = True, use_dec32_attn: bool = False):
         super().__init__()
         w0, w1, w2 = base_dim, base_dim * 2, base_dim * 3
         q_proj_ch = 64
         self.y32_scale = y32_scale
         self.use_router = use_router
+        self.use_dec32_attn = use_dec32_attn
 
         self.eref = nn.Sequential(
             nn.Linear(feat_dim, 256), nn.SiLU(inplace=True), nn.Linear(256, e_dim),
@@ -149,6 +151,8 @@ class V27PrimeUNet(nn.Module):
         self.up32 = nn.Conv2d(w2, w1, 3, padding=1)
         self.skip32 = nn.Conv2d(w1 * 2, w1, 1)
         self.dec32_spade = SPADEStyleBlock(w1, 1, cond_dim)
+        if use_dec32_attn:
+            self.dec32_ref_attn = QuotientRefCrossAttention(w1, q_sem_dim=32, v_ref_dim=v_dim, heads=8)
         self.dec32 = nn.ModuleList([V27PrimeResBlock(w1, cond_dim, v_dim),
                                     V27PrimeResBlock(w1, cond_dim, v_dim)])
         self.up64 = nn.Conv2d(w1, w0, 3, padding=1)
@@ -181,7 +185,8 @@ class V27PrimeUNet(nn.Module):
                   else layout_scale.to(dev).float().view(B).clamp(0.0, 1.0) * (~drop_content).float())
         lscale4 = lscale.view(B, 1, 1, 1)
 
-        qf16 = self.q_proj(q32_src * cmask4) * lscale4
+        q_src_16mod = q32_src * lscale4
+        qf16 = self.q_proj(q_src_16mod * cmask4) * lscale4
         s16 = torch.cat([y16_lcn * lscale4, qf16], dim=1)
         s32 = y32_smooth * (lscale4 * 0.85 * self.y32_scale)
         v_mean = v_mean * smask2
@@ -211,6 +216,11 @@ class V27PrimeUNet(nn.Module):
         u32 = self.up32(h16.repeat_interleave(2, dim=-2).repeat_interleave(2, dim=-1))
         u32 = self.skip32(torch.cat([u32, h32], dim=1))
         u32 = self.dec32_spade(u32, s32, cond)
+        if self.use_dec32_attn:
+            q_src_32 = F.interpolate(q_src_16mod.float(), size=(32, 32),
+                                     mode="bilinear", align_corners=False).to(z_tau.dtype)
+            u32 = self.dec32_ref_attn(u32, q_src_32, k_ref_tok * smask2.view(B, 1, 1),
+                                      v_ref_tok * smask2.view(B, 1, 1), smask2)
         for blk in self.dec32:
             u32 = blk(u32, cond, r32)
         u64 = self.up64(u32.repeat_interleave(2, dim=-2).repeat_interleave(2, dim=-1))
@@ -224,7 +234,8 @@ class V27PrimeUNet(nn.Module):
 
 def train_prime(arm: str, bundle, c21, feats_train: torch.Tensor,
                 updates: int = 3800, micro: int = 96, accum: int = 1,
-                device: str = "cuda", use_router: bool = True) -> Path:
+                device: str = "cuda", use_router: bool = True,
+                use_dec32_attn: bool = False) -> Path:
     seed_all(20267100 if arm == "A1" else 20267099)
     ckpt_dir = OUT / f"prime_{arm}"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
@@ -248,7 +259,7 @@ def train_prime(arm: str, bundle, c21, feats_train: torch.Tensor,
     all_cls_idx = [((sid_all == s) & valid_m).nonzero(as_tuple=True)[0] for s in range(5)]
     core_cls_idx = [ci.long() for ci in tr21["core_idx_per_style"]]
 
-    model = V27PrimeUNet(use_router=use_router).to(device)
+    model = V27PrimeUNet(use_router=use_router, use_dec32_attn=use_dec32_attn).to(device)
     ema = copy.deepcopy(model).eval()
     for p in ema.parameters():
         p.requires_grad_(False)
@@ -336,7 +347,7 @@ def train_prime(arm: str, bundle, c21, feats_train: torch.Tensor,
 
     torch.save({"ema": ema.state_dict(), "updates": updates, "arm": arm,
                 "params": sum(p.numel() for p in ema.parameters()),
-                "use_router": use_router}, final_p)
+                "use_router": use_router, "use_dec32_attn": use_dec32_attn}, final_p)
     print(f"[{arm}] Saved {final_p} ({ema.n_params()/1e6:.2f}M) in {(time.time()-t0)/60:.1f} min", flush=True)
     return final_p
 
@@ -421,7 +432,8 @@ def eval_prime(arm: str, ckpt_p, bundle, c21, feats, tasks, z_src_750, device: s
     P_C = bundle["fnd"]["priors"]["P_C"].to(device).float()
     eps_750 = torch.randn(z_src_750.shape, generator=torch.Generator().manual_seed(20261185))
     ck = torch.load(ckpt_p, map_location=device, weights_only=False)
-    model = V27PrimeUNet(use_router=ck.get("use_router", True)).to(device).eval()
+    model = V27PrimeUNet(use_router=ck.get("use_router", True),
+                         use_dec32_attn=ck.get("use_dec32_attn", False)).to(device).eval()
     model.load_state_dict(ck["ema"])
     dec = load_s10_decoder(device)
 
@@ -514,8 +526,10 @@ def main():
                "arms": {}, "updated_utc": utc()}
     for arm in args.arms.split(","):
         use_router = (arm == "A1")
+        use_dec32 = (arm == "A2")
         ckpt = train_prime(arm, bundle, c21, feats["train"], updates=args.updates,
-                           device=args.device, use_router=use_router)
+                           device=args.device, use_router=use_router,
+                           use_dec32_attn=use_dec32)
         res = eval_prime(arm, ckpt, bundle, c21, feats, tasks, z_src_750, device=args.device)
         verdict["arms"][arm] = res
         save_json(OUT / "p01_prime_verdict.json", verdict)

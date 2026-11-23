@@ -1,0 +1,170 @@
+{
+  "task": "ICME Step2: Closed-set host consolidation & few-step segmented CFG sweep",
+  "updated_utc": "2026-11-23T03:20:10.059674+00:00",
+  "arms": {
+    "ICME_D2_s8_full": {
+      "host": "V20_D2",
+      "steps": 8,
+      "nfe": 64,
+      "full_steps": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "csd_top1": 0.6117,
+      "dino_s": 0.5661,
+      "dino_c": 0.5321,
+      "lpips": 0.6017,
+      "style_affinity": 0.658,
+      "clip_s": 0.75,
+      "same150_top1": 0.9667,
+      "min_top1": 1.0,
+      "imp_to_min_top1": 1.0
+    },
+    "ICME_D2_s8_e3full": {
+      "host": "V20_D2",
+      "steps": 8,
+      "nfe": 44,
+      "full_steps": [
+        0,
+        1,
+        2
+      ],
+      "csd_top1": 0.5233,
+      "dino_s": 0.5489,
+      "dino_c": 0.5786,
+      "lpips": 0.5859,
+      "style_affinity": 0.6428,
+      "clip_s": 0.7367,
+      "same150_top1": 0.9667,
+      "min_top1": 0.9667,
+      "imp_to_min_top1": 0.8667
+    },
+    "ICME_D2_s6_full": {
+      "host": "V20_D2",
+      "steps": 6,
+      "nfe": 48,
+      "full_steps": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "csd_top1": 0.6033,
+      "dino_s": 0.5632,
+      "dino_c": 0.5351,
+      "lpips": 0.6006,
+      "style_affinity": 0.656,
+      "clip_s": 0.7488,
+      "same150_top1": 0.9667,
+      "min_top1": 1.0,
+      "imp_to_min_top1": 1.0
+    },
+    "ICME_D2_s6_e2full": {
+      "host": "V20_D2",
+      "steps": 6,
+      "nfe": 32,
+      "full_steps": [
+        0,
+        1
+      ],
+      "csd_top1": 0.5217,
+      "dino_s": 0.5453,
+      "dino_c": 0.5848,
+      "lpips": 0.5851,
+      "style_affinity": 0.6401,
+      "clip_s": 0.7349,
+      "same150_top1": 0.9667,
+      "min_top1": 0.95,
+      "imp_to_min_top1": 0.8333
+    },
+    "ICME_D2_s6_l2full": {
+      "host": "V20_D2",
+      "steps": 6,
+      "nfe": 32,
+      "full_steps": [
+        4,
+        5
+      ],
+      "csd_top1": 0.4867,
+      "dino_s": 0.5409,
+      "dino_c": 0.5868,
+      "lpips": 0.5751,
+      "style_affinity": 0.636,
+      "clip_s": 0.7312,
+      "same150_top1": 0.9667,
+      "min_top1": 0.6083,
+      "imp_to_min_top1": 0.2333
+    },
+    "ICME_D2_s6_csj": {
+      "host": "V20_D2",
+      "steps": 6,
+      "nfe": 24,
+      "full_steps": [],
+      "csd_top1": 0.4333,
+      "dino_s": 0.5338,
+      "dino_c": 0.5994,
+      "lpips": 0.5697,
+      "style_affinity": 0.6293,
+      "clip_s": 0.7249,
+      "same150_top1": 0.9667,
+      "min_top1": 0.55,
+      "imp_to_min_top1": 0.1667
+    },
+    "ICME_D2_s4_e2full": {
+      "host": "V20_D2",
+      "steps": 4,
+      "nfe": 24,
+      "full_steps": [
+        0,
+        1
+      ],
+      "csd_top1": 0.5283,
+      "dino_s": 0.5448,
+      "dino_c": 0.5763,
+      "lpips": 0.5874,
+      "style_affinity": 0.6407,
+      "clip_s": 0.7366,
+      "same150_top1": 0.9667,
+      "min_top1": 0.9917,
+      "imp_to_min_top1": 0.9667
+    },
+    "ICME_JPk_s6_csj": {
+      "host": "V23_HiC_JPk",
+      "steps": 6,
+      "nfe": 24,
+      "full_steps": [],
+      "csd_top1": 0.5933,
+      "dino_s": 0.5329,
+      "dino_c": 0.63,
+      "lpips": 0.5648,
+      "style_affinity": 0.63,
+      "clip_s": 0.7272,
+      "same150_top1": 0.9667,
+      "min_top1": 0.8833,
+      "imp_to_min_top1": 0.7
+    },
+    "ICME_TrT1_s6_csj": {
+      "host": "V25_Tr_T1",
+      "steps": 6,
+      "nfe": 24,
+      "full_steps": [],
+      "csd_top1": 0.5933,
+      "dino_s": 0.5323,
+      "dino_c": 0.6273,
+      "lpips": 0.5599,
+      "style_affinity": 0.6298,
+      "clip_s": 0.7274,
+      "same150_top1": 0.9667,
+      "min_top1": 0.925,
+      "imp_to_min_top1": 0.8
+    }
+  }
+}
