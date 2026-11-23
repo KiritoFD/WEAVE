@@ -292,8 +292,8 @@ def train_stage2_arm(
     seed_all(20268200 + (0 if arm == "P2_Rollout_Glob" else 10 if arm == "P2_Part_Glob" else 20) + seed_offset)
 
     is_24gb = torch.cuda.get_device_properties(0).total_memory > 18e9
-    micro = 6 if is_24gb else 3
-    accum = max(1, 24 // micro)
+    micro = 3 if is_24gb else 2
+    accum = 6 if is_24gb else 9
 
     tr = bundle["v18_cache"]["train"]
     priors = {k: v.to(device) if torch.is_tensor(v) else v for k, v in bundle["fnd"]["priors"].items()}
@@ -363,7 +363,9 @@ def train_stage2_arm(
     core_cls = [ci.long() for ci in bank["core_idx_per_style"]]
 
     def _compute_losses(step_idx: int, is_calib: bool = False):
-        n_same = 1 if micro >= 4 else 0
+        n_same = int((torch.rand(micro) < 0.15).sum().item())
+        if step_idx == 0 and n_same == 0:
+            n_same = 1
         n_cross = micro - n_same
         ic = cross_pool[torch.randint(0, len(cross_pool), (n_cross,))]
         idx = torch.cat([ic, same_pool[torch.randint(0, len(same_pool), (n_same,))]], dim=0) if n_same > 0 else ic
@@ -397,7 +399,8 @@ def train_stage2_arm(
             pi_src = part_bank.assign(q32b)
 
         with torch.no_grad():
-            best_c, _ = match_scene_submode(d16b, ti, bank)
+            flat_c, _ = match_scene_submode(d16b, ti, bank)
+            best_c = flat_c % int(bank["k_sub"])
             x_s = decode_s10(dec_fp16, zs, batch=B, output_cpu=False).clamp(0.0, 1.0)
             s_f1, s_f2, s_f3 = vgg.forward_style(x_s)
             s_r42 = vgg.forward_gray_r42(x_s)
@@ -430,7 +433,11 @@ def train_stage2_arm(
             model, z_init, y_in, q_in, ti, u_core, lscale, gamma,
             s16_part=s16_part, steps=4, device=device,
         )
-        x_hat = decode_s10(dec_bf16, z_hat, batch=B, dtype=torch.bfloat16, enable_grad=True, output_cpu=False).clamp(0.0, 1.0)
+        x_hat = checkpoint(
+            lambda zz: decode_s10(dec_bf16, zz, batch=B, dtype=torch.bfloat16, enable_grad=True, output_cpu=False),
+            z_hat,
+            use_reentrant=False,
+        ).clamp(0.0, 1.0)
 
         h_f1, h_f2, h_f3 = vgg.forward_style(x_hat)
         h_r42 = vgg.forward_gray_r42(x_hat)
@@ -472,7 +479,8 @@ def train_stage2_arm(
     norms = norms.clamp_min(1e-6)
     target_ratios = torch.tensor([0.70, 0.60, 0.25, 0.60, 0.35], device=device) if use_part_loss else torch.tensor([1.0, 0.25, 0.60, 0.40], device=device)
     w_loss = (target_ratios / norms) * norms[0]
-    print(f"[{arm}] Calib grad norms={[round(float(x), 4) for x in norms]} → weights={[round(float(x), 4) for x in w_loss]}", flush=True)
+    peak_gb = torch.cuda.max_memory_allocated(device) / (1024 ** 3)
+    print(f"[{arm}] Calib grad norms={[round(float(x), 4) for x in norms]} → weights={[round(float(x), 4) for x in w_loss]} (peak_vram={peak_gb:.2f} GB)", flush=True)
 
     param_groups = []
     if use_part_arch:

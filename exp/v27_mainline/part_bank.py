@@ -175,8 +175,9 @@ class SLFUNetPart(nn.Module):
         uv = u_vivid * smask2
         temb = sinusoidal_time_emb(tau, 64)
         flags = torch.stack([drop_style.float(), 1.0 - lscale], dim=-1)
-        g_col = torch.ones(B, 1, device=dev) if gamma is None else gamma.to(dev).float().view(B, 1)
-        cond = self.cond_mlp(torch.cat([temb, oh, uv, flags, g_col], dim=-1))
+        g_val = torch.ones(B, device=dev, dtype=torch.float32) if gamma is None else gamma.to(dev).float().view(B)
+        g_emb = sinusoidal_time_emb(g_val, 16)
+        cond = self.cond_mlp(torch.cat([temb, oh, uv, flags, g_emb], dim=-1))
 
         s_map = self.part_proj(s16_part.to(dtype=z_tau.dtype) * cmask4 * lscale4)
 
