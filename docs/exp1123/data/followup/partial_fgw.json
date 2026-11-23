@@ -1,0 +1,63 @@
+{
+  "study": "24 distinct test sources, horizontal flip oracle",
+  "partial_mass": 0.80078125,
+  "geometry_weight": 0.6,
+  "sources": [
+    "Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece",
+    "Early_Renaissance__benozzo-gozzoli_madonna-and-child-1485",
+    "Early_Renaissance__domenico-ghirlandaio_st-stephen-st-jacobo-st-peter",
+    "Early_Renaissance__fra-angelico_coronation-of-the-virgin-detail-1435-1",
+    "Early_Renaissance__paolo-uccello_scene-adoration-of-the-three-kings-1440",
+    "Impressionism__alfred-sisley_riverbank-at-veneux-1881",
+    "Impressionism__childe-hassam_evening-champs-elysees-aka-pres-du-louvre",
+    "Impressionism__edgar-degas_study-of-gentile-bellini-1855",
+    "Impressionism__joaquã­n-sorolla_study-of-vineyard",
+    "Impressionism__pierre-auguste-renoir_still-life-with-apples-and-pomegranates-1901",
+    "Minimalism__agnes-martin_happy-valley-1967",
+    "Minimalism__eva-hesse_expanded-expansion-1969",
+    "Minimalism__john-mclaughlin_number-13-1973",
+    "Minimalism__robert-mangold_ellow-black-zone-painting-iv-1996",
+    "Minimalism__ruth-vollmer_trimer-monomer-dimer-1965",
+    "Rococo__antoine-pesne_carl-heinrich-graun",
+    "Rococo__bernardo-bellotto_view-of-dresden-the-dresden-fortifications-moat-with-a-bridge-between-gate-and-post-mile-pillar",
+    "Rococo__dmitry-levitzky_portrait-of-unknown-woman-with-a-rose-1788",
+    "Rococo__joseph-wright_mr-and-mrs-thomas-coltman",
+    "Rococo__pietro-longhi_the-tooth-extractor",
+    "Ukiyo_e__hiroshige_hakone-kosuizu",
+    "Ukiyo_e__katsushika-hokusai_woman-looking-at-herself-in-a-mirror",
+    "Ukiyo_e__ogata-gekko_nihon-hana-zue-1896",
+    "Ukiyo_e__utagawa-kunisada_not_detected_240353"
+  ],
+  "arms": {
+    "oracle_full": {
+      "coverage": 1.0,
+      "oracle_patch_top1_kept": 1.0,
+      "oracle_patch_top1_total": 1.0,
+      "texture_mae_kept": 0.0
+    },
+    "q32_soft_top1_full": {
+      "coverage": 1.0,
+      "oracle_patch_top1_kept": 0.10400390625,
+      "oracle_patch_top1_total": 0.10400390625,
+      "texture_mae_kept": 0.009747345291543752
+    },
+    "shuffled_full": {
+      "coverage": 1.0,
+      "oracle_patch_top1_kept": 0.0029296875,
+      "oracle_patch_top1_total": 0.0029296875,
+      "texture_mae_kept": 0.01574421133652019
+    },
+    "q32_partial_linear": {
+      "coverage": 0.80078125,
+      "oracle_patch_top1_kept": 0.37560975609756103,
+      "oracle_patch_top1_total": 0.30078125,
+      "texture_mae_kept": 0.005672420496315074
+    },
+    "q32_partial_fgw": {
+      "coverage": 0.80078125,
+      "oracle_patch_top1_kept": 0.6705284552845528,
+      "oracle_patch_top1_total": 0.5369466145833334,
+      "texture_mae_kept": 0.002378787234192714
+    }
+  }
+}

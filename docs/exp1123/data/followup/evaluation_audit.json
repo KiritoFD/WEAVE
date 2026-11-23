@@ -1,0 +1,611 @@
+{
+  "artist_identity": "filename prefix heuristic; overlaps are candidates",
+  "artist_overlap": {
+    "test_source_artists": 92,
+    "test_reference_artists": 30,
+    "train_artists": 372,
+    "source_with_reference": [
+      "agnes-martin",
+      "alfred-sisley",
+      "antoine-pesne",
+      "benozzo-gozzoli",
+      "claude-monet",
+      "dmitry-levitzky",
+      "domenico-ghirlandaio",
+      "edgar-degas",
+      "filippo-lippi",
+      "hiroshige",
+      "joshua-reynolds",
+      "keisai-eisen",
+      "nicolae-vermont",
+      "rudolf-schweitzer-cumpana",
+      "sandro-botticelli",
+      "thomas-gainsborough",
+      "tsukioka-yoshitoshi",
+      "utagawa-kuniyoshi"
+    ],
+    "source_with_train": [
+      "agnes-martin",
+      "alfred-sisley",
+      "alvaro-lapa",
+      "andrea-mantegna",
+      "antoine-blanchard",
+      "antoine-pesne",
+      "antoine-watteau",
+      "antonello-da-messina",
+      "armand-guillaumin",
+      "bartolome-bermejo",
+      "benjamin-west",
+      "benozzo-gozzoli",
+      "bernardo-bellotto",
+      "brice-marden",
+      "bruce-nauman",
+      "camille-pissarro",
+      "canaletto",
+      "carl-ludwig-johann-christineck",
+      "carlo-crivelli",
+      "childe-hassam",
+      "claude-monet",
+      "dan-flavin",
+      "dmitry-levitzky",
+      "domenico-ghirlandaio",
+      "domenico-veneziano",
+      "edgar-degas",
+      "edouard-manet",
+      "ellsworth-kelly",
+      "eugene-boudin",
+      "eva-hesse",
+      "fernando-lanhas",
+      "filippo-lippi",
+      "fra-angelico",
+      "francois-boucher",
+      "frank-stella",
+      "giovanni-bellini",
+      "giovanni-domenico-tiepolo",
+      "henri-matisse",
+      "hiroshige",
+      "imi-knoebel",
+      "jacopo-bellini",
+      "jean-marc-nattier",
+      "joan-hernandez-pijuan",
+      "john-mclaughlin",
+      "john-singer-sargent",
+      "joseph-wright",
+      "joshua-reynolds",
+      "judy-chicago",
+      "katsushika-hokusai",
+      "keisai-eisen",
+      "kitagawa-utamaro",
+      "konstantin-korovin",
+      "leonardo-da-vinci",
+      "louise-elisabeth-vigee-le-brun",
+      "maurice-quentin-de-la-tour",
+      "mihaly-munkacsy",
+      "mira-schendel",
+      "nicolae-vermont",
+      "nikolay-bogdanov-belsky",
+      "ogata-gekko",
+      "paolo-uccello",
+      "piero-della-francesca",
+      "pierre-auguste-renoir",
+      "pietro-longhi",
+      "pietro-perugino",
+      "pino-pinelli",
+      "pisanello",
+      "richard-tuttle",
+      "robert-mangold",
+      "robert-morris",
+      "robert-ryman",
+      "ronald-davis",
+      "rudolf-schweitzer-cumpana",
+      "ruth-vollmer",
+      "sandro-botticelli",
+      "sean-scully",
+      "thomas-gainsborough",
+      "tony-smith",
+      "tsukioka-yoshitoshi",
+      "utagawa-kunisada",
+      "utagawa-kunisada-ii",
+      "utagawa-kuniyoshi",
+      "utagawa-toyokuni",
+      "william-hogarth",
+      "william-merritt-chase",
+      "william-scott",
+      "winston-churchill",
+      "yves-gaucher",
+      "yves-klein"
+    ],
+    "reference_with_train": [
+      "agnes-martin",
+      "alfred-sisley",
+      "allan-ramsay",
+      "andrea-del-castagno",
+      "antoine-pesne",
+      "benozzo-gozzoli",
+      "berthe-morisot",
+      "bob-law",
+      "claude-monet",
+      "dmitry-levitzky",
+      "domenico-ghirlandaio",
+      "edgar-degas",
+      "filippo-lippi",
+      "george-romney",
+      "hiroshige",
+      "john-jackson",
+      "joshua-reynolds",
+      "keisai-eisen",
+      "nicolae-vermont",
+      "rudolf-de-crignis",
+      "rudolf-schweitzer-cumpana",
+      "sandro-botticelli",
+      "thomas-gainsborough",
+      "tsukioka-yoshitoshi",
+      "utagawa-kuniyoshi",
+      "vladimir-borovikovsky",
+      "willard-metcalf"
+    ],
+    "cross_tasks_source_artist_unseen_train": 12
+  },
+  "csls_background": "fixed 150 raw test sources; shared across arms, prototype ranking sensitivity only",
+  "arms": {
+    "followup_a_clock": {
+      "raw": 0.5483333333333333,
+      "csls_k5": 0.5166666666666667,
+      "csls_k10": 0.51,
+      "csls_k10_er_uki": {
+        "0": 0.016666666666666666,
+        "4": 0.0
+      },
+      "csls_k20": 0.515,
+      "raw_source_artist_unseen_train": 0.5833333333333334
+    },
+    "followup_a_global": {
+      "raw": 0.5316666666666666,
+      "csls_k5": 0.5133333333333333,
+      "csls_k10": 0.5066666666666667,
+      "csls_k10_er_uki": {
+        "0": 0.008333333333333333,
+        "4": 0.0
+      },
+      "csls_k20": 0.5083333333333333,
+      "raw_source_artist_unseen_train": 0.5
+    },
+    "followup_a_grid": {
+      "raw": 0.525,
+      "csls_k5": 0.5133333333333333,
+      "csls_k10": 0.5033333333333333,
+      "csls_k10_er_uki": {
+        "0": 0.008333333333333333,
+        "4": 0.0
+      },
+      "csls_k20": 0.5083333333333333,
+      "raw_source_artist_unseen_train": 0.5
+    },
+    "followup_a_start": {
+      "raw": 0.5516666666666666,
+      "csls_k5": 0.5133333333333333,
+      "csls_k10": 0.5083333333333333,
+      "csls_k10_er_uki": {
+        "0": 0.025,
+        "4": 0.0
+      },
+      "csls_k20": 0.5083333333333333,
+      "raw_source_artist_unseen_train": 0.5833333333333334
+    },
+    "followup_b_aligned_n128_s350": {
+      "raw": 0.49,
+      "csls_k5": 0.4483333333333333,
+      "csls_k10": 0.44,
+      "csls_k10_er_uki": {
+        "0": 0.0,
+        "4": 0.0
+      },
+      "csls_k20": 0.44666666666666666,
+      "raw_source_artist_unseen_train": 0.4166666666666667
+    },
+    "followup_b_shuffled_n128_s350": {
+      "raw": 0.5066666666666667,
+      "csls_k5": 0.43333333333333335,
+      "csls_k10": 0.4116666666666667,
+      "csls_k10_er_uki": {
+        "0": 0.0,
+        "4": 0.0
+      },
+      "csls_k20": 0.43,
+      "raw_source_artist_unseen_train": 0.5
+    },
+    "followup_b_teacher_n128_s350": {
+      "raw": 0.36666666666666664,
+      "csls_k5": 0.24166666666666667,
+      "csls_k10": 0.235,
+      "csls_k10_er_uki": {
+        "0": 0.008333333333333333,
+        "4": 0.0
+      },
+      "csls_k20": 0.24333333333333335,
+      "raw_source_artist_unseen_train": 0.16666666666666666
+    }
+  },
+  "paired_deltas": {
+    "followup_a_grid minus followup_a_global": {
+      "cross600": {
+        "target_top1": {
+          "mean": -0.006666666666666667,
+          "ci95": [
+            -0.015,
+            0.0
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": false
+        },
+        "dino_c": {
+          "mean": -0.0008263404791553816,
+          "ci95": [
+            -0.0012471299941341082,
+            -0.0003972040330991148
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "dino_s": {
+          "mean": 7.222620149453481e-05,
+          "ci95": [
+            -0.0003052238455663124,
+            0.00045701405964791773
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": false
+        },
+        "lpips": {
+          "mean": -5.3561230500539145e-05,
+          "ci95": [
+            -0.00027554582556088764,
+            0.00014834161102771765
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": false
+        }
+      },
+      "er_uki_240": {
+        "target_top1": {
+          "mean": 0.0,
+          "ci95": [
+            -0.012605042016806723,
+            0.0125
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": false
+        },
+        "dino_c": {
+          "mean": 0.0011885097560783227,
+          "ci95": [
+            0.0006266542954139472,
+            0.0017919894866645337
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "lpips": {
+          "mean": -0.0012462377548217774,
+          "ci95": [
+            -0.0015267470551985295,
+            -0.0009863976866119736
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        }
+      }
+    },
+    "followup_a_start minus followup_a_global": {
+      "cross600": {
+        "target_top1": {
+          "mean": 0.02,
+          "ci95": [
+            0.0016666666666666668,
+            0.04
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "dino_c": {
+          "mean": -0.020246415405223768,
+          "ci95": [
+            -0.027677799298272777,
+            -0.012935664349701252
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "dino_s": {
+          "mean": 0.0072591105351845426,
+          "ci95": [
+            0.002426621132840713,
+            0.012303153743967414
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "lpips": {
+          "mean": 0.003347000628709793,
+          "ci95": [
+            0.001397369183599949,
+            0.005389199943592152
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        }
+      },
+      "er_uki_240": {
+        "target_top1": {
+          "mean": 0.004166666666666667,
+          "ci95": [
+            -0.0215540565756083,
+            0.03305785123966942
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": false
+        },
+        "dino_c": {
+          "mean": -0.03229607613757253,
+          "ci95": [
+            -0.04139952012713365,
+            -0.023200424582083396
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "lpips": {
+          "mean": 0.00456049864490827,
+          "ci95": [
+            0.0019521821735113884,
+            0.007143603259652316
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        }
+      }
+    },
+    "followup_a_clock minus followup_a_start": {
+      "cross600": {
+        "target_top1": {
+          "mean": -0.0033333333333333335,
+          "ci95": [
+            -0.011666666666666667,
+            0.005
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": false
+        },
+        "dino_c": {
+          "mean": 0.003572247245659431,
+          "ci95": [
+            0.002938055101005981,
+            0.004253776665932188
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "dino_s": {
+          "mean": -0.0015079441169897716,
+          "ci95": [
+            -0.0020650149347881475,
+            -0.0009528909288346767
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "lpips": {
+          "mean": -0.001013873815536499,
+          "ci95": [
+            -0.0012140457766751447,
+            -0.0008018955960869789
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        }
+      },
+      "er_uki_240": {
+        "target_top1": {
+          "mean": -0.004166666666666667,
+          "ci95": [
+            -0.012875536480686695,
+            0.0
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": false
+        },
+        "dino_c": {
+          "mean": 0.002000194912155469,
+          "ci95": [
+            0.0013954541816716746,
+            0.0026678672756562816
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "lpips": {
+          "mean": -0.0005250483751296997,
+          "ci95": [
+            -0.0007132068260037284,
+            -0.0003435479406879569
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        }
+      }
+    },
+    "followup_b_aligned_n128_s350 minus followup_b_teacher_n128_s350": {
+      "cross600": {
+        "target_top1": {
+          "mean": 0.12333333333333334,
+          "ci95": [
+            0.09333333333333334,
+            0.155
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "dino_c": {
+          "mean": -0.00950895035173744,
+          "ci95": [
+            -0.01545906141276161,
+            -0.003426899590801136
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "dino_s": {
+          "mean": 0.013067772363622982,
+          "ci95": [
+            0.008054607243587574,
+            0.018128144768377145
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "lpips": {
+          "mean": 0.019088492443164188,
+          "ci95": [
+            0.012573530501375595,
+            0.02575239620730281
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        }
+      },
+      "er_uki_240": {
+        "target_top1": {
+          "mean": -0.05416666666666667,
+          "ci95": [
+            -0.08536585365853659,
+            -0.02499740663900414
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "dino_c": {
+          "mean": 0.024270241144889345,
+          "ci95": [
+            0.014472320921074436,
+            0.033844578386045494
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "lpips": {
+          "mean": -0.014092356339097023,
+          "ci95": [
+            -0.024903330305902985,
+            -0.003446946492394983
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        }
+      }
+    },
+    "followup_b_aligned_n128_s350 minus followup_b_shuffled_n128_s350": {
+      "cross600": {
+        "target_top1": {
+          "mean": -0.016666666666666666,
+          "ci95": [
+            -0.03833333333333333,
+            0.005
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": false
+        },
+        "dino_c": {
+          "mean": 0.03214507091479997,
+          "ci95": [
+            0.023934096708505725,
+            0.040155017178971325
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "dino_s": {
+          "mean": -0.014408324534694353,
+          "ci95": [
+            -0.021338293669745323,
+            -0.007800543341164785
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "lpips": {
+          "mean": -0.050187001576026284,
+          "ci95": [
+            -0.056166880898177625,
+            -0.0444292462207377
+          ],
+          "n": 600,
+          "n_clusters": 150,
+          "excludes_zero": true
+        }
+      },
+      "er_uki_240": {
+        "target_top1": {
+          "mean": 0.008333333333333333,
+          "ci95": [
+            0.0,
+            0.021551724137931036
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": false
+        },
+        "dino_c": {
+          "mean": 0.08539570945237453,
+          "ci95": [
+            0.07167277633793556,
+            0.09938054421805469
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        },
+        "lpips": {
+          "mean": -0.14247024940947692,
+          "ci95": [
+            -0.15213696321031792,
+            -0.13315909191996098
+          ],
+          "n": 240,
+          "n_clusters": 150,
+          "excludes_zero": true
+        }
+      }
+    }
+  }
+}

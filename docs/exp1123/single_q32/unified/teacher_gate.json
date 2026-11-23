@@ -1,0 +1,1094 @@
+{
+  "his_top1": 0.58,
+  "his_per_target": {
+    "Early_Renaissance": {
+      "hits": 7,
+      "n": 30
+    },
+    "Impressionism": {
+      "hits": 29,
+      "n": 30
+    },
+    "Minimalism": {
+      "hits": 28,
+      "n": 30
+    },
+    "Rococo": {
+      "hits": 17,
+      "n": 30
+    },
+    "Ukiyo_e": {
+      "hits": 6,
+      "n": 30
+    }
+  },
+  "hic_dino_c_s10_source": 0.6473561525344849,
+  "hic_dino_c_original_subset": 0.593165934085846,
+  "original_source_n": 87,
+  "per_task": [
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__childe-hassam_elms-east-hampton-new-york",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.8039715886116028
+    },
+    {
+      "sid": 3,
+      "tid": 0,
+      "source_id": "d5__Rococo__Rococo__bernardo-bellotto_a-view-of-the-lobkowicz-palace-in-vienna-1761",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6556405425071716
+    },
+    {
+      "sid": 2,
+      "tid": 0,
+      "source_id": "d5__Minimalism__Minimalism__horia-damian_triedrul-1969",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.655982255935669
+    },
+    {
+      "sid": 2,
+      "tid": 0,
+      "source_id": "d5__Minimalism__Minimalism__roman-opalka_tau-1965",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7825812101364136
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__niccolo-cannicci_pastorelli-con-gregge",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6286328434944153
+    },
+    {
+      "sid": 3,
+      "tid": 0,
+      "source_id": "wikiart__Rococo__Rococo__george-romney_benjamin-thomas-mee-the-younger-1742-1796",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.8031398057937622
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__camille-pissarro_landscape-near-pontoise",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7665697336196899
+    },
+    {
+      "sid": 4,
+      "tid": 0,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__ito-shinsui_shirahama-in-the-morning",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7396453619003296
+    },
+    {
+      "sid": 4,
+      "tid": 0,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_scene-of-housekeeping-four-women-are-working",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7632433176040649
+    },
+    {
+      "sid": 2,
+      "tid": 0,
+      "source_id": "d5__Minimalism__Minimalism__tony-smith_source-1967",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.48147252202033997
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__john-singer-sargent_bedouin-camp",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.8979793787002563
+    },
+    {
+      "sid": 3,
+      "tid": 0,
+      "source_id": "d5__Rococo__Rococo__canaletto_piazza-san-marco-looking-south-west",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.711004376411438
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__claude-monet_the-spring-at-vetheuil",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.8627909421920776
+    },
+    {
+      "sid": 3,
+      "tid": 0,
+      "source_id": "d5__Rococo__Rococo__giovanni-battista-tiepolo_a-young-woman-with-a-macaw",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.77997225522995
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__james-charles_a-misty-morning",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7940435409545898
+    },
+    {
+      "sid": 4,
+      "tid": 0,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__keisai-eisen_shinagawa-hot-tea-1845(1)",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7401440739631653
+    },
+    {
+      "sid": 4,
+      "tid": 0,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__keisai-eisen_an-allegory-of-komachi-visiting",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7537053227424622
+    },
+    {
+      "sid": 2,
+      "tid": 0,
+      "source_id": "d5__Minimalism__Minimalism__frank-stella_tomlinson-court-park-1959",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7172452211380005
+    },
+    {
+      "sid": 4,
+      "tid": 0,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_woman-in-a-boat-on-the-sumida-river",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6870297193527222
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__thomas-eakins_columbus-in-prison",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.8462218046188354
+    },
+    {
+      "sid": 2,
+      "tid": 0,
+      "source_id": "d5__Minimalism__Minimalism__ellsworth-kelly_circle-form-1951",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6309928297996521
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__robert-spencer_wharves",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7861576080322266
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__paul-gauguin_the-embroiderer-or-mette-gauguin",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7819346785545349
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__edgar-degas_woman-seen-from-behind-drying-hair",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.8095690011978149
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__camille-pissarro_bridge-at-montfoucault",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.796212911605835
+    },
+    {
+      "sid": 3,
+      "tid": 0,
+      "source_id": "wikiart__Rococo__Rococo__george-romney_thomas-holme-mayor-of-kendal-1741-1742-1755-1756",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.8238391876220703
+    },
+    {
+      "sid": 3,
+      "tid": 0,
+      "source_id": "d5__Rococo__Rococo__vladimir-borovikovsky_st-tsaritsa-alexandra-1815",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.8619086742401123
+    },
+    {
+      "sid": 4,
+      "tid": 0,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__utagawa-kunisada_not_detected_240340",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7849584817886353
+    },
+    {
+      "sid": 2,
+      "tid": 0,
+      "source_id": "d5__Minimalism__Minimalism__pino-pinelli_pittura-r-1998",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7604219913482666
+    },
+    {
+      "sid": 1,
+      "tid": 0,
+      "source_id": "wikiart__Impressionism__Impressionism__william-merritt-chase_in-the-studio",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.831959068775177
+    },
+    {
+      "sid": 2,
+      "tid": 1,
+      "source_id": "d5__Minimalism__Minimalism__daniel-dezeuze_lattice-1997",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.51695317029953
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__keisai-eisen_shimada-station-shimada-shuku-no-24-from-an-untitled-series-of-the-fifty-three-stations-of-the-t-kaid-road-1830",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6689097881317139
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__kitagawa-utamaro_komurasaki-of-the-tamaya-with-pipe-in-hand",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5785263180732727
+    },
+    {
+      "sid": 2,
+      "tid": 1,
+      "source_id": "d5__Minimalism__Minimalism__jiro-yoshihara_to-martha-s-memory-1970",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7017561197280884
+    },
+    {
+      "sid": 3,
+      "tid": 1,
+      "source_id": "wikiart__Rococo__Rococo__george-romney_vice-admiral-george-darby-c-1720-1790",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6987581253051758
+    },
+    {
+      "sid": 0,
+      "tid": 1,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__sandro-botticelli_illustration-to-the-divine-comedy-inferno-1480(1)",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.69764244556427
+    },
+    {
+      "sid": 0,
+      "tid": 1,
+      "source_id": "wikiart__Early_Renaissance__Early_Renaissance__fra-angelico_christ-the-judge-detali",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.8363975882530212
+    },
+    {
+      "sid": 2,
+      "tid": 1,
+      "source_id": "d5__Minimalism__Minimalism__anne-truitt_arundel-xxxiv-1975",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.47337985038757324
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__shibata-zeshin_morning-glories",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5861462950706482
+    },
+    {
+      "sid": 2,
+      "tid": 1,
+      "source_id": "d5__Minimalism__Minimalism__tony-smith_asteriskos-1968",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5698362588882446
+    },
+    {
+      "sid": 2,
+      "tid": 1,
+      "source_id": "d5__Minimalism__Minimalism__bruce-nauman_collection-of-various-flexible-materials-separated-by-layers-of-grease-with-holes-the-size-of-1966",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5981377959251404
+    },
+    {
+      "sid": 2,
+      "tid": 1,
+      "source_id": "d5__Minimalism__Minimalism__angelo-de-sousa_pintura-1972",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5740982294082642
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_cats-forming-the-caracters-for-catfish",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6724419593811035
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_woman-mending-a-fish-net",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6971641778945923
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__ito-jakuchu_rousho-oumuzu",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5038856267929077
+    },
+    {
+      "sid": 3,
+      "tid": 1,
+      "source_id": "d5__Rococo__Rococo__joshua-reynolds_the-infant-samuel",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.8078223466873169
+    },
+    {
+      "sid": 3,
+      "tid": 1,
+      "source_id": "wikiart__Rococo__Rococo__giovanni-battista-tiepolo_the-martyrdom-of-st-agatha",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7400538325309753
+    },
+    {
+      "sid": 3,
+      "tid": 1,
+      "source_id": "wikiart__Rococo__Rococo__george-morland_herdsman-with-cattle-crossing-bridge",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.603205680847168
+    },
+    {
+      "sid": 3,
+      "tid": 1,
+      "source_id": "wikiart__Rococo__Rococo__john-jackson_the-artist-s-second-wife",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.612158477306366
+    },
+    {
+      "sid": 3,
+      "tid": 1,
+      "source_id": "wikiart__Rococo__Rococo__dmitry-levitzky_portrait-of-an-uknown-man",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.8941818475723267
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__keisai-eisen_numazu-senju-of-the-sakaya-1823(1)",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6027780771255493
+    },
+    {
+      "sid": 2,
+      "tid": 1,
+      "source_id": "d5__Minimalism__Minimalism__ralph-hotere_black-painting-1964",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5255125761032104
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_wrestling",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5379918217658997
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_hibiscus-and-sparrow-1",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6797241568565369
+    },
+    {
+      "sid": 3,
+      "tid": 1,
+      "source_id": "d5__Rococo__Rococo__hubert-robert_imaginary-view-of-the-grand-gallery-of-the-louvre-in-ruins-1796",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5051536560058594
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__hiroshige_a-vision-of-shitamachi",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.681344747543335
+    },
+    {
+      "sid": 2,
+      "tid": 1,
+      "source_id": "d5__Minimalism__Minimalism__ellsworth-kelly_white-plaque-bridge-arch-and-reflection-1955",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6908540725708008
+    },
+    {
+      "sid": 2,
+      "tid": 1,
+      "source_id": "d5__Minimalism__Minimalism__horia-damian_mastaba-1983",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5943514108657837
+    },
+    {
+      "sid": 0,
+      "tid": 1,
+      "source_id": "wikiart__Early_Renaissance__Early_Renaissance__benozzo-gozzoli_death-of-st-monica",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7145591378211975
+    },
+    {
+      "sid": 4,
+      "tid": 1,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_toki-jurozaemon-mitsuchika",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5360216498374939
+    },
+    {
+      "sid": 1,
+      "tid": 2,
+      "source_id": "wikiart__Impressionism__Impressionism__henry-herbert-la-thangue_goats-at-a-fountain",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.4897739291191101
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__paul-jacoulet_femme-tatouee-de-falalap-ouest-carolines",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5340347290039062
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__utagawa-kunisada_hinasuke-arashi-as-goemon-ishikawa",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.4872198700904846
+    },
+    {
+      "sid": 3,
+      "tid": 2,
+      "source_id": "d5__Rococo__Rococo__fyodor-rokotov_portrait-of-catherine-ii-of-russia",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6417603492736816
+    },
+    {
+      "sid": 0,
+      "tid": 2,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__fra-angelico_san-domenico-altarpiece-1430",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.4010523557662964
+    },
+    {
+      "sid": 1,
+      "tid": 2,
+      "source_id": "wikiart__Impressionism__Impressionism__pierre-auguste-renoir_studies-woman-s-heads-nudes-landscapes-and-peaches",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7220685482025146
+    },
+    {
+      "sid": 3,
+      "tid": 2,
+      "source_id": "d5__Rococo__Rococo__louise-elisabeth-vigee-le-brun_portrait-of-countess-catherine-skavronskaya",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5369369983673096
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__keisai-eisen_lucky-god-stepping-on-a-rat-from-the-series-twelve-treasures-of-the-rat(1)",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.46540677547454834
+    },
+    {
+      "sid": 1,
+      "tid": 2,
+      "source_id": "d5__Impressionism__Impressionism__gustave-caillebotte_the-artist-s-house-at-yerres",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.4841391444206238
+    },
+    {
+      "sid": 0,
+      "tid": 2,
+      "source_id": "wikiart__Early_Renaissance__Early_Renaissance__fra-angelico_communion-of-the-apostles",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.4050109386444092
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__toyohara-chikanobu_true-beauties",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.633139431476593
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__katsushika-hokusai_poppies",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.47224289178848267
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_inume-pass-in-the-kai-province",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5287500619888306
+    },
+    {
+      "sid": 0,
+      "tid": 2,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__pietro-perugino_the-miracles-of-san-bernardino-miracle-baby-born-with-one-dead",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5091524124145508
+    },
+    {
+      "sid": 3,
+      "tid": 2,
+      "source_id": "wikiart__Rococo__Rococo__dmitry-levitzky_nikolai-lvov",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5463800430297852
+    },
+    {
+      "sid": 0,
+      "tid": 2,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__carlo-crivelli_saint-james-the-elder-saint-bernard-of-siena-saint-nicodemus-1482",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5784308910369873
+    },
+    {
+      "sid": 0,
+      "tid": 2,
+      "source_id": "wikiart__Early_Renaissance__Early_Renaissance__antonello-da-messina_portrait-of-a-man-the-condottiero",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6403169631958008
+    },
+    {
+      "sid": 1,
+      "tid": 2,
+      "source_id": "wikiart__Impressionism__Impressionism__konstantin-yuon_the-winter-sun-ligachevo",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7137174606323242
+    },
+    {
+      "sid": 0,
+      "tid": 2,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__sandro-botticelli_virgin-and-child-with-saints-from-the-altarpiece-of-san-barnabas-1488(1)",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.258754163980484
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_the-dragon-princess",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6041978597640991
+    },
+    {
+      "sid": 0,
+      "tid": 2,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__benozzo-gozzoli_vision-of-st-dominic-and-meeting-of-st-francis-and-st-dominic",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5563777685165405
+    },
+    {
+      "sid": 1,
+      "tid": 2,
+      "source_id": "wikiart__Impressionism__Impressionism__valentin-serov_portrait-of-sergey-muromtsev",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.34286224842071533
+    },
+    {
+      "sid": 1,
+      "tid": 2,
+      "source_id": "wikiart__Impressionism__Impressionism__t-c-steele_vernon-beeches",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.3833068013191223
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__katsushika-hokusai_ocean-waves",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5508132576942444
+    },
+    {
+      "sid": 1,
+      "tid": 2,
+      "source_id": "wikiart__Impressionism__Impressionism__mary-cassatt_mother-sara-and-the-baby",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.45743492245674133
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__keisai-eisen_no-41-distant-view-of-kanagawa-bridge-near-nojiri-station",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5420514345169067
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__ito-jakuchu_rousho-hakkeizu",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.27580127120018005
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__keisai-eisen_love-boat-1838(1)",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.4947812855243683
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__hiroshige_untitled-two-rabbits-pampas-grass-and-full-moon-1851",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5853824615478516
+    },
+    {
+      "sid": 4,
+      "tid": 2,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_lingering-snow-at-ishiyama",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.4915611147880554
+    },
+    {
+      "sid": 0,
+      "tid": 3,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__piero-della-francesca_torment-of-the-jew(1)",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7479521036148071
+    },
+    {
+      "sid": 1,
+      "tid": 3,
+      "source_id": "wikiart__Impressionism__Impressionism__henri-martin_view-of-salute-in-venice",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.626408576965332
+    },
+    {
+      "sid": 0,
+      "tid": 3,
+      "source_id": "wikiart__Early_Renaissance__Early_Renaissance__piero-della-francesca_baptism-of-christ-detail",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7798353433609009
+    },
+    {
+      "sid": 2,
+      "tid": 3,
+      "source_id": "d5__Minimalism__Minimalism__fred-sandback_untitled-sculptural-study-six-part-construction-detail-1977",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.5181424021720886
+    },
+    {
+      "sid": 1,
+      "tid": 3,
+      "source_id": "wikiart__Impressionism__Impressionism__john-singer-sargent_granada-sunspots",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.682703971862793
+    },
+    {
+      "sid": 0,
+      "tid": 3,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__fra-angelico_scenes-from-the-lives-of-sts-lawrence-and-stephen-1449",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7874448895454407
+    },
+    {
+      "sid": 0,
+      "tid": 3,
+      "source_id": "wikiart__Early_Renaissance__Early_Renaissance__piero-della-francesca_st-augustine",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7369106411933899
+    },
+    {
+      "sid": 2,
+      "tid": 3,
+      "source_id": "d5__Minimalism__Minimalism__john-mccracken_parsec-1988",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6189767718315125
+    },
+    {
+      "sid": 0,
+      "tid": 3,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__fra-angelico_crucifixion-with-the-virgin-and-sts-cosmas-john-the-evangelist-and-peter-martyr-1442",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7862858176231384
+    },
+    {
+      "sid": 1,
+      "tid": 3,
+      "source_id": "wikiart__Impressionism__Impressionism__camille-pissarro_the-seine-viewed-from-the-pont-neuf-winter",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7518176436424255
+    },
+    {
+      "sid": 4,
+      "tid": 3,
+      "source_id": "wikiart__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_woman-in-a-boat-on-the-sumida-river",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5920906662940979
+    },
+    {
+      "sid": 0,
+      "tid": 3,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__fra-angelico_dispute-before-sanhedrin-1449",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.8601728677749634
+    },
+    {
+      "sid": 4,
+      "tid": 3,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_street-scenes-newly-pubished-5",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.5501754879951477
+    },
+    {
+      "sid": 4,
+      "tid": 3,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__utagawa-sadatora_oguri-hangan-sukeshige-in-battle",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7171274423599243
+    },
+    {
+      "sid": 0,
+      "tid": 3,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__filippo-lippi_madonna-enthroned",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.8241530060768127
+    },
+    {
+      "sid": 1,
+      "tid": 3,
+      "source_id": "wikiart__Impressionism__Impressionism__max-liebermann_horse-races",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.8452209830284119
+    },
+    {
+      "sid": 1,
+      "tid": 3,
+      "source_id": "wikiart__Impressionism__Impressionism__claude-monet_cliffs-of-the-porte-d-aval",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7259175777435303
+    },
+    {
+      "sid": 4,
+      "tid": 3,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_dipicting-the-characters-from-the-chushingura-3",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6475860476493835
+    },
+    {
+      "sid": 4,
+      "tid": 3,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__keisai-eisen_nihonbashi-pl-1-from-a-facsimile-edition-of-sixty-nine-stations-of-the-kiso-highway(1)",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.571477472782135
+    },
+    {
+      "sid": 4,
+      "tid": 3,
+      "source_id": "d5__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_half-legth-portrait-of-goshaku-somegoro",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6321950554847717
+    },
+    {
+      "sid": 1,
+      "tid": 3,
+      "source_id": "wikiart__Impressionism__Impressionism__alfred-sisley_abandoned-house",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7495483160018921
+    },
+    {
+      "sid": 2,
+      "tid": 3,
+      "source_id": "d5__Minimalism__Minimalism__anne-truitt_parva-xxviib-1993",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.493767648935318
+    },
+    {
+      "sid": 1,
+      "tid": 3,
+      "source_id": "wikiart__Impressionism__Impressionism__camille-pissarro_outer-harbour-of-le-havre",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5634630918502808
+    },
+    {
+      "sid": 0,
+      "tid": 3,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__leonardo-da-vinci_head-of-an-old-man",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5647111535072327
+    },
+    {
+      "sid": 0,
+      "tid": 3,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__benozzo-gozzoli_death-and-ascention-of-st-francis",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7563207149505615
+    },
+    {
+      "sid": 2,
+      "tid": 3,
+      "source_id": "d5__Minimalism__Minimalism__henk-peeters_untitled-2",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6444852352142334
+    },
+    {
+      "sid": 2,
+      "tid": 3,
+      "source_id": "d5__Minimalism__Minimalism__agnes-martin_the-islands-1979",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.5595135688781738
+    },
+    {
+      "sid": 1,
+      "tid": 3,
+      "source_id": "wikiart__Impressionism__Impressionism__rudolf-schweitzer-cumpana_bridge-over-seine",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.5299263000488281
+    },
+    {
+      "sid": 0,
+      "tid": 3,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__domenico-ghirlandaio_st-jerome-1480",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7565703392028809
+    },
+    {
+      "sid": 1,
+      "tid": 3,
+      "source_id": "d5__Impressionism__Impressionism__edgar-degas_houses-by-the-seaside-1869",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.71435546875
+    },
+    {
+      "sid": 0,
+      "tid": 4,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__carlo-crivelli_saint-ursula-1473",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6418560147285461
+    },
+    {
+      "sid": 3,
+      "tid": 4,
+      "source_id": "wikiart__Rococo__Rococo__louise-elisabeth-vigee-le-brun_anna-ivanovna-tolstaya",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7821569442749023
+    },
+    {
+      "sid": 3,
+      "tid": 4,
+      "source_id": "d5__Rococo__Rococo__louise-elisabeth-vigee-le-brun_elisabeth-alexeievna",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.604759156703949
+    },
+    {
+      "sid": 2,
+      "tid": 4,
+      "source_id": "d5__Minimalism__Minimalism__robert-morris_untitled-l-beams-1965",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7182772755622864
+    },
+    {
+      "sid": 1,
+      "tid": 4,
+      "source_id": "wikiart__Impressionism__Impressionism__konstantin-korovin_trading-pier-in-the-capital-city-sketch-of-set-for-c-pugni-s-ballet",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7305144667625427
+    },
+    {
+      "sid": 0,
+      "tid": 4,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__carlo-crivelli_saint-jerome-1477",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6742382049560547
+    },
+    {
+      "sid": 1,
+      "tid": 4,
+      "source_id": "wikiart__Impressionism__Impressionism__william-merritt-chase_view-near-polling",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7214037179946899
+    },
+    {
+      "sid": 3,
+      "tid": 4,
+      "source_id": "wikiart__Rococo__Rococo__george-romney_dr-edmund-law-bishop-of-carlisle-1769-1787",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7671084403991699
+    },
+    {
+      "sid": 2,
+      "tid": 4,
+      "source_id": "d5__Minimalism__Minimalism__richard-tuttle_light-pink-octagon-1967",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6927939653396606
+    },
+    {
+      "sid": 3,
+      "tid": 4,
+      "source_id": "d5__Rococo__Rococo__bernardo-bellotto_the-piazza-della-signoria-in-florence",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.5702365040779114
+    },
+    {
+      "sid": 0,
+      "tid": 4,
+      "source_id": "wikiart__Early_Renaissance__Early_Renaissance__jacopo-bellini_christ-in-the-grave",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6882812976837158
+    },
+    {
+      "sid": 1,
+      "tid": 4,
+      "source_id": "wikiart__Impressionism__Impressionism__childe-hassam_elms-east-hampton-new-york",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.5790566205978394
+    },
+    {
+      "sid": 0,
+      "tid": 4,
+      "source_id": "wikiart__Early_Renaissance__Early_Renaissance__leonardo-da-vinci_madonna-with-a-flower-madonna-benois",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.6626026630401611
+    },
+    {
+      "sid": 0,
+      "tid": 4,
+      "source_id": "wikiart__Early_Renaissance__Early_Renaissance__benozzo-gozzoli_upper-portions-of-the-east-window-wall",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7053805589675903
+    },
+    {
+      "sid": 1,
+      "tid": 4,
+      "source_id": "wikiart__Impressionism__Impressionism__edgar-degas_at-the-caf",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7305761575698853
+    },
+    {
+      "sid": 1,
+      "tid": 4,
+      "source_id": "wikiart__Impressionism__Impressionism__claude-monet_the-seine-seen-from-the-heights-chantemesle",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.763994574546814
+    },
+    {
+      "sid": 0,
+      "tid": 4,
+      "source_id": "d5__Early_Renaissance__Early_Renaissance__andrea-mantegna_the-martyrdom-of-saint-christopher-1506",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6304881572723389
+    },
+    {
+      "sid": 2,
+      "tid": 4,
+      "source_id": "d5__Minimalism__Minimalism__park-seo-bo_ecriture-no-960714-1996",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.285078227519989
+    },
+    {
+      "sid": 1,
+      "tid": 4,
+      "source_id": "wikiart__Impressionism__Impressionism__childe-hassam_gate-of-the-alhambra",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.8804413676261902
+    },
+    {
+      "sid": 3,
+      "tid": 4,
+      "source_id": "wikiart__Rococo__Rococo__jean-baptiste-simeon-chardin_not-dtected",
+      "hit": true,
+      "hic_dino_c_s10_source": 0.7067606449127197
+    },
+    {
+      "sid": 2,
+      "tid": 4,
+      "source_id": "d5__Minimalism__Minimalism__piero-manzoni_achrome-1960-2",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6944876909255981
+    },
+    {
+      "sid": 2,
+      "tid": 4,
+      "source_id": "d5__Minimalism__Minimalism__rodolfo-arico_radic-tiva",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.27323663234710693
+    },
+    {
+      "sid": 1,
+      "tid": 4,
+      "source_id": "wikiart__Impressionism__Impressionism__eva-gonzales_portrait-of-a-woman-in-white",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.7159051895141602
+    },
+    {
+      "sid": 2,
+      "tid": 4,
+      "source_id": "d5__Minimalism__Minimalism__angelo-de-sousa_sculpture-in-front-of-burgo-empreendimento",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.591593861579895
+    },
+    {
+      "sid": 3,
+      "tid": 4,
+      "source_id": "d5__Rococo__Rococo__joshua-reynolds_boy-holding-a-bunch-of-grapes",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.694252610206604
+    },
+    {
+      "sid": 3,
+      "tid": 4,
+      "source_id": "d5__Rococo__Rococo__thomas-gainsborough_figures-with-cart-at-roadside",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6563205122947693
+    },
+    {
+      "sid": 2,
+      "tid": 4,
+      "source_id": "d5__Minimalism__Minimalism__pino-pinelli_pittura-bl-1993",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6879670023918152
+    },
+    {
+      "sid": 2,
+      "tid": 4,
+      "source_id": "d5__Minimalism__Minimalism__marko-pogacnik_untitled",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.550652027130127
+    },
+    {
+      "sid": 3,
+      "tid": 4,
+      "source_id": "wikiart__Rococo__Rococo__george-romney_sir-john-trevelyan-1761-1846-5th-bt",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.6423483490943909
+    },
+    {
+      "sid": 3,
+      "tid": 4,
+      "source_id": "d5__Rococo__Rococo__maurice-quentin-de-la-tour_francois-dachery-childhood-friend-of-maurice-quentin-de-la-tour",
+      "hit": false,
+      "hic_dino_c_s10_source": 0.5538270473480225
+    }
+  ],
+  "seed": 20261126,
+  "planned_sources": 1500,
+  "planned_tasks": 7500,
+  "gate_tasks": 150,
+  "anchor": "V19_T4_CONFIG (offline teacher only)",
+  "checkpoint": "icme_q32_flagship.pt",
+  "student_updates": 0,
+  "gate": {
+    "his_top1_at_least_54_percent": true,
+    "er_at_least_25_percent": false,
+    "uki_at_least_25_percent": false,
+    "hic_dino_c_at_least_062": true
+  },
+  "passed": false
+}

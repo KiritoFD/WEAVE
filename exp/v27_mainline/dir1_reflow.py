@@ -143,10 +143,13 @@ class SLFUNetGamma(SLFUNet):
 
 @torch.no_grad()
 def _integrate_q32_seg(model, z_anc, eps, y16, d16_match, q32_in, tid, bank, *,
-                       steps: int, full_steps: set[int], cfg_kw: dict) -> torch.Tensor:
-    dev = z_anc.device
-    B = len(z_anc)
+                       steps: int, full_steps: set[int], cfg_kw: dict,
+                       wc_override: float | None = None, zero_vivid: bool = False) -> torch.Tensor:
+    dev = eps.device
+    B = len(eps)
     y_in, q_in, u_core, lscale = prepare_q32_cond_inputs(y16, d16_match, q32_in, tid, bank, lscale_abs=cfg_kw["lscale_abs"])
+    if zero_vivid:
+        u_core = torch.zeros_like(u_core)
     sc_src = F.normalize(F.avg_pool2d(d16_match.float(), 4).flatten(1), dim=-1)
     best_c = torch.einsum("bd,bkd->bk", sc_src, bank["sub_scene"].to(dev).float()[tid]).argmax(dim=1)
     ex_dsd = bank["sub_dsd"].to(dev).float()[tid, best_c]
@@ -154,7 +157,13 @@ def _integrate_q32_seg(model, z_anc, eps, y16, d16_match, q32_in, tid, bank, *,
     gf4 = g_fig.view(B, 1, 1, 1)
 
     tau_v = (cfg_kw["tau_min"] + (cfg_kw["tau_hi"] - cfg_kw["tau_min"]) * g_fig).clamp(0.0, 0.78)
-    z = (1.0 - tau_v.view(B, 1, 1, 1)) * eps + tau_v.view(B, 1, 1, 1) * z_anc
+    if z_anc is None:
+        if cfg_kw["tau_min"] != 0 or cfg_kw["tau_hi"] != 0:
+            raise ValueError("An empty anchor requires tau_0=0")
+        z = eps
+    else:
+        tau4 = tau_v.view(B, 1, 1, 1)
+        z = (1.0 - tau4) * eps + tau4 * z_anc
     f0 = torch.zeros(B, dtype=torch.bool, device=dev)
     f1 = torch.ones(B, dtype=torch.bool, device=dev)
     ls0 = torch.zeros(B, device=dev)
@@ -173,7 +182,8 @@ def _integrate_q32_seg(model, z_anc, eps, y16, d16_match, q32_in, tid, bank, *,
                     drop_content=torch.cat([f0, f1, f0, f1], 0),
                     layout_scale=torch.cat([lscale, ls0, lscale, ls0], 0),
                 ).float().chunk(4, 0)
-            wc = gf4 * (cfg_kw["wc_fig"] - 0.45 * gl) + (1.0 - gf4) * cfg_kw["wc_abs"]
+            wc = (gf4 * (cfg_kw["wc_fig"] - 0.45 * gl) + (1.0 - gf4) * cfg_kw["wc_abs"]
+                  if wc_override is None else wc_override)
             ws_p = gf4 * (gl * cfg_kw["wsp_fig_late"]) + (1.0 - gf4) * cfg_kw["wsp_abs"]
             vr = v_00 + wc * (v_0c - v_00) + ws_j * (v_sc - v_0c) + ws_p * (v_s0 - v_00)
             if rescale_phi > 0.0:

@@ -1,0 +1,256 @@
+{
+  "checkpoint": "ema_s4000.pt",
+  "student_updates": 4000,
+  "nfe": 1,
+  "teacher_gate": false,
+  "same_bypass": false,
+  "arms": {
+    "l000": {
+      "csd_top1": 0.0083,
+      "dino_s": 0.3735,
+      "dino_c": 0.959,
+      "style_affinity": 0.5028,
+      "clip_s": 0.6321,
+      "lpips": 0.089,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 0.0,
+      "per_target": {
+        "Early_Renaissance": 0.025,
+        "Impressionism": 0.0167,
+        "Minimalism": 0.0,
+        "Rococo": 0.0,
+        "Ukiyo_e": 0.0
+      },
+      "strength": 0.0,
+      "hits": {
+        "ER": [
+          3,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "wrong": false,
+      "lambda_zero_max_abs": 0.0
+    },
+    "l025": {
+      "csd_top1": 0.0717,
+      "dino_s": 0.4043,
+      "dino_c": 0.8969,
+      "style_affinity": 0.5342,
+      "clip_s": 0.6641,
+      "lpips": 0.2627,
+      "same150_top1": 0.98,
+      "imp_to_min_top1": 0.2,
+      "per_target": {
+        "Early_Renaissance": 0.025,
+        "Impressionism": 0.0583,
+        "Minimalism": 0.2,
+        "Rococo": 0.0667,
+        "Ukiyo_e": 0.0083
+      },
+      "strength": 0.25,
+      "hits": {
+        "ER": [
+          3,
+          120
+        ],
+        "Uki": [
+          1,
+          120
+        ]
+      },
+      "wrong": false,
+      "lambda_zero_max_abs": null
+    },
+    "l045": {
+      "csd_top1": 0.445,
+      "dino_s": 0.4426,
+      "dino_c": 0.7587,
+      "style_affinity": 0.5669,
+      "clip_s": 0.6912,
+      "lpips": 0.4977,
+      "same150_top1": 0.9867,
+      "imp_to_min_top1": 0.7333,
+      "per_target": {
+        "Early_Renaissance": 0.1167,
+        "Impressionism": 0.6,
+        "Minimalism": 0.7917,
+        "Rococo": 0.55,
+        "Ukiyo_e": 0.1667
+      },
+      "strength": 0.45,
+      "hits": {
+        "ER": [
+          14,
+          120
+        ],
+        "Uki": [
+          20,
+          120
+        ]
+      },
+      "wrong": false,
+      "lambda_zero_max_abs": null
+    },
+    "l070": {
+      "csd_top1": 0.4533,
+      "dino_s": 0.4421,
+      "dino_c": 0.7445,
+      "style_affinity": 0.5679,
+      "clip_s": 0.6937,
+      "lpips": 0.4916,
+      "same150_top1": 0.98,
+      "imp_to_min_top1": 0.8333,
+      "per_target": {
+        "Early_Renaissance": 0.1333,
+        "Impressionism": 0.6083,
+        "Minimalism": 0.9167,
+        "Rococo": 0.5,
+        "Ukiyo_e": 0.1083
+      },
+      "strength": 0.7,
+      "hits": {
+        "ER": [
+          16,
+          120
+        ],
+        "Uki": [
+          13,
+          120
+        ]
+      },
+      "wrong": false,
+      "lambda_zero_max_abs": null
+    },
+    "l085": {
+      "csd_top1": 0.4483,
+      "dino_s": 0.4412,
+      "dino_c": 0.7422,
+      "style_affinity": 0.5678,
+      "clip_s": 0.6944,
+      "lpips": 0.4884,
+      "same150_top1": 0.9733,
+      "imp_to_min_top1": 0.8667,
+      "per_target": {
+        "Early_Renaissance": 0.1167,
+        "Impressionism": 0.6,
+        "Minimalism": 0.9333,
+        "Rococo": 0.5167,
+        "Ukiyo_e": 0.075
+      },
+      "strength": 0.85,
+      "hits": {
+        "ER": [
+          14,
+          120
+        ],
+        "Uki": [
+          9,
+          120
+        ]
+      },
+      "wrong": false,
+      "lambda_zero_max_abs": null
+    },
+    "l100": {
+      "csd_top1": 0.5133,
+      "dino_s": 0.4478,
+      "dino_c": 0.7047,
+      "style_affinity": 0.5742,
+      "clip_s": 0.7006,
+      "lpips": 0.5305,
+      "same150_top1": 0.9933,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.15,
+        "Impressionism": 0.7167,
+        "Minimalism": 0.9833,
+        "Rococo": 0.625,
+        "Ukiyo_e": 0.0917
+      },
+      "strength": 1.0,
+      "hits": {
+        "ER": [
+          18,
+          120
+        ],
+        "Uki": [
+          11,
+          120
+        ]
+      },
+      "wrong": false,
+      "lambda_zero_max_abs": null
+    },
+    "l115": {
+      "csd_top1": 0.565,
+      "dino_s": 0.4612,
+      "dino_c": 0.6033,
+      "style_affinity": 0.5795,
+      "clip_s": 0.6978,
+      "lpips": 0.6238,
+      "same150_top1": 0.9733,
+      "imp_to_min_top1": 0.9,
+      "per_target": {
+        "Early_Renaissance": 0.2583,
+        "Impressionism": 0.8,
+        "Minimalism": 0.9583,
+        "Rococo": 0.7333,
+        "Ukiyo_e": 0.075
+      },
+      "strength": 1.15,
+      "hits": {
+        "ER": [
+          31,
+          120
+        ],
+        "Uki": [
+          9,
+          120
+        ]
+      },
+      "wrong": false,
+      "lambda_zero_max_abs": null
+    },
+    "wrong": {
+      "csd_top1": 0.005,
+      "dino_s": 0.3891,
+      "dino_c": 0.7047,
+      "style_affinity": 0.5251,
+      "clip_s": 0.661,
+      "lpips": 0.5305,
+      "same150_top1": 0.9933,
+      "imp_to_min_top1": 0.0,
+      "per_target": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.0167,
+        "Minimalism": 0.0083,
+        "Rococo": 0.0,
+        "Ukiyo_e": 0.0
+      },
+      "strength": 1.0,
+      "hits": {
+        "ER": [
+          0,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "wrong": true,
+      "lambda_zero_max_abs": null
+    }
+  },
+  "acceptance": {
+    "exact_latent_identity": true,
+    "high_content": false,
+    "strong_style": false,
+    "wrong_target": true,
+    "rtx3060_latency": null
+  }
+}

@@ -196,6 +196,7 @@ def eval_model_750(
     dec,
     *,
     is_wrong: bool = False,
+    same_bypass: bool = True,
     device: str = "cuda",
 ) -> dict:
     m_dir = OUT / "measured" / arm_tag
@@ -242,8 +243,10 @@ def eval_model_750(
                     v = model(z, y_in, q_in, tid_u, u_core, tau, layout_scale=lscale, gamma=gamma).float()
             z = z + dt * v
 
-        wr.write_batch(torch.where(same_750[sl].view(-1, 1, 1, 1).to(device), zs, z), tasks[sl])
-    wr.finalize(arm=arm_tag, is_wrong=is_wrong)
+        if same_bypass:
+            z = torch.where(same_750[sl].view(-1, 1, 1, 1).to(device), zs, z)
+        wr.write_batch(z, tasks[sl])
+    wr.finalize(arm=arm_tag, is_wrong=is_wrong, same_bypass=same_bypass)
     return run_measure_v27m(arm_tag, device=device)
 
 

@@ -1,0 +1,272 @@
+{
+  "checkpoint": "icme_q32_flagship.pt",
+  "sha256": "e3b2848847adcee4de3ac2508888b584ed0c431deae5297a60fe74ab8cf6612b",
+  "seed": 20261185,
+  "weights_trained": false,
+  "same_bypass": false,
+  "arms": {
+    "m1_csj": {
+      "csd_top1": 0.55,
+      "dino_s": 0.6347,
+      "dino_c": 0.3766,
+      "style_affinity": 0.7019,
+      "clip_s": 0.7691,
+      "lpips": 0.7788,
+      "same150_top1": 0.7467,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.325,
+        "Impressionism": 0.9667,
+        "Minimalism": 0.9917,
+        "Rococo": 0.3,
+        "Ukiyo_e": 0.1667
+      },
+      "hard_target_hits": {
+        "ER": [
+          39,
+          120
+        ],
+        "Uki": [
+          20,
+          120
+        ]
+      },
+      "er_uki_dino_c": 0.44736119878167907,
+      "tau0": 0.0,
+      "physical_steps": 6,
+      "nfe": 24,
+      "full_cfg_steps": [],
+      "wc_full_override": null,
+      "zero_vivid": false,
+      "elapsed_s": 58.4
+    },
+    "m1_e2full": {
+      "csd_top1": 0.5233,
+      "dino_s": 0.6247,
+      "dino_c": 0.3839,
+      "style_affinity": 0.6934,
+      "clip_s": 0.7622,
+      "lpips": 0.7494,
+      "same150_top1": 0.74,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.175,
+        "Impressionism": 0.9667,
+        "Minimalism": 1.0,
+        "Rococo": 0.2917,
+        "Ukiyo_e": 0.1833
+      },
+      "hard_target_hits": {
+        "ER": [
+          21,
+          120
+        ],
+        "Uki": [
+          22,
+          120
+        ]
+      },
+      "er_uki_dino_c": 0.47304993038997056,
+      "tau0": 0.0,
+      "physical_steps": 6,
+      "nfe": 32,
+      "full_cfg_steps": [
+        0,
+        1
+      ],
+      "wc_full_override": null,
+      "zero_vivid": false,
+      "elapsed_s": 63.05
+    },
+    "m2_wc1": {
+      "csd_top1": 0.545,
+      "dino_s": 0.635,
+      "dino_c": 0.3641,
+      "style_affinity": 0.6998,
+      "clip_s": 0.7646,
+      "lpips": 0.7847,
+      "same150_top1": 0.7333,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.3167,
+        "Impressionism": 0.975,
+        "Minimalism": 1.0,
+        "Rococo": 0.325,
+        "Ukiyo_e": 0.1083
+      },
+      "hard_target_hits": {
+        "ER": [
+          38,
+          120
+        ],
+        "Uki": [
+          13,
+          120
+        ]
+      },
+      "er_uki_dino_c": 0.4494823571604987,
+      "tau0": 0.0,
+      "physical_steps": 6,
+      "nfe": 32,
+      "full_cfg_steps": [
+        0,
+        1
+      ],
+      "wc_full_override": 1.0,
+      "zero_vivid": false,
+      "elapsed_s": 63.36
+    },
+    "m2_wc2": {
+      "csd_top1": 0.4867,
+      "dino_s": 0.6214,
+      "dino_c": 0.393,
+      "style_affinity": 0.6905,
+      "clip_s": 0.7596,
+      "lpips": 0.7275,
+      "same150_top1": 0.7333,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.1167,
+        "Impressionism": 0.9083,
+        "Minimalism": 1.0,
+        "Rococo": 0.2417,
+        "Ukiyo_e": 0.1667
+      },
+      "hard_target_hits": {
+        "ER": [
+          14,
+          120
+        ],
+        "Uki": [
+          20,
+          120
+        ]
+      },
+      "er_uki_dino_c": 0.4878128167086591,
+      "tau0": 0.0,
+      "physical_steps": 6,
+      "nfe": 32,
+      "full_cfg_steps": [
+        0,
+        1
+      ],
+      "wc_full_override": 2.0,
+      "zero_vivid": false,
+      "elapsed_s": 63.12
+    },
+    "m2_wc3": {
+      "csd_top1": 0.43,
+      "dino_s": 0.6157,
+      "dino_c": 0.4064,
+      "style_affinity": 0.6861,
+      "clip_s": 0.7565,
+      "lpips": 0.7055,
+      "same150_top1": 0.6533,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.0583,
+        "Impressionism": 0.8833,
+        "Minimalism": 1.0,
+        "Rococo": 0.125,
+        "Ukiyo_e": 0.0833
+      },
+      "hard_target_hits": {
+        "ER": [
+          7,
+          120
+        ],
+        "Uki": [
+          10,
+          120
+        ]
+      },
+      "er_uki_dino_c": 0.5048027989765008,
+      "tau0": 0.0,
+      "physical_steps": 6,
+      "nfe": 32,
+      "full_cfg_steps": [
+        0,
+        1
+      ],
+      "wc_full_override": 3.0,
+      "zero_vivid": false,
+      "elapsed_s": 63.23
+    },
+    "m3_analytic": {
+      "csd_top1": 0.3967,
+      "dino_s": 0.5513,
+      "dino_c": 0.4112,
+      "style_affinity": 0.6419,
+      "clip_s": 0.7325,
+      "lpips": 0.6601,
+      "same150_top1": 0.6933,
+      "imp_to_min_top1": 0.9,
+      "per_target": {
+        "Early_Renaissance": 0.2333,
+        "Impressionism": 0.8667,
+        "Minimalism": 0.7833,
+        "Rococo": 0.1,
+        "Ukiyo_e": 0.0
+      },
+      "hard_target_hits": {
+        "ER": [
+          28,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "er_uki_dino_c": 0.47602588705097637,
+      "tau0": 0.2,
+      "physical_steps": 6,
+      "nfe": 32,
+      "full_cfg_steps": [
+        0,
+        1
+      ],
+      "wc_full_override": null,
+      "zero_vivid": false,
+      "elapsed_s": 63.69
+    },
+    "m4_zero_vivid": {
+      "csd_top1": 0.3367,
+      "dino_s": 0.5458,
+      "dino_c": 0.4305,
+      "style_affinity": 0.6408,
+      "clip_s": 0.7357,
+      "lpips": 0.6641,
+      "same150_top1": 0.44,
+      "imp_to_min_top1": 0.6,
+      "per_target": {
+        "Early_Renaissance": 0.075,
+        "Impressionism": 0.8667,
+        "Minimalism": 0.725,
+        "Rococo": 0.0167,
+        "Ukiyo_e": 0.0
+      },
+      "hard_target_hits": {
+        "ER": [
+          9,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "er_uki_dino_c": 0.48312620211703083,
+      "tau0": 0.0,
+      "physical_steps": 6,
+      "nfe": 32,
+      "full_cfg_steps": [
+        0,
+        1
+      ],
+      "wc_full_override": null,
+      "zero_vivid": true,
+      "elapsed_s": 63.33
+    }
+  }
+}

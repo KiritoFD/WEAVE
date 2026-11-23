@@ -1,0 +1,63 @@
+{
+  "intervention": "inject grayscale donor fiber in Stage 1 u_vivid instead of class prototype",
+  "arms": {
+    "Early_Renaissance": {
+      "donor_ids": [
+        "d5__Early_Renaissance__Early_Renaissance__antonello-da-messina_portrait-of-a-man-1473",
+        "d5__Early_Renaissance__Early_Renaissance__leonardo-da-vinci_design-for-a-flying-machine"
+      ],
+      "source_tasks": [
+        "Impressionism/Impressionism__alfred-sisley_riverbank-at-veneux-1881/Early_Renaissance",
+        "Impressionism/Impressionism__alfred-sisley_the-banks-of-the-oise-1878/Early_Renaissance",
+        "Impressionism/Impressionism__antoine-blanchard_place-de-la-madeleine-hiver/Early_Renaissance",
+        "Impressionism/Impressionism__armand-guillaumin_valley-in-pontgibaud-1890/Early_Renaissance",
+        "Impressionism/Impressionism__augustus-john_proven-al-landscape/Early_Renaissance",
+        "Impressionism/Impressionism__camille-pissarro_the-gardener-afternoon-sun-eragny-1899/Early_Renaissance",
+        "Impressionism/Impressionism__childe-hassam_evening-champs-elysees-aka-pres-du-louvre/Early_Renaissance",
+        "Impressionism/Impressionism__childe-hassam_september-moonrise/Early_Renaissance",
+        "Impressionism/Impressionism__claude-monet_bordighera-the-house-of-gardener/Early_Renaissance",
+        "Impressionism/Impressionism__claude-monet_palazzo-contarini-2/Early_Renaissance",
+        "Impressionism/Impressionism__claude-monet_rouen-cathedral-the-portal-at-midday/Early_Renaissance",
+        "Impressionism/Impressionism__edgar-degas_ancer-with-red-stockings/Early_Renaissance",
+        "Impressionism/Impressionism__edgar-degas_study-of-gentile-bellini-1855/Early_Renaissance",
+        "Impressionism/Impressionism__edouard-manet_tarring-the-boat-1873/Early_Renaissance",
+        "Impressionism/Impressionism__eugene-boudin_laundresses-on-the-banks-of-the-touques-9/Early_Renaissance",
+        "Impressionism/Impressionism__eugene-boudin_the-port-ships-at-dock/Early_Renaissance"
+      ],
+      "donor_fiber_cosine": 0.5892484784126282,
+      "output_rgb_mae": 0.042621809523552656,
+      "donor_gray_band_l2": 6.393518447875977,
+      "output_gray_band_l2": 0.3301149308681488,
+      "output_to_donor_band_direction_cosine": -0.9452296495437622
+    },
+    "Ukiyo_e": {
+      "donor_ids": [
+        "wikiart__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_the-actor-ichumura-meeting-a-cat-ghost",
+        "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_a-lacquered-washbasin-and-ewer"
+      ],
+      "source_tasks": [
+        "Early_Renaissance/Early_Renaissance__andrea-mantegna_adoration-of-the-magi-central-panel-from-the-altarpiece/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__andrea-mantegna_maria-with-the-sleeping-child-1455/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__andrea-mantegna_scenes-from-the-life-of-st-james-1448-2/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__antonello-da-messina_painter-self-portrait/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__bartolome-bermejo_death-of-the-virgin-1462/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__benozzo-gozzoli_madonna-and-child-1485/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__benozzo-gozzoli_procession-of-the-magus-caspar-detail-1461-4/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__benozzo-gozzoli_the-school-of-tagaste-1465-1/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__carlo-crivelli_piet-1/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__carlo-crivelli_saint-thomas-aquinas-1476/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__domenico-ghirlandaio_st-jerome/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__domenico-ghirlandaio_st-stephen-st-jacobo-st-peter/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__domenico-ghirlandaio_the-nativity-1/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__domenico-veneziano_not-detected-269819/Ukiyo_e",
+        "Early_Renaissance/Early_Renaissance__filippo-lippi_adoration-of-the-magi-detail-2/Ukiyo_e"
+      ],
+      "donor_fiber_cosine": 0.9877982139587402,
+      "output_rgb_mae": 0.0027944792236667126,
+      "donor_gray_band_l2": 5.830582141876221,
+      "output_gray_band_l2": 0.011673402972519398,
+      "output_to_donor_band_direction_cosine": -0.742063045501709
+    }
+  }
+}

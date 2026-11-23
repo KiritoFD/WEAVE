@@ -70,6 +70,7 @@ exp/*
 !exp/v26/
 !exp/v27/
 !exp/v27_mainline/
+!exp/v27_single/
 experiments/
 state/
 archives/

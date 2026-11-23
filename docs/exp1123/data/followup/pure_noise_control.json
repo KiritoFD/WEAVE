@@ -1,0 +1,25 @@
+{
+  "stage1_reference_channel": "absent",
+  "arms": {
+    "pure_noise": {
+      "csd_top1": 0.3267,
+      "dino_s": 0.3513,
+      "dino_c": 0.1953,
+      "style_affinity": 0.4952,
+      "clip_s": 0.6392,
+      "lpips": 0.8112,
+      "same150_top1": 0.3533,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.0,
+        "Impressionism": 0.7583,
+        "Minimalism": 0.875,
+        "Rococo": 0.0,
+        "Ukiyo_e": 0.0
+      },
+      "same150_latent_mae": 1.1077508533000946,
+      "same150_s10_rgb_mae": 0.3434423294663429
+    }
+  },
+  "alpha_bridge": 0.0
+}

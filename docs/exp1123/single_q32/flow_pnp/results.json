@@ -1,0 +1,533 @@
+{
+  "checkpoint": "icme_q32_flagship.pt",
+  "sha256": "e3b2848847adcee4de3ac2508888b584ed0c431deae5297a60fe74ab8cf6612b",
+  "seed": 20261185,
+  "tau0": 0.0,
+  "steps": 8,
+  "flow_branch_evals": 16,
+  "eta_c_max": 0.45,
+  "eta_g_max": 0.2,
+  "style_steps_zero_based": [
+    3,
+    4
+  ],
+  "same_bypass": false,
+  "arms": {
+    "structure_0.1": {
+      "csd_top1": 0.24,
+      "dino_s": 0.4592,
+      "dino_c": 0.3949,
+      "style_affinity": 0.5743,
+      "clip_s": 0.6894,
+      "lpips": 0.6508,
+      "same150_top1": 0.5267,
+      "imp_to_min_top1": 0.4667,
+      "per_target": {
+        "Early_Renaissance": 0.0667,
+        "Impressionism": 0.5,
+        "Minimalism": 0.4833,
+        "Rococo": 0.15,
+        "Ukiyo_e": 0.0
+      },
+      "s": 0.1,
+      "mode": "structure",
+      "hits": {
+        "ER": [
+          8,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "arm": "flow_pnp_structure_s01_c0.45_g0.2",
+      "infer_s": 24.43,
+      "elapsed_s": 53.14
+    },
+    "structure_0.3": {
+      "csd_top1": 0.2817,
+      "dino_s": 0.4884,
+      "dino_c": 0.4277,
+      "style_affinity": 0.5952,
+      "clip_s": 0.7021,
+      "lpips": 0.6427,
+      "same150_top1": 0.54,
+      "imp_to_min_top1": 0.5667,
+      "per_target": {
+        "Early_Renaissance": 0.0417,
+        "Impressionism": 0.65,
+        "Minimalism": 0.5333,
+        "Rococo": 0.1833,
+        "Ukiyo_e": 0.0
+      },
+      "s": 0.3,
+      "mode": "structure",
+      "hits": {
+        "ER": [
+          5,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "arm": "flow_pnp_structure_s03_c0.45_g0.2",
+      "infer_s": 23.92,
+      "elapsed_s": 52.61
+    },
+    "structure_0.5": {
+      "csd_top1": 0.37,
+      "dino_s": 0.5312,
+      "dino_c": 0.4429,
+      "style_affinity": 0.6246,
+      "clip_s": 0.7181,
+      "lpips": 0.6535,
+      "same150_top1": 0.6333,
+      "imp_to_min_top1": 0.9,
+      "per_target": {
+        "Early_Renaissance": 0.0583,
+        "Impressionism": 0.7333,
+        "Minimalism": 0.8833,
+        "Rococo": 0.175,
+        "Ukiyo_e": 0.0
+      },
+      "s": 0.5,
+      "mode": "structure",
+      "hits": {
+        "ER": [
+          7,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "arm": "flow_pnp_structure_s05_c0.45_g0.2",
+      "infer_s": 23.84,
+      "elapsed_s": 54.24
+    },
+    "structure_0.7": {
+      "csd_top1": 0.465,
+      "dino_s": 0.5805,
+      "dino_c": 0.4185,
+      "style_affinity": 0.6639,
+      "clip_s": 0.7473,
+      "lpips": 0.7074,
+      "same150_top1": 0.64,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.1083,
+        "Impressionism": 0.8583,
+        "Minimalism": 1.0,
+        "Rococo": 0.3583,
+        "Ukiyo_e": 0.0
+      },
+      "s": 0.7,
+      "mode": "structure",
+      "hits": {
+        "ER": [
+          13,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "arm": "flow_pnp_structure_s07_c0.45_g0.2",
+      "infer_s": 23.79,
+      "elapsed_s": 55.22
+    },
+    "structure_0.9": {
+      "csd_top1": 0.5183,
+      "dino_s": 0.6042,
+      "dino_c": 0.38,
+      "style_affinity": 0.6818,
+      "clip_s": 0.7594,
+      "lpips": 0.7767,
+      "same150_top1": 0.6867,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.1583,
+        "Impressionism": 0.925,
+        "Minimalism": 1.0,
+        "Rococo": 0.475,
+        "Ukiyo_e": 0.0333
+      },
+      "s": 0.9,
+      "mode": "structure",
+      "hits": {
+        "ER": [
+          19,
+          120
+        ],
+        "Uki": [
+          4,
+          120
+        ]
+      },
+      "arm": "flow_pnp_structure_s09_c0.45_g0.2",
+      "infer_s": 23.94,
+      "elapsed_s": 54.65
+    },
+    "structure_1.0": {
+      "csd_top1": 0.5333,
+      "dino_s": 0.6073,
+      "dino_c": 0.3707,
+      "style_affinity": 0.6837,
+      "clip_s": 0.7601,
+      "lpips": 0.7942,
+      "same150_top1": 0.7,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.2167,
+        "Impressionism": 0.9333,
+        "Minimalism": 1.0,
+        "Rococo": 0.475,
+        "Ukiyo_e": 0.0417
+      },
+      "s": 1.0,
+      "mode": "structure",
+      "hits": {
+        "ER": [
+          26,
+          120
+        ],
+        "Uki": [
+          5,
+          120
+        ]
+      },
+      "arm": "flow_pnp_structure_s10_c0.45_g0.2",
+      "infer_s": 23.78,
+      "elapsed_s": 53.17
+    },
+    "joint_0.1": {
+      "csd_top1": 0.2467,
+      "dino_s": 0.4634,
+      "dino_c": 0.3976,
+      "style_affinity": 0.5766,
+      "clip_s": 0.6898,
+      "lpips": 0.6504,
+      "same150_top1": 0.54,
+      "imp_to_min_top1": 0.5,
+      "per_target": {
+        "Early_Renaissance": 0.0833,
+        "Impressionism": 0.525,
+        "Minimalism": 0.5083,
+        "Rococo": 0.1167,
+        "Ukiyo_e": 0.0
+      },
+      "s": 0.1,
+      "mode": "joint",
+      "hits": {
+        "ER": [
+          10,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "arm": "flow_pnp_joint_s01_c0.45_g0.2",
+      "infer_s": 67.28,
+      "elapsed_s": 99.16
+    },
+    "joint_0.3": {
+      "csd_top1": 0.2867,
+      "dino_s": 0.4942,
+      "dino_c": 0.4299,
+      "style_affinity": 0.5982,
+      "clip_s": 0.7022,
+      "lpips": 0.6423,
+      "same150_top1": 0.5667,
+      "imp_to_min_top1": 0.5667,
+      "per_target": {
+        "Early_Renaissance": 0.075,
+        "Impressionism": 0.675,
+        "Minimalism": 0.525,
+        "Rococo": 0.1583,
+        "Ukiyo_e": 0.0
+      },
+      "s": 0.3,
+      "mode": "joint",
+      "hits": {
+        "ER": [
+          9,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "arm": "flow_pnp_joint_s03_c0.45_g0.2",
+      "infer_s": 69.48,
+      "elapsed_s": 102.35
+    },
+    "joint_0.5": {
+      "csd_top1": 0.3767,
+      "dino_s": 0.5303,
+      "dino_c": 0.4387,
+      "style_affinity": 0.6238,
+      "clip_s": 0.7174,
+      "lpips": 0.6521,
+      "same150_top1": 0.6267,
+      "imp_to_min_top1": 0.8667,
+      "per_target": {
+        "Early_Renaissance": 0.0833,
+        "Impressionism": 0.7667,
+        "Minimalism": 0.85,
+        "Rococo": 0.1833,
+        "Ukiyo_e": 0.0
+      },
+      "s": 0.5,
+      "mode": "joint",
+      "hits": {
+        "ER": [
+          10,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "arm": "flow_pnp_joint_s05_c0.45_g0.2",
+      "infer_s": 67.55,
+      "elapsed_s": 99.39
+    },
+    "joint_0.7": {
+      "csd_top1": 0.4767,
+      "dino_s": 0.5737,
+      "dino_c": 0.4123,
+      "style_affinity": 0.6594,
+      "clip_s": 0.745,
+      "lpips": 0.7018,
+      "same150_top1": 0.6933,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.1833,
+        "Impressionism": 0.8833,
+        "Minimalism": 1.0,
+        "Rococo": 0.3167,
+        "Ukiyo_e": 0.0
+      },
+      "s": 0.7,
+      "mode": "joint",
+      "hits": {
+        "ER": [
+          22,
+          120
+        ],
+        "Uki": [
+          0,
+          120
+        ]
+      },
+      "arm": "flow_pnp_joint_s07_c0.45_g0.2",
+      "infer_s": 68.07,
+      "elapsed_s": 100.25
+    },
+    "joint_0.9": {
+      "csd_top1": 0.5533,
+      "dino_s": 0.5971,
+      "dino_c": 0.3758,
+      "style_affinity": 0.6775,
+      "clip_s": 0.7579,
+      "lpips": 0.7646,
+      "same150_top1": 0.7267,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.2833,
+        "Impressionism": 0.9417,
+        "Minimalism": 1.0,
+        "Rococo": 0.4583,
+        "Ukiyo_e": 0.0833
+      },
+      "s": 0.9,
+      "mode": "joint",
+      "hits": {
+        "ER": [
+          34,
+          120
+        ],
+        "Uki": [
+          10,
+          120
+        ]
+      },
+      "arm": "flow_pnp_joint_s09_c0.45_g0.2",
+      "infer_s": 67.52,
+      "elapsed_s": 99.99
+    },
+    "joint_1.0": {
+      "csd_top1": 0.575,
+      "dino_s": 0.6049,
+      "dino_c": 0.3686,
+      "style_affinity": 0.6822,
+      "clip_s": 0.7596,
+      "lpips": 0.7792,
+      "same150_top1": 0.7933,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.325,
+        "Impressionism": 0.9667,
+        "Minimalism": 1.0,
+        "Rococo": 0.4833,
+        "Ukiyo_e": 0.1
+      },
+      "s": 1.0,
+      "mode": "joint",
+      "hits": {
+        "ER": [
+          39,
+          120
+        ],
+        "Uki": [
+          12,
+          120
+        ]
+      },
+      "arm": "flow_pnp_joint_s10_c0.45_g0.2",
+      "infer_s": 66.46,
+      "elapsed_s": 98.49
+    }
+  },
+  "reference_ids": [
+    [
+      "d5__Early_Renaissance__Early_Renaissance__piero-della-francesca_burial-of-the-holy-wood-1464(1)",
+      "d5__Early_Renaissance__Early_Renaissance__benozzo-gozzoli_st-augustine-reading-the-epistle-of-st-paul-1465",
+      "wikiart__Early_Renaissance__Early_Renaissance__benozzo-gozzoli_view-of-the-apsidal-chapel-of-sant-agostino-cycle-of-st-augustine",
+      "wikiart__Early_Renaissance__Early_Renaissance__andrea-mantegna_the-house-of-ludovico-gonzaga-bridegroom-decorated-wall-and-his-son",
+      "d5__Early_Renaissance__Early_Renaissance__luca-signorelli_moses-s-testament-and-death-detail-1482-1",
+      "d5__Early_Renaissance__Early_Renaissance__sandro-botticelli_the-virgin-adoring-the-child(1)",
+      "d5__Early_Renaissance__Early_Renaissance__fra-angelico_the-naming-of-st-john-the-baptist-1435",
+      "d5__Early_Renaissance__Early_Renaissance__pietro-perugino_st-sebastian-1490",
+      "d5__Early_Renaissance__Early_Renaissance__giovanni-bellini_portrait-of-a-condottiere",
+      "wikiart__Early_Renaissance__Early_Renaissance__fra-angelico_saint-cosmas-and-saint-damian-salvaged",
+      "d5__Early_Renaissance__Early_Renaissance__andrea-mantegna_the-ascension-left-hand-panel-from-the-altarpiece",
+      "d5__Early_Renaissance__Early_Renaissance__piero-della-francesca_battle-between-heraclius-and-chosroes-detail-1(1)",
+      "wikiart__Early_Renaissance__Early_Renaissance__pietro-perugino_journey-of-moses-and-circumcision-of-her-second-child",
+      "wikiart__Early_Renaissance__Early_Renaissance__andrea-mantegna_study-for-a-christ",
+      "d5__Early_Renaissance__Early_Renaissance__fra-angelico_crucified-christ-with-saint-john-the-evangelist",
+      "d5__Early_Renaissance__Early_Renaissance__carlo-crivelli_enthroned-madonna-saint-jerome-and-st-sebastian-1490",
+      "d5__Early_Renaissance__Early_Renaissance__piero-della-francesca_nativity-detail-1475(1)",
+      "d5__Early_Renaissance__Early_Renaissance__luca-signorelli_head-of-a-poet-wearing-a-cap",
+      "wikiart__Early_Renaissance__Early_Renaissance__sandro-botticelli_simonetta",
+      "wikiart__Early_Renaissance__Early_Renaissance__benozzo-gozzoli_tobias-and-the-fish",
+      "wikiart__Early_Renaissance__Early_Renaissance__pisanello_portrait-of-leonillo-d-este",
+      "d5__Early_Renaissance__Early_Renaissance__sandro-botticelli_judith-leaving-the-tent-of-holofernes-1500(1)",
+      "d5__Early_Renaissance__Early_Renaissance__fra-angelico_madonna-with-the-child-and-angels",
+      "wikiart__Early_Renaissance__Early_Renaissance__carlo-crivelli_polyptych"
+    ],
+    [
+      "wikiart__Impressionism__Impressionism__eugene-boudin_laundresses-on-the-banks-of-touques",
+      "wikiart__Impressionism__Impressionism__claude-monet_the-garden",
+      "d5__Impressionism__Impressionism__auguste-rodin_mme-vicuna-1884",
+      "wikiart__Impressionism__Impressionism__gustave-caillebotte_paris-a-rainy-day",
+      "wikiart__Impressionism__Impressionism__childe-hassam_cos-cob",
+      "d5__Impressionism__Impressionism__william-merritt-chase_portrait-of-julian-oderdonk",
+      "d5__Impressionism__Impressionism__childe-hassam_brooklyn-bridge-in-winter",
+      "wikiart__Impressionism__Impressionism__mihaly-munkacsy_landscape-with-river",
+      "wikiart__Impressionism__Impressionism__willard-metcalf_a-family-of-birches",
+      "wikiart__Impressionism__Impressionism__claude-monet_the-house-at-giverny-viewed-from-the-rose-garden",
+      "wikiart__Impressionism__Impressionism__giverny-also-known-as-railway-embankment_late-afternoon",
+      "wikiart__Impressionism__Impressionism__konstantin-korovin_roses-evening",
+      "wikiart__Impressionism__Impressionism__william-merritt-chase_spanish-girl",
+      "wikiart__Impressionism__Impressionism__berthe-morisot_on-the-beach-at-portrieux",
+      "wikiart__Impressionism__Impressionism__isles-of-shoals_the-east-headland-appledore",
+      "wikiart__Impressionism__Impressionism__eugene-boudin_oiseme-landscape-near-chartres",
+      "wikiart__Impressionism__Impressionism__james-charles_landscape-in-sussex",
+      "wikiart__Impressionism__Impressionism__willard-metcalf_coast-of-brittany",
+      "wikiart__Impressionism__Impressionism__kimon-loghi_blooming-cherry-trees",
+      "wikiart__Impressionism__Impressionism__t-c-steele_street-scene",
+      "wikiart__Impressionism__Impressionism__childe-hassam_the-quarry-pool-folly-cove-cape-ann",
+      "wikiart__Impressionism__Impressionism__mary-cassatt_mother-and-two-children",
+      "d5__Impressionism__Impressionism__childe-hassam_casa-eby-cos-cob",
+      "wikiart__Impressionism__Impressionism__john-henry-twachtman_sailing-boats-dieppe-harbor"
+    ],
+    [
+      "d5__Minimalism__Minimalism__tony-smith_playground-1963",
+      "d5__Minimalism__Minimalism__joan-hernandez-pijuan_memoria-d-evora-i-1990",
+      "d5__Minimalism__Minimalism__kazuo-nakamura_city-s-suburb",
+      "d5__Minimalism__Minimalism__ronnie-landfield_series-painting-5-1966",
+      "d5__Minimalism__Minimalism__yves-klein_untitled-blue-monochrome-1959-2",
+      "d5__Minimalism__Minimalism__mira-schendel_untitled-from-cadernos-series-1971",
+      "d5__Minimalism__Minimalism__robert-ryman_untitled-1959",
+      "d5__Minimalism__Minimalism__jiro-yoshihara_white-line-on-black-1968",
+      "d5__Minimalism__Minimalism__richard-tuttle_20-pearls-a-2007",
+      "d5__Minimalism__Minimalism__william-scott_full-house-1963",
+      "d5__Minimalism__Minimalism__fred-sandback_six-lithographs-1975",
+      "d5__Minimalism__Minimalism__brice-marden_10-2011",
+      "d5__Minimalism__Minimalism__martin-barre_59-140-130-a-1959",
+      "d5__Minimalism__Minimalism__leo-villareal_big-bang-2008",
+      "d5__Minimalism__Minimalism__john-mclaughlin_untitled-vertical-lines-1963",
+      "d5__Minimalism__Minimalism__paul-brach_the-negative-way-4-1964",
+      "d5__Minimalism__Minimalism__judy-chicago_sun-garden-1971",
+      "d5__Minimalism__Minimalism__andrei-cadere_square-wooden-bar",
+      "d5__Minimalism__Minimalism__rodolfo-arico_anomalia-1969",
+      "d5__Minimalism__Minimalism__john-mccracken_le-marquis",
+      "wikiart__Minimalism__Minimalism__roman-cotosman_pair",
+      "d5__Minimalism__Minimalism__alighiero-boetti_ma-cosa-fai-ma-cosa-dici-1972",
+      "d5__Minimalism__Minimalism__david-batchelor_against-nature-detail-2005",
+      "d5__Minimalism__Minimalism__edward-corbett_p-t-5-1970"
+    ],
+    [
+      "d5__Rococo__Rococo__joshua-reynolds_portrait-of-bridget-moris-in-a-white-silk-dress",
+      "wikiart__Rococo__Rococo__fyodor-rokotov_portrait-of-p-i-vyrubov",
+      "d5__Rococo__Rococo__vladimir-borovikovsky_paul-i-1800",
+      "d5__Rococo__Rococo__joshua-reynolds_general-sir-banastre-tarleton",
+      "wikiart__Rococo__Rococo__joshua-reynolds_admiral-sir-edward-hughes",
+      "d5__Rococo__Rococo__hubert-robert_demolition-of-the-houses-on-the-pont-notre-dame-in-1786-1786",
+      "wikiart__Rococo__Rococo__fyodor-rokotov_portrait-of-countess-elizaveta-santi",
+      "wikiart__Rococo__Rococo__jean-baptiste-simeon-chardin_young-draughtsman-copying-an-academy-study",
+      "d5__Rococo__Rococo__bernardo-bellotto_pirna-seen-from-the-harbour-town",
+      "wikiart__Rococo__Rococo__jean-honore-fragonard_at-the-stove",
+      "wikiart__Rococo__Rococo__george-romney_michael-russell-agent-victualler-of-dover",
+      "d5__Rococo__Rococo__george-morland_a-visit-to-the-boarding-school-1788",
+      "d5__Rococo__Rococo__george-morland_wooded-landscape-with-a-toll-gate",
+      "wikiart__Rococo__Rococo__louise-elisabeth-vigee-le-brun_anna-ivanovna-tolstaya",
+      "d5__Rococo__Rococo__william-hogarth_the-distrest-poet-1736",
+      "wikiart__Rococo__Rococo__john-jackson_david-williams-1765-1810-minister-and-man-of-letters",
+      "d5__Rococo__Rococo__bernardo-bellotto_fortress-of-sonnenstein-above-pirna-1756",
+      "wikiart__Rococo__Rococo__thomas-gainsborough_portrait-of-mary-countess-howe",
+      "wikiart__Rococo__Rococo__joshua-reynolds_catherine-lady-chambers",
+      "d5__Rococo__Rococo__louise-elisabeth-vigee-le-brun_lady-hamilton-as-ariadne-1790",
+      "d5__Rococo__Rococo__george-morland_smugglers-1792",
+      "wikiart__Rococo__Rococo__george-morland_the-wreckers",
+      "d5__Rococo__Rococo__dmitry-levitzky_portrait-of-nikolay-lvov-1789",
+      "wikiart__Rococo__Rococo__george-romney_edward-smallwell-1721-1799-bishop-of-oxford"
+    ],
+    [
+      "wikiart__Ukiyo_e__Ukiyo_e__katsushika-hokusai_ocean-waves",
+      "d5__Ukiyo_e__Ukiyo_e__tsukioka-yoshitoshi_nihon-ryakushi",
+      "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_the-tea-plantation-of-katakura-in-the-suruga-province",
+      "d5__Ukiyo_e__Ukiyo_e__kitagawa-utamaro_one-hundred-stories-of-demons-and-spirits",
+      "d5__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_the-moonlight-fight-between-yoshitsune-and-benkei-on-the-gojobashi",
+      "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_models-hugs",
+      "wikiart__Ukiyo_e__Ukiyo_e__paul-jacoulet_bebe-coreen-en-costume-de-ceremonie-seoul",
+      "wikiart__Ukiyo_e__Ukiyo_e__keisai-eisen_an-allegory-of-komachi-visiting",
+      "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_waterfall-yoshino-in-yamato-province-where-yoshitne-washed-his-horse",
+      "wikiart__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_woman-under-a-cherry-tree",
+      "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_the-bullock-cart",
+      "d5__Ukiyo_e__Ukiyo_e__keisai-eisen_a-couple-1827",
+      "d5__Ukiyo_e__Ukiyo_e__hiroshige_matsushima-in-oshu-province",
+      "wikiart__Ukiyo_e__Ukiyo_e__katsushika-hokusai_the-adonis-plant",
+      "d5__Ukiyo_e__Ukiyo_e__hiroshige_untitled-two-rabbits-pampas-grass-and-full-moon-1851",
+      "d5__Ukiyo_e__Ukiyo_e__ogata-gekko_nihon-hana-zue-1896-4",
+      "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_portrait",
+      "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_two-carps",
+      "wikiart__Ukiyo_e__Ukiyo_e__paul-jacoulet_coucher-de-soleil-a-menado-celebes",
+      "d5__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_women-16",
+      "wikiart__Ukiyo_e__Ukiyo_e__keisai-eisen_katsuyama-of-the-matsubaya",
+      "wikiart__Ukiyo_e__Ukiyo_e__paul-jacoulet_les-vieux-manuscrits-coree-seoul",
+      "d5__Ukiyo_e__Ukiyo_e__utagawa-kuniyoshi_sakata-kintoki-struggling-with-a-huge-carp-in-a-waterfall-1836",
+      "d5__Ukiyo_e__Ukiyo_e__katsushika-hokusai_scene-light-district-of-yoshiwara"
+    ]
+  ]
+}
