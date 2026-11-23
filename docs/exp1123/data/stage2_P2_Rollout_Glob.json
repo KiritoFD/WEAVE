@@ -1,0 +1,61 @@
+{
+  "arm": "P2_Rollout_Glob",
+  "base_ckpt": "/root/Workspace/WEAVE/runs/v27_mainline/d1_reflow_v2.pt",
+  "seed_offset": 0,
+  "calib_norms": [
+    17.2547,
+    18.0019,
+    0.4745,
+    0.5788
+  ],
+  "calib_weights": [
+    1.0,
+    0.2396,
+    21.8173,
+    11.925
+  ],
+  "checkpoints": {
+    "500": {
+      "csd_top1": 0.5583,
+      "dino_s": 0.5225,
+      "dino_c": 0.6038,
+      "style_affinity": 0.6222,
+      "clip_s": 0.722,
+      "lpips": 0.5938,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.1917,
+        "Impressionism": 0.9,
+        "Minimalism": 1.0,
+        "Rococo": 0.6417,
+        "Ukiyo_e": 0.0583
+      },
+      "part_diff": {
+        "part_anova_r2_mean": 0.2884,
+        "n_cross": 600
+      }
+    },
+    "1000": {
+      "csd_top1": 0.5367,
+      "dino_s": 0.5111,
+      "dino_c": 0.6022,
+      "style_affinity": 0.6112,
+      "clip_s": 0.7112,
+      "lpips": 0.61,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.175,
+        "Impressionism": 0.8833,
+        "Minimalism": 1.0,
+        "Rococo": 0.5417,
+        "Ukiyo_e": 0.0833
+      },
+      "part_diff": {
+        "part_anova_r2_mean": 0.2911,
+        "n_cross": 600
+      }
+    }
+  }
+}

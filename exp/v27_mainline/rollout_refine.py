@@ -49,11 +49,11 @@ from src.utils import decode_s10, load_s10_decoder
 from src.utils._local_eval_refs import load_dino_model
 from src.utils.protocol import EVAL_SEED, load_vgg16_features_offline
 from src.utils.runtime import bf16_autocast as autocast, sanitize_cuda_env, save_json, seed_all, utc
-from src.utils.structure import local_contrast_norm, rgb_to_gray
+from src.utils.structure import extract_color_fiber_27d, local_contrast_norm, rgb_to_gray
 
 
 class FrozenVGG16Rollout(nn.Module):
-    """Frozen ImageNet VGG-16 extracting relu1_2, relu2_2, relu3_3 (style) & relu4_2 (gray self-sim)."""
+    """Frozen ImageNet VGG-16 extracting relu1_2, relu2_2, relu3_3, relu4_3 (style) & relu4_2 (gray self-sim)."""
 
     def __init__(self):
         super().__init__()
@@ -61,25 +61,27 @@ class FrozenVGG16Rollout(nn.Module):
         self.s1 = vgg[:4]     # relu1_2 (64ch, 256x256)
         self.s2 = vgg[4:9]    # relu2_2 (128ch, 128x128)
         self.s3 = vgg[9:16]   # relu3_3 (256ch, 64x64)
-        self.s4 = vgg[16:21]  # relu4_2 (512ch, 32x32)
+        self.s4_2 = vgg[16:21]  # relu4_2 (512ch, 32x32)
+        self.s4_3 = vgg[21:23]  # relu4_3 (512ch, 32x32)
         self.register_buffer("im_mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
         self.register_buffer("im_std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
         for p in self.parameters():
             p.requires_grad_(False)
 
-    def forward_style(self, rgb01: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward_style(self, rgb01: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         x = F.interpolate(rgb01.float(), size=(256, 256), mode="bilinear", align_corners=False)
         xn = (x - self.im_mean) / self.im_std
         f1 = self.s1(xn)
         f2 = self.s2(f1)
         f3 = self.s3(f2)
-        return f1, f2, f3
+        f4 = self.s4_3(self.s4_2(f3))
+        return f1, f2, f3, f4
 
     def forward_gray_r42(self, rgb01: torch.Tensor) -> torch.Tensor:
         y = rgb_to_gray(rgb01.float()).repeat(1, 3, 1, 1)
         x = F.interpolate(y, size=(256, 256), mode="bilinear", align_corners=False)
         xn = (x - self.im_mean) / self.im_std
-        return self.s4(self.s3(self.s2(self.s1(xn))))
+        return self.s4_2(self.s3(self.s2(self.s1(xn))))
 
 
 def dynamic_swd(f_out: torch.Tensor, f_ref: torch.Tensor, n_proj: int = 64) -> torch.Tensor:
@@ -87,13 +89,29 @@ def dynamic_swd(f_out: torch.Tensor, f_ref: torch.Tensor, n_proj: int = 64) -> t
     a = f_out.flatten(2).transpose(1, 2)
     b = f_ref.detach().flatten(2).transpose(1, 2)
     if a.shape[1] > 1024:
-        step = max(1, a.shape[1] // 1024)
-        a = a[:, ::step, :]
-        b = b[:, ::step, :]
+        perm = torch.randperm(a.shape[1], device=f_out.device)[:1024]
+        a = a[:, perm, :]
+        b = b[:, perm, :]
     proj = F.normalize(torch.randn(C, n_proj, device=f_out.device, dtype=f_out.dtype), dim=0)
     pa = torch.sort(a @ proj, dim=1).values
     pb = torch.sort(b @ proj, dim=1).values
     return (pa - pb).abs().mean()
+
+
+def vgg_moment_and_gram_loss(f_out: torch.Tensor, f_ref: torch.Tensor) -> torch.Tensor:
+    """Channel-mean, std, and spatial Gram distance on deep VGG layers (captures Rococo/ER/Uki texture & contrast)."""
+    a = f_out.flatten(2)
+    b = f_ref.detach().flatten(2)
+    mu_a, mu_b = a.mean(-1), b.mean(-1)
+    sd_a = (a.var(-1, unbiased=False) + 1e-6).sqrt()
+    sd_b = (b.var(-1, unbiased=False) + 1e-6).sqrt()
+    mom_l = F.smooth_l1_loss(mu_a, mu_b, beta=0.1) + F.smooth_l1_loss(sd_a, sd_b, beta=0.1)
+    # Normalized Gram matching (channel correlations)
+    an = a / math.sqrt(a.shape[-1])
+    bn = b / math.sqrt(b.shape[-1])
+    ga = torch.bmm(an, an.transpose(1, 2))
+    gb = torch.bmm(bn, bn.transpose(1, 2))
+    return mom_l + 0.05 * F.smooth_l1_loss(ga, gb, beta=0.5)
 
 
 def _haar_level_ratio(y: torch.Tensor, eps: float = 1e-4) -> tuple[torch.Tensor, torch.Tensor]:
@@ -251,7 +269,7 @@ def measure_part_texture_differentiation(
         rgb = d["rgb_u8"].to(device).float() / 255.0
         B = len(rgb)
         q32b = q32_750[idx_off:idx_off + B].to(device).float()
-        _, f2, _ = vgg.forward_style(rgb)                                      # (B, 128, 128, 128)
+        _, f2, _, _ = vgg.forward_style(rgb)                                      # (B, 128, 128, 128)
         f2_16 = F.adaptive_avg_pool2d(f2, 16).flatten(2).transpose(1, 2)       # (B, 256, 128)
         pi = part_bank.assign(q32b).argmax(dim=-1)                             # (B, 256)
         for bi in range(B):
@@ -285,6 +303,7 @@ def train_stage2_arm(
     eval_every: int = 500,
     warmup_steps: int = 500,
     seed_offset: int = 0,
+    tag_prefix: str = "v2",
     device: str = "cuda",
 ) -> dict:
     use_part_arch = arm in ("P2_Part_Glob", "P2_Part_Closed")
@@ -320,15 +339,18 @@ def train_stage2_arm(
 
     part_bank = PartStyleBank(pbank_dict["centers"], pbank_dict["bank"]).to(device).eval()
 
-    # Pre-extract 5x8=40 submode exemplar features, Haar ratios & Q32 part assignments once
+    # Pre-extract 5x8=40 submode exemplar features, Oklab 27D, Haar ratios & Q32 part assignments once
     with torch.no_grad():
         ex_z = bank["sub_exemplar_z"].reshape(40, 4, 64, 64).to(device).float()
         ex_rgb = decode_s10(dec_fp16, ex_z, batch=8, output_cpu=False).clamp(0.0, 1.0)
-        ex_f1, ex_f2, ex_f3 = vgg.forward_style(ex_rgb)
+        ex_f1, ex_f2, ex_f3, ex_f4 = vgg.forward_style(ex_rgb)
+        ex_ok = extract_color_fiber_27d(ex_rgb)
         ex_haar = haar_hf_lf_ratio_2level(ex_rgb)
         ex_f1 = ex_f1.view(5, bank["k_sub"], *ex_f1.shape[1:])
         ex_f2 = ex_f2.view(5, bank["k_sub"], *ex_f2.shape[1:])
         ex_f3 = ex_f3.view(5, bank["k_sub"], *ex_f3.shape[1:])
+        ex_f4 = ex_f4.view(5, bank["k_sub"], *ex_f4.shape[1:])
+        ex_ok = ex_ok.view(5, bank["k_sub"], 27)
         ex_haar = ex_haar.view(5, bank["k_sub"])
 
         # Match each of the 40 exemplars back to its source painting in train_4400 to get its exact Q32!
@@ -402,7 +424,8 @@ def train_stage2_arm(
             flat_c, _ = match_scene_submode(d16b, ti, bank)
             best_c = flat_c % int(bank["k_sub"])
             x_s = decode_s10(dec_fp16, zs, batch=B, output_cpu=False).clamp(0.0, 1.0)
-            s_f1, s_f2, s_f3 = vgg.forward_style(x_s)
+            s_f1, s_f2, s_f3, s_f4 = vgg.forward_style(x_s)
+            s_ok = extract_color_fiber_27d(x_s)
             s_r42 = vgg.forward_gray_r42(x_s)
             s_haar = haar_hf_lf_ratio_2level(x_s)
 
@@ -411,6 +434,8 @@ def train_stage2_arm(
                 r_f1 = torch.where(same_b.view(B, 1, 1, 1), s_f1, ex_f1[ti, best_c])
                 r_f2 = torch.where(same_b.view(B, 1, 1, 1), s_f2, ex_f2[ti, best_c])
                 r_f3 = torch.where(same_b.view(B, 1, 1, 1), s_f3, ex_f3[ti, best_c])
+                r_f4 = torch.where(same_b.view(B, 1, 1, 1), s_f4, ex_f4[ti, best_c])
+                r_ok = torch.where(same_b.view(B, 1), s_ok, ex_ok[ti, best_c])
                 r_haar = torch.where(same_b, s_haar, ex_haar[ti, best_c])
                 pi_ref = torch.where(same_b.view(B, 1, 1), pi_src, ex_pi[ti, best_c])
             else:
@@ -420,12 +445,15 @@ def train_stage2_arm(
                 )
                 zr = z_tr[r_idx].to(device, non_blocking=True).float()
                 xr = decode_s10(dec_fp16, zr, batch=B, output_cpu=False).clamp(0.0, 1.0)
-                rf1, rf2, rf3 = vgg.forward_style(xr)
+                rf1, rf2, rf3, rf4 = vgg.forward_style(xr)
+                rok = extract_color_fiber_27d(xr)
                 rh = haar_hf_lf_ratio_2level(xr)
                 rpi = part_bank.assign(q32_tr[r_idx].to(device, non_blocking=True).float())
                 r_f1 = torch.where(same_b.view(B, 1, 1, 1), s_f1, rf1)
                 r_f2 = torch.where(same_b.view(B, 1, 1, 1), s_f2, rf2)
                 r_f3 = torch.where(same_b.view(B, 1, 1, 1), s_f3, rf3)
+                r_f4 = torch.where(same_b.view(B, 1, 1, 1), s_f4, rf4)
+                r_ok = torch.where(same_b.view(B, 1), s_ok, rok)
                 r_haar = torch.where(same_b, s_haar, rh)
                 pi_ref = torch.where(same_b.view(B, 1, 1), pi_src, rpi)
 
@@ -439,10 +467,18 @@ def train_stage2_arm(
             use_reentrant=False,
         ).clamp(0.0, 1.0)
 
-        h_f1, h_f2, h_f3 = vgg.forward_style(x_hat)
+        h_f1, h_f2, h_f3, h_f4 = vgg.forward_style(x_hat)
         h_r42 = vgg.forward_gray_r42(x_hat)
+        h_ok = extract_color_fiber_27d(x_hat)
 
-        l_glob = 0.8 * dynamic_swd(h_f1, r_f1, 64) + 1.0 * dynamic_swd(h_f2, r_f2, 64) + 1.2 * dynamic_swd(h_f3, r_f3, 64)
+        l_swd = (0.7 * dynamic_swd(h_f1, r_f1, 64)
+                 + 1.0 * dynamic_swd(h_f2, r_f2, 64)
+                 + 1.1 * dynamic_swd(h_f3, r_f3, 64)
+                 + 1.2 * dynamic_swd(h_f4, r_f4, 64))
+        l_deep = vgg_moment_and_gram_loss(h_f3, r_f3) + 1.2 * vgg_moment_and_gram_loss(h_f4, r_f4)
+        l_ok = F.smooth_l1_loss(h_ok, r_ok.detach(), beta=0.05)
+        l_glob = l_swd + 0.35 * l_deep + 4.0 * l_ok
+
         l_haar = (haar_hf_lf_ratio_2level(x_hat) - r_haar).abs().mean()
         l_struct = 0.7 * gray_self_sim_loss(h_r42, s_r42) + 0.3 * latent_y32_lcn_loss(z_hat, zs, w_luma, b_luma)
 
@@ -477,7 +513,11 @@ def train_stage2_arm(
             gn = torch.sqrt(sum((g.float().square().sum() for g in grads if g is not None), torch.tensor(0.0, device=device)))
             norms[j] += gn.detach() / 50.0
     norms = norms.clamp_min(1e-6)
-    target_ratios = torch.tensor([0.70, 0.60, 0.25, 0.60, 0.35], device=device) if use_part_loss else torch.tensor([1.0, 0.25, 0.60, 0.40], device=device)
+    target_ratios = (
+        torch.tensor([0.85, 0.55, 0.20, 0.30, 0.20], device=device)
+        if use_part_loss else
+        torch.tensor([1.00, 0.20, 0.30, 0.20], device=device)
+    )
     w_loss = (target_ratios / norms) * norms[0]
     peak_gb = torch.cuda.max_memory_allocated(device) / (1024 ** 3)
     print(f"[{arm}] Calib grad norms={[round(float(x), 4) for x in norms]} → weights={[round(float(x), 4) for x in w_loss]} (peak_vram={peak_gb:.2f} GB)", flush=True)
@@ -529,21 +569,23 @@ def train_stage2_arm(
 
         if step % eval_every == 0 or step == updates:
             suf = f"_seed{seed_offset}" if seed_offset else ""
-            ck_tag = f"{arm}{suf}_s{step}"
+            px = f"{tag_prefix}_" if tag_prefix else ""
+            ck_tag = f"{px}{arm}{suf}_s{step}"
             torch.save({"ema": ema.state_dict(), "step": step, "arm": arm}, OUT / f"{ck_tag}.pt")
             res_s = eval_model_750(
                 ema, part_bank if use_part_arch else None, ck_tag, bundle, c21, bank, priors, dec_fp16, device=device,
             )
             res_s["part_diff"] = measure_part_texture_differentiation(ck_tag, q32_750, part_bank, device=device)
             out_log["checkpoints"][str(step)] = res_s
-            save_json(OUT / f"stage2_{arm}{suf}.json", out_log)
+            save_json(OUT / f"stage2_{px}{arm}{suf}.json", out_log)
 
     suf = f"_seed{seed_offset}" if seed_offset else ""
+    px = f"{tag_prefix}_" if tag_prefix else ""
     out_log["wrong_id"] = eval_model_750(
-        ema, part_bank if use_part_arch else None, f"{arm}{suf}_s{updates}_wrong",
+        ema, part_bank if use_part_arch else None, f"{px}{arm}{suf}_s{updates}_wrong",
         bundle, c21, bank, priors, dec_fp16, is_wrong=True, device=device,
     )
-    save_json(OUT / f"stage2_{arm}{suf}.json", out_log)
+    save_json(OUT / f"stage2_{px}{arm}{suf}.json", out_log)
     return out_log
 
 
@@ -646,6 +688,7 @@ def main():
     ap.add_argument("--warmup_steps", type=int, default=500)
     ap.add_argument("--seed_offset", type=int, default=0)
     ap.add_argument("--ckpt_2c", default=str(OUT / "P2_Part_Closed_s2500.pt"))
+    ap.add_argument("--tag_prefix", default="v2")
     ap.add_argument("--device", default="cuda")
     args = ap.parse_args()
     sanitize_cuda_env()
@@ -664,7 +707,7 @@ def main():
     train_stage2_arm(
         args.arm, args.base_ckpt, bundle, c21, bank, tcache, pbank_dict,
         updates=args.updates, eval_every=args.eval_every, warmup_steps=args.warmup_steps,
-        seed_offset=args.seed_offset, device=args.device,
+        seed_offset=args.seed_offset, tag_prefix=args.tag_prefix, device=args.device,
     )
     print(f"[{args.arm}] ALL DONE", flush=True)
 
