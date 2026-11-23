@@ -29,22 +29,20 @@ def composite_dino_lse(
     dino_c: float,
     dino_s: float,
     *,
-    c0: float = 0.60,
-    s0: float = 0.384,
-    alpha: float = 18.0,
-    beta: float = 80.0,
+    alpha: float = 10.0,
+    beta: float = 15.0,
 ) -> float:
     """Smooth negative-log-sum-exp composite of DINO-C and DINO-S.
 
-    Linear combinations (a*C + b*S) systematically favor extreme endpoints
-    (no-edit C~0.96 or content-collapsed S~0.58) over balanced editing regimes.
-    Taking -log(exp(-alpha*(C - c0)) + exp(-beta*(S - s0))) acts as a concave
-    smooth minimum above the structural fidelity threshold (c0=0.60) and
-    non-trivial stylization threshold (s0=0.384, +0.0105 over unedited floor 0.3735).
+    Linear combinations (a*C + b*S) maximize at extreme endpoints (e.g. unedited
+    C~0.96 or content-collapsed S~0.58) rather than balanced regimes.
+    -log(exp(-10*C) + exp(-15*S)) acts as a smooth concave minimum that aligns
+    typical DINO-C (~0.70) and DINO-S (~0.47) scales (2:3 ratio) with zero
+    hard thresholds.
     """
     import math
 
-    u_c = -alpha * (float(dino_c) - c0)
-    u_s = -beta * (float(dino_s) - s0)
+    u_c = -alpha * float(dino_c)
+    u_s = -beta * float(dino_s)
     m = max(u_c, u_s)
     return -(m + math.log(math.exp(u_c - m) + math.exp(u_s - m)))

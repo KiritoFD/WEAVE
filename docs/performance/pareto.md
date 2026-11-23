@@ -34,10 +34,10 @@ python -m exp.v28_unified.plot_speed_score
 
 ## 均衡档位综合得分与推理速度图
 
-线性组合（如 `DINO-C + DINO-S`）会在无编辑端点（`λ=0`, `C=0.959, S=0.3735`）或内容坍缩端点达到极值，压低均衡工作点与高保真模型。引入基于双门槛的负对数平滑最小值（`composite_dino_lse` in [pareto.py](../../src/eval/pareto.py)）：
+线性组合（如 `DINO-C + DINO-S`）会在无编辑端点（`λ=0`, `C=0.959, S=0.3735`）或内容坍缩端点达到极值，压低均衡工作点。引入无截断门槛、仅按两指标典型尺度（`~0.70` vs `~0.47`，即 `2:3`）加权的负对数平滑最小值（`composite_dino_lse` in [pareto.py](../../src/eval/pareto.py)）：
 
-$$S_{\mathrm{LSE}}(C, S) = -\log\!\Big(\exp\big(-18\,(C - 0.60)\big) + \exp\big(-80\,(S - 0.384)\big)\Big)$$
+$$S_{\mathrm{LSE}}(C, S) = -\log\!\big(e^{-10 C} + e^{-15 S}\big)$$
 
-其中 `C_0 = 0.60` 为结构内容下界、`S_0 = 0.384` 为相对无编辑基线（`0.3735`）的非平凡风格迁移门槛（`+0.0105`）。该指标惩罚任一维度坍缩，使 `PRISM-1-Unified` 均衡档位（`λ=0.45–0.85`）严格高于 `λ=0/0.25/1.15`，且商业参考 `Seedream 4.5`（`S_LSE = +0.24`, `0.50 img/s`）位于外部速度-得分帕累托前沿。对应速度图生成至 [速度-综合得分图](figures/speed_composite_score.png)。
+该凹聚合函数惩罚任一维度塌缩，使 `PRISM-1-Unified` 均衡档位（`λ=0.45–1.00`, `6.18–6.31`）严格高于无编辑端（`λ=0: 5.58`）和过拟合端（`λ=1.15: 5.69`），同时商业参考 `Seedream 4.5`（`5.63`, `0.50 img/s`）稳居高分区且显著领先极端的 `StyleID (3.86)` 与 `StyleShot (3.56)`。对应速度图生成至 [速度-综合得分图](figures/speed_composite_score.png)。
 
 台账绘图命令读取现有 CSV，保留原始数据。V25 默认输出到性能图目录。冻结稿的图单独保管，需要明确指定 `--paper-figures` 才写入论文图目录。

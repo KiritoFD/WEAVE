@@ -140,19 +140,19 @@ def render_chart() -> tuple[Path, Path, dict]:
     for x, y_lse, s_raw in zip(xs, lse_norm, lse_vals):
         dy = -13 if x == 0.7 else (10 if x == 0.0 else 7)
         dx = 0
-        ax_l.annotate(f"{s_raw:+.2f}", (x, y_lse), xytext=(dx, dy), textcoords="offset points",
+        ax_l.annotate(f"{s_raw:.2f}", (x, y_lse), xytext=(dx, dy), textcoords="offset points",
                       ha="center", fontsize=8, color="#0f766e", fontweight="bold")
     seed_pt = next(p for p in ext_pts if p["name"] == "Seedream 4.5")
     seed_lse_norm = (seed_pt["score"] - lse_min) / max(1e-6, lse_max - lse_min)
     ax_l.axhline(seed_lse_norm, color="#d97706", ls=":", lw=1.4,
-                 label=f"Seedream 4.5 Neg-Log Score ({seed_pt['score']:+.2f}, #2 ext)")
-    ax_l.axvspan(0.40, 0.90, color="#ccfbf1", alpha=0.35, zorder=0, label="Balanced working zone")
+                 label=f"Seedream 4.5 S_LSE ({seed_pt['score']:.2f})")
+    ax_l.axvspan(0.40, 1.02, color="#ccfbf1", alpha=0.35, zorder=0, label="Balanced working zone")
     ax_l.set(xlabel="Editing Strength λ (PRISM-1-Unified ema_s4000)",
              ylabel="Normalized Score within Sweep [0, 1]",
              title="A. Balanced Tiers Under Linear vs Neg-Log LSE Score")
     ax_l.grid(alpha=0.22)
     ax_l.legend(loc="lower center", bbox_to_anchor=(0.52, 0.01), frameon=True, facecolor="white", framealpha=0.94, fontsize=7.6)
-    ax_l.set_ylim(-0.10, 1.15)
+    ax_l.set_ylim(-0.18, 1.15)
 
     # ---- Right panel: Inference Speed (img/s, log) vs Neg-Log LSE Composite Score ----
     pub = [p for p in ext_pts if p["is_public"]]
@@ -164,18 +164,18 @@ def render_chart() -> tuple[Path, Path, dict]:
 
     ext_offsets = {
         "StyleGallery": (8, 5, "left"),
-        "StyleShot": (8, -6, "left"),
-        "StyleID": (8, -4, "left"),
-        "StyTr2": (8, 5, "left"),
-        "Seedream 4.5": (-12, -20, "right"),
-        "AesPA": (-12, 2, "right"),
-        "SaMAM": (8, -10, "left"),
-        "SaMST": (8, 4, "left"),
-        "CUT": (8, -4, "left"),
-        "WCT": (8, 4, "left"),
-        "Hist2Style": (-8, -10, "right"),
+        "StyleShot": (8, 4, "left"),
+        "StyleID": (8, 4, "left"),
+        "StyTr2": (-8, 8, "right"),
+        "Seedream 4.5": (-10, -14, "right"),
+        "AesPA": (8, 8, "left"),
+        "SaMAM": (8, -4, "left"),
+        "CUT": (-8, -11, "right"),
+        "Hist2Style": (-8, -12, "right"),
     }
     for p in ext_pts:
+        if p["score"] < 3.2:
+            continue
         is_seed = p["name"] == "Seedream 4.5"
         if is_seed:
             ax_r.scatter([p["img_s"]], [p["score"]], marker="*", s=260, c="#f59e0b",
@@ -185,7 +185,7 @@ def render_chart() -> tuple[Path, Path, dict]:
             ax_r.scatter([p["img_s"]], [p["score"]], marker="o", s=52, c="#94a3b8",
                          edgecolors="#334155", linewidths=0.8, zorder=4)
         dx, dy, ha = ext_offsets.get(p["name"], (6, 4, "left"))
-        ax_r.annotate(f"{p['name']} ({p['score']:+.2f})", (p["img_s"], p["score"]),
+        ax_r.annotate(f"{p['name']} ({p['score']:.2f})", (p["img_s"], p["score"]),
                       xytext=(dx, dy), textcoords="offset points", ha=ha,
                       fontsize=7.6 if not is_seed else 8.4,
                       fontweight="bold" if is_seed else "normal",
@@ -198,15 +198,15 @@ def render_chart() -> tuple[Path, Path, dict]:
                   label="WEAVE / PRISM Measured 4090 Frontier", zorder=6)
 
     w_offsets = {
-        "PRISM-1 (λ=0.75)": (-10, 6, "right"),
-        "PRISM-1 (λ=1.0)": (-10, -2, "right"),
-        "PRISM-1 (λ=1.30)": (-10, -8, "right"),
-        "PRISM-Pro (T4)": (-10, 8, "right"),
-        "PRISM-Flow (D6)": (8, -3, "left"),
-        "PRISM-Flow (D5)": (8, -3, "left"),
+        "PRISM-1 (λ=0.75)": (-10, 9, "right"),
+        "PRISM-1 (λ=1.0)": (-10, -3, "right"),
+        "PRISM-1 (λ=1.30)": (-10, -16, "right"),
+        "PRISM-Pro (T4)": (-10, 9, "right"),
+        "PRISM-Flow (D6)": (0, 11, "center"),
+        "PRISM-Flow (D5)": (-8, -13, "right"),
         "PRISM-Flow (D2)": (8, 4, "left"),
-        "PRISM-Flow (D1)": (8, -10, "left"),
-        "PRISM-Pro+ (A1)": (-10, 8, "right"),
+        "PRISM-Flow (D1)": (8, -4, "left"),
+        "PRISM-Pro+ (A1)": (0, -14, "center"),
     }
     for p in weave_pts:
         is_p1 = "PRISM-1 (λ=1.0)" in p["name"]
@@ -219,23 +219,23 @@ def render_chart() -> tuple[Path, Path, dict]:
             dx, dy, ha = w_offsets[p["name"]]
             ax_r.annotate(f"{p['name']} ({p['img_s']:.1f} img/s)", (p["img_s"], p["score"]),
                           xytext=(dx, dy), textcoords="offset points", ha=ha,
-                          fontsize=7.5, fontweight="bold" if is_p1 else "normal",
+                          fontsize=7.4, fontweight="bold" if is_p1 else "normal",
                           color="#991b1b" if is_p1 else "#9a3412", zorder=9)
 
     ax_r.set_xscale("log")
     ax_r.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:g}"))
     ax_r.set(xlabel="Inference Throughput (img/s ↑, log scale; 4090 measured / API)",
-             ylabel="Neg-Log LSE Score S(DINO-C, DINO-S) ↑",
+             ylabel="Neg-Log LSE Score −log(e^−10C + e^−15S) ↑",
              title="B. Inference Speed vs Neg-Log Balanced Score (Cross600)")
-    ax_r.set_ylim(-6.0, 3.6)
+    ax_r.set_ylim(3.2, 6.72)
     ax_r.set_xlim(0.022, 95.0)
-    ax_r.text(0.02, 0.02, "Note: WCT (−18.4 @ 3.4 img/s), SaMST (−9.1 @ 1.3 img/s) < −6",
-              transform=ax_r.transAxes, fontsize=7.1, color="#64748b")
+    ax_r.text(0.02, 0.02, "Off-scale (< 3.2): SaMST (1.55 @ 1.3 img/s), WCT (0.11 @ 3.4 img/s)",
+              transform=ax_r.transAxes, fontsize=7.2, color="#64748b")
     ax_r.grid(alpha=0.22, which="both")
     ax_r.legend(loc="lower right", frameon=True, facecolor="white", framealpha=0.92, fontsize=8)
 
     fig.suptitle(
-        r"S_LSE(C, S) = −log(exp(−18(C − 0.60)) + exp(−80(S − 0.384)))  ·  Balanced Quality × Speed",
+        r"S_LSE(C, S) = −log(exp(−10C) + exp(−15S))  ·  Balanced Quality × Speed",
         fontsize=11.5, fontweight="bold",
     )
 
