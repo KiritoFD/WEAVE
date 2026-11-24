@@ -167,3 +167,43 @@ def test_unet_latent_opt_exact_at_zero_and_tto_isolation() -> None:
             imports.update(a.name for a in node.names)
     for bad in ("csd_model", "csd_prototypes", "load_dino_model", "encode_dino", "FeatureStack", "lpips", "dino_16"):
         assert bad not in imports and bad not in tto_src.lower(), f"Referee leakage in tto_ablation: {bad}"
+
+
+def test_bridge4_identity_projected_d_and_duel_isolation() -> None:
+    from exp.v28_unified.student_models import BridgeHybridUNet
+    from exp.v28_unified.train_duel import ProjectedMultiScaleD, relaxed_l1_weight
+
+    m = BridgeHybridUNet(stats_dim=27).eval()
+    src = torch.randn(2, 4, 64, 64)
+    c64 = torch.randn(2, 4, 64, 64)
+    q32 = torch.randn(2, 32, 16, 16)
+    tid = torch.tensor([0, 4])
+    stats = torch.randn(5, 27)
+    priors = {
+        "P_Y": torch.eye(4)[:1].repeat(4, 1) * 0.25,
+        "P_C": torch.eye(4) - 0.25,
+        "mu_c": torch.randn(5, 4, 1, 1),
+        "std_c": torch.ones(5, 4, 1, 1),
+    }
+    with torch.no_grad():
+        out_zero = m(src, c64, q32, tid, torch.zeros(2), stats, priors, noise=torch.randn_like(src))
+    assert float((out_zero - src).abs().max()) == 0.0
+
+    w = relaxed_l1_weight(torch.tensor([0.2, 0.4, 0.575, 0.75, 1.0]), min_weight=0.12)
+    assert torch.allclose(w[:2], torch.ones(2))
+    assert torch.allclose(w[3:], torch.tensor([0.12, 0.12]))
+
+    disc = ProjectedMultiScaleD()
+    feats = {
+        "vgg_s2": torch.randn(2, 128, 32, 32),
+        "vgg_s3": torch.randn(2, 256, 16, 16),
+        "vgg_s4": torch.randn(2, 512, 16, 16),
+        "cnx_s1": torch.randn(2, 96, 32, 32),
+        "cnx_s2": torch.randn(2, 192, 16, 16),
+        "cnx_s3": torch.randn(2, 384, 16, 16),
+    }
+    assert disc(feats, tid).shape == (2,)
+
+    duel_src = (ROOT / "exp/v28_unified/train_duel.py").read_text(encoding="utf-8")
+    for bad in ("csd_model", "csd_prototypes", "load_dino_model", "encode_dino", "featurestack", "lpips", "dino_16"):
+        assert bad not in duel_src.lower(), f"Referee leakage in train_duel: {bad}"

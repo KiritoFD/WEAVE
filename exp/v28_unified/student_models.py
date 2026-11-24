@@ -145,14 +145,18 @@ class UnifiedHybridUNet(nn.Module):
             cond = cond + dcond
 
         q_eff = q32 if dq32 is None else (q32 + dq32)
+        inp = torch.cat((z0_in, luma * gate_src, c64 * gate_src, noise_ch), dim=1).contiguous(
+            memory_format=torch.channels_last
+        )
+        delta = self._unet_core(inp, q_eff, cond)
+        return z0 + amount * delta
+
+    def _unet_core(self, inp: torch.Tensor, q_eff: torch.Tensor, cond: torch.Tensor) -> torch.Tensor:
         s16_q = self.q_proj(q_eff)
         r16 = self.route(q_eff) * self.route_gate(cond).tanh()[:, :, None, None]
         r32 = F.interpolate(r16, size=(32, 32), mode="bilinear", align_corners=False)
         r64 = F.interpolate(r16, size=(64, 64), mode="bilinear", align_corners=False)
 
-        inp = torch.cat((z0_in, luma * gate_src, c64 * gate_src, noise_ch), dim=1).contiguous(
-            memory_format=torch.channels_last
-        )
         h64 = self.in_conv(inp)
         for blk in self.enc64:
             h64 = blk(h64, cond)
@@ -173,9 +177,78 @@ class UnifiedHybridUNet(nn.Module):
         u64 = self.skip64(torch.cat((u64, h64), dim=1))
         for blk in self.dec64:
             u64 = blk(u64, cond, r64)
+        return self.out(F.silu(self.out_norm(u64)))
 
-        delta = self.out(F.silu(self.out_norm(u64)))
-        return z0 + amount * delta
+
+class BridgeHybridUNet(UnifiedHybridUNet):
+    """4-Step Paired Latent Bridge U-Net (~11.5M, exact lambda=0 zero-velocity identity)."""
+
+    def __init__(self, stats_dim: int, w0: int = 128, w1: int = 192, w2: int = 288, cond_dim: int = 192):
+        super().__init__(stats_dim, w0=w0, w1=w1, w2=w2, cond_dim=cond_dim)
+        self.t_bridge_mlp = nn.Sequential(nn.Linear(32, cond_dim), nn.SiLU(), nn.Linear(cond_dim, cond_dim))
+        nn.init.zeros_(self.t_bridge_mlp[-1].weight)
+        nn.init.zeros_(self.t_bridge_mlp[-1].bias)
+
+    @staticmethod
+    def bridge_sigma(strength: torch.Tensor) -> torch.Tensor:
+        return 0.50 * strength.clamp(0.0, 1.15)
+
+    def bridge_start(
+        self,
+        source: torch.Tensor,
+        tid: torch.Tensor,
+        strength: torch.Tensor,
+        priors: dict,
+        noise: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        amount = strength[:, None, None, None]
+        aligned = apply_latent_chroma_shift(source, tid, priors, alpha=1.0)
+        z0 = source + 0.35 * amount * (aligned - source)
+        sig = self.bridge_sigma(strength)[:, None, None, None]
+        eps = torch.zeros_like(source) if noise is None else noise
+        return (1.0 - sig) * z0 + sig * eps, z0
+
+    def predict_velocity(
+        self,
+        z_t: torch.Tensor,
+        source: torch.Tensor,
+        c64: torch.Tensor,
+        q32: torch.Tensor,
+        tid: torch.Tensor,
+        strength: torch.Tensor,
+        t_bridge: torch.Tensor,
+        raw_stats: torch.Tensor,
+        priors: dict,
+    ) -> torch.Tensor:
+        amount = strength[:, None, None, None]
+        luma = torch.einsum("ij,bjhw->bihw", priors["P_Y"], source)
+        gate_src = (1.0 - 0.80 * amount).clamp(0.0, 1.0)
+        style = self.stats(raw_stats[tid])
+        cond = self.cond(torch.cat((F.one_hot(tid, 5).float(), sinusoidal_time_emb(strength, 32), style), 1))
+        cond = cond + self.t_bridge_mlp(sinusoidal_time_emb(t_bridge, 32))
+        inp = torch.cat((z_t, luma * gate_src, c64 * gate_src, 0.5 * (z_t - source)), dim=1).contiguous(
+            memory_format=torch.channels_last
+        )
+        return amount * self._unet_core(inp, q32, cond)
+
+    def forward(
+        self,
+        source: torch.Tensor,
+        c64: torch.Tensor,
+        q32: torch.Tensor,
+        tid: torch.Tensor,
+        strength: torch.Tensor,
+        raw_stats: torch.Tensor,
+        priors: dict,
+        noise: torch.Tensor | None = None,
+        steps: int = 4,
+    ) -> torch.Tensor:
+        z, _ = self.bridge_start(source, tid, strength, priors, noise=noise)
+        dt = 1.0 / float(steps)
+        for k in range(steps):
+            tb = torch.full((len(source),), k * dt, device=source.device, dtype=torch.float32)
+            z = z + dt * self.predict_velocity(z, source, c64, q32, tid, strength, tb, raw_stats, priors)
+        return z
 
 
 class PixelBridgeV28:
@@ -234,4 +307,6 @@ def build_student_model(arch: str, stats_dim: int, device: str = "cuda") -> nn.M
         return UnifiedEditor(stats_dim).to(device).to(memory_format=torch.channels_last)
     if arch == "unet":
         return UnifiedHybridUNet(stats_dim).to(device).to(memory_format=torch.channels_last)
+    if arch == "bridge4":
+        return BridgeHybridUNet(stats_dim).to(device).to(memory_format=torch.channels_last)
     raise ValueError(f"Unknown student arch: {arch}")

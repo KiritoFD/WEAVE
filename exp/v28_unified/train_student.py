@@ -154,7 +154,7 @@ def evaluate_student_v28(
                 zs = src[sl].to(device).float()
                 tgt = labels[sl].to(device)
                 st_t = torch.full_like(tgt, strength, dtype=torch.float32)
-                if arch == "unet":
+                if arch in ("unet", "bridge4"):
                     z = model(zs, ts["c_64"][sl].to(device).float(), q[sl].to(device).float(),
                               tgt, st_t, raw_stats, priors, noise=eps_fixed[sl].to(device).float())
                 else:
@@ -165,7 +165,7 @@ def evaluate_student_v28(
                     if identity > 0.0:
                         raise RuntimeError(f"Lambda-zero latent identity failed: {identity}")
                 writer.write_batch(z, tasks[sl])
-            writer.finalize(arm=arm, strength=strength, nfe=1, same_bypass=False,
+            writer.finalize(arm=arm, strength=strength, nfe=4 if arch == "bridge4" else 1, same_bypass=False,
                             lambda_zero_max_abs=identity if strength == 0.0 else None)
         row = run_measure_v28(arm, device=device)
         row.update(strength=strength, wrong=wrong,
@@ -212,7 +212,7 @@ def run_final_eval(
         "arch": arch,
         "checkpoint": checkpoint_name,
         "student_updates": steps,
-        "nfe": 1,
+        "nfe": 4 if arch == "bridge4" else 1,
         "same_bypass": False,
         "arms": levels,
         "bootstrap_ci": {

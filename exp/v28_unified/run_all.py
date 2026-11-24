@@ -10,6 +10,7 @@ from exp.v28_unified.phase1_race import run_phase1
 from exp.v28_unified.phase2_pools import run_phase2
 from exp.v28_unified.phase3_4_5 import run_knob2_frontier, run_phase3, run_phase4, run_phase4_5, run_phase5
 from exp.v28_unified.train_student import train_student_arm
+from exp.v28_unified.train_duel import run_duel_smoke, run_training_duel
 from exp.v28_unified.tto_ablation import run_tto_ablation, run_tto_probe
 from src.utils.runtime import read_json, sanitize_cuda_env, save_json, utc
 
@@ -33,7 +34,7 @@ def main():
     ap.add_argument("--pool", default=str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16"))
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--smoke", action="store_true")
-    ap.add_argument("--phase", default="all", choices=("all", "0", "1", "2", "3", "4", "4_5", "5", "knob2", "tto_probe", "tto"))
+    ap.add_argument("--phase", default="all", choices=("all", "0", "1", "2", "3", "4", "4_5", "5", "knob2", "tto_probe", "tto", "duel_smoke", "duel"))
     args = ap.parse_args()
     sanitize_cuda_env()
     OUT.mkdir(parents=True, exist_ok=True)
@@ -84,6 +85,10 @@ def main():
             run_tto_probe(device=args.device)
         elif ph == "tto":
             run_tto_ablation(device=args.device)
+        elif ph == "duel_smoke":
+            run_duel_smoke(device=args.device)
+        elif ph == "duel":
+            run_training_duel(device=args.device)
 
         status["phases"][ph] = {"done": True, "elapsed_s": round(time.monotonic() - t0, 1), "utc": utc()}
         status["current_phase"] = "done" if ph == phases[-1] else ph
