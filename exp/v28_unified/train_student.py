@@ -101,14 +101,20 @@ def _latent_loss_terms(
     loss_mode: str,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Return (smooth_l1_term, full_latent_loss)."""
-    direct = F.smooth_l1_loss(pred, target, beta=0.06)
+    direct_ps = F.smooth_l1_loss(pred, target, beta=0.06, reduction="none").mean(dim=(1, 2, 3))
+    if loss_mode == "hiswd":
+        # Relax high-lambda latent Smooth L1 averaging contraction so pixel SWD can recover textures
+        high_damp = torch.where(levels > 0.6, torch.full_like(levels, 0.55), torch.ones_like(levels))
+        direct = (direct_ps * high_damp).mean()
+    else:
+        direct = direct_ps.mean()
     fp, ft = dwt2_haar(pred), dwt2_haar(target)
     bands = sum(w * F.l1_loss(a, b) for w, a, b in zip((1.0, 1.0, 0.5), fp[1:], ft[1:]))
     dy = torch.einsum("ij,bjhw->bihw", priors["P_Y"], pred - target).abs().mean(dim=(1, 2, 3))
     if loss_mode == "base":
         luma = dy.mean()
         return direct, direct + 0.35 * bands + 0.25 * luma
-    # Rebalanced M2/M3: luma L1 weight 0.25 -> 0.10 AND active only at low lambda!
+    # Rebalanced M2/M3/Phase4.5: luma L1 weight 0.25 -> 0.10 AND active only at low lambda!
     low_gate = ((0.55 - levels) / 0.55).clamp(0.0, 1.0)
     luma = (dy * low_gate).mean()
     return direct, direct + 0.35 * bands + 0.10 * luma
@@ -195,6 +201,11 @@ def run_final_eval(
     high, mid, strong = levels["l040"], levels["l075"], levels["l100"]
     monotonic_dino_s = (levels["l025"]["dino_s"] <= high["dino_s"] <= mid["dino_s"] <= strong["dino_s"])
     monotonic_top1 = (levels["l025"]["csd_top1"] <= high["csd_top1"] <= mid["csd_top1"] <= strong["csd_top1"])
+    no_l060_hole = (
+        levels["l060"]["dino_s"] >= high["dino_s"] - 0.002
+        and levels["l060"]["csd_top1"] >= high["csd_top1"] - 0.02
+        and mid["csd_top1"] >= levels["l060"]["csd_top1"] - 0.02
+    )
 
     report = {
         "arm_tag": tag,
@@ -212,6 +223,7 @@ def run_final_eval(
             "exact_latent_identity": levels["l000"]["lambda_zero_max_abs"] == 0.0,
             "monotonic_dino_s": monotonic_dino_s,
             "monotonic_top1": monotonic_top1,
+            "monotonic_no_l060_hole": no_l060_hole,
             "high_content_l040": (
                 high["dino_c"] >= 0.72 and high["dino_s"] >= 0.49
                 and high["csd_top1"] >= 0.52 and high["same150_top1"] >= 0.95
@@ -243,6 +255,7 @@ def train_student_arm(
     pool_variant: str = "main",     # main | rand | old
     pool_c_path: Path | None = None,
     pool_c_field: str = "z_real",   # z_real | z_fwd | z_shuf
+    curriculum_steps: int | None = None,
     updates: int = 2800,
     seed: int = SEED_TRAIN,
     eff_batch: int = 128,
@@ -310,13 +323,15 @@ def train_student_arm(
     same_ids = pairs["same"].nonzero().flatten()
     cross_ids = (~pairs["same"]).nonzero().flatten()
 
-    # 50-step Auto-Gradient Norm Calibration for M2/M3/Phase 4/Phase 5
+    # 50-step Auto-Gradient Norm Calibration for M2/M3/Phase 4/Phase 4.5/Phase 5
     pixel_scale = 1.0
-    if loss_mode == "calibrated":
+    if loss_mode in ("calibrated", "hiswd"):
         calib_p = run_dir / "calib.json"
         if calib_p.exists() and smoke_steps == 0:
             pixel_scale = float(read_json(calib_p)["pixel_scale"])
         else:
+            cal_swd_w = 0.35 if loss_mode == "hiswd" else 0.15
+            cal_ratio = 1.0 if loss_mode == "hiswd" else 0.65
             g_lat_sum, g_pix_sum = 0.0, 0.0
             n_cal = 12 if smoke_steps > 0 else 50
             cal_params = [p for p in model.parameters() if p.requires_grad]
@@ -336,20 +351,21 @@ def train_student_arm(
                     pred = model(zs, tr["c_64"][src_i].to(device).float(), c21["train"]["q32"][src_i].to(device).float(),
                                  pairs["tid"][c_idx].to(device), lv, raw_stats, priors)
                 l_lat, _ = _latent_loss_terms(pred, tgt, lv, priors, loss_mode)
-                l_pix = pixel.loss(pred, tgt, proj_c)
+                l_pix = pixel.loss(pred, tgt, proj_c, swd_weight=cal_swd_w)
                 gl = torch.autograd.grad(l_lat, cal_params, retain_graph=True, allow_unused=True)
                 gp = torch.autograd.grad(l_pix, cal_params, allow_unused=True)
                 g_lat_sum += float(torch.sqrt(sum((g.float().square().sum() for g in gl if g is not None), torch.tensor(0.0, device=device))).item())
                 g_pix_sum += float(torch.sqrt(sum((g.float().square().sum() for g in gp if g is not None), torch.tensor(0.0, device=device))).item())
-            pixel_scale = float(max(0.05, min(10.0, 0.65 * (g_lat_sum / max(g_pix_sum, 1e-6)))))
+            pixel_scale = float(max(0.05, min(10.0, cal_ratio * (g_lat_sum / max(g_pix_sum, 1e-6)))))
             save_json(calib_p, {
                 "n_cal": n_cal,
                 "mean_grad_latent": round(g_lat_sum / n_cal, 4),
                 "mean_grad_pixel": round(g_pix_sum / n_cal, 4),
                 "pixel_scale": round(pixel_scale, 4),
+                "target_ratio": cal_ratio,
             })
             print(f"[{arm_name}] Auto-Grad Calib ({n_cal} steps): pixel_scale={pixel_scale:.4f} "
-                  f"(ratio 0.65:1.0)", flush=True)
+                  f"(ratio {cal_ratio:.2f}:1.0)", flush=True)
 
     resume_p = run_dir / "resume.pt"
     first = 1
@@ -365,7 +381,8 @@ def train_student_arm(
 
     target_steps = smoke_steps if smoke_steps > 0 else updates
     mode_pat = MODE_PATTERN_2TIER if interp_mode == "2tier" else MODE_PATTERN_3TIER
-    curriculum_start = updates - max(500, updates // 4)  # Last 25% steps for Pool C TeleStyle mixing
+    c_tail = curriculum_steps if curriculum_steps is not None else max(500, updates // 4)
+    curriculum_start = max(0, updates - c_tail)  # Last tail steps for Pool C TeleStyle mixing
 
     print(f"[{arm_name}] START {first}/{target_steps} | arch={arch} ({num_params:,} params) "
           f"interp={interp_mode} loss={loss_mode} bs={eff_batch} micro={micro} pix_micro={pixel_micro} "
@@ -498,16 +515,21 @@ def train_student_arm(
             return pred, tgt, b_l
 
         total = torch.zeros(2, device=device)
-        # Pixel perceptual slice: base mode runs 2*pixel_micro on even steps; calibrated runs pixel_micro every step!
-        run_pix_now = (loss_mode == "calibrated") or (step % 2 == 0)
-        pix_n = pixel_micro if loss_mode == "calibrated" else (2 * pixel_micro if run_pix_now else 0)
+        # Pixel perceptual slice: base mode runs 2*pixel_micro on even steps; calibrated/hiswd run pixel_micro every step!
+        run_pix_now = (loss_mode in ("calibrated", "hiswd")) or (step % 2 == 0)
+        pix_n = pixel_micro if loss_mode in ("calibrated", "hiswd") else (2 * pixel_micro if run_pix_now else 0)
         if pix_n > 0:
             for st in range(0, pix_n, pixel_micro):
                 sl = slice(st, min(pix_n, st + pixel_micro))
                 pred, tgt, lv = _predict_slice(sl)
                 _, l_lat = _latent_loss_terms(pred, tgt, lv, priors, loss_mode)
                 l_lat = l_lat * (len(lv) / float(eff_batch))
-                l_pix = pixel.loss(pred, tgt, proj) * (pixel_scale * (len(lv) / float(pix_n)))
+                if loss_mode == "hiswd":
+                    swd_sample_w = torch.where(lv > 0.6, torch.full_like(lv, 2.2), torch.ones_like(lv))
+                    l_pix = pixel.loss(pred, tgt, proj, swd_weight=0.35, sample_weights=swd_sample_w)
+                else:
+                    l_pix = pixel.loss(pred, tgt, proj)
+                l_pix = l_pix * (pixel_scale * (len(lv) / float(pix_n)))
                 (l_lat + l_pix).backward()
                 total[0] += l_lat.detach()
                 total[1] += l_pix.detach()

@@ -179,15 +179,30 @@ class PixelBridgeV28:
             self.layers.clear()
         return features, tokens
 
-    def loss(self, pred: torch.Tensor, goal: torch.Tensor, proj: tuple[torch.Tensor, ...], *, oklab_weight: float = 0.25) -> torch.Tensor:
+    def loss(
+        self,
+        pred: torch.Tensor,
+        goal: torch.Tensor,
+        proj: tuple[torch.Tensor, ...],
+        *,
+        oklab_weight: float = 0.25,
+        swd_weight: float = 0.15,
+        sample_weights: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         current, tokens = self.encode(pred, grad=True)
         with torch.no_grad():
             target, ref_tokens = self.encode(goal, grad=False)
-        moments = F.smooth_l1_loss((current - target) / self.scale, torch.zeros_like(current), beta=0.20)
-        swd = sum(((a @ p).sort(dim=1).values - (b @ p).sort(dim=1).values).abs().mean()
-                  for a, b, p in zip(tokens, ref_tokens, proj)) / len(proj)
+        moments_ps = F.smooth_l1_loss(
+            (current - target) / self.scale, torch.zeros_like(current), beta=0.20, reduction="none"
+        ).mean(dim=1)
+        swd_ps = sum(
+            ((a @ p).sort(dim=1).values - (b @ p).sort(dim=1).values).abs().mean(dim=(1, 2))
+            for a, b, p in zip(tokens, ref_tokens, proj)
+        ) / len(proj)
+        if sample_weights is not None:
+            swd_ps = swd_ps * sample_weights.to(swd_ps.device, dtype=swd_ps.dtype)
         # Note: current[:27] is Oklab 27D * 3.0 inside UnnormalizedVGGFeatureExtractor
-        return oklab_weight * moments + 0.15 * swd
+        return (oklab_weight * moments_ps + swd_weight * swd_ps).mean()
 
 
 def build_student_model(arch: str, stats_dim: int, device: str = "cuda") -> nn.Module:

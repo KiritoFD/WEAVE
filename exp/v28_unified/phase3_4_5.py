@@ -187,6 +187,176 @@ def run_phase4(stu_star_arch: str = "unet", stu_star_interp: str = "3tier", stu_
     return summary
 
 
+def build_pool_v22_clean(
+    pool_dir: str = str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16"),
+    *,
+    shard_size: int = 256,
+    device: str = "cuda",
+) -> Path:
+    """Build 7,500-pair coherent two-tier pool from single neural teacher V22 Peak1500 (+ 300-sample audit)."""
+    from exp.v20.slf_flow import coarse_y16_lcn
+    from exp.v20.submode_patchswd import build_or_load_core_knn_bank
+    from exp.v21.stiefel_ref_cache import build_or_load_v21_cache
+    from exp.v27_single.unified.teacher_gate import task_plan
+    from exp.v28_unified import SEED_PLAN, atomic_save, recipe_hash
+    from exp.v28_unified.data_map import resolve_train_rgb_paths
+    from exp.v28_unified.phase1_race import evaluate_150_referee
+    from exp.v28_unified.teacher_routes import V22CleanTeacher
+
+    out_p = OUT / "pools/pool_V22_clean.pt"
+    r_hash = recipe_hash({
+        "pool": "V22_clean_v1",
+        "peak_hiC": V22CleanTeacher.PEAK_HIC,
+        "peak_hiS": V22CleanTeacher.PEAK_HIS,
+        "seed": SEED_PLAN,
+    })
+    if out_p.exists():
+        ck = torch.load(out_p, map_location="cpu", weights_only=False)
+        if ck.get("recipe_hash") == r_hash and len(ck["src"]) == 7500:
+            print(f"[Phase 4.5 Pool V22] Reusing {out_p}", flush=True)
+            return out_p
+
+    pack = build_or_load_v21_cache(pool_dir, device=device)
+    bundle = pack["bundle"]
+    bank = build_or_load_core_knn_bank(bundle, k_sub=8, core_per_style=180, device=device)
+    tr = bundle["v18_cache"]["train"]
+    paths_4400 = resolve_train_rgb_paths(tr["ids"], tr["sid"], require_full=True)
+
+    selected, _, _ = task_plan(tr)
+    src = selected.repeat_interleave(5)
+    tid = torch.arange(5).repeat(len(selected))
+    same = tr["sid"][src] == tid
+    cross_ids = (~same).nonzero().flatten()
+
+    teacher = V22CleanTeacher(bundle, bank, device=device)
+    shard_dir = OUT / "pools/shards_pool_V22_clean"
+    shard_dir.mkdir(parents=True, exist_ok=True)
+    y16_all = coarse_y16_lcn(tr["y_64"].float())
+    shards = []
+    t0 = time.monotonic()
+
+    for sh_i, ids in enumerate(cross_ids.split(shard_size)):
+        sp = shard_dir / f"shard_{sh_i:03d}.pt"
+        if sp.exists():
+            pl = torch.load(sp, map_location="cpu", weights_only=False)
+            if pl.get("recipe_hash") == r_hash and torch.equal(pl["ids"], ids):
+                shards.append(pl)
+                continue
+
+        gen = torch.Generator().manual_seed(SEED_PLAN + 1000 + sh_i)
+        eps = torch.randn((len(ids), 4, 64, 64), generator=gen).half()
+        s_idx = src[ids]
+        t_idx = tid[ids]
+        hi_c, hi_s = teacher.generate_two_tiers(
+            tr["z"][s_idx],
+            y16_all[s_idx],
+            tr["dino_16"][s_idx],
+            tr["c_64"][s_idx],
+            bundle["fnd"]["tr_fib"][s_idx],
+            t_idx,
+            eps,
+            src_idx=s_idx,
+            batch=32,
+        )
+        pl = {"recipe_hash": r_hash, "ids": ids, "hiC": hi_c, "hiS": hi_s}
+        atomic_save(pl, sp)
+        shards.append(pl)
+        print(f"[Pool V22] shard {sh_i+1}: {min((sh_i+1)*shard_size, len(cross_ids))}/{len(cross_ids)} "
+              f"(elapsed={time.monotonic()-t0:.0f}s)", flush=True)
+
+    hi_c_full = tr["z"][src].half().clone()
+    hi_s_full = tr["z"][src].half().clone()
+    for pl in shards:
+        hi_c_full[pl["ids"]] = pl["hiC"]
+        hi_s_full[pl["ids"]] = pl["hiS"]
+
+    pool_v22 = {"recipe_hash": r_hash, "src": src, "tid": tid, "same": same, "hiC": hi_c_full, "hiS": hi_s_full}
+    atomic_save(pool_v22, out_p)
+    del teacher
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    # Run disjoint 300-sample audit matching Phase 2 seed for apples-to-apples comparison
+    dec_fp16 = load_s10_decoder(device)
+    gen = torch.Generator().manual_seed(SEED_PLAN + 999)
+    cross_mask = ~same
+    picks = []
+    for s in range(5):
+        cand = (cross_mask & (tid == s)).nonzero().flatten()
+        picks.append(cand[torch.randperm(len(cand), generator=gen)[:60]])
+    idx_300 = torch.cat(picks, dim=0)
+    audit = evaluate_150_referee(
+        dec_fp16, paths_4400, src[idx_300], tid[idx_300],
+        {"V22_clean_hiC": hi_c_full[idx_300], "V22_clean_hiS": hi_s_full[idx_300]},
+        device=device,
+    )
+    del dec_fp16
+    gc.collect()
+    torch.cuda.empty_cache()
+    save_json(OUT / "phase4_5_pool_audit_300.json", {"updated_utc": utc(), "elapsed_s": round(time.monotonic() - t0, 1), "audit": audit})
+    print(f"[Pool V22] COMPLETE & AUDITED -> {out_p}", flush=True)
+    return out_p
+
+
+def run_phase4_5(
+    pool_dir: str = str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16"),
+    device: str = "cuda",
+) -> dict:
+    """Phase 4.5: Single consistent strong teacher (V22 Peak1500) + continuous 2tier UNet + hiSWD."""
+    pool_v22 = build_pool_v22_clean(pool_dir, device=device)
+    pool_old = UNIFIED_OLD_OUT / "pairs.pt"
+    pool_c = OUT / "pools/pool_C.pt"
+
+    base_kw = dict(arch="unet", interp_mode="2tier", updates=2800, eval_every=700, curriculum_steps=800, device=device)
+    results = {}
+    results["P4_5_V22_clean"] = train_student_arm("P4_5_V22_clean", pool_v22, loss_mode="calibrated", **base_kw)
+    results["P4_5_V22_rev"] = train_student_arm("P4_5_V22_rev", pool_v22, pool_c_path=pool_c, loss_mode="calibrated", **base_kw)
+    results["P4_5_Old_rev"] = train_student_arm("P4_5_Old_rev", pool_old, pool_c_path=pool_c, loss_mode="calibrated", **base_kw)
+
+    def _score(r: dict) -> float:
+        a = r["arms"]
+        er_u = (a["l100"]["hits"]["ER"][0] + a["l100"]["hits"]["Uki"][0]) / 240.0
+        hole_ok = 1.0 if r["acceptance"].get("monotonic_no_l060_hole", True) else -0.25
+        wrong_ok = 0.0 if a["wrong"]["csd_top1"] <= 0.025 else -0.50
+        return (
+            0.35 * a["l100"]["csd_top1"] + 0.25 * a["l075"]["csd_top1"] + 0.15 * a["l040"]["csd_top1"]
+            + 0.15 * er_u + 0.20 * a["l100"]["dino_s"] + hole_ok + wrong_ok
+        )
+
+    v22_base = max(("P4_5_V22_clean", "P4_5_V22_rev"), key=lambda k: _score(results[k]))
+    v22_c_path = pool_c if v22_base == "P4_5_V22_rev" else None
+    print(f"[Phase 4.5] Building P4_5_V22_hiSWD on winner base: {v22_base}", flush=True)
+    results["P4_5_V22_hiSWD"] = train_student_arm(
+        "P4_5_V22_hiSWD", pool_v22, pool_c_path=v22_c_path, loss_mode="hiswd", **base_kw
+    )
+
+    winner = max(results, key=lambda k: _score(results[k]))
+    winner_cfg_map = {
+        "P4_5_V22_clean": dict(base_pool=str(pool_v22), pool_c=None, loss_mode="calibrated"),
+        "P4_5_V22_rev": dict(base_pool=str(pool_v22), pool_c=str(pool_c), loss_mode="calibrated"),
+        "P4_5_Old_rev": dict(base_pool=str(pool_old), pool_c=str(pool_c), loss_mode="calibrated"),
+        "P4_5_V22_hiSWD": dict(base_pool=str(pool_v22), pool_c=str(v22_c_path) if v22_c_path else None, loss_mode="hiswd"),
+    }
+    summary = {
+        "updated_utc": utc(),
+        "hiswd_base": v22_base,
+        "winner": winner,
+        "winner_config": dict(arch="unet", interp_mode="2tier", curriculum_steps=800, **winner_cfg_map[winner]),
+        "arms": {k: {
+            "l040": v["arms"]["l040"],
+            "l060": v["arms"]["l060"],
+            "l075": v["arms"]["l075"],
+            "l100": v["arms"]["l100"],
+            "l115": v["arms"]["l115"],
+            "wrong": v["arms"]["wrong"],
+            "acceptance": v["acceptance"],
+        } for k, v in results.items()},
+    }
+    save_json(OUT / "phase4_5_summary.json", summary)
+    print(f"[Phase 4.5] Winner for Phase 5 = {winner} ({summary['winner_config']})", flush=True)
+    return summary
+
+
 @torch.no_grad()
 def proximal_swd_polish_eval(
     ckpt_path: Path,
@@ -477,26 +647,25 @@ def export_visual_strip(tag: str, out_png: Path) -> None:
 
 
 def run_phase5(pool_winner: str | None = None, arch: str = "unet", device: str = "cuda") -> dict:
-    """Phase 5: 5k updates dual-seed finalization + proximal polish + complete audit pack."""
-    if pool_winner is None:
-        p4 = read_json(OUT / "phase4_summary.json")
-        pool_winner = p4["winner"]
-
-    pool_a = OUT / "pools/pool_A.pt"
-    pool_b = OUT / "pools/pool_B.pt"
-    pool_c = OUT / "pools/pool_C.pt"
-    main_base = OUT / "pools/pool_A.pt"
-    if (OUT / "phase4_summary.json").exists():
-        mb = read_json(OUT / "phase4_summary.json").get("main_base_pool", "Pool_A_M3")
-        main_base = pool_a if mb == "Pool_A_M3" else pool_b
-
-    kw = dict(arch=arch, interp_mode="3tier", loss_mode="calibrated", updates=3500, eval_every=700, device=device)
-    if pool_winner == "T_opt":
-        base_pool, c_path = pool_b, None
-    elif pool_winner == "T_rev":
-        base_pool, c_path = main_base, pool_c
+    """Phase 5: 3.5k updates dual-seed finalization from Phase 4.5 winner (strict continuous 2tier UNet)."""
+    p45_p = OUT / "phase4_5_summary.json"
+    if p45_p.exists():
+        p45 = read_json(p45_p)
+        cfg = p45["winner_config"]
+        pool_winner = p45["winner"]
+        base_pool = Path(cfg["base_pool"])
+        c_path = Path(cfg["pool_c"]) if cfg.get("pool_c") else None
+        kw = dict(
+            arch=cfg.get("arch", arch),
+            interp_mode=cfg.get("interp_mode", "2tier"),
+            loss_mode=cfg.get("loss_mode", "calibrated"),
+            curriculum_steps=int(cfg.get("curriculum_steps", 800)),
+            updates=3500,
+            eval_every=700,
+            device=device,
+        )
     else:
-        base_pool, c_path = pool_a, None
+        raise FileNotFoundError(f"Refusing to run Phase 5 without Phase 4.5 winner summary: {p45_p}")
 
     rep_s0 = train_student_arm("Final_5k_seed0", base_pool, pool_c_path=c_path, seed=SEED_TRAIN, **kw)
     rep_s1 = train_student_arm("Final_5k_seed1", base_pool, pool_c_path=c_path, seed=SEED_TRAIN + 777, **kw)

@@ -8,7 +8,7 @@ from exp.v28_unified import OUT, ROOT, assert_vram_budget
 from exp.v28_unified.phase0_audit import run_phase0
 from exp.v28_unified.phase1_race import run_phase1
 from exp.v28_unified.phase2_pools import run_phase2
-from exp.v28_unified.phase3_4_5 import run_phase3, run_phase4, run_phase5
+from exp.v28_unified.phase3_4_5 import run_phase3, run_phase4, run_phase4_5, run_phase5
 from exp.v28_unified.train_student import train_student_arm
 from src.utils.runtime import read_json, sanitize_cuda_env, save_json, utc
 
@@ -32,7 +32,7 @@ def main():
     ap.add_argument("--pool", default=str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16"))
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--smoke", action="store_true")
-    ap.add_argument("--phase", default="all", choices=("all", "0", "1", "2", "3", "4", "5"))
+    ap.add_argument("--phase", default="all", choices=("all", "0", "1", "2", "3", "4", "4_5", "5"))
     args = ap.parse_args()
     sanitize_cuda_env()
     OUT.mkdir(parents=True, exist_ok=True)
@@ -44,7 +44,7 @@ def main():
         save_json(OUT / "smoke_report.json", rep)
         return
 
-    phases = ("0", "1", "2", "3", "4", "5") if args.phase == "all" else (args.phase,)
+    phases = ("0", "1", "2", "3", "4", "4_5", "5") if args.phase == "all" else (args.phase,)
     for ph in phases:
         t0 = time.monotonic()
         status["current_phase"] = ph
@@ -70,6 +70,8 @@ def main():
             interp = "2tier" if "2tier" in winner else "3tier"
             loss = "base" if ("M0" in winner or "M1" in winner) else "calibrated"
             run_phase4(stu_star_arch=arch, stu_star_interp=interp, stu_star_loss=loss, device=args.device)
+        elif ph == "4_5":
+            run_phase4_5(args.pool, device=args.device)
         elif ph == "5":
             p3 = read_json(OUT / "phase3_summary.json") if (OUT / "phase3_summary.json").exists() else {}
             winner = p3.get("winner", "M3_unet_3tier_cal")

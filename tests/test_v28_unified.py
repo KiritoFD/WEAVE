@@ -87,3 +87,26 @@ def test_resolve_train_rgb_paths_fails_on_missing() -> None:
 
     with pytest.raises(RuntimeError, match="Incomplete train RGB mapping"):
         resolve_train_rgb_paths(["nonexistent_sample_xyz_12345"], [0], require_full=True)
+
+
+def test_continuous_two_tier_and_hiswd_latent_damping() -> None:
+    from exp.v28_unified.train_student import _latent_loss_terms
+
+    gen = torch.Generator().manual_seed(7)
+    modes = torch.tensor([0, 1, 2, 3, 2, 3])
+    strengths, tc = _sample_strengths_and_targets(modes, len(modes), gen, "2tier")
+    src = torch.zeros(len(modes), 4, 8, 8)
+    hic = torch.ones(len(modes), 4, 8, 8) * 2.0
+    his = torch.ones(len(modes), 4, 8, 8) * 6.0
+    tgt = _compute_targets(src, hic, None, his, strengths, tc, "2tier")
+    assert torch.allclose(tgt[modes == 0], hic[modes == 0])
+    assert torch.allclose(tgt[modes == 1], his[modes == 1])
+    assert (tgt[modes == 2] > 0.0).all() and (tgt[modes == 2] <= 2.0).all()
+    assert (tgt[modes == 3] > 2.0).all() and (tgt[modes == 3] <= 6.0).all()
+
+    priors = {"P_Y": torch.eye(4)[:1].repeat(4, 1) * 0.25}
+    pred = torch.zeros(2, 4, 8, 8)
+    target = torch.ones(2, 4, 8, 8)
+    d_cal, _ = _latent_loss_terms(pred, target, torch.tensor([0.3, 0.9]), priors, "calibrated")
+    d_hi, _ = _latent_loss_terms(pred, target, torch.tensor([0.3, 0.9]), priors, "hiswd")
+    assert float(d_hi) < float(d_cal)

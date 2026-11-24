@@ -47,46 +47,17 @@ from src.utils import decode_s10
 from src.utils.runtime import bf16_autocast
 
 
-class T1MultiExpertTeacher:
-    """5-expert multi-tier teacher: Peak1500(P1), V20 D2, Q32 e2full_d5, Q32 csj_d6h, V19 S10-VGG."""
+class _P1AnchorMixin:
+    """Shared P1 + B4 + Canonicalizer anchor helper without loading unused experts."""
 
-    CANDIDATE_NAMES = (
-        "q32_csj_d6h",
-        "q32_e2full_d5",
-        "peak1500_hiC",
-        "peak1500_mid",
-        "peak1500_hiS",
-        "v20d2_hiC",
-        "v20d2_hiS",
-        "v19_s10vgg_hiC",
-        "v19_s10vgg_sweet",
-        "v19_s10vgg_strong",
-    )
-
-    def __init__(self, bundle: dict, c21: dict, bank: dict, dec_bf16: nn.Module, device: str = "cuda"):
-        self.device = device
-        self.bundle = bundle
-        self.c21 = c21
-        self.bank = bank
-        self.dec_bf16 = dec_bf16
-
-        self.aniso = AnisotropicS10Teacher(bundle, device=device)
-        # Share bf16 decoder to save VRAM
-        del self.aniso.dec_bf16
-        self.aniso.dec_bf16 = dec_bf16
-
-        self.q32_flow = make_bottleneck_net(32).to(device).eval().requires_grad_(False)
-        self.q32_flow.load_state_dict(torch.load(Q32_FLAGSHIP_CKPT, map_location="cpu", weights_only=False)["ema"])
-
-        self.core_peak = PrismCore(bundle, bank, PEAK1500_CKPT, device=device)
-        self.core_d2 = PrismCore(bundle, bank, V20_D2_CKPT, device=device)
-
-        # Load P1 & B4 for anchor computation
+    def _init_p1_anchor(self, bundle: dict, device: str) -> None:
         from exp.v19.fiber_duality import StyleFiberEncoder
         from exp.v19.routed_student import SpatiallyRoutedChordNet
         from exp.v28_unified import B4_CKPT, P1_CKPT
         from src.infer import canonicalizer, load_c3unet
 
+        self.device = device
+        self.bundle = bundle
         fnd = bundle["fnd"]
         self.priors = {k: v.to(device) if torch.is_tensor(v) else v for k, v in fnd["priors"].items()}
         self.b4, _ = load_c3unet(B4_CKPT, device)
@@ -130,6 +101,40 @@ class T1MultiExpertTeacher:
             chord, same_mask=torch.zeros(len(ti), dtype=torch.bool, device=dev),
         )
         return (z_anc + delta).detach()
+
+
+class T1MultiExpertTeacher(_P1AnchorMixin):
+    """5-expert multi-tier teacher: Peak1500(P1), V20 D2, Q32 e2full_d5, Q32 csj_d6h, V19 S10-VGG."""
+
+    CANDIDATE_NAMES = (
+        "q32_csj_d6h",
+        "q32_e2full_d5",
+        "peak1500_hiC",
+        "peak1500_mid",
+        "peak1500_hiS",
+        "v20d2_hiC",
+        "v20d2_hiS",
+        "v19_s10vgg_hiC",
+        "v19_s10vgg_sweet",
+        "v19_s10vgg_strong",
+    )
+
+    def __init__(self, bundle: dict, c21: dict, bank: dict, dec_bf16: nn.Module, device: str = "cuda"):
+        self._init_p1_anchor(bundle, device)
+        self.c21 = c21
+        self.bank = bank
+        self.dec_bf16 = dec_bf16
+
+        self.aniso = AnisotropicS10Teacher(bundle, device=device)
+        # Share bf16 decoder to save VRAM
+        del self.aniso.dec_bf16
+        self.aniso.dec_bf16 = dec_bf16
+
+        self.q32_flow = make_bottleneck_net(32).to(device).eval().requires_grad_(False)
+        self.q32_flow.load_state_dict(torch.load(Q32_FLAGSHIP_CKPT, map_location="cpu", weights_only=False)["ema"])
+
+        self.core_peak = PrismCore(bundle, bank, PEAK1500_CKPT, device=device)
+        self.core_d2 = PrismCore(bundle, bank, V20_D2_CKPT, device=device)
 
     @torch.no_grad()
     def generate_candidates(
@@ -221,6 +226,58 @@ class T1MultiExpertTeacher:
             cands[9].append(z_v19_st.cpu().half())
 
         return [torch.cat(chunks, dim=0) for chunks in cands]
+
+
+class V22CleanTeacher(_P1AnchorMixin):
+    """Single function-consistent neural teacher: Peak1500 + P1 anchor, two coherent tiers."""
+
+    PEAK_HIC = dict(D5_SOLVER, tau_min=0.38, tau_hi=0.74, steps=6, ws_fig=3.8, wc_fig=1.80, wc_abs=1.50)
+    PEAK_HIS = dict(D5_SOLVER, tau_min=0.28, tau_hi=0.55, steps=6, wc_fig=1.00, wc_abs=1.00)
+
+    def __init__(self, bundle: dict, bank: dict, device: str = "cuda"):
+        self._init_p1_anchor(bundle, device)
+        self.core_peak = PrismCore(bundle, bank, PEAK1500_CKPT, device=device)
+
+    @torch.no_grad()
+    def generate_two_tiers(
+        self,
+        z_src: torch.Tensor,
+        y16: torch.Tensor,
+        d16: torch.Tensor,
+        c64: torch.Tensor,
+        fib: torch.Tensor,
+        tid: torch.Tensor,
+        eps: torch.Tensor,
+        *,
+        src_idx: torch.Tensor | None = None,
+        batch: int = 32,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Return (hiC_fp16_cpu, hiS_fp16_cpu) with matched P1 anchor and deterministic noise."""
+        dev = self.device
+        N = len(z_src)
+        hi_c_out, hi_s_out = [], []
+        g_c = GateConfig(mode="fixed", fixed_g=0.50)
+        g_s = GateConfig(mode="fixed", fixed_g=0.42)
+        cfg_full = CFGConfig(branches="full", rescale_phi=0.48)
+
+        for st in range(0, N, batch):
+            sl = slice(st, min(st + batch, N))
+            zs = z_src[sl].to(dev).float()
+            yb = y16[sl].to(dev).float()
+            db = d16[sl].to(dev).float()
+            cb = c64[sl].to(dev).float()
+            fb = fib[sl].to(dev).float()
+            ti = tid[sl].to(dev)
+            ep = eps[sl].to(dev).float()
+            s_idx = src_idx[sl] if src_idx is not None else None
+
+            anc = self.compute_p1_anchor(zs, db, cb, fb, ti, src_idx=s_idx)
+            z_hic, _ = self.core_peak.integrate_flow(ep, anc, yb, db, ti, gate=g_c, cfg=cfg_full, solver=self.PEAK_HIC)
+            z_his, _ = self.core_peak.integrate_flow(ep, anc, yb, db, ti, gate=g_s, cfg=cfg_full, solver=self.PEAK_HIS)
+            hi_c_out.append(z_hic.cpu().half())
+            hi_s_out.append(z_his.cpu().half())
+
+        return torch.cat(hi_c_out, dim=0), torch.cat(hi_s_out, dim=0)
 
 
 class T4RegionalGapFiller:
