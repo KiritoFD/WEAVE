@@ -8,7 +8,7 @@ from exp.v28_unified import OUT, ROOT, assert_vram_budget
 from exp.v28_unified.phase0_audit import run_phase0
 from exp.v28_unified.phase1_race import run_phase1
 from exp.v28_unified.phase2_pools import run_phase2
-from exp.v28_unified.phase3_4_5 import run_phase3, run_phase4, run_phase4_5, run_phase5
+from exp.v28_unified.phase3_4_5 import run_knob2_frontier, run_phase3, run_phase4, run_phase4_5, run_phase5
 from exp.v28_unified.train_student import train_student_arm
 from src.utils.runtime import read_json, sanitize_cuda_env, save_json, utc
 
@@ -32,7 +32,7 @@ def main():
     ap.add_argument("--pool", default=str(ROOT.parent / "pseudo_gt_24h/orig_mean_fp16"))
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--smoke", action="store_true")
-    ap.add_argument("--phase", default="all", choices=("all", "0", "1", "2", "3", "4", "4_5", "5"))
+    ap.add_argument("--phase", default="all", choices=("all", "0", "1", "2", "3", "4", "4_5", "5", "knob2"))
     args = ap.parse_args()
     sanitize_cuda_env()
     OUT.mkdir(parents=True, exist_ok=True)
@@ -77,6 +77,8 @@ def main():
             winner = p3.get("winner", "M3_unet_3tier_cal")
             arch = "flat" if winner.startswith(("M0", "M1")) else "unet"
             run_phase5(arch=arch, device=args.device)
+        elif ph == "knob2":
+            run_knob2_frontier(device=args.device)
 
         status["phases"][ph] = {"done": True, "elapsed_s": round(time.monotonic() - t0, 1), "utc": utc()}
         status["current_phase"] = "done" if ph == phases[-1] else ph

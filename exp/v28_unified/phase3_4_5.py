@@ -357,34 +357,52 @@ def run_phase4_5(
     return summary
 
 
-@torch.no_grad()
-def proximal_swd_polish_eval(
-    ckpt_path: Path,
-    arch: str,
-    n_steps: int,
-    tag: str,
-    device: str = "cuda",
-) -> dict:
-    """Zero-training 1-2 step inference-time S10-BF16 orthogonal SWD proximal refinement at lambda=1.0."""
-    m_dir = OUT / "measured" / tag
-    if (m_dir / "summary_v28.json").exists():
-        return run_measure_v28(tag, device=device)
+def unified_knob_schedule(strength: float) -> dict:
+    """Two-stage continuous single-knob schedule:
 
-    saved = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-    raw_stats = saved["raw_stats"].to(device)
-    priors = {k: v.to(device) for k, v in saved["priors"].items()}
-    model = build_student_model(arch, raw_stats.shape[-1], device=device).eval()
-    model.load_state_dict(saved["ema"])
+    - s in [0.0, 1.0]: pure 1-NFE forward pass (base_lambda = s, 0 proximal steps).
+    - s in (1.0, 2.0]: clamp base_lambda at 1.0 (forbid >1.0 residual extrapolation)
+      and drive 1-3 S10-BF16 orthogonal SWD proximal steps with continuous step size,
+      anisotropic trust radii, and decaying structural pullback.
+    """
+    s = float(strength)
+    if s <= 1.0:
+        return {
+            "strength": s,
+            "base_lambda": max(0.0, s),
+            "u": 0.0,
+            "prox_steps": 0,
+            "eta": 0.0,
+            "w_y": 0.0,
+            "w_c": 0.0,
+            "rho_y_edge": 0.0,
+            "rho_y_low": 0.0,
+            "rho_c": 0.0,
+            "pullback_w": 0.0,
+            "mom_w": 0.0,
+            "swd_w": 0.0,
+        }
+    u = min(1.0, max(0.0, s - 1.0))
+    prox_steps = 1 if u <= 0.34 else (2 if u <= 0.67 else 3)
+    return {
+        "strength": s,
+        "base_lambda": 1.0,
+        "u": u,
+        "prox_steps": prox_steps,
+        "eta": 0.055 + 0.045 * u,
+        "w_y": 0.22 + 0.30 * u,
+        "w_c": 0.95,
+        "rho_y_edge": 0.05 + 0.12 * u,
+        "rho_y_low": 0.10 + 0.18 * u,
+        "rho_c": 0.26 + 0.26 * u,
+        "pullback_w": 0.18 * (1.0 - 0.85 * u),
+        "mom_w": 0.25 + 0.10 * u,
+        "swd_w": 0.15 + 0.25 * u,
+    }
 
-    ts = load_cache("runs/v18/cache/test750_struct_cache.pt")
-    q = load_cache("runs/v21/cache/v21_stiefel_ref_cache.pt")["test750"]["q32"]
-    tr = load_cache("runs/v18/cache/ccf_pool_cache.pt")["train"]
-    tasks, src, _ = tasks_and_sources()
-    tid_all = torch.tensor([t["target_style_id"] for t in tasks])
-    eps_fixed = torch.randn(src.shape, generator=torch.Generator().manual_seed(EVAL_SEED))
 
-    pixel = PixelBridgeV28(device=device)
-    # Build per-style orthogonal VGG target moments & SWD tokens strictly from train_4400
+def _build_train_vgg_swd_refs(pixel: PixelBridgeV28, tr: dict, device: str) -> tuple[torch.Tensor, tuple[torch.Tensor, ...], tuple[torch.Tensor, ...]]:
+    """Precompute per-style orthogonal VGG/Oklab target moments & SWD tokens strictly from train_4400."""
     g_p = torch.Generator(device=device).manual_seed(SEED_TRAIN + 505)
     proj = tuple(torch.linalg.qr(torch.randn(c, 64, device=device, generator=g_p), mode="reduced").Q
                  for c in (64, 128, 256))
@@ -401,9 +419,55 @@ def proximal_swd_polish_eval(
         style_moms.append(torch.cat(ms, 0).mean(0))
         for j in range(3):
             style_toks[j].append(torch.cat(ts_list[j], 0).mean(0))
-    ref_moms = torch.stack(style_moms, 0)  # (5, D)
-    ref_toks = tuple(torch.stack(tl, 0) for tl in style_toks)  # each (5, 256, C)
+    ref_moms = torch.stack(style_moms, 0)
+    ref_toks = tuple(torch.stack(tl, 0) for tl in style_toks)
     pixel.scale = ref_moms.std(0, unbiased=False).clamp_min(0.05)
+    return ref_moms, ref_toks, proj
+
+
+@torch.no_grad()
+def proximal_swd_polish_eval(
+    ckpt_path: Path,
+    arch: str,
+    n_steps: int,
+    tag: str,
+    device: str = "cuda",
+    *,
+    knob_strength: float | None = None,
+    wrong: bool = False,
+) -> dict:
+    """Zero-training S10-BF16 orthogonal SWD proximal refinement at base lambda=1.0 (discrete or continuous s in (1, 2])."""
+    m_dir = OUT / "measured" / tag
+    if (m_dir / "summary_v28.json").exists():
+        row = run_measure_v28(tag, device=device)
+        if knob_strength is not None:
+            row.update(strength=float(knob_strength), wrong=wrong)
+        return row
+
+    from src.utils.protocol import pick_wrong_cross_tid
+
+    sched = unified_knob_schedule(knob_strength) if knob_strength is not None else {
+        "strength": 1.0, "base_lambda": 1.0, "prox_steps": n_steps, "eta": 0.065,
+        "w_y": 0.20, "w_c": 0.95, "rho_y_edge": 0.05, "rho_y_low": 0.10, "rho_c": 0.28,
+        "pullback_w": 0.0, "mom_w": 0.25, "swd_w": 0.15,
+    }
+    saved = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    raw_stats = saved["raw_stats"].to(device)
+    priors = {k: v.to(device) for k, v in saved["priors"].items()}
+    model = build_student_model(arch, raw_stats.shape[-1], device=device).eval()
+    model.load_state_dict(saved["ema"])
+
+    ts = load_cache("runs/v18/cache/test750_struct_cache.pt")
+    q = load_cache("runs/v21/cache/v21_stiefel_ref_cache.pt")["test750"]["q32"]
+    tr = load_cache("runs/v18/cache/ccf_pool_cache.pt")["train"]
+    tasks, src, _ = tasks_and_sources()
+    sid_all = torch.tensor([t["source_style_id"] for t in tasks])
+    tid_all = torch.tensor([t["target_style_id"] for t in tasks])
+    labels_all = pick_wrong_cross_tid(sid_all, tid_all) if wrong else tid_all
+    eps_fixed = torch.randn(src.shape, generator=torch.Generator().manual_seed(EVAL_SEED))
+
+    pixel = PixelBridgeV28(device=device)
+    ref_moms, ref_toks, proj = _build_train_vgg_swd_refs(pixel, tr, device)
 
     P_Y, P_C = priors["P_Y"], priors["P_C"]
     dec_fp16 = load_s10_decoder(device)
@@ -412,8 +476,8 @@ def proximal_swd_polish_eval(
     for st in range(0, len(tasks), 8):
         sl = slice(st, min(st + 8, len(tasks)))
         zs = src[sl].to(device).float()
-        tgt = tid_all[sl].to(device)
-        st_t = torch.ones(len(zs), device=device, dtype=torch.float32)
+        tgt = labels_all[sl].to(device)
+        st_t = torch.full((len(zs),), float(sched["base_lambda"]), device=device, dtype=torch.float32)
         if arch == "unet":
             z0 = model(zs, ts["c_64"][sl].to(device).float(), q[sl].to(device).float(),
                        tgt, st_t, raw_stats, priors, noise=eps_fixed[sl].to(device).float())
@@ -422,24 +486,32 @@ def proximal_swd_polish_eval(
                        tgt, st_t, raw_stats, priors)
 
         z = z0.clone()
-        for _ in range(n_steps):
+        for _ in range(int(sched["prox_steps"])):
             with torch.enable_grad():
                 zr = z.detach().requires_grad_(True)
                 cur_f, cur_t = pixel.encode(zr, grad=True)
                 l_mom = F.smooth_l1_loss((cur_f - ref_moms[tgt]) / pixel.scale, torch.zeros_like(cur_f), beta=0.20)
                 l_swd = sum(((a @ p).sort(dim=1).values - (b[tgt] @ p).sort(dim=1).values).abs().mean()
                             for a, b, p in zip(cur_t, ref_toks, proj)) / 3.0
-                g = torch.autograd.grad(0.25 * l_mom + 0.15 * l_swd, zr)[0].detach()
+                loss_total = sched["mom_w"] * l_mom + sched["swd_w"] * l_swd
+                if sched["pullback_w"] > 0.0:
+                    loss_total = loss_total + sched["pullback_w"] * (zr - z0).square().mean()
+                g = torch.autograd.grad(loss_total, zr)[0].detach()
             g = _smooth_grad_3x3(g, blend=0.25)
-            d = aniso_rms_direction(-g, P_Y, P_C, w_y=0.20, w_c=0.95)
-            z = project_anisotropic_trust(z + 0.065 * d, z0, P_Y, P_C, rho_y_edge=0.05, rho_y_low=0.10, rho_c=0.28)
+            d = aniso_rms_direction(-g, P_Y, P_C, w_y=sched["w_y"], w_c=sched["w_c"])
+            z = project_anisotropic_trust(
+                z + sched["eta"] * d, z0, P_Y, P_C,
+                rho_y_edge=sched["rho_y_edge"], rho_y_low=sched["rho_y_low"], rho_c=sched["rho_c"],
+            )
         wr.write_batch(z, tasks[sl])
 
-    wr.finalize(arm=tag, proximal_steps=n_steps, strength=1.0, same_bypass=False)
+    wr.finalize(arm=tag, proximal_steps=int(sched["prox_steps"]), strength=float(sched["strength"]), wrong=wrong, same_bypass=False)
     del pixel, model, dec_fp16
     gc.collect()
     torch.cuda.empty_cache()
-    return run_measure_v28(tag, device=device)
+    row = run_measure_v28(tag, device=device)
+    row.update(strength=float(sched["strength"]), wrong=wrong, prox_steps=int(sched["prox_steps"]))
+    return row
 
 
 @torch.no_grad()
@@ -704,3 +776,214 @@ def run_phase5(pool_winner: str | None = None, arch: str = "unet", device: str =
     save_json(OUT / "phase5_final_audit.json", audit)
     print(f"[Phase 5] COMPLETE -> {OUT / 'phase5_final_audit.json'}", flush=True)
     return audit
+
+
+def measure_knob2_latency_4090(ckpt_path: Path, arch: str, device: str = "cuda") -> dict:
+    """Measure real 4090 per-image latency across s=1.00 (1-NFE) and s=(1,2] (1-3 proximal steps)."""
+    saved = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    raw_stats = saved["raw_stats"].to(device)
+    priors = {k: v.to(device) for k, v in saved["priors"].items()}
+    model = build_student_model(arch, raw_stats.shape[-1], device=device).eval()
+    model.load_state_dict(saved["ema"])
+    dec = load_s10_decoder(device)
+    pixel = PixelBridgeV28(device=device)
+    tr = load_cache("runs/v18/cache/ccf_pool_cache.pt")["train"]
+    ref_moms, ref_toks, proj = _build_train_vgg_swd_refs(pixel, tr, device)
+    P_Y, P_C = priors["P_Y"], priors["P_C"]
+
+    out = {}
+    for s_val in (1.25, 1.50, 2.00):
+        sched = unified_knob_schedule(s_val)
+        n_st = int(sched["prox_steps"])
+        key = f"s{int(round(s_val * 100)):03d}_{n_st}step"
+        per_bs = {}
+        for bs in (1, 8):
+            zs = torch.randn(bs, 4, 64, 64, device=device)
+            c64 = torch.randn(bs, 4, 64, 64, device=device)
+            q32 = torch.randn(bs, 32, 16, 16, device=device)
+            tgt = torch.zeros(bs, dtype=torch.long, device=device)
+            st_t = torch.ones(bs, device=device)
+            eps = torch.randn_like(zs)
+
+            def _once():
+                with torch.no_grad():
+                    z0 = model(zs, c64, q32, tgt, st_t, raw_stats, priors, noise=eps) if arch == "unet" else model(zs, c64, q32, tgt, st_t, raw_stats, priors)
+                z = z0.clone()
+                for _ in range(n_st):
+                    with torch.enable_grad():
+                        zr = z.detach().requires_grad_(True)
+                        cf, ct = pixel.encode(zr, grad=True)
+                        lm = F.smooth_l1_loss((cf - ref_moms[tgt]) / pixel.scale, torch.zeros_like(cf), beta=0.20)
+                        ls = sum(((a @ p).sort(dim=1).values - (b[tgt] @ p).sort(dim=1).values).abs().mean()
+                                 for a, b, p in zip(ct, ref_toks, proj)) / 3.0
+                        lt = sched["mom_w"] * lm + sched["swd_w"] * ls + sched["pullback_w"] * (zr - z0).square().mean()
+                        g = torch.autograd.grad(lt, zr)[0].detach()
+                    with torch.no_grad():
+                        d = aniso_rms_direction(-_smooth_grad_3x3(g, 0.25), P_Y, P_C, w_y=sched["w_y"], w_c=sched["w_c"])
+                        z = project_anisotropic_trust(
+                            z + sched["eta"] * d, z0, P_Y, P_C,
+                            rho_y_edge=sched["rho_y_edge"], rho_y_low=sched["rho_y_low"], rho_c=sched["rho_c"],
+                        )
+                with torch.no_grad():
+                    _ = decode_s10(dec, z, batch=bs, output_cpu=False)
+
+            for _ in range(3):
+                _once()
+            torch.cuda.synchronize()
+            t0 = time.perf_counter()
+            for _ in range(10):
+                _once()
+            torch.cuda.synchronize()
+            ms = (time.perf_counter() - t0) * 1000.0 / 10.0
+            per_bs[f"b{bs}"] = {
+                "e2e_s10_ms_per_img": round(ms / bs, 2),
+                "e2e_img_per_s": round(1000.0 * bs / ms, 2),
+            }
+        out[key] = per_bs
+
+    del pixel, model, dec
+    torch.cuda.empty_cache()
+    return out
+
+
+def plot_unified_knob2_pareto(seed0_rep: dict, knob2_arms: dict, out_dir: Path) -> None:
+    """Plot full s in [0, 2] unified knob curve: [0, 1] 1-NFE + (1, 2] continuous proximal SWD."""
+    literature = _literature_points()
+    archived = [
+        ("PRISM-1", 0.7440, 0.4431, 0.4433),
+        ("R12 g=.55", 0.7723, 0.4564, 0.4250),
+        ("V23 HiC", 0.6299, 0.5330, 0.5883),
+        ("V20 D2", 0.6050, 0.5672, 0.6050),
+        ("V22 Peak1500", 0.5730, 0.5820, 0.7683),
+    ]
+    base_pts = [seed0_rep["arms"][k] for k in ("l025", "l040", "l060", "l075", "l100")]
+    old_extrap = seed0_rep["arms"]["l115"]
+    prox_pts = [seed0_rep["arms"]["l100"]] + [
+        v for k, v in sorted(knob2_arms.items(), key=lambda kv: kv[1]["strength"]) if k != "wrong"
+    ]
+
+    plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10, "axes.spines.top": False,
+                         "axes.spines.right": False, "svg.fonttype": "none"})
+    fig, axes = plt.subplots(1, 2, figsize=(11.2, 4.6), layout="constrained")
+    for ax, (metric, ylabel, scale) in zip(
+        axes, (("dino_s", "DINO-S ↑", 1.0), ("csd_top1", "CSD Top-1 (%) ↑", 100.0))
+    ):
+        pub = [(r["dino_c"], scale * r[metric]) for r in literature]
+        front = _frontier_indices(pub)
+        if front:
+            ax.scatter(*zip(*pub), marker="o", s=16, facecolors="none", edgecolors="#666974", zorder=2)
+            ax.plot(*zip(*(pub[i] for i in front)), color="#666974", lw=1.2, ls="--", marker="o", ms=3,
+                    zorder=2, label="External literature Pareto")
+        for i, (name, dc, ds, csd) in enumerate(archived):
+            y = ds if metric == "dino_s" else 100.0 * csd
+            ax.scatter(dc, y, marker="x", c="#c9722c", s=34, zorder=3, label="Historical V19-V25" if i == 0 else None)
+            ax.annotate(name, (dc, y), xytext=(4, 4), textcoords="offset points", color="#c9722c", fontsize=7)
+
+        ax.scatter(old_extrap["dino_c"], scale * old_extrap[metric], marker="x", c="#9ca3af", s=34, zorder=3,
+                   label="Old extrap (λ=1.15, replaced)")
+        ax.plot([p["dino_c"] for p in base_pts], [scale * p[metric] for p in base_pts],
+                marker="D", color="#1b6b52", lw=2.0, ms=5.5, zorder=4, label="Unified s∈[0,1] (1-NFE)")
+        for p in base_pts:
+            ax.annotate(f"{p['strength']:g}", (p["dino_c"], scale * p[metric]),
+                        xytext=(5, 4), textcoords="offset points", color="#1b6b52", fontsize=8)
+
+        ax.plot([p["dino_c"] for p in prox_pts], [scale * p[metric] for p in prox_pts],
+                marker="s", color="#b91c48", lw=2.0, ms=5.5, zorder=5, label="Unified s∈(1,2] (1-3 Prox SWD)")
+        for p in prox_pts[1:]:
+            ax.annotate(f"{p['strength']:g}", (p["dino_c"], scale * p[metric]),
+                        xytext=(5, 4), textcoords="offset points", color="#b91c48", fontsize=8)
+
+        ax.grid(alpha=0.18, zorder=0)
+        ax.set(xlabel="DINO-C ↑", ylabel=ylabel)
+        ax.margins(x=0.10, y=0.15)
+    axes[0].legend(loc="best", frameon=False, fontsize=7.5)
+    fig.suptitle("PRISM-1-Unified v2 Single-Knob Full Spectrum (s∈[0,1] 1-NFE + s∈(1,2] Proximal SWD) · Cross600",
+                 fontsize=11.5, fontweight="bold")
+    for ext in ("png", "svg"):
+        fig.savefig(out_dir / f"pareto_v28_knob2.{ext}", dpi=220, facecolor="white")
+    plt.close(fig)
+
+
+def export_knob2_visual_strip(seed0_tag: str, prox_tags: list[str], out_png: Path) -> None:
+    """Export s = 0, 0.40, 1.00, 1.50, 2.00 progression strip across hard tasks."""
+    tasks, _, _ = tasks_and_sources()
+    picks = [next(t for t in tasks if t["source_style_id"] != t["target_style_id"] and t["target_style_id"] == s)
+             for s in (0, 4, 2)]
+    arms = [(f"{seed0_tag}_l000", "s=0.00"), (f"{seed0_tag}_l040", "s=0.40"), (f"{seed0_tag}_l100", "s=1.00")]
+    for pt in prox_tags:
+        arms.append((pt, f"s={int(pt[-3:]) / 100.0:.2f}"))
+    cell = 200
+    W = len(arms) * (cell + 6) + 10
+    H = len(picks) * (cell + 26) + 28
+    canvas = Image.new("RGB", (W, H), (24, 24, 24))
+    dr = ImageDraw.Draw(canvas)
+    for ci, (_, lbl) in enumerate(arms):
+        dr.text((8 + ci * (cell + 6), 6), lbl, fill=(200, 245, 220))
+    for ri, t in enumerate(picks):
+        y0 = 26 + ri * (cell + 26)
+        dr.text((8, y0 + cell + 2), f"{t['source_style'][:4]}->{t['target_style'][:4]}: {t['source_stem'][:22]}", fill=(255, 220, 120))
+        for ci, (arm, _) in enumerate(arms):
+            raw_dir = OUT / "raw" / arm
+            for bf in sorted(raw_dir.glob("batch_*.pt")):
+                pl = torch.load(bf, map_location="cpu", weights_only=False)
+                if t["task_id"] in pl["ids"]:
+                    j = list(pl["ids"]).index(t["task_id"])
+                    im = Image.fromarray(pl["rgb_u8"][j].permute(1, 2, 0).numpy()).resize((cell, cell))
+                    canvas.paste(im, (6 + ci * (cell + 6), y0))
+                    break
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    canvas.save(out_png)
+
+
+def run_knob2_frontier(device: str = "cuda") -> dict:
+    """Zero-retraining extension: map s in (1, 2] to continuous 1-3 step S10-BF16 SWD polish (no >1.0 extrap)."""
+    ckpt_s0 = OUT / "students/Final_5k_seed0/Final_5k_seed0_final.pt"
+    assert ckpt_s0.exists(), f"Missing final checkpoint: {ckpt_s0}"
+    seed0_rep = read_json(OUT / "students/Final_5k_seed0/results.json")
+
+    knob_arms = {}
+    for s_val in (1.25, 1.50, 1.75, 2.00):
+        tag = f"Final_5k_s{int(round(s_val * 100)):03d}"
+        sched = unified_knob_schedule(s_val)
+        knob_arms[f"s{int(round(s_val * 100)):03d}"] = proximal_swd_polish_eval(
+            ckpt_s0, "unet", sched["prox_steps"], tag=tag, device=device, knob_strength=s_val, wrong=False,
+        )
+    knob_arms["wrong"] = proximal_swd_polish_eval(
+        ckpt_s0, "unet", unified_knob_schedule(2.0)["prox_steps"], tag="Final_5k_s200_wrong",
+        device=device, knob_strength=2.0, wrong=True,
+    )
+
+    r_s100 = read_json(OUT / "measured/Final_5k_seed0_l100/eval.json")["rows"]
+    r_s150 = read_json(OUT / "measured/Final_5k_s150/eval.json")["rows"]
+    r_s200 = read_json(OUT / "measured/Final_5k_s200/eval.json")["rows"]
+
+    latency = measure_knob2_latency_4090(ckpt_s0, "unet", device=device)
+    plot_unified_knob2_pareto(seed0_rep, knob_arms, OUT)
+    export_knob2_visual_strip("Final_5k_seed0", ["Final_5k_s150", "Final_5k_s200"], OUT / "visual_audit_strip_knob2.png")
+
+    report = {
+        "updated_utc": utc(),
+        "base_checkpoint": ckpt_s0.name,
+        "seed0_l100": seed0_rep["arms"]["l100"],
+        "knob2_arms": knob_arms,
+        "bootstrap_ci": {
+            "s150_minus_s100": paired_cluster_ci(r_s150, r_s100),
+            "s200_minus_s100": paired_cluster_ci(r_s200, r_s100),
+        },
+        "latency_4090_knob2": latency,
+        "acceptance": {
+            "no_extrap_above_1": all(unified_knob_schedule(s)["base_lambda"] == 1.0 for s in (1.25, 1.50, 1.75, 2.00)),
+            "monotonic_dino_s_s1_to_s2": (
+                seed0_rep["arms"]["l100"]["dino_s"] <= knob_arms["s125"]["dino_s"]
+                <= knob_arms["s150"]["dino_s"] <= knob_arms["s175"]["dino_s"] <= knob_arms["s200"]["dino_s"]
+            ),
+            "monotonic_top1_s1_to_s2": (
+                seed0_rep["arms"]["l100"]["csd_top1"] <= knob_arms["s125"]["csd_top1"]
+                <= knob_arms["s150"]["csd_top1"] <= knob_arms["s175"]["csd_top1"] <= knob_arms["s200"]["csd_top1"]
+            ),
+            "wrong_target_s200": knob_arms["wrong"]["csd_top1"] <= 0.025,
+        },
+    }
+    save_json(OUT / "phase5_knob2_audit.json", report)
+    print(f"[Knob2] COMPLETE -> {OUT / 'phase5_knob2_audit.json'}", flush=True)
+    return report

@@ -110,3 +110,24 @@ def test_continuous_two_tier_and_hiswd_latent_damping() -> None:
     d_cal, _ = _latent_loss_terms(pred, target, torch.tensor([0.3, 0.9]), priors, "calibrated")
     d_hi, _ = _latent_loss_terms(pred, target, torch.tensor([0.3, 0.9]), priors, "hiswd")
     assert float(d_hi) < float(d_cal)
+
+
+def test_unified_knob_schedule_two_stage_continuity() -> None:
+    from exp.v28_unified.phase3_4_5 import unified_knob_schedule
+
+    s0 = unified_knob_schedule(0.0)
+    assert s0["base_lambda"] == 0.0 and s0["prox_steps"] == 0
+    s1 = unified_knob_schedule(1.0)
+    assert s1["base_lambda"] == 1.0 and s1["prox_steps"] == 0
+
+    prev_eta = 0.0
+    prev_pull = float("inf")
+    prev_swd = 0.0
+    for s in (1.25, 1.50, 1.75, 2.00):
+        cfg = unified_knob_schedule(s)
+        assert cfg["base_lambda"] == 1.0, "Must forbid >1.0 residual extrapolation"
+        assert 1 <= cfg["prox_steps"] <= 3
+        assert cfg["eta"] > prev_eta
+        assert cfg["pullback_w"] < prev_pull
+        assert cfg["swd_w"] > prev_swd
+        prev_eta, prev_pull, prev_swd = cfg["eta"], cfg["pullback_w"], cfg["swd_w"]
