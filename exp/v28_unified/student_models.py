@@ -108,9 +108,30 @@ class UnifiedHybridUNet(nn.Module):
         priors: dict,
         noise: torch.Tensor | None = None,
     ) -> torch.Tensor:
+        return self.forward_latent_opt(
+            source, c64, q32, tid, strength, raw_stats, priors, noise=noise
+        )
+
+    def forward_latent_opt(
+        self,
+        source: torch.Tensor,
+        c64: torch.Tensor,
+        q32: torch.Tensor,
+        tid: torch.Tensor,
+        strength: torch.Tensor,
+        raw_stats: torch.Tensor,
+        priors: dict,
+        noise: torch.Tensor | None = None,
+        *,
+        dz_in: torch.Tensor | None = None,
+        dq32: torch.Tensor | None = None,
+        dcond: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Forward pass supporting test-time input/condition deltas projected purely through decoder manifold."""
         amount = strength[:, None, None, None]
         aligned = apply_latent_chroma_shift(source, tid, priors, alpha=1.0)
         z0 = source + 0.35 * amount * (aligned - source)
+        z0_in = z0 if dz_in is None else (z0 + dz_in)
         luma = torch.einsum("ij,bjhw->bihw", priors["P_Y"], source)
 
         # Gated source high-freq direct connection: releases 80% edge lock at lambda=1 while keeping lambda=0 exact
@@ -120,13 +141,16 @@ class UnifiedHybridUNet(nn.Module):
 
         style = self.stats(raw_stats[tid])
         cond = self.cond(torch.cat((F.one_hot(tid, 5).float(), sinusoidal_time_emb(strength, 32), style), 1))
+        if dcond is not None:
+            cond = cond + dcond
 
-        s16_q = self.q_proj(q32)
-        r16 = self.route(q32) * self.route_gate(cond).tanh()[:, :, None, None]
+        q_eff = q32 if dq32 is None else (q32 + dq32)
+        s16_q = self.q_proj(q_eff)
+        r16 = self.route(q_eff) * self.route_gate(cond).tanh()[:, :, None, None]
         r32 = F.interpolate(r16, size=(32, 32), mode="bilinear", align_corners=False)
         r64 = F.interpolate(r16, size=(64, 64), mode="bilinear", align_corners=False)
 
-        inp = torch.cat((z0, luma * gate_src, c64 * gate_src, noise_ch), dim=1).contiguous(
+        inp = torch.cat((z0_in, luma * gate_src, c64 * gate_src, noise_ch), dim=1).contiguous(
             memory_format=torch.channels_last
         )
         h64 = self.in_conv(inp)

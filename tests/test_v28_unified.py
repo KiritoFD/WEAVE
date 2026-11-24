@@ -131,3 +131,39 @@ def test_unified_knob_schedule_two_stage_continuity() -> None:
         assert cfg["pullback_w"] < prev_pull
         assert cfg["swd_w"] > prev_swd
         prev_eta, prev_pull, prev_swd = cfg["eta"], cfg["pullback_w"], cfg["swd_w"]
+
+
+def test_unet_latent_opt_exact_at_zero_and_tto_isolation() -> None:
+    from exp.v28_unified.student_models import UnifiedHybridUNet
+
+    m = UnifiedHybridUNet(stats_dim=27).eval()
+    src = torch.randn(2, 4, 64, 64)
+    c64 = torch.randn(2, 4, 64, 64)
+    q32 = torch.randn(2, 32, 16, 16)
+    tid = torch.tensor([0, 4])
+    st = torch.ones(2)
+    stats = torch.randn(5, 27)
+    priors = {
+        "P_Y": torch.eye(4)[:1].repeat(4, 1) * 0.25,
+        "P_C": torch.eye(4) - 0.25,
+        "mu_c": torch.randn(5, 4, 1, 1),
+        "std_c": torch.ones(5, 4, 1, 1),
+    }
+    eps = torch.randn_like(src)
+    out_std = m(src, c64, q32, tid, st, stats, priors, noise=eps)
+    out_opt0 = m.forward_latent_opt(
+        src, c64, q32, tid, st, stats, priors, noise=eps,
+        dz_in=torch.zeros_like(src), dq32=torch.zeros_like(q32), dcond=torch.zeros(2, 192),
+    )
+    assert torch.allclose(out_std, out_opt0, atol=1e-6)
+
+    tto_src = (ROOT / "exp/v28_unified/tto_ablation.py").read_text(encoding="utf-8")
+    tto_tree = ast.parse(tto_src)
+    imports = set()
+    for node in ast.walk(tto_tree):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            imports.add(node.module)
+        elif isinstance(node, ast.Import):
+            imports.update(a.name for a in node.names)
+    for bad in ("csd_model", "csd_prototypes", "load_dino_model", "encode_dino", "FeatureStack", "lpips", "dino_16"):
+        assert bad not in imports and bad not in tto_src.lower(), f"Referee leakage in tto_ablation: {bad}"
