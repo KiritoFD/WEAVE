@@ -455,7 +455,7 @@ def measure_latency_4090(ckpt_path: Path, arch: str, device: str = "cuda") -> di
     out = {}
     for bs in (1, 16):
         zs = torch.randn(bs, 4, 64, 64, device=device)
-        c64 = torch.randn(bs, 7, 64, 64, device=device)
+        c64 = torch.randn(bs, 4, 64, 64, device=device)
         q32 = torch.randn(bs, 32, 16, 16, device=device)
         tid = torch.zeros(bs, dtype=torch.long, device=device)
         st = torch.ones(bs, device=device)
