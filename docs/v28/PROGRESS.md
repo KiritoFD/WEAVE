@@ -197,3 +197,10 @@
 
 - `/root/Workspace/models/Qwen-Image-2.1-Turbo`：已校验就位（`17` 文件，`32.45 GB`，软链自既有 SHA256 验证目录）；
 - `/root/Workspace/models/Qwen-Image-2.1`：已通过 CPU 后台完成 ModelScope 拉取（`29` 文件，`33,134,834,656 bytes`）。
+
+## 十、14 个外部基线 Cross600 `DINO-S (Top-5 mean)` 与 `CSD Top-1` 统一重算核查
+
+对磁盘全部 `14` 个外部基线（`docs/performance/images/baselines_D5_512/jpg/*`、`docs/baseline/Hist2Style/images` 与 `StyleGallery 750` 原图重提取 `features.pt`）与 WEAVE 各主力曲线统一按 Cross600（$n=600$）重算 `DINO-S (Top-5 mean)`（每张生成图对 30 张目标参考库取相似度最高的 5 张均值）与 `CSD Top-1 (%)`（全量结果归档于 `runs/v28_baselines_top5_metrics.json`、`runs/v28_top5_pareto_metrics.json`，总览图见 [pareto_v28_top5.svg](pareto_v28_top5.svg)）：
+
+- **`CSD Top-1 (%)`（判别式分类准确率，即前序 Pareto 统一口径）**：WEAVE 全线站在全部外部基线 Pareto 前沿上方——例如 `Adv1NFE (l060)` 在 `C=0.7336` 达 **`51.33%`**（vs `Seedream 4.5` `37.15%`, `+14.18pp`）、`Adv1NFE (l100)` 在 `C=0.5974` 达 **`66.83%`**、`TTO2 (+Struct)` 在 `C=0.6395` 达 **`67.83%`**（vs `StyleGallery` `51.67%`, `+16.16pp`）、`Knob2 (s175)` 在 `C=0.4917` 达 **`79.17%`**、`TTO1` 在 `C=0.4594` 达 **`80.67%`**。此前一度显得偏低，是因为错将右图纵轴换成了**未减非目标类均值的原始 Prototype Cosine（`cf @ proto[tgt]`）**——`Seedream 4.5` 共模余弦偏高（`0.3388` 但 `Top-1 = 37.15%`），而 `Adv1NFE (l100)` 类间边距干净（`0.2950` 但 `Top-1 = 66.83%`），用原始点积直接比较会失真。
+- **`DINO-S (Top-5 mean)`（抑制单图内容碰撞作弊）**：相比 `max`（`StyleGallery 0.5605`），改用 Top-5 均值后 `StyleGallery` 回落至 `0.5040`（`-0.0565`），而 `V20_D1`（`0.5223 @ 0.5005 C`）、`V20_D2`（`0.5116 @ 0.5335 C`）、`V22_Peak1500`（`0.5096 @ 0.4992 C`）均立于外部 Pareto 前沿之上；高内容保真区 `TTO2 (+Struct)`（`0.4562 @ 0.6395 C`）与 `Adv1NFE`（`l075: 0.4320`, `l040: 0.3820`）继续支配同内容水平的所有外部基线。
