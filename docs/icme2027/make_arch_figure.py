@@ -768,38 +768,37 @@ def build_architecture() -> None:
     ax.axis("off")
 
     # =========================================================================
-    # 0. TOP UNIFIED FACTORIZATION BANNER (Selective Information Removal)
+    # 0. TOP UNIFIED BANNER (Selective Information Filtering)
     # =========================================================================
-    ax.plot([0.18, 1.85], [5.03, 5.03], color="#CBD5E1", lw=1.0, zorder=1)
-    ax.plot([12.45, 14.12], [5.03, 5.03], color="#CBD5E1", lw=1.0, zorder=1)
-    card(ax, 1.92, 4.89, 10.46, 0.27, fc="#F1F5F9", ec="#475569", lw=1.1, rad=0.09, zorder=3)
+    ax.plot([0.18, 2.05], [5.03, 5.03], color="#CBD5E1", lw=1.0, zorder=1)
+    ax.plot([12.25, 14.12], [5.03, 5.03], color="#CBD5E1", lw=1.0, zorder=1)
+    card(ax, 2.12, 4.89, 10.06, 0.27, fc="#F1F5F9", ec="#475569", lw=1.1, rad=0.09, zorder=3)
     ax.text(
         7.15,
         5.025,
-        r"CLEAVE Selective Information Removal:   [×] Strip Source Style Gram, $64^2$ Micro-Edges & Decoder Retraction   |   [+] Keep Spatial Geometry & Target Brushwork",
+        r"CLEAVE Selective Information Filtering:   [×] Remove Source-Style Backflow   |   [+] Preserve Controllable Geometry & Target Brushwork",
         ha="center",
         va="center",
-        fontsize=8.25,
+        fontsize=8.6,
         weight="bold",
         color="#0F172A",
         zorder=4,
     )
 
     # =========================================================================
-    # 1. LEFT INPUT PAIR COLUMN (x_s, x_ref)
+    # 1. LEFT INPUT COLUMN (x_s, y_t, s)
     # =========================================================================
-    ax.text(0.73, 4.66, r"Source Content $x_s$", ha="center", va="bottom", fontsize=9.4, weight="bold", color="#0F172A")
+    ax.text(0.73, 4.66, r"Source $x_s$", ha="center", va="bottom", fontsize=9.8, weight="bold", color="#0F172A")
     framed_image(ax, src_img, 0.17, 3.48, 1.12, 1.12, ec="#1E3A8A", lw=1.35, zorder=6)
-    card(ax, 0.17, 3.21, 1.12, 0.21, fc="#EFF6FF", ec="#93C5FD", lw=0.85, rad=0.05, zorder=4)
-    ax.text(0.73, 3.315, r"Unlabeled $512^2$", ha="center", va="center", fontsize=8.0, color="#1E40AF", weight="bold", zorder=5)
+    ax.text(0.73, 3.30, r"$512{\times}512$", ha="center", va="center", fontsize=8.3, color="#1E40AF", weight="bold", zorder=5)
 
-    ax.text(0.73, 2.46, r"Target Style $y_t, s$", ha="center", va="bottom", fontsize=9.4, weight="bold", color="#7C2D12")
+    ax.text(0.73, 2.46, r"Target $y_t,\;s$", ha="center", va="bottom", fontsize=9.8, weight="bold", color="#7C2D12")
     framed_image(ax, ref_img, 0.17, 1.28, 1.12, 1.12, ec="#B45309", lw=1.35, zorder=6)
-    card(ax, 0.15, 1.00, 1.16, 0.22, fc="#FFFBEB", ec="#FCD34D", lw=0.85, rad=0.05, zorder=4)
-    ax.text(0.73, 1.11, r"Knob $s\in[0,1.50]$", ha="center", va="center", fontsize=8.0, color="#92400E", weight="bold", zorder=5)
+    card(ax, 0.15, 0.96, 1.16, 0.24, fc="#FFFBEB", ec="#FCD34D", lw=0.9, rad=0.05, zorder=4)
+    ax.text(0.73, 1.08, r"Knob $s\in[0,1.5]$", ha="center", va="center", fontsize=8.1, color="#92400E", weight="bold", zorder=5)
 
     # =========================================================================
-    # 2. FILTER I PILLAR: CONDITIONING SPACE (Stiefel Q32 & K=8 Bank)
+    # 2. FILTER I PILLAR: CONDITIONING SPACE (Blue/Teal matching Fig. 4a)
     # =========================================================================
     stage_container(
         ax,
@@ -807,89 +806,53 @@ def build_architecture() -> None:
         0.84,
         3.78,
         4.00,
-        r"Filter I · Conditioning Space (ConvNeXt-S3 $\to$ Stiefel $Q_{32}$)",
+        r"Filter I · Conditioning (ConvNeXt-S3, $12.4\mathrm{M}$)",
         body_fc="#F8FAFC",
-        border_col="#334155",
+        border_col="#1E3A5F",
         header_fc="#1E3A5F",
-        header_h=0.27,
-        title_fs=8.9,
+        header_h=0.28,
+        title_fs=9.2,
     )
 
-    # ---- Upper Sub-Panel: Stiefel Polar Quotient ----
-    card(ax, 1.74, 2.52, 3.58, 1.98, fc="#EFF6FF", ec="#2563EB", lw=1.25, rad=0.08, zorder=3)
-    ax.text(
-        3.53,
-        4.35,
-        r"ConvNeXt-S3 ($12.4\mathrm{M}$) $\to$ Stiefel Polar Quotient $Q_{32}^{\mathrm{cnx}}$",
-        ha="center",
-        va="center",
-        fontsize=8.4,
-        weight="bold",
-        color="#1E3A8A",
-        zorder=5,
-    )
+    # Upper visual: Grayscale -> LCN -> Stiefel Q32
+    m_y = 3.55
+    m_s = 0.78
+    framed_image(ax, y_map, 1.84, m_y, m_s, m_s, ec="#334155", lw=1.0, zorder=6)
+    ax.text(2.23, 3.38, r"Grayscale $Y$", ha="center", va="center", fontsize=8.1, weight="bold", color="#0F172A", zorder=6)
+    rounded_ortho_arrow(ax, [(2.65, m_y + m_s / 2), (2.98, m_y + m_s / 2)], col="#1D4ED8", lw=1.4, hs=8.0)
 
-    m_y = 3.42
-    m_s = 0.72
-    framed_image(ax, y_map, 1.86, m_y, m_s, m_s, ec="#334155", lw=1.0, zorder=6)
-    ax.text(2.22, 3.27, r"Grayscale $Y$", ha="center", va="center", fontsize=7.8, weight="bold", color="#0F172A", zorder=6)
+    framed_image(ax, lcn_map, 3.01, m_y, m_s, m_s, ec="#1D4ED8", lw=1.0, zorder=6)
+    ax.text(3.40, 3.38, r"$C_{64},\;Y_{16}$", ha="center", va="center", fontsize=8.2, weight="bold", color="#1E3A8A", zorder=6)
+    rounded_ortho_arrow(ax, [(3.82, m_y + m_s / 2), (4.15, m_y + m_s / 2)], col="#1D4ED8", lw=1.4, hs=8.0)
 
-    rounded_ortho_arrow(ax, [(2.61, m_y + m_s / 2), (2.94, m_y + m_s / 2)], col="#1D4ED8", lw=1.3, hs=7.8)
+    framed_image(ax, zca_src_img, 4.18, m_y, m_s, m_s, ec="#1E3A8A", lw=1.15, interp="nearest", zorder=7)
+    ax.text(4.57, 3.38, r"Stiefel $Q_{32}$", ha="center", va="center", fontsize=8.2, weight="bold", color="#1E3A8A", zorder=6)
 
-    framed_image(ax, lcn_map, 2.97, m_y, m_s, m_s, ec="#1D4ED8", lw=1.0, zorder=6)
-    ax.text(3.33, 3.27, r"$\mathrm{LCN}(Y)$", ha="center", va="center", fontsize=7.8, weight="bold", color="#1E3A8A", zorder=6)
+    # Clean Red/Green Filter I Summary Badges
+    card(ax, 1.80, 2.84, 3.46, 0.34, fc="#FEE2E2", ec="#DC2626", lw=1.05, rad=0.06, zorder=5)
+    ax.text(3.53, 3.01, r"[×] Strip Source-Style Correlations ($91.3\%\to 20.7\%$)", ha="center", va="center", fontsize=8.0, weight="bold", color="#991B1B", zorder=6)
 
-    rounded_ortho_arrow(ax, [(3.72, m_y + m_s / 2), (4.05, m_y + m_s / 2)], col="#1D4ED8", lw=1.3, hs=7.8)
+    card(ax, 1.80, 2.42, 3.46, 0.34, fc="#DCFCE7", ec="#16A34A", lw=1.05, rad=0.06, zorder=5)
+    ax.text(3.53, 2.59, r"[+] Keep Semantic Layout ($Q_{32},\;C_{64},\;Y_{16}$)", ha="center", va="center", fontsize=8.0, weight="bold", color="#166534", zorder=6)
 
-    framed_image(ax, zca_src_img, 4.08, m_y, m_s, m_s, ec="#1E3A8A", lw=1.15, interp="nearest", zorder=7)
-    card(ax, 4.84, m_y + 0.48, 0.41, 0.20, fc="#DBEAFE", ec="#3B82F6", lw=0.8, rad=0.04, zorder=8)
-    ax.text(5.045, m_y + 0.58, r"$I_{32}$", ha="center", va="center", fontsize=7.6, weight="bold", color="#1E40AF", zorder=9)
-    ax.text(4.48, 3.27, r"Stiefel $Q_{32}^{\mathrm{cnx}}$", ha="center", va="center", fontsize=7.9, weight="bold", color="#1E3A8A", zorder=6)
+    # Lower visual: K=8 Sub-School Bank
+    card(ax, 1.80, 0.96, 3.46, 1.32, fc="#FFFBEB", ec="#D97706", lw=1.2, rad=0.07, zorder=3)
+    ax.text(3.53, 2.09, r"$K=8$ Sub-School Bank ($417\text{-D}$) & Scene Router", ha="center", va="center", fontsize=8.4, weight="bold", color="#92400E", zorder=5)
 
-    # Dual Red/Green Filter Badges inside Filter I
-    card(ax, 1.83, 2.86, 3.40, 0.25, fc="#FEE2E2", ec="#DC2626", lw=1.0, rad=0.05, zorder=5)
-    ax.text(3.53, 2.985, r"[×] Strip 2nd-Order Style Gram ($91.3\% \to 20.7\%$ Chance)", ha="center", va="center", fontsize=7.65, weight="bold", color="#991B1B", zorder=6)
-
-    card(ax, 1.83, 2.57, 3.40, 0.24, fc="#DCFCE7", ec="#16A34A", lw=1.0, rad=0.05, zorder=5)
-    ax.text(3.53, 2.69, r"[+] Keep Pure Spatial Geometry ($C_{64},\;Y_{16},\;Q_{32}^{\mathrm{cnx}}$)", ha="center", va="center", fontsize=7.65, weight="bold", color="#166534", zorder=6)
-
-    # ---- Lower Sub-Panel: K=8 Style Bank & Scene Router ----
-    card(ax, 1.74, 0.92, 3.58, 1.50, fc="#FFFBEB", ec="#D97706", lw=1.25, rad=0.08, zorder=3)
-    ax.text(
-        3.53,
-        2.26,
-        r"$K=8$ Sub-School Style Bank ($417\text{-D}$) & Scene Router",
-        ha="center",
-        va="center",
-        fontsize=8.3,
-        weight="bold",
-        color="#92400E",
-        zorder=5,
-    )
-
-    card(ax, 1.84, 1.32, 1.72, 0.78, fc="#FFFFFF", ec="#F59E0B", lw=0.95, rad=0.06, zorder=4)
-    ax.text(2.70, 1.93, r"$\mathrm{Oklab}_{27}\oplus\mathrm{Haar}_6\oplus\mu_{\mathrm{CNX}}$", ha="center", va="center", fontsize=7.4, weight="bold", color="#78350F", zorder=5)
-    sw_x0, sw_w, sw_h = 1.96, 0.22, 0.18
+    sw_x0, sw_w, sw_h = 1.98, 0.25, 0.22
     for idx, col_rgb in enumerate(ref_swatches):
-        ax.add_patch(Rectangle((sw_x0 + idx * sw_w, 1.57), sw_w - 0.02, sw_h, facecolor=col_rgb, edgecolor="#334155", linewidth=0.55, zorder=6))
-    ax.text(2.70, 1.42, "Target Palette & Texture", ha="center", va="center", fontsize=7.2, weight="bold", color="#B45309", zorder=5)
+        ax.add_patch(Rectangle((sw_x0 + idx * sw_w, 1.54), sw_w - 0.025, sw_h, facecolor=col_rgb, edgecolor="#334155", linewidth=0.6, zorder=6))
+    ax.text(2.70, 1.27, "Oklab + Haar + CNX", ha="center", va="center", fontsize=7.8, weight="bold", color="#78350F", zorder=5)
 
-    rounded_ortho_arrow(ax, [(3.57, 1.71), (3.76, 1.71)], col="#B45309", lw=1.3, hs=7.6)
+    rounded_ortho_arrow(ax, [(3.56, 1.65), (3.84, 1.65)], col="#B45309", lw=1.35, hs=7.8)
+    draw_sphere_manifold(ax, cx=4.22, cy=1.60, r=0.28, zorder=6)
+    ax.text(4.86, 1.60, r"Routed" "\n" r"$u_{y_t,k^\star}$", ha="center", va="center", fontsize=8.2, weight="bold", color="#9F1239", zorder=6)
 
-    card(ax, 3.77, 1.32, 1.45, 0.78, fc="#FFFDF7", ec="#D97706", lw=0.95, rad=0.06, zorder=4)
-    draw_sphere_manifold(ax, cx=4.13, cy=1.71, r=0.25, zorder=6)
-    ax.text(4.82, 1.86, r"$K\!=\!8$ Router", ha="center", va="center", fontsize=7.6, weight="bold", color="#78350F", zorder=6)
-    ax.text(4.82, 1.54, r"$u_{y_t,k^\star}^{\mathrm{cnx}}$", ha="center", va="center", fontsize=8.2, weight="bold", color="#9F1239", zorder=6)
-
-    card(ax, 1.83, 0.99, 3.40, 0.24, fc="#FEF3C7", ec="#D97706", lw=0.95, rad=0.05, zorder=5)
-    ax.text(3.53, 1.11, r"[+] $100\%$ Blind Referee Isolation (Zero ViT Backbone)", ha="center", va="center", fontsize=7.55, weight="bold", color="#92400E", zorder=6)
-
-    # Input-to-Filter-I routing
-    rounded_ortho_arrow(ax, [(1.29, 3.82), (1.84, 3.82)], col="#1D4ED8", lw=1.5)
-    rounded_ortho_arrow(ax, [(1.29, 1.71), (1.83, 1.71)], col="#B45309", lw=1.5)
+    rounded_ortho_arrow(ax, [(1.29, 3.92), (1.82, 3.92)], col="#1D4ED8", lw=1.55)
+    rounded_ortho_arrow(ax, [(1.29, 1.65), (1.79, 1.65)], col="#B45309", lw=1.55)
 
     # =========================================================================
-    # 3. FILTER II PILLAR: TRAJECTORY SPACE (P/E-Core Transport)
+    # 3. FILTER II PILLAR: TRAJECTORY SPACE (Slate/Crimson matching Fig. 4b)
     # =========================================================================
     stage_container(
         ax,
@@ -897,73 +860,71 @@ def build_architecture() -> None:
         0.84,
         5.18,
         4.00,
-        r"Filter II · Trajectory Space (Performance-Hybrid P/E-Core $\mathcal{T}_{\mathrm{P/E}}$)",
+        r"Filter II · Trajectory (2-Tier CPU-Like P/E-Core $\mathcal{T}_{\mathrm{P/E}}$)",
         body_fc="#F8FAFC",
-        border_col="#334155",
+        border_col="#1E293B",
         header_fc="#1E293B",
-        header_h=0.27,
-        title_fs=8.9,
+        header_h=0.28,
+        title_fs=9.2,
     )
 
-    # ---- Top Band (Teal/Green): E-Core (s <= 0.75, 1-NFE) ----
-    card(ax, 5.75, 3.66, 4.92, 0.84, fc="#F0FDFA", ec="#0D9488", lw=1.35, rad=0.07, zorder=4)
-    ax.text(8.21, 4.30, r"E-Core ($s \leq 0.75$, 1-NFE, $11.1\mathrm{M}$ · $33.1\,\mathrm{img/s}$ Cold)", ha="center", va="center", fontsize=8.45, weight="bold", color="#115E59", zorder=6)
-    ax.text(8.21, 4.04, r"[+] Keep $64^2$ Gated Contours ($\gamma_{\mathrm{skip}}(\lambda)$) & Exact $s=0$ Identity ($\max|\hat{z}-z_s|=0.0$)", ha="center", va="center", fontsize=7.65, weight="bold", color="#166534", zorder=6)
-    ax.text(8.21, 3.80, r"[+] Emit $1\,\mathrm{ms}$ Structural & Chrominance Draft $z_{\mathrm{E}}(\lambda_{\mathrm{draft}})$ to Initialize P-Core", ha="center", va="center", fontsize=7.55, weight="bold", color="#0F766E", zorder=6)
+    # ---- Top Tier (Teal): E-Core (1-NFE, 11.1M) ----
+    card(ax, 5.76, 3.44, 4.18, 1.04, fc="#F0FDFA", ec="#0D9488", lw=1.45, rad=0.07, zorder=4)
+    ax.text(7.85, 4.26, r"E-Core ($s \leq 0.75$ · 1-NFE, $11.1\mathrm{M}$)", ha="center", va="center", fontsize=8.9, weight="bold", color="#115E59", zorder=6)
+    ax.text(7.85, 3.96, r"[+] Keep Controllable $64^2$ Geometry ($P_Y\!\oplus\!P_C$, exact $s=0$)", ha="center", va="center", fontsize=7.95, weight="bold", color="#166534", zorder=6)
+    ax.text(7.85, 3.66, r"[+] Emit $1\,\mathrm{ms}$ Structural & Color Draft $z_{\mathrm{E}}$", ha="center", va="center", fontsize=7.95, weight="bold", color="#0F766E", zorder=6)
 
-    # ---- Center Simplified U-Net & Luma-Chroma Split ----
-    card(ax, 5.75, 1.88, 1.32, 1.64, fc="#FFFFFF", ec="#CBD5E1", lw=1.05, rad=0.07, zorder=3)
-    ax.text(6.41, 3.34, r"$P_Y \oplus P_C$ Split", ha="center", va="center", fontsize=8.0, weight="bold", color="#0F172A", zorder=5)
-    draw_3d_slab(ax, 6.13, 2.74, 0.44, 0.44, dx=0.08, dy=0.055, base_col="#38BDF8", ec="#0369A1", lw=1.0, face_img=py_map, zorder=6)
-    ax.text(6.41, 2.58, r"1-D Luma $P_Y$", ha="center", va="center", fontsize=7.5, weight="bold", color="#0369A1", zorder=6)
-    draw_3d_slab(ax, 6.13, 2.04, 0.44, 0.44, dx=0.08, dy=0.055, base_col="#FB7185", ec="#9F1239", lw=1.0, face_img=pc_maps[0], zorder=6)
-    ax.text(6.41, 1.95, r"3-D Chroma $P_C$", ha="center", va="center", fontsize=7.5, weight="bold", color="#9F1239", zorder=6)
+    # ---- Prominent E-Core -> P-Core Draft Arrow (Signature P/E Design!) ----
+    rounded_ortho_arrow(
+        ax,
+        [(6.38, 3.44), (6.38, 2.04)],
+        col="#0D9488",
+        lw=2.6,
+        hs=10.5,
+        halo=True,
+        zorder=11,
+    )
+    card(ax, 5.76, 2.50, 1.24, 0.56, fc="#CCFBF1", ec="#0F766E", lw=1.1, rad=0.06, zorder=12)
+    ax.text(6.38, 2.78, "1 ms Draft $z_{\\mathrm{E}}$\n(Seeds P-Core)", ha="center", va="center", fontsize=7.55, weight="bold", color="#115E59", zorder=13)
 
-    y_hg = 2.70
-    draw_multislice_block(ax, 7.25, y_hg, slice_w=0.11, h=1.04, n_slices=2, step_x=0.055, base_col="#60A5FA", ec="#1D4ED8", zorder=6)
-    ax.text(7.35, y_hg - 0.64, r"$64^2$", ha="center", va="center", fontsize=7.6, weight="bold", color="#1E3A8A", zorder=6)
+    # ---- Center Simplified U-Net Bottleneck Diagram ----
+    y_hg = 2.74
+    draw_multislice_block(ax, 7.22, y_hg, slice_w=0.11, h=0.92, n_slices=2, step_x=0.055, base_col="#60A5FA", ec="#1D4ED8", zorder=6)
+    ax.text(7.32, y_hg - 0.58, r"$64^2$", ha="center", va="center", fontsize=7.8, weight="bold", color="#1E3A8A", zorder=6)
 
-    draw_multislice_block(ax, 7.58, y_hg, slice_w=0.10, h=0.72, n_slices=2, step_x=0.05, base_col="#818CF8", ec="#4338CA", zorder=6)
-    ax.text(7.67, y_hg - 0.48, r"$32^2$", ha="center", va="center", fontsize=7.6, weight="bold", color="#312E81", zorder=6)
+    card(ax, 7.60, 2.22, 1.44, 1.04, fc="#EEF2FF", ec="#4338CA", lw=1.35, rad=0.07, shadow=True, zorder=4)
+    ax.text(8.32, 3.06, r"$16{\times}16$ Bottleneck", ha="center", va="center", fontsize=8.3, weight="bold", color="#312E81", zorder=6)
+    ax.imshow(att_map, extent=(7.74, 8.20, 2.38, 2.84), cmap="YlGnBu", aspect="auto", interpolation="nearest", zorder=6)
+    ax.add_patch(Rectangle((7.74, 2.38), 0.46, 0.46, fill=False, edgecolor="#312E81", linewidth=0.9, zorder=7))
+    ax.text(8.62, 2.61, r"$Q_{32}+Y_{16}$" "\n" r"Only!", ha="center", va="center", fontsize=7.8, weight="bold", color="#1D4ED8", zorder=6)
 
-    card(ax, 7.88, 1.94, 1.48, 1.52, fc="#EEF2FF", ec="#4338CA", lw=1.35, rad=0.08, shadow=True, zorder=4)
-    ax.text(8.62, 3.28, r"$16{\times}16$ Bottleneck", ha="center", va="center", fontsize=8.3, weight="bold", color="#312E81", zorder=6)
-    ax.imshow(att_map, extent=(8.12, 8.62, 2.52, 3.02), cmap="YlGnBu", aspect="auto", interpolation="nearest", zorder=6)
-    ax.add_patch(Rectangle((8.12, 2.52), 0.50, 0.50, fill=False, edgecolor="#312E81", linewidth=0.95, zorder=7))
-    ax.text(8.98, 2.77, r"$Q_{32}^{\mathrm{cnx}}$" "\n" r"$+\,Y_{16}$", ha="center", va="center", fontsize=7.8, weight="bold", color="#1D4ED8", zorder=6)
-    card(ax, 7.96, 2.02, 1.32, 0.36, fc="#DCFCE7", ec="#16A34A", lw=0.9, rad=0.05, zorder=5)
-    ax.text(8.62, 2.20, "[+] 16×16 Layout Only\n[×] No 64² Edge Lock!", ha="center", va="center", fontsize=7.1, weight="bold", color="#166534", zorder=6)
+    draw_multislice_block(ax, 9.26, y_hg, slice_w=0.11, h=0.92, n_slices=2, step_x=0.055, base_col="#FB923C", ec="#C2410C", zorder=6)
+    ax.text(9.36, y_hg - 0.58, r"$64^2$", ha="center", va="center", fontsize=7.8, weight="bold", color="#9A3412", zorder=6)
 
-    draw_multislice_block(ax, 9.48, y_hg, slice_w=0.10, h=0.72, n_slices=2, step_x=0.05, base_col="#FBBF24", ec="#B45309", zorder=6)
-    ax.text(9.57, y_hg - 0.48, r"$32^2$", ha="center", va="center", fontsize=7.6, weight="bold", color="#92400E", zorder=6)
+    rounded_ortho_arrow(ax, [(7.44, y_hg), (7.59, y_hg)], col="#4338CA", lw=1.3, hs=7.0)
+    rounded_ortho_arrow(ax, [(9.05, y_hg), (9.24, y_hg)], col="#C2410C", lw=1.3, hs=7.0)
 
-    draw_multislice_block(ax, 9.79, y_hg, slice_w=0.11, h=1.04, n_slices=2, step_x=0.055, base_col="#FB923C", ec="#C2410C", zorder=6)
-    ax.text(9.89, y_hg - 0.64, r"$64^2$", ha="center", va="center", fontsize=7.6, weight="bold", color="#9A3412", zorder=6)
+    # ---- Right Hybrid Director Switch (User-Budget Dispatch, Not Input MoE!) ----
+    card(ax, 10.02, 1.64, 0.68, 2.20, fc="#FFF1F2", ec="#BE123C", lw=1.25, rad=0.07, zorder=6)
+    ax.text(10.36, 3.56, "Hybrid\nDirector", ha="center", va="center", fontsize=7.9, weight="bold", color="#9F1239", zorder=7)
+    ax.text(10.36, 2.90, "User\nKnob $s$", ha="center", va="center", fontsize=7.8, weight="bold", color="#0F172A", zorder=7)
+    ax.text(10.36, 2.15, "2-Tier\nBudget\n(Not MoE)", ha="center", va="center", fontsize=7.0, weight="bold", color="#881337", zorder=7)
 
-    card(ax, 10.12, 2.08, 0.56, 1.24, fc="#FFF1F2", ec="#E11D48", lw=1.05, rad=0.06, zorder=5)
-    ax.text(10.40, 3.04, "Hybrid\nDirector", ha="center", va="center", fontsize=7.4, weight="bold", color="#9F1239", zorder=6)
-    ax.text(10.40, 2.60, "Knob $s$", ha="center", va="center", fontsize=7.6, weight="bold", color="#0F172A", zorder=6)
-    ax.text(10.40, 2.28, "E / P\nSwitch", ha="center", va="center", fontsize=7.1, weight="bold", color="#881337", zorder=6)
+    rounded_ortho_arrow(ax, [(9.94, 3.94), (10.36, 3.94), (10.36, 3.85)], col="#0D9488", lw=1.45, hs=7.4)
+    rounded_ortho_arrow(ax, [(9.94, 1.48), (10.36, 1.48), (10.36, 1.63)], col="#E11D48", lw=1.45, hs=7.4)
 
-    rounded_ortho_arrow(ax, [(7.07, y_hg), (7.24, y_hg)], col="#334155", lw=1.25, hs=6.8)
-    rounded_ortho_arrow(ax, [(7.46, y_hg), (7.57, y_hg)], col="#4338CA", lw=1.15, hs=6.2)
-    rounded_ortho_arrow(ax, [(7.76, y_hg), (7.87, y_hg)], col="#4338CA", lw=1.15, hs=6.2)
-    rounded_ortho_arrow(ax, [(9.36, y_hg), (9.47, y_hg)], col="#B45309", lw=1.15, hs=6.2)
-    rounded_ortho_arrow(ax, [(9.67, y_hg), (9.78, y_hg)], col="#C2410C", lw=1.15, hs=6.2)
-    rounded_ortho_arrow(ax, [(10.00, y_hg), (10.11, y_hg)], col="#BE123C", lw=1.25, hs=6.8)
-
-    # ---- Bottom Band (Vermilion/Red): P-Core (s > 0.75, 6-Step Flow) ----
-    card(ax, 5.75, 0.92, 4.92, 0.84, fc="#FFF1F2", ec="#E11D48", lw=1.35, rad=0.07, zorder=4)
-    ax.text(8.21, 1.56, r"P-Core ($s \geq 0.80$, 6-Step DPM-2M Flow, $22.3\mathrm{M}$ · $18.2\,\mathrm{img/s}$ Cold)", ha="center", va="center", fontsize=8.45, weight="bold", color="#9F1239", zorder=6)
-    ax.text(8.21, 1.30, r"[×] Drop $64^2/32^2$ Structural Skips ($16{\times}16$ Bottleneck Only) to Dissolve Source Micro-Edges", ha="center", va="center", fontsize=7.65, weight="bold", color="#991B1B", zorder=6)
-    ax.text(8.21, 1.05, r"[+] Break Posterior Source-Lock via $15\%$ Pool C Reversed Real-Painting Pairs & 4-Branch CFG", ha="center", va="center", fontsize=7.55, weight="bold", color="#166534", zorder=6)
+    # ---- Bottom Tier (Crimson): P-Core (6-Step Flow, 22.3M) ----
+    card(ax, 5.76, 0.96, 4.18, 1.04, fc="#FFF1F2", ec="#E11D48", lw=1.45, rad=0.07, zorder=4)
+    ax.text(7.85, 1.78, r"P-Core ($s \geq 0.80$ · 6-Step Flow, $22.3\mathrm{M}$)", ha="center", va="center", fontsize=8.9, weight="bold", color="#9F1239", zorder=6)
+    ax.text(7.85, 1.48, r"[×] Drop $64^2/32^2$ Source Micro-Textures ($16{\times}16$ Only)", ha="center", va="center", fontsize=7.95, weight="bold", color="#991B1B", zorder=6)
+    ax.text(7.85, 1.18, r"[+] Break Source-Lock via Pool C Reversed Pairs", ha="center", va="center", fontsize=7.95, weight="bold", color="#166534", zorder=6)
 
     # Inter-pillar arrows Filter I -> Filter II
-    rounded_ortho_arrow(ax, [(5.32, 3.68), (5.74, 3.68)], col="#1D4ED8", lw=1.5, halo=True, hs=8.0)
-    rounded_ortho_arrow(ax, [(5.32, 1.68), (5.74, 1.68)], col="#B45309", lw=1.5, halo=True, hs=8.0)
+    rounded_ortho_arrow(ax, [(5.42, 3.92), (5.75, 3.92)], col="#1D4ED8", lw=1.55, halo=True, hs=8.2)
+    rounded_ortho_arrow(ax, [(5.42, 1.48), (5.75, 1.48)], col="#B45309", lw=1.55, halo=True, hs=8.2)
 
     # =========================================================================
-    # 4. FILTER III PILLAR: DECODING SPACE (CLEAVE-Dec D_*) & OUTPUT x_hat
+    # 4. FILTER III PILLAR: DECODING SPACE (Crimson matching Fig. 4c)
     # =========================================================================
     stage_container(
         ax,
@@ -975,18 +936,18 @@ def build_architecture() -> None:
         body_fc="#FFF1F2",
         border_col="#BE123C",
         header_fc="#BE123C",
-        header_h=0.27,
-        title_fs=8.7,
+        header_h=0.28,
+        title_fs=8.9,
     )
 
-    ax.text(11.82, 4.38, r"$49.5\mathrm{M}\!\to\!10.7\mathrm{M}$", ha="center", va="center", fontsize=8.6, weight="bold", color="#881337", zorder=6)
-    ax.text(11.82, 4.15, r"$(-78.5\%\;\mathrm{Channels})$", ha="center", va="center", fontsize=7.4, weight="bold", color="#9F1239", zorder=6)
+    ax.text(11.82, 4.35, r"$49.5\mathrm{M}\!\to\!10.7\mathrm{M}$", ha="center", va="center", fontsize=8.8, weight="bold", color="#881337", zorder=6)
+    ax.text(11.82, 4.10, r"($-78.5\%$ Pruned)", ha="center", va="center", fontsize=7.6, weight="bold", color="#9F1239", zorder=6)
 
     stage_xs = [11.12, 11.46, 11.81, 12.16]
-    full_hs = [0.95, 1.16, 1.40, 1.66]
-    kept_hs = [0.42, 0.56, 0.74, 0.96]
+    full_hs = [0.92, 1.12, 1.34, 1.58]
+    kept_hs = [0.40, 0.54, 0.72, 0.94]
     stage_lbls = [r"$64^2$", r"$128^2$", r"$256^2$", r"$512^2$"]
-    y_base_dec = 2.32
+    y_base_dec = 2.34
 
     for sx, fh, kh, slbl in zip(stage_xs, full_hs, kept_hs, stage_lbls):
         ax.add_patch(
@@ -1016,51 +977,49 @@ def build_architecture() -> None:
             stripes=4,
             zorder=6,
         )
-        ax.text(sx + 0.11, y_base_dec - 0.13, slbl, ha="center", va="center", fontsize=7.0, color="#475569", weight="bold", zorder=6)
+        ax.text(sx + 0.11, y_base_dec - 0.14, slbl, ha="center", va="center", fontsize=7.1, color="#475569", weight="bold", zorder=6)
 
-    # Dual Red/Green Filter Badges inside Filter III
-    card(ax, 11.08, 1.54, 1.48, 0.52, fc="#FEE2E2", ec="#DC2626", lw=1.0, rad=0.06, zorder=5)
-    ax.text(11.82, 1.80, "[×] Prune 78.5%\nTexture Filters", ha="center", va="center", fontsize=7.45, weight="bold", color="#991B1B", zorder=6)
+    card(ax, 11.08, 1.56, 1.48, 0.52, fc="#FEE2E2", ec="#DC2626", lw=1.05, rad=0.06, zorder=5)
+    ax.text(11.82, 1.82, "[×] Remove Texture\nRetraction", ha="center", va="center", fontsize=7.65, weight="bold", color="#991B1B", zorder=6)
 
-    card(ax, 11.08, 0.92, 1.48, 0.54, fc="#DCFCE7", ec="#16A34A", lw=1.0, rad=0.06, zorder=5)
-    ax.text(11.82, 1.19, "[+] Block Retraction\n(+4.49pp, 3.15×)", ha="center", va="center", fontsize=7.35, weight="bold", color="#166534", zorder=6)
+    card(ax, 11.08, 0.94, 1.48, 0.54, fc="#DCFCE7", ec="#16A34A", lw=1.05, rad=0.06, zorder=5)
+    ax.text(11.82, 1.21, "[+] Keep Brushwork\n(+4.49pp, 3.15×)", ha="center", va="center", fontsize=7.55, weight="bold", color="#166534", zorder=6)
 
-    # Stylized Output x_hat + 2.5x Zoom Comparison Column
-    ax.text(13.54, 4.66, r"Stylized Output $\hat{x}$", ha="center", va="bottom", fontsize=9.3, weight="bold", color="#881337")
-    ax.text(13.54, 4.46, r"$512{\times}512$ Ukiyo-e", ha="center", va="bottom", fontsize=7.8, weight="bold", color="#475569")
+    # Output x_hat + 2.5x Zoom Detail
+    ax.text(13.54, 4.66, r"Stylized $\hat{x}$", ha="center", va="bottom", fontsize=9.6, weight="bold", color="#881337")
+    ax.text(13.54, 4.46, r"Ukiyo-e ($512^2$)", ha="center", va="bottom", fontsize=8.0, weight="bold", color="#475569")
     framed_image(ax, out_img, 12.93, 3.18, 1.22, 1.22, ec="#BE123C", lw=1.5, zorder=6)
     ax.add_patch(Rectangle((12.93 + 0.32, 3.18 + 0.45), 0.56, 0.56, fill=False, edgecolor="#FACC15", linewidth=1.0, linestyle="--", zorder=8))
 
     card(ax, 12.90, 0.84, 1.27, 2.16, fc="#FFFDF9", ec="#CBD5E1", lw=1.05, rad=0.07, shadow=True, zorder=4)
-    ax.text(13.535, 2.84, r"$2.5\times$ Zoom Detail", ha="center", va="center", fontsize=7.6, weight="bold", color="#1E293B", zorder=5)
+    ax.text(13.535, 2.84, r"$2.5\times$ Stroke Detail", ha="center", va="center", fontsize=7.8, weight="bold", color="#1E293B", zorder=5)
 
     framed_image(ax, src_zoom, 12.965, 1.98, 0.525, 0.68, ec="#334155", lw=0.9, shadow=False, zorder=6)
-    ax.text(13.227, 1.84, r"Source $x_s$", ha="center", va="center", fontsize=7.0, color="#334155", weight="bold", zorder=6)
+    ax.text(13.227, 1.83, r"Source", ha="center", va="center", fontsize=7.3, color="#334155", weight="bold", zorder=6)
 
     framed_image(ax, out_zoom, 13.575, 1.98, 0.525, 0.68, ec="#BE123C", lw=1.05, shadow=False, zorder=6)
-    ax.text(13.837, 1.84, r"CLEAVE $\hat{x}$", ha="center", va="center", fontsize=7.0, color="#9F1239", weight="bold", zorder=6)
+    ax.text(13.837, 1.83, r"CLEAVE", ha="center", va="center", fontsize=7.3, color="#9F1239", weight="bold", zorder=6)
 
-    card(ax, 12.965, 0.92, 1.135, 0.78, fc="#FFF1F2", ec="#FDA4AF", lw=0.9, rad=0.05, zorder=5)
-    ax.text(13.535, 1.54, "CLEAVE P/E-Core", ha="center", va="center", fontsize=7.3, weight="bold", color="#881337", zorder=6)
-    ax.text(13.535, 1.31, "62.3%–80.2% Top-1", ha="center", va="center", fontsize=7.1, weight="bold", color="#0F172A", zorder=6)
-    ax.text(13.535, 1.08, "18.2–33.1 img/s Cold", ha="center", va="center", fontsize=7.0, weight="bold", color="#BE123C", zorder=6)
+    card(ax, 12.965, 0.94, 1.135, 0.74, fc="#FFF1F2", ec="#FDA4AF", lw=0.9, rad=0.05, zorder=5)
+    ax.text(13.535, 1.48, "18.2–33.1 img/s", ha="center", va="center", fontsize=7.45, weight="bold", color="#BE123C", zorder=6)
+    ax.text(13.535, 1.16, "Cold RGB→RGB", ha="center", va="center", fontsize=7.2, weight="bold", color="#0F172A", zorder=6)
 
     # Arrows: Filter II -> Filter III -> x_hat
-    rounded_ortho_arrow(ax, [(10.69, y_hg), (11.10, y_hg)], col="#1E293B", lw=1.5, halo=True, hs=8.2)
-    ax.text(10.89, y_hg + 0.08, r"$\hat{z}$", ha="center", va="bottom", fontsize=8.8, weight="bold", color="#0F172A", zorder=7)
-    rounded_ortho_arrow(ax, [(12.42, 2.82), (12.78, 2.82), (12.78, 3.79), (12.92, 3.79)], col="#BE123C", lw=1.5, rad=0.06, halo=True, hs=8.4)
+    rounded_ortho_arrow(ax, [(10.71, y_hg), (11.10, y_hg)], col="#1E293B", lw=1.55, halo=True, hs=8.4)
+    ax.text(10.90, y_hg + 0.08, r"$\hat{z}$", ha="center", va="bottom", fontsize=9.2, weight="bold", color="#0F172A", zorder=7)
+    rounded_ortho_arrow(ax, [(12.42, 2.82), (12.78, 2.82), (12.78, 3.79), (12.92, 3.79)], col="#BE123C", lw=1.55, rad=0.06, halo=True, hs=8.4)
 
     # =========================================================================
-    # 5. BOTTOM STRIP: ULTRA-CLEAN 1-LINE OFFLINE TRAINING SUMMARY
+    # 5. COMPACT SINGLE-LINE OFFLINE TRAINING STRIP
     # =========================================================================
-    card(ax, 0.17, 0.14, 13.99, 0.44, fc="#FEFCE8", ec="#A16207", lw=1.15, rad=0.07, ls="--", zorder=2)
+    card(ax, 0.17, 0.16, 13.99, 0.42, fc="#FEFCE8", ec="#A16207", lw=1.1, rad=0.07, ls="--", zorder=2)
     ax.text(
         7.16,
-        0.36,
-        r"Offline Training Only (0 ms Inference Cost):   15% Pool C Reversed Real-Painting Pairs (Break Source-Lock)   ·   High-$\tau$ Pixel Patch-SWD & Taylor Channel Pruning",
+        0.37,
+        r"Offline Training Only (0 ms Inference Cost):   Pool C In-Domain Reversed Real-Painting Pairs   ·   High-$\tau$ Pixel Patch-SWD & Taylor Channel Pruning",
         ha="center",
         va="center",
-        fontsize=8.1,
+        fontsize=8.2,
         weight="bold",
         color="#78350F",
         zorder=5,

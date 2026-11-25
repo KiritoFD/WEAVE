@@ -214,73 +214,66 @@ def plot_fig1_pareto_zoom():
 
 
 def plot_fig2_three_paradoxes():
-    fig, axes = plt.subplots(1, 3, figsize=(10.5, 3.15), facecolor=BG)
+    """Ultra-clean single-column Fig. 4: More Features / Params / Reconstruction All Hurt Stylization."""
+    fig, axes = plt.subplots(1, 3, figsize=(9.6, 2.85), facecolor=BG)
     for ax in axes:
         ax.set_facecolor(BG)
-        ax.grid(color=GRID, lw=0.85, axis="y")
+        ax.grid(color=GRID, lw=0.8, axis="y")
         for edge in ("bottom", "left"):
             ax.spines[edge].set_color("#B9C5D0")
 
-    # (a) Channel 1 — Conditioning Space: Source-Style Leakage & Stiefel Quotient
+    # (a) Filter I — Conditioning: Style Leakage (Blue/Teal palette matching Fig. 2 Filter I)
     ax = axes[0]
-    cats_a = ["Raw\nCNX", "Stiefel\nQ32", "Struct\nΔC×100", "Style\nΔS×100"]
-    vals_a = [91.33, 20.67, 74.2, 1.2]
-    lbls_a = ["91.3%", "20.7%", "+7.4", "+0.1"]
-    cols_a = [CRIMSON, TEAL, BLUE, GREY]
-    xa = np.arange(4)
-    bars_a = ax.bar(xa, vals_a, 0.54, color=cols_a, edgecolor=INK, lw=0.9, zorder=4)
-    ax.axhline(20.0, color="#64748B", lw=1.1, ls="--", zorder=2)
-    ax.text(3.45, 23.0, "20% Chance", ha="right", fontsize=8.4, color="#475569", style="italic", weight="bold")
-    ax.axvline(1.5, color="#CBD5E1", lw=1.0, ls=":", zorder=2)
-    for bar, lbl, col in zip(bars_a, lbls_a, cols_a):
-        t_col = CRIMSON if col == CRIMSON else (TEAL if col == TEAL else (BLUE if col == BLUE else MUTED))
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 2.2, lbl,
-                ha="center", va="bottom", fontsize=8.8, weight="bold", color=t_col)
-    ax.set_xticks(xa)
-    ax.set_xticklabels(cats_a, fontsize=8.6, weight="bold", color=INK)
-    ax.set_ylim(0, 108)
-    ax.set_ylabel("Probe (%) / Δ×100", fontsize=9.2, weight="bold", color=INK)
-    ax.set_title("(a) Conditioning Leak", fontsize=10.5, weight="bold", color=INK, pad=6)
+    bars_a = ax.bar([0, 1], [91.33, 20.67], 0.50, color=[CRIMSON, TEAL], edgecolor=INK, lw=1.0, zorder=4)
+    ax.axhline(20.0, color="#64748B", lw=1.2, ls="--", zorder=2)
+    ax.text(1.36, 24.5, "20% Chance", ha="right", fontsize=8.8, color="#475569", style="italic", weight="bold")
+    ax.text(0, 93.8, "91.3%", ha="center", va="bottom", fontsize=10.5, weight="bold", color=CRIMSON)
+    ax.text(1, 24.5, "20.7%", ha="center", va="bottom", fontsize=10.5, weight="bold", color=TEAL)
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(["Raw\nCNX", "Stiefel\nQ32"], fontsize=9.8, weight="bold", color=INK)
+    ax.set_xlim(-0.55, 1.48)
+    ax.set_ylim(0, 112)
+    ax.set_yticks([0, 50, 100])
+    ax.set_ylabel("5-Way Gram Probe (%)", fontsize=9.6, weight="bold", color=INK)
+    ax.set_title("(a) Conditioning", fontsize=11.2, weight="bold", color="#1E3A5F", pad=6)
 
-    # (b) Channel 2 — Trajectory Space: 260× Self-Paired Scaling Paradox
+    # (b) Filter II — Trajectory: 260× Scaling Paradox (Slate/Crimson palette matching Fig. 2 Filter II)
     ax = axes[1]
     params_m = [0.13, 0.37, 1.17, 3.16, 4.13, 8.92, 15.52, 34.19]
     gen_t0 = [20.0, 20.5, 28.0, 36.33, 42.67, 45.00, 45.00, 49.33]
     edit_t07 = [8.83, 9.00, 8.83, 10.67, 9.50, 8.00, 8.33, 6.67]
-    ax.grid(color=GRID, lw=0.85, which="both")
-    ax.plot(params_m, gen_t0, marker="o", ms=4.5, lw=2.0, color=BLUE, label=r"Gen ($\tau_0\!=\!0$)")
-    ax.plot(params_m, edit_t07, marker="s", ms=4.5, lw=2.2, color=CRIMSON, label=r"Edit ($\tau_0\!=\!0.7$)")
+    ax.grid(color=GRID, lw=0.8, which="both")
+    ax.plot(params_m, gen_t0, marker="o", ms=4.5, lw=2.3, color=BLUE, label=r"Gen ($\tau_0\!=\!0$)")
+    ax.plot(params_m, edit_t07, marker="s", ms=4.5, lw=2.5, color=CRIMSON, label=r"Edit ($\tau_0\!=\!0.7$)")
     ax.set_xscale("log")
-    ax.set_ylim(0, 58)
-    ax.set_xlabel("Params (M, log)", fontsize=9.2, weight="bold", color=INK)
-    ax.set_ylabel("CSD Top-1 (%)", fontsize=9.2, weight="bold", color=INK)
-    ax.annotate("49.3%", xy=(34.19, 49.33), xytext=(8.5, 50.5), fontsize=8.8, weight="bold", color=BLUE)
-    ax.annotate("6.67% (Lock!)", xy=(34.19, 6.67), xytext=(1.1, 17.5),
-                fontsize=8.6, weight="bold", color=CRIMSON,
-                arrowprops=dict(arrowstyle="->", color=CRIMSON, lw=1.2))
-    ax.set_title("(b) 260× Scaling Lock", fontsize=10.5, weight="bold", color=INK, pad=6)
-    ax.legend(frameon=False, fontsize=8.2, loc="upper left")
+    ax.set_ylim(0, 60)
+    ax.set_yticks([0, 25, 50])
+    ax.set_xlabel("Params (M, log · 260×)", fontsize=9.4, weight="bold", color=INK)
+    ax.set_ylabel("CSD Top-1 (%)", fontsize=9.6, weight="bold", color=INK)
+    ax.annotate("49.3%", xy=(34.19, 49.33), xytext=(6.2, 51.5), fontsize=9.4, weight="bold", color=BLUE)
+    ax.annotate("6.7% Lock!", xy=(34.19, 6.67), xytext=(0.95, 19.0),
+                fontsize=9.3, weight="bold", color=CRIMSON,
+                arrowprops=dict(arrowstyle="->", color=CRIMSON, lw=1.4))
+    ax.set_title("(b) Trajectory", fontsize=11.2, weight="bold", color="#1E293B", pad=6)
+    ax.legend(frameon=False, fontsize=8.4, loc="upper left", handlelength=1.4)
 
-    # (c) Channel 3 — Decoding Space: Texture Retraction Paradox
+    # (c) Filter III — Decoding: Texture Retraction (Crimson palette matching Fig. 2 Filter III)
     ax = axes[2]
-    models_b = ["Frozen\n49.5M", "Wiki-FT\n49.5M", "CLEAVE-Dec\n10.7M"]
+    models_b = ["Frozen\n49.5M", "Wiki-FT\n49.5M", "CLEAVE\n10.7M"]
     top1_b = [53.50, 55.83, 60.33]
-    lpips_b = [60.27, 66.61, 60.22]
-    x = np.arange(3)
-    w = 0.35
-    b1 = ax.bar(x - w/2, top1_b, w, color=[GREY, "#8FA2B2", CRIMSON], edgecolor=INK, lw=0.9, label="Top-1 (%) ↑")
-    b2 = ax.bar(x + w/2, lpips_b, w, color=["#D0D7DE", "#B8C4CE", TEAL], edgecolor=INK, lw=0.9, label="LPIPS×100 ↓")
-    for bar, val in zip(b1, top1_b):
-        ax.text(bar.get_x() + bar.get_width()/2, val + 1.0, f"{val:.1f}", ha="center", va="bottom", fontsize=8.4, weight="bold", color=INK)
-    for bar, val in zip(b2, lpips_b):
-        ax.text(bar.get_x() + bar.get_width()/2, val + 1.0, f".{int(round(val*10)):03d}", ha="center", va="bottom", fontsize=8.2, weight="bold", color=TEAL)
-    ax.set_xticks(x)
-    ax.set_xticklabels(models_b, fontsize=8.5, weight="bold", color=INK)
+    b1 = ax.bar([0, 1, 2], top1_b, 0.56, color=[GREY, "#8FA2B2", CRIMSON], edgecolor=INK, lw=1.0, zorder=4)
+    for bar, val, col in zip(b1, top1_b, [MUTED, "#475569", CRIMSON]):
+        ax.text(bar.get_x() + bar.get_width() / 2, val + 1.4, f"{val:.1f}%", ha="center", va="bottom", fontsize=9.4, weight="bold", color=col)
+    ax.text(1.45, 70.5, "+4.49pp · 3.15×", ha="center", va="center", fontsize=8.8, weight="bold", color=CRIMSON,
+            bbox=dict(boxstyle="round,pad=0.2", fc="#FFF1F2", ec="#FECDD3", lw=0.8))
+    ax.set_xticks([0, 1, 2])
+    ax.set_xticklabels(models_b, fontsize=9.0, weight="bold", color=INK)
     ax.set_ylim(0, 79)
-    ax.set_title("(c) Decoder Retraction", fontsize=10.5, weight="bold", color=INK, pad=6)
-    ax.legend(frameon=False, fontsize=8.1, loc="upper left")
+    ax.set_yticks([0, 30, 60])
+    ax.set_ylabel("CSD Top-1 (%)", fontsize=9.6, weight="bold", color=INK)
+    ax.set_title("(c) Decoding", fontsize=11.2, weight="bold", color="#BE123C", pad=6)
 
-    fig.tight_layout(pad=0.65)
+    fig.tight_layout(pad=0.55)
     _save(fig, "fig2_three_paradoxes")
 
 
