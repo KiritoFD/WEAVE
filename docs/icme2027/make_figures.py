@@ -226,9 +226,8 @@ def plot_fig2_three_paradoxes():
     ax = axes[0]
     bars_a = ax.bar([0, 1], [91.33, 20.67], 0.50, color=[CRIMSON, TEAL], edgecolor=INK, lw=1.0, zorder=4)
     ax.axhline(20.0, color="#64748B", lw=1.2, ls="--", zorder=2)
-    ax.text(1.36, 24.5, "20% Chance", ha="right", fontsize=8.8, color="#475569", style="italic", weight="bold")
     ax.text(0, 93.8, "91.3%", ha="center", va="bottom", fontsize=10.5, weight="bold", color=CRIMSON)
-    ax.text(1, 24.5, "20.7%", ha="center", va="bottom", fontsize=10.5, weight="bold", color=TEAL)
+    ax.text(1, 24.0, "20.7%\n(20% Chance)", ha="center", va="bottom", fontsize=9.2, weight="bold", color=TEAL)
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["Raw\nCNX", "Stiefel\nQ32"], fontsize=9.8, weight="bold", color=INK)
     ax.set_xlim(-0.55, 1.48)
