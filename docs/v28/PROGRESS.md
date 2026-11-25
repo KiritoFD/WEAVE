@@ -193,10 +193,14 @@
   2. **路线 A (`Bridge4`) 暴露直接 $\sigma=0.50$ 噪声 4 步大步长缺陷**：虽然 `DINO-S` 在 `l100` 拉到 `0.5178`（高过 `Adv1NFE` `+0.0098`），但无轨迹蒸馏下 4 步 Euler 从 50% 高斯噪声直推留下残留颗粒噪点，导致 `ER`（`7/120`）与 `Uki`（`1/120`）几乎失真、`DINO-C` 跌至 `0.5169`、`Same150` 跌至 `83.3%`，综合显着逊于 `Adv1NFE`（`Bridge4 - Adv1NFE`: `Top-1 -14.83pp`, `DINO-C -0.0806`）。
   3. **距离 `(0.58 C, 0.565 S)` 跨线目标的客观差距**：目前最均衡强的零推理外挂单权重已推进至 **`Adv1NFE (l100)`：`66.83% Top-1 / 0.5079 S / 0.5974 C / 13 ms`**，距离 `V20 D2`（`0.567 S / 0.605 C`）在 `DINO-S` 轴上仍差 **`0.059`**——说明仅 `adv_w = 0.06` 轻量微调还不够彻底摆脱回归残差收缩，进一步加大高 $\lambda$ L1 释放与 Projected GAN 对抗比或引入多步一致性蒸馏（而非直接 $\sigma=0.5$ 噪点 4 步）是继续冲刺 `0.565+` 的直接抓手。
 
-## 九、4090 通用模型横向资产整理（CPU-only）
+## 九、4090 / 3060 通用模型横向资产整理与实测
 
-- `/root/Workspace/models/Qwen-Image-2.1-Turbo`：已校验就位（`17` 文件，`32.45 GB`，软链自既有 SHA256 验证目录）；
-- `/root/Workspace/models/Qwen-Image-2.1`：已通过 CPU 后台完成 ModelScope 拉取（`29` 文件，`33,134,834,656 bytes`）。
+- `4090` `/root/Workspace/models/Qwen-Image-2.1-Turbo`：已校验就位（`17` 文件，`32.45 GB`，软链自既有 SHA256 验证目录）；
+- `4090` `/root/Workspace/models/Qwen-Image-2.1`：已通过 CPU 后台完成 ModelScope 拉取（`29` 文件，`33,134,834,656 bytes`）；
+- **`3060` `Qwen-Image-2.1-Turbo (bnb4, 512px)` Cross600 实测完成**（2026-11-25，详见 [QWEN_IMAGE_21_TURBO_CROSS600.md](QWEN_IMAGE_21_TURBO_CROSS600.md) 与 [eval_qwen_turbo.py](../../exp/v28_unified/eval_qwen_turbo.py)）：
+  - 分组件 4-bit NF4 量化落盘至 `F:\models\Qwen-Image-2.1-Turbo-bnb4`（`10.73 GB`），配合 `enable_model_cpu_offload` 在 12GB RTX 3060 上稳定运行（峰值显存 `7.32 GB`）；
+  - **Cross600（`n=600`）**：**`CSD Top-1 = 42.17%`**（CI `[37.00%, 47.17%]`）、**`DINO-S = 0.4660`**、**`DINO-C = 0.7016`**、**`CLIP-S = 0.6975`**、**`Style Affinity = 0.5817`**、**`LPIPS = 0.6256`**（$S_{\mathrm{LSE}} = 6.309, M_{-4} = 0.5301$；`ER 15.0% / Imp 34.2% / Min 63.3% / Roc 20.0% / Uki 78.3%`，`pred_eq_src = 56.83%`）；
+  - **3060 端到端推理时间**（`n=599` 去预热）：均值 **`16,070.78 ms/img`**（中位 `15,745.35 ms`，P95 `18,601.11 ms`，`0.0622 img/s`）。
 
 ## 十、13 个外部基线 Cross600 `DINO-S (Max vs Top-5 mean)`、`CSD Top-1` 与速度×负对数综合得分核查
 
