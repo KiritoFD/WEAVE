@@ -214,76 +214,73 @@ def plot_fig1_pareto_zoom():
 
 
 def plot_fig2_three_paradoxes():
-    fig, axes = plt.subplots(1, 3, figsize=(15.0, 3.75), facecolor=BG)
+    fig, axes = plt.subplots(1, 3, figsize=(10.5, 3.15), facecolor=BG)
     for ax in axes:
         ax.set_facecolor(BG)
         ax.grid(color=GRID, lw=0.85, axis="y")
         for edge in ("bottom", "left"):
             ax.spines[edge].set_color("#B9C5D0")
 
-    # (a) Self-Paired Scaling Paradox
+    # (a) Channel 1 — Conditioning Space: Source-Style Leakage & Stiefel Quotient
     ax = axes[0]
+    cats_a = ["Raw\nCNX", "Stiefel\nQ32", "Struct\nΔC×100", "Style\nΔS×100"]
+    vals_a = [91.33, 20.67, 74.2, 1.2]
+    lbls_a = ["91.3%", "20.7%", "+7.4", "+0.1"]
+    cols_a = [CRIMSON, TEAL, BLUE, GREY]
+    xa = np.arange(4)
+    bars_a = ax.bar(xa, vals_a, 0.54, color=cols_a, edgecolor=INK, lw=0.9, zorder=4)
+    ax.axhline(20.0, color="#64748B", lw=1.1, ls="--", zorder=2)
+    ax.text(3.45, 23.0, "20% Chance", ha="right", fontsize=8.4, color="#475569", style="italic", weight="bold")
+    ax.axvline(1.5, color="#CBD5E1", lw=1.0, ls=":", zorder=2)
+    for bar, lbl, col in zip(bars_a, lbls_a, cols_a):
+        t_col = CRIMSON if col == CRIMSON else (TEAL if col == TEAL else (BLUE if col == BLUE else MUTED))
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 2.2, lbl,
+                ha="center", va="bottom", fontsize=8.8, weight="bold", color=t_col)
+    ax.set_xticks(xa)
+    ax.set_xticklabels(cats_a, fontsize=8.6, weight="bold", color=INK)
+    ax.set_ylim(0, 108)
+    ax.set_ylabel("Probe (%) / Δ×100", fontsize=9.2, weight="bold", color=INK)
+    ax.set_title("(a) Conditioning Leak", fontsize=10.5, weight="bold", color=INK, pad=6)
+
+    # (b) Channel 2 — Trajectory Space: 260× Self-Paired Scaling Paradox
+    ax = axes[1]
     params_m = [0.13, 0.37, 1.17, 3.16, 4.13, 8.92, 15.52, 34.19]
     gen_t0 = [20.0, 20.5, 28.0, 36.33, 42.67, 45.00, 45.00, 49.33]
     edit_t07 = [8.83, 9.00, 8.83, 10.67, 9.50, 8.00, 8.33, 6.67]
     ax.grid(color=GRID, lw=0.85, which="both")
-    ax.plot(params_m, gen_t0, marker="o", lw=2.2, color=BLUE, label=r"Unconditional Gen ($\tau_0=0$) ↑")
-    ax.plot(params_m, edit_t07, marker="s", lw=2.4, color=CRIMSON, label=r"Cross-Style SDEdit ($\tau_0=0.7$) ↑")
+    ax.plot(params_m, gen_t0, marker="o", ms=4.5, lw=2.0, color=BLUE, label=r"Gen ($\tau_0\!=\!0$)")
+    ax.plot(params_m, edit_t07, marker="s", ms=4.5, lw=2.2, color=CRIMSON, label=r"Edit ($\tau_0\!=\!0.7$)")
     ax.set_xscale("log")
     ax.set_ylim(0, 58)
-    ax.set_xlabel("Flow U-Net Parameters (Millions, log)", fontsize=9.6, weight="bold", color=INK)
-    ax.set_ylabel("Cross600 CSD Top-1 (%)", fontsize=9.6, weight="bold", color=INK)
-    ax.annotate("49.3%", xy=(34.19, 49.33), xytext=(12.0, 51.5), fontsize=9, weight="bold", color=BLUE)
-    ax.annotate("6.67% (59% Source-Lock!)", xy=(34.19, 6.67), xytext=(2.2, 16.0),
-                fontsize=8.7, weight="bold", color=CRIMSON,
-                arrowprops=dict(arrowstyle="->", color=CRIMSON, lw=1.3))
-    ax.set_title("(a) 260× Self-Paired Scaling Paradox", fontsize=10.6, weight="bold", color=INK, pad=8)
-    ax.legend(frameon=False, fontsize=8.4, loc="upper left")
+    ax.set_xlabel("Params (M, log)", fontsize=9.2, weight="bold", color=INK)
+    ax.set_ylabel("CSD Top-1 (%)", fontsize=9.2, weight="bold", color=INK)
+    ax.annotate("49.3%", xy=(34.19, 49.33), xytext=(8.5, 50.5), fontsize=8.8, weight="bold", color=BLUE)
+    ax.annotate("6.67% (Lock!)", xy=(34.19, 6.67), xytext=(1.1, 17.5),
+                fontsize=8.6, weight="bold", color=CRIMSON,
+                arrowprops=dict(arrowstyle="->", color=CRIMSON, lw=1.2))
+    ax.set_title("(b) 260× Scaling Lock", fontsize=10.5, weight="bold", color=INK, pad=6)
+    ax.legend(frameon=False, fontsize=8.2, loc="upper left")
 
-    # (b) Pruned Decoder Regularization Paradox (Closed-Set CLEAVE Latents, Step 1 Attribution)
-    ax = axes[1]
-    models_b = ["Full SD-VAE\n(Frozen, 49.5M)", "Full SD-VAE\n(WikiArt FT, 49.5M)", f"{DEC_NAME}\n(10.7M, 3.15×)"]
+    # (c) Channel 3 — Decoding Space: Texture Retraction Paradox
+    ax = axes[2]
+    models_b = ["Frozen\n49.5M", "Wiki-FT\n49.5M", "CLEAVE-Dec\n10.7M"]
     top1_b = [53.50, 55.83, 60.33]
     lpips_b = [60.27, 66.61, 60.22]
     x = np.arange(3)
-    w = 0.34
-    b1 = ax.bar(x - w/2, top1_b, w, color=[GREY, "#8FA2B2", CRIMSON], edgecolor=INK, lw=0.9, label="CSD Top-1 (%) ↑")
-    b2 = ax.bar(x + w/2, lpips_b, w, color=["#D0D7DE", "#B8C4CE", TEAL], edgecolor=INK, lw=0.9, label="LPIPS ×100 ↓")
+    w = 0.35
+    b1 = ax.bar(x - w/2, top1_b, w, color=[GREY, "#8FA2B2", CRIMSON], edgecolor=INK, lw=0.9, label="Top-1 (%) ↑")
+    b2 = ax.bar(x + w/2, lpips_b, w, color=["#D0D7DE", "#B8C4CE", TEAL], edgecolor=INK, lw=0.9, label="LPIPS×100 ↓")
     for bar, val in zip(b1, top1_b):
-        ax.text(bar.get_x() + bar.get_width()/2, val + 0.9, f"{val:.2f}%", ha="center", va="bottom", fontsize=8.3, weight="bold", color=INK)
+        ax.text(bar.get_x() + bar.get_width()/2, val + 1.0, f"{val:.1f}", ha="center", va="bottom", fontsize=8.4, weight="bold", color=INK)
     for bar, val in zip(b2, lpips_b):
-        ax.text(bar.get_x() + bar.get_width()/2, val + 0.9, f"{val/100:.3f}", ha="center", va="bottom", fontsize=8.3, weight="bold", color=TEAL)
+        ax.text(bar.get_x() + bar.get_width()/2, val + 1.0, f".{int(round(val*10)):03d}", ha="center", va="bottom", fontsize=8.2, weight="bold", color=TEAL)
     ax.set_xticks(x)
-    ax.set_xticklabels(models_b, fontsize=8.3, weight="bold", color=INK)
-    ax.set_ylim(0, 78)
-    ax.set_title("(b) Spectral Bottleneck Decoder (+4.49pp vs FT, p<0.05)", fontsize=10.3, weight="bold", color=INK, pad=8)
-    ax.legend(frameon=False, fontsize=8.4, loc="upper left")
+    ax.set_xticklabels(models_b, fontsize=8.5, weight="bold", color=INK)
+    ax.set_ylim(0, 79)
+    ax.set_title("(c) Decoder Retraction", fontsize=10.5, weight="bold", color=INK, pad=6)
+    ax.legend(frameon=False, fontsize=8.1, loc="upper left")
 
-    # (c) Counterfactual Causal Specificity Ladder (CLEAVE P/E-Core)
-    ax = axes[2]
-    arms_c = ["Post-Hoc\nSubband", "De-Styled\nFlow (τ0=0)", "E-Core (1-NFE)\n(s=1.00)", "P-Core (6-Step)\n(s=1.50)"]
-    corr_v = [12.33, 18.67, 67.17, 80.17]
-    wrong_v = [13.00, 8.83, 1.17, 2.17]
-    xc = np.arange(4)
-    w_c = 0.34
-    b_c = ax.bar(xc - w_c/2, corr_v, w_c, color=CRIMSON, edgecolor=INK, lw=0.9, label="True Target Label")
-    b_w = ax.bar(xc + w_c/2, wrong_v, w_c, color=GREY, edgecolor=INK, lw=0.9, label="Counterfactual Wrong ID")
-    for bar, val in zip(b_c, corr_v):
-        ax.text(bar.get_x() + bar.get_width()*0.45, val + 0.9, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.0, weight="bold", color=CRIMSON)
-    for bar, val in zip(b_w, wrong_v):
-        ax.text(bar.get_x() + bar.get_width()*0.62, val + 0.9, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.0, weight="bold", color=MUTED)
-    ax.annotate("+66.0–78.0pp\nCausal Specificity!", xy=(2 - w_c/2 - 0.04, 60.0), xytext=(0.72, 54.0),
-                fontsize=8.3, weight="bold", color=CRIMSON, ha="center",
-                arrowprops=dict(arrowstyle="->", color=CRIMSON, lw=1.4))
-    ax.set_xticks(xc)
-    ax.set_xticklabels(arms_c, fontsize=8.4, weight="bold", color=INK)
-    ax.set_ylim(0, 91)
-    ax.set_title("(c) Counterfactual Specificity Audit", fontsize=10.6, weight="bold", color=INK, pad=8)
-    ax.legend(frameon=False, fontsize=8.4, loc="upper left")
-
-    fig.suptitle("More Capacity Can Preserve the Wrong Information — Source-Style Lock in Latent Transport & Decoding",
-                 fontsize=12.0, weight="bold", color=INK, y=0.992)
-    fig.tight_layout(rect=[0, 0, 1, 0.925], pad=0.9)
+    fig.tight_layout(pad=0.65)
     _save(fig, "fig2_three_paradoxes")
 
 
