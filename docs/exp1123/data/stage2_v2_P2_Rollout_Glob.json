@@ -1,0 +1,40 @@
+{
+  "arm": "P2_Rollout_Glob",
+  "base_ckpt": "/root/Workspace/WEAVE/runs/v27_mainline/d1_reflow_v2.pt",
+  "seed_offset": 0,
+  "calib_norms": [
+    25.007,
+    18.0018,
+    0.4745,
+    0.6636
+  ],
+  "calib_weights": [
+    1.0,
+    0.2778,
+    15.809,
+    7.5371
+  ],
+  "checkpoints": {
+    "500": {
+      "csd_top1": 0.7417,
+      "dino_s": 0.5523,
+      "dino_c": 0.5489,
+      "style_affinity": 0.6426,
+      "clip_s": 0.733,
+      "lpips": 0.6125,
+      "same150_top1": 0.9667,
+      "imp_to_min_top1": 1.0,
+      "per_target": {
+        "Early_Renaissance": 0.5333,
+        "Impressionism": 0.9417,
+        "Minimalism": 1.0,
+        "Rococo": 0.8167,
+        "Ukiyo_e": 0.4167
+      },
+      "part_diff": {
+        "part_anova_r2_mean": 0.2831,
+        "n_cross": 600
+      }
+    }
+  }
+}

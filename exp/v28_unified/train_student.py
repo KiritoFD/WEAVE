@@ -132,8 +132,11 @@ def evaluate_student_v28(
     tag: str,
     levels: tuple[float, ...] = EVAL_LEVELS_V28,
     wrong: bool = False,
+    sub_bank: dict | None = None,
     device: str = "cuda",
 ) -> dict:
+    from exp.v20.submode_patchswd import match_scene_submode
+
     tasks, src, _ = tasks_and_sources()
     sid = torch.tensor([t["source_style_id"] for t in tasks])
     tid = torch.tensor([t["target_style_id"] for t in tasks])
@@ -154,7 +157,13 @@ def evaluate_student_v28(
                 zs = src[sl].to(device).float()
                 tgt = labels[sl].to(device)
                 st_t = torch.full_like(tgt, strength, dtype=torch.float32)
-                if arch in ("unet", "bridge4"):
+                if arch == "unleashed":
+                    u_viv = None
+                    if sub_bank is not None:
+                        _, u_viv = match_scene_submode(ts["dino_16"][sl].to(device).float(), tgt, sub_bank)
+                    z = model(zs, ts["c_64"][sl].to(device).float(), q[sl].to(device).float(),
+                              tgt, st_t, raw_stats, priors, noise=eps_fixed[sl].to(device).float(), u_vivid=u_viv)
+                elif arch in ("unet", "bridge4"):
                     z = model(zs, ts["c_64"][sl].to(device).float(), q[sl].to(device).float(),
                               tgt, st_t, raw_stats, priors, noise=eps_fixed[sl].to(device).float())
                 else:
@@ -188,10 +197,15 @@ def run_final_eval(
     run_dir: Path,
     tag: str,
     checkpoint_name: str,
+    sub_bank: dict | None = None,
     device: str = "cuda",
 ) -> dict:
-    levels = evaluate_student_v28(model, arch, raw_stats, priors, ts, q, tag=tag, levels=EVAL_LEVELS_V28, device=device)
-    levels.update(evaluate_student_v28(model, arch, raw_stats, priors, ts, q, tag=tag, levels=(1.0,), wrong=True, device=device))
+    levels = evaluate_student_v28(
+        model, arch, raw_stats, priors, ts, q, tag=tag, levels=EVAL_LEVELS_V28, sub_bank=sub_bank, device=device
+    )
+    levels.update(evaluate_student_v28(
+        model, arch, raw_stats, priors, ts, q, tag=tag, levels=(1.0,), wrong=True, sub_bank=sub_bank, device=device
+    ))
 
     # Paired bootstrap CI of l100 vs l040 and vs old ema_s4000 if measured exists
     rows_l100 = read_json(OUT / "measured" / f"{tag}_l100" / "eval.json")["rows"]

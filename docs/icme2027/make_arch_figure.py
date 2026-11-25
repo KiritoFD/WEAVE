@@ -776,10 +776,10 @@ def build_architecture() -> None:
     ax.text(
         7.15,
         5.03,
-        r"Blocking Source-Style Backflow:   Source Texture Leakage ($92.3\%\!\to\!20.0\%$)  $\rightarrow$  Invariant Layout $\Pi_\perp$  $\rightarrow$  Target Style Chord $e(x_s\!\to\!\tau)$  $\rightarrow$  Controlled Transport $\mathcal{T}$",
+        r"CLEAVE Quotient-Guided P/E-Core Factorization:   ConvNeXt-S3 Stiefel $Q_{32}^{\mathrm{cnx}}$ ($91.33\%\!\to\!20.67\%$ Gram)  $\rightarrow$  417-D $K\!=\!8$ Bank  $\rightarrow$  E-Core (1-NFE) / P-Core (6-Step)  $\rightarrow$  CLEAVE-Dec $\mathcal{D}_\star$",
         ha="center",
         va="center",
-        fontsize=8.05,
+        fontsize=7.65,
         weight="bold",
         color="#0F172A",
         zorder=4,
@@ -793,13 +793,13 @@ def build_architecture() -> None:
     card(ax, 0.19, 3.25, 1.08, 0.19, fc="#EFF6FF", ec="#93C5FD", lw=0.85, rad=0.05, zorder=4)
     ax.text(0.73, 3.345, r"Unlabeled $\cdot\;512^2$", ha="center", va="center", fontsize=7.15, color="#1E40AF", weight="bold", zorder=5)
 
-    ax.text(0.73, 2.46, r"Target Ref. $x_{\mathrm{ref}}$", ha="center", va="bottom", fontsize=8.8, weight="bold", color="#7C2D12")
+    ax.text(0.73, 2.46, r"Target Style $y_t, s$", ha="center", va="bottom", fontsize=8.8, weight="bold", color="#7C2D12")
     framed_image(ax, ref_img, 0.17, 1.28, 1.12, 1.12, ec="#B45309", lw=1.35, zorder=6)
     card(ax, 0.15, 1.02, 1.16, 0.20, fc="#FFFBEB", ec="#FCD34D", lw=0.85, rad=0.05, zorder=4)
-    ax.text(0.73, 1.12, r"1-Shot (or proto. $\bar{u}_{y_t}$)", ha="center", va="center", fontsize=7.05, color="#92400E", weight="bold", zorder=5)
+    ax.text(0.73, 1.12, r"Knob $s\in[0,1.50]$", ha="center", va="center", fontsize=7.05, color="#92400E", weight="bold", zorder=5)
 
     # =========================================================================
-    # 2. OPERATOR I PILLAR: ORTHOGONAL QUOTIENT-FIBER DUALITY (Pi_perp, Pi_parallel)
+    # 2. OPERATOR I PILLAR: ZERO-DINO QUOTIENT-FIBER SPLIT (ConvNeXt-Stage3)
     # =========================================================================
     stage_container(
         ax,
@@ -807,12 +807,12 @@ def build_architecture() -> None:
         0.84,
         3.78,
         4.00,
-        r"Operator I · Orthogonal Quotient–Fiber Duality $(\Pi_\perp, \Pi_\parallel)$",
+        r"Operator I · Quotient–Fiber Conditioning (ConvNeXt-S3, $12.35\mathrm{M}$)",
         body_fc="#F8FAFC",
         border_col="#334155",
         header_fc="#1E3A5F",
         header_h=0.25,
-        title_fs=8.55,
+        title_fs=8.25,
     )
 
     # ---- Upper Sub-Panel: Pi_perp (Cool Slate/Blue Theme) ----
@@ -820,10 +820,10 @@ def build_architecture() -> None:
     ax.text(
         3.53,
         4.41,
-        r"$\Pi_\perp$ · Invariant Structural Quotient (Hue & Moment Free)",
+        r"$\Pi_\perp^{\mathrm{cnx}}$ · Grayscale ConvNeXt-S3 Stiefel Quotient ($0.985\,\mathrm{ms}$)",
         ha="center",
         va="center",
-        fontsize=7.65,
+        fontsize=7.45,
         weight="bold",
         color="#1E3A8A",
         zorder=5,
@@ -839,26 +839,26 @@ def build_architecture() -> None:
 
     # Map 2: Multi-Scale Contrast LCN(Y)
     framed_image(ax, lcn_map, 2.95, m_y, m_s, m_s, ec="#1D4ED8", lw=1.0, zorder=6)
-    ax.text(3.32, 3.37, r"Contrast $\mathrm{LCN}(Y)$", ha="center", va="center", fontsize=7.0, weight="bold", color="#1E3A8A", zorder=6)
+    ax.text(3.32, 3.37, r"$C_{64}$ & $\mathrm{LCN}_3(Y_{16})$", ha="center", va="center", fontsize=6.85, weight="bold", color="#1E3A8A", zorder=6)
 
     rounded_ortho_arrow(ax, [(3.72, m_y + m_s / 2), (4.02, m_y + m_s / 2)], col="#1D4ED8", lw=1.2, hs=7.6)
 
     # Map 3: Polar-ZCA 16x16 Semantic Layout Grid (+ back-stacked x_ref token grid)
     framed_image(ax, zca_ref_img, 4.18, m_y + 0.06, m_s * 0.90, m_s * 0.90, ec="#64748B", lw=0.8, shadow=False, interp="nearest", zorder=5)
     framed_image(ax, zca_src_img, 4.05, m_y, m_s, m_s, ec="#1E3A8A", lw=1.1, interp="nearest", zorder=7)
-    card(ax, 4.89, m_y + 0.50, 0.34, 0.17, fc="#DBEAFE", ec="#3B82F6", lw=0.7, rad=0.04, zorder=8)
-    ax.text(5.06, m_y + 0.585, r"$Q, K$", ha="center", va="center", fontsize=6.5, weight="bold", color="#1E40AF", zorder=9)
-    ax.text(4.50, 3.37, r"Stiefel Polar $16{\times}16\;Q_{32}$", ha="center", va="center", fontsize=7.0, weight="bold", color="#1E3A8A", zorder=6)
+    card(ax, 4.86, m_y + 0.50, 0.39, 0.17, fc="#DBEAFE", ec="#3B82F6", lw=0.7, rad=0.04, zorder=8)
+    ax.text(5.055, m_y + 0.585, r"$I_{32}$", ha="center", va="center", fontsize=6.5, weight="bold", color="#1E40AF", zorder=9)
+    ax.text(4.50, 3.37, r"Stiefel $16{\times}16\;Q_{32}^{\mathrm{cnx}}$", ha="center", va="center", fontsize=6.9, weight="bold", color="#1E3A8A", zorder=6)
 
     # Leakage Audit Badge
     card(ax, 1.84, 3.03, 3.38, 0.22, fc="#DBEAFE", ec="#2563EB", lw=0.9, rad=0.05, zorder=5)
     ax.text(
         3.53,
         3.14,
-        r"Linear / 2nd-Order Gram Leak: $18.3\% / 20.0\%$ (Chance) $\cdot$ $0.994$ Layout",
+        r"5-Way Gram Probe: $91.33\%\!\to\!20.67\%$ (Chance $20\%$) $\cdot$ Err $1.95\times 10^{-4}$",
         ha="center",
         va="center",
-        fontsize=6.55,
+        fontsize=6.45,
         weight="bold",
         color="#1E3A8A",
         zorder=6,
@@ -867,10 +867,10 @@ def build_architecture() -> None:
     # ---- Middle Latent Pass-Through: Frozen VAE Encoder E(x_s) -> z_s ----
     vae_pts = [(1.88, 2.61), (2.94, 2.65), (2.94, 2.86), (1.88, 2.90)]
     ax.add_patch(Polygon(vae_pts, closed=True, facecolor="#E0F2FE", edgecolor="#0284C7", linewidth=1.15, zorder=5))
-    ax.text(2.41, 2.755, r"Frozen VAE $\mathcal{E}$", ha="center", va="center", fontsize=7.15, weight="bold", color="#0C4A6E", zorder=6)
+    ax.text(2.41, 2.755, r"SD-VAE $\mathcal{E}\;(34.2\mathrm{M})$", ha="center", va="center", fontsize=6.85, weight="bold", color="#0C4A6E", zorder=6)
 
     card(ax, 3.16, 2.62, 2.06, 0.27, fc="#F0F9FF", ec="#0284C7", lw=0.95, rad=0.05, zorder=5)
-    ax.text(4.19, 2.755, r"Latent $z_s \to$ Anchor $z_0\;(64^2{\times}4)$", ha="center", va="center", fontsize=7.05, weight="bold", color="#075985", zorder=6)
+    ax.text(4.19, 2.755, r"Latent $z_s \to$ E-Core Draft $z_{\mathrm{E}}$", ha="center", va="center", fontsize=6.95, weight="bold", color="#075985", zorder=6)
     rounded_ortho_arrow(ax, [(2.94, 2.755), (3.15, 2.755)], col="#0284C7", lw=1.2, hs=7.2)
 
     # ---- Lower Sub-Panel: Pi_parallel (Warm Amber/Coral Theme) ----
@@ -878,10 +878,10 @@ def build_architecture() -> None:
     ax.text(
         3.53,
         2.42,
-        r"$\Pi_\parallel$ · Complementary Style Fiber & Universal Chord",
+        r"$\Pi_\parallel^{\mathrm{cnx}}$ · 417-D $K=8$ Sub-School Style Bank & Scene Router",
         ha="center",
         va="center",
-        fontsize=7.65,
+        fontsize=7.45,
         weight="bold",
         color="#92400E",
         zorder=5,
@@ -889,7 +889,7 @@ def build_architecture() -> None:
 
     # Left Sub-Card: Real Oklab Palette Swatch Bars + Moments
     card(ax, 1.83, 1.24, 1.60, 1.06, fc="#FFFFFF", ec="#F59E0B", lw=0.95, rad=0.06, zorder=4)
-    ax.text(2.63, 2.18, r"Oklab Swatches $\oplus\;(\mu_{\mathrm{sp}},\sigma_{\mathrm{sp}})$", ha="center", va="center", fontsize=6.75, weight="bold", color="#78350F", zorder=5)
+    ax.text(2.63, 2.18, r"$\mathrm{Oklab}_{27}\oplus\mathrm{Haar}_6\oplus\mu_{\mathrm{RGB}}^{\mathrm{CNX}}$", ha="center", va="center", fontsize=6.45, weight="bold", color="#78350F", zorder=5)
 
     ax.text(1.89, 1.94, r"$x_s$", ha="left", va="center", fontsize=7.0, weight="bold", color="#1E3A8A", zorder=6)
     sw_x0, sw_w, sw_h = 2.11, 0.155, 0.145
@@ -908,7 +908,7 @@ def build_architecture() -> None:
     for bi, bh in enumerate([0.07, 0.13, 0.10]):
         ax.add_patch(Rectangle((3.09 + bi * 0.072, 1.87), 0.048, bh, facecolor="#60A5FA", edgecolor="none", zorder=6))
 
-    ax.text(1.87, 1.64, r"$x_{\mathrm{ref}}$", ha="left", va="center", fontsize=6.85, weight="bold", color="#9F1239", zorder=6)
+    ax.text(1.87, 1.64, r"$y_t$", ha="left", va="center", fontsize=6.85, weight="bold", color="#9F1239", zorder=6)
     for idx, col_rgb in enumerate(ref_swatches):
         ax.add_patch(
             Rectangle(
@@ -924,27 +924,27 @@ def build_architecture() -> None:
     for bi, bh in enumerate([0.14, 0.08, 0.12]):
         ax.add_patch(Rectangle((3.09 + bi * 0.072, 1.57), 0.048, bh, facecolor="#FB7185", edgecolor="none", zorder=6))
 
-    ax.text(2.63, 1.36, r"Fiber Probe: $97.3\%$ Style Acc.", ha="center", va="center", fontsize=6.8, weight="bold", color="#B45309", zorder=5)
+    ax.text(2.63, 1.36, r"417-D $K\!=\!8$ Sub-School Bank", ha="center", va="center", fontsize=6.55, weight="bold", color="#B45309", zorder=5)
 
     rounded_ortho_arrow(ax, [(3.44, 1.77), (3.64, 1.77)], col="#B45309", lw=1.2, hs=7.4)
-    ax.text(3.54, 1.87, r"$\phi_\eta$", ha="center", va="bottom", fontsize=7.4, weight="bold", color="#92400E", zorder=7)
+    ax.text(3.54, 1.87, r"$4{\times}4$", ha="center", va="bottom", fontsize=6.9, weight="bold", color="#92400E", zorder=7)
 
-    # Right Sub-Card: Spherical Style Manifold S^127 + Universal Chord e
+    # Right Sub-Card: K=8 Sub-School Bank & Scene Router
     card(ax, 3.65, 1.24, 1.58, 1.06, fc="#FFFDF7", ec="#D97706", lw=0.95, rad=0.06, zorder=4)
     draw_sphere_manifold(ax, cx=4.06, cy=1.74, r=0.29, zorder=6)
-    ax.text(4.86, 2.08, r"$\mathbb{S}^{127}$ Sphere", ha="center", va="center", fontsize=7.1, weight="bold", color="#78350F", zorder=6)
-    ax.text(4.86, 1.81, "Universal\nChord", ha="center", va="center", fontsize=6.85, weight="bold", color="#9F1239", zorder=6)
-    ax.text(4.86, 1.44, r"$e = u_{\mathrm{ref}} - u_s$", ha="center", va="center", fontsize=7.35, weight="bold", color="#0F172A", zorder=6)
+    ax.text(4.86, 2.08, r"$K\!=\!8$ Sub-Schools", ha="center", va="center", fontsize=6.75, weight="bold", color="#78350F", zorder=6)
+    ax.text(4.86, 1.81, "Scene Router\n(0.025 ms)", ha="center", va="center", fontsize=6.55, weight="bold", color="#9F1239", zorder=6)
+    ax.text(4.86, 1.44, r"$u_{y_t,k^\star}^{\mathrm{cnx}}\in\mathbb{R}^{417}$", ha="center", va="center", fontsize=6.85, weight="bold", color="#0F172A", zorder=6)
 
     # Exact Self-Identity Badge
     card(ax, 1.84, 0.96, 3.38, 0.22, fc="#FEF3C7", ec="#D97706", lw=0.9, rad=0.05, zorder=5)
     ax.text(
         3.53,
         1.07,
-        r"Zero Source-ID $\cdot$ Exact Identity: $x_{\mathrm{ref}}=x_s \Rightarrow e\equiv\mathbf{0}\;\;(99.3\%\;\mathrm{Same150})$",
+        r"Exact $s=0$ Identity: $\max|\hat{z}(0)-z_s|=0.0\;\;(98.7\%\;\mathrm{Same150})$",
         ha="center",
         va="center",
-        fontsize=6.95,
+        fontsize=6.55,
         weight="bold",
         color="#92400E",
         zorder=6,
@@ -958,7 +958,7 @@ def build_architecture() -> None:
     rounded_ortho_arrow(ax, [(1.29, 1.64), (1.82, 1.64)], col="#B45309", lw=1.4)
 
     # =========================================================================
-    # 3. OPERATOR II PILLAR: QUOTIENT-GUIDED LATENT TRANSPORT T (R^4 = P_Y (+) P_C)
+    # 3. OPERATOR II PILLAR: PERFORMANCE-HYBRID P/E-CORE TRANSPORT T
     # =========================================================================
     stage_container(
         ax,
@@ -966,12 +966,12 @@ def build_architecture() -> None:
         0.84,
         5.18,
         4.00,
-        r"Operator II · Quotient-Guided Latent Transport $\mathcal{T}\;\;(\mathbb{R}^4 = P_Y \oplus P_C)$",
+        r"Operator II · Performance-Hybrid P/E-Core Transport $\mathcal{T}_{\mathrm{P/E}}\;\;(s\in[0,1.50])$",
         body_fc="#F8FAFC",
         border_col="#334155",
         header_fc="#1E293B",
         header_h=0.25,
-        title_fs=8.65,
+        title_fs=8.35,
     )
 
     # ---- Module II-1: 3D-Staggered Luma-Chroma Split (64x64x4) ----
@@ -994,7 +994,7 @@ def build_architecture() -> None:
         zorder=6,
     )
     ax.text(6.33, 3.08, r"1-D Luma $P_Y$", ha="center", va="center", fontsize=7.05, weight="bold", color="#0369A1", zorder=6)
-    ax.text(6.33, 2.93, r"(tight $\rho_Y$)", ha="center", va="center", fontsize=6.6, color="#475569", zorder=6)
+    ax.text(6.33, 2.93, r"(structure axis)", ha="center", va="center", fontsize=6.5, color="#475569", zorder=6)
 
     ax.add_patch(Circle((6.33, 2.75), 0.082, facecolor="#F1F5F9", edgecolor="#475569", linewidth=0.85, zorder=6))
     ax.text(6.33, 2.75, r"$\oplus$", ha="center", va="center", fontsize=8.0, weight="bold", color="#1E293B", zorder=7)
@@ -1020,12 +1020,12 @@ def build_architecture() -> None:
             zorder=6 + (2 - idx) * 2,
         )
     ax.text(6.33, 1.83, r"3-D Chroma $P_C$", ha="center", va="center", fontsize=7.05, weight="bold", color="#C2410C", zorder=6)
-    ax.text(6.33, 1.69, r"(wide $\rho_C \gg \rho_Y$)", ha="center", va="center", fontsize=6.6, color="#9A3412", zorder=6)
+    ax.text(6.33, 1.69, r"(palette shift)", ha="center", va="center", fontsize=6.5, color="#9A3412", zorder=6)
 
     # ---- Module II-2: Multi-Slice 3D U-Net / 16x16 Semantic Bottleneck Hourglass ----
     y_hg = 2.755
     # Down-Blocks: 64^2 (2-slice) -> 32^2 (3-slice)
-    ax.text(7.35, 3.83, "Latent\nStem", ha="center", va="center", fontsize=7.05, weight="bold", color="#1E3A8A", zorder=6)
+    ax.text(7.35, 3.83, "E/P-Core\nEncoder", ha="center", va="center", fontsize=6.95, weight="bold", color="#1E3A8A", zorder=6)
     draw_multislice_block(ax, 7.08, y_hg, slice_w=0.11, h=1.18, n_slices=2, step_x=0.055, base_col="#60A5FA", ec="#1D4ED8", zorder=6)
     ax.text(7.18, y_hg - 0.71, r"$64^2$", ha="center", va="center", fontsize=6.85, weight="bold", color="#1E3A8A", zorder=6)
 
@@ -1035,7 +1035,7 @@ def build_architecture() -> None:
     # Center 16x16 Semantic Bottleneck Card
     card(ax, 7.75, 1.69, 1.44, 2.28, fc="#EEF2FF", ec="#4338CA", lw=1.4, rad=0.08, shadow=True, zorder=4)
     ax.text(8.47, 3.83, r"$16{\times}16$ Bottleneck", ha="center", va="center", fontsize=7.85, weight="bold", color="#312E81", zorder=6)
-    ax.text(8.47, 3.65, "Quotient-Keyed Router", ha="center", va="center", fontsize=7.0, weight="bold", color="#4338CA", zorder=6)
+    ax.text(8.47, 3.65, "Coarse-16 Injection", ha="center", va="center", fontsize=7.0, weight="bold", color="#4338CA", zorder=6)
 
     # Visual Q x K^T attention heatmap + V / Chord interaction
     att_x, att_y, att_s = 7.99, 2.84, 0.55
@@ -1051,7 +1051,7 @@ def build_architecture() -> None:
                 zorder=6,
             )
         )
-    ax.text(att_x - 0.07, att_y + att_s + 0.05, r"$Q$", ha="center", va="bottom", fontsize=6.8, weight="bold", color="#1D4ED8", zorder=6)
+    ax.text(att_x - 0.07, att_y + att_s + 0.05, r"$Q_{32}^{\mathrm{cnx}}$", ha="center", va="bottom", fontsize=6.5, weight="bold", color="#1D4ED8", zorder=6)
 
     for ki in range(6):
         ax.add_patch(
@@ -1065,7 +1065,7 @@ def build_architecture() -> None:
                 zorder=6,
             )
         )
-    ax.text(att_x + att_s + 0.04, att_y + att_s + 0.065, r"$K^\top$", ha="left", va="center", fontsize=6.8, weight="bold", color="#1D4ED8", zorder=6)
+    ax.text(att_x + att_s + 0.04, att_y + att_s + 0.065, r"$Y_{16}$", ha="left", va="center", fontsize=6.6, weight="bold", color="#1D4ED8", zorder=6)
 
     ax.imshow(att_map, extent=(att_x, att_x + att_s, att_y, att_y + att_s), cmap="YlGnBu", aspect="auto", interpolation="nearest", zorder=6)
     ax.add_patch(Rectangle((att_x, att_y), att_s, att_s, fill=False, edgecolor="#312E81", linewidth=0.95, zorder=7))
@@ -1083,12 +1083,12 @@ def build_architecture() -> None:
                 zorder=6,
             )
         )
-    ax.text(8.905, att_y + att_s + 0.045, r"$V, e$", ha="center", va="bottom", fontsize=6.8, weight="bold", color="#B45309", zorder=6)
+    ax.text(8.905, att_y + att_s + 0.045, r"$u_{k^\star}$", ha="center", va="bottom", fontsize=6.7, weight="bold", color="#B45309", zorder=6)
 
     card(ax, 7.82, 2.05, 1.30, 0.65, fc="#FFFFFF", ec="#818CF8", lw=0.85, rad=0.05, zorder=5)
-    ax.text(8.47, 2.54, r"$Q\!=\!\Pi_\perp(x_s),\;K\!=\!\Pi_\perp(x_{\mathrm{ref}})$", ha="center", va="center", fontsize=6.6, color="#1E293B", zorder=6)
-    ax.text(8.47, 2.34, r"$V\!=\!\mathrm{Style}\;\oplus\;(Q_{32}\!\otimes e)$", ha="center", va="center", fontsize=6.65, color="#312E81", weight="bold", zorder=6)
-    ax.text(8.47, 2.15, r"$\to (\Gamma_{64}, B_{64})$ norm mod.", ha="center", va="center", fontsize=6.45, color="#7C2D12", zorder=6)
+    ax.text(8.47, 2.54, r"$\mathrm{LCN}_3(Y_{16})\oplus\gamma Q_{32}^{\mathrm{cnx}}$", ha="center", va="center", fontsize=6.55, color="#1E293B", zorder=6)
+    ax.text(8.47, 2.34, r"4-Branch DPM-2M CFG", ha="center", va="center", fontsize=6.6, color="#312E81", weight="bold", zorder=6)
+    ax.text(8.47, 2.15, r"($w_c, w_s, w_{sp}$ at 6 steps)", ha="center", va="center", fontsize=6.4, color="#7C2D12", zorder=6)
 
     card(ax, 7.82, 1.75, 1.30, 0.23, fc="#DCFCE7", ec="#16A34A", lw=0.85, rad=0.05, zorder=5)
     ax.text(8.47, 1.865, r"No $64^2$ Source-Edge Lock!", ha="center", va="center", fontsize=6.7, weight="bold", color="#166534", zorder=6)
@@ -1099,11 +1099,11 @@ def build_architecture() -> None:
 
     draw_multislice_block(ax, 9.61, y_hg, slice_w=0.11, h=1.18, n_slices=2, step_x=0.055, base_col="#FB923C", ec="#C2410C", zorder=6)
     ax.text(9.71, y_hg + 0.72, r"$64^2$", ha="center", va="center", fontsize=6.75, weight="bold", color="#9A3412", zorder=6)
-    ax.text(9.53, 3.83, "Brushstroke\nSynthesis", ha="center", va="center", fontsize=7.05, weight="bold", color="#9A3412", zorder=6)
+    ax.text(9.53, 3.83, "Pure-Style\nDecoder", ha="center", va="center", fontsize=7.0, weight="bold", color="#9A3412", zorder=6)
 
     # Explicit AdaGN / Routed Modulation bar feeding both 32^2 & 64^2 synthesis blocks
     card(ax, 9.24, 1.69, 0.61, 0.27, fc="#FFF7ED", ec="#EA580C", lw=0.85, rad=0.045, zorder=5)
-    ax.text(9.545, 1.825, r"AdaGN $(\Gamma, B)$", ha="center", va="center", fontsize=6.1, weight="bold", color="#9A3412", zorder=6)
+    ax.text(9.545, 1.825, r"AdaGN $(u_{k^\star})$", ha="center", va="center", fontsize=6.1, weight="bold", color="#9A3412", zorder=6)
     rounded_ortho_arrow(ax, [(9.39, 1.96), (9.39, y_hg - 0.42)], col="#D97706", lw=1.0, hs=5.6)
     rounded_ortho_arrow(ax, [(9.69, 1.96), (9.69, y_hg - 0.60)], col="#C2410C", lw=1.0, hs=5.6)
 
@@ -1114,7 +1114,7 @@ def build_architecture() -> None:
     rounded_ortho_arrow(ax, [(9.19, y_hg), (9.27, y_hg)], col="#B45309", lw=1.1, hs=6.2)
     rounded_ortho_arrow(ax, [(9.53, y_hg), (9.61, y_hg)], col="#C2410C", lw=1.1, hs=6.2)
 
-    # ---- Module II-3: Continuous Zero-Chord Norm Gate & Residual Output ----
+    # ---- Module II-3: Continuous Knob s Handoff & Output ----
     ax.add_patch(Circle((10.11, y_hg), 0.105, facecolor="#FFF1F2", edgecolor="#BE123C", linewidth=1.15, zorder=7))
     ax.text(10.11, y_hg, r"$\times$", ha="center", va="center", fontsize=8.8, weight="bold", color="#9F1239", zorder=8)
 
@@ -1125,11 +1125,11 @@ def build_architecture() -> None:
     rounded_ortho_arrow(ax, [(10.22, y_hg), (10.35, y_hg)], col="#BE123C", lw=1.2, hs=6.8)
 
     card(ax, 9.91, 1.69, 0.77, 0.64, fc="#FFF1F2", ec="#E11D48", lw=0.9, rad=0.05, zorder=5)
-    ax.text(10.295, 2.18, "Norm Gate", ha="center", va="center", fontsize=6.75, weight="bold", color="#9F1239", zorder=6)
-    ax.text(10.295, 1.90, r"$\lambda\tanh^2\!\frac{\|e\|}{\sigma_e}$", ha="center", va="center", fontsize=7.1, color="#881337", zorder=6)
+    ax.text(10.295, 2.18, "Hybrid Dir.", ha="center", va="center", fontsize=6.45, weight="bold", color="#9F1239", zorder=6)
+    ax.text(10.295, 1.90, r"$s\!\leq\!.75$: E-Core" "\n" r"$s\!\geq\!.80$: P-Core", ha="center", va="center", fontsize=5.95, color="#881337", weight="bold", zorder=6)
     rounded_ortho_arrow(ax, [(10.11, 2.33), (10.11, y_hg - 0.11)], col="#BE123C", lw=1.15, hs=6.6)
 
-    # Luma-Preserving Anchor bypass: exits right side of P_Y into x=6.98 corridor (zero overlap with 64x64x4 Split title!)
+    # E-Core Draft z_E bypass
     rounded_ortho_arrow(
         ax,
         [(6.60, 3.53), (6.98, 3.53), (6.98, 4.19), (10.47, 4.19), (10.47, y_hg + 0.11)],
@@ -1141,7 +1141,7 @@ def build_architecture() -> None:
         halo=True,
         zorder=10,
     )
-    ax.text(9.38, 4.22, r"Luma Anchor $z_0^\perp$ ($P_Y$ locked)", ha="center", va="bottom", fontsize=6.85, weight="bold", color="#0369A1", zorder=11)
+    ax.text(9.36, 4.22, r"E-Core (1-NFE, Gated $C_{64}\!\to\!z_{\mathrm{E}}$, $0.99\,\mathrm{ms}$)", ha="center", va="bottom", fontsize=6.5, weight="bold", color="#0369A1", zorder=11)
 
     rounded_ortho_arrow(
         ax,
@@ -1153,12 +1153,12 @@ def build_architecture() -> None:
         halo=True,
         zorder=13,
     )
-    ax.text(6.82, 4.46, r"Invariant Layout $(C_{64}, Q_{32})$ · Source Texture Blocked", ha="center", va="bottom", fontsize=6.8, weight="bold", color="#1E40AF", zorder=14)
+    ax.text(6.82, 4.46, r"Quotient Layout $(C_{64}, \mathrm{LCN}_3(Y_{16}), Q_{32}^{\mathrm{cnx}})$ · $20.67\%$ Gram Floor", ha="center", va="bottom", fontsize=6.65, weight="bold", color="#1E40AF", zorder=14)
 
     # Middle Latent Highway: z_0 -> 64x64x4 Split
     rounded_ortho_arrow(ax, [(5.22, 2.755), (5.74, 2.755)], col="#0284C7", lw=1.4, halo=True, hs=8.0)
 
-    # Bottom Chord Bus: dedicated clean lane at y = 1.37
+    # Bottom Style Vector Bus: dedicated clean lane at y = 1.37
     rounded_ortho_arrow(
         ax,
         [(5.23, 1.62), (5.50, 1.62), (5.50, 1.37), (8.47, 1.37), (8.47, 1.68)],
@@ -1173,19 +1173,19 @@ def build_architecture() -> None:
     ax.add_patch(Circle((9.545, 1.37), 0.028, facecolor="#C2410C", edgecolor="white", linewidth=0.5, zorder=14))
     rounded_ortho_arrow(ax, [(9.545, 1.37), (10.295, 1.37), (10.295, 1.68)], col="#BE123C", lw=1.2, rad=0.055, hs=7.0)
 
-    card(ax, 5.88, 1.285, 2.08, 0.175, fc="#FFFBEB", ec="#F59E0B", lw=0.75, rad=0.04, zorder=13)
-    ax.text(6.92, 1.372, r"Target Style Chord $e(x_s\!\to\!\tau)$ (Zero Source-ID)", ha="center", va="center", fontsize=6.55, weight="bold", color="#92400E", zorder=14)
+    card(ax, 5.88, 1.285, 2.15, 0.175, fc="#FFFBEB", ec="#F59E0B", lw=0.75, rad=0.04, zorder=13)
+    ax.text(6.955, 1.372, r"Routed Sub-School $u_{y_t,k^\star}^{\mathrm{cnx}}\in\mathbb{R}^{417}$", ha="center", va="center", fontsize=6.45, weight="bold", color="#92400E", zorder=14)
 
-    # Unified Execution Bar inside Operator II (generous horizontal margins!)
+    # Unified Execution Bar inside Operator II
     card(ax, 5.75, 0.91, 4.92, 0.30, fc="#FEFCE8", ec="#CA8A04", lw=0.95, rad=0.06, zorder=4)
     ax.text(
         8.21,
         1.06,
-        r"1-Step (PRISM-1): $1.50\mathrm{M}\cdot 58.5\,\mathrm{ms}$ cached ($5.97\,\mathrm{img/s}$ E2E)"
-        r"  |  $Q_{32}$ Flow: $173\,\mathrm{ms}$ (6s) / $541\,\mathrm{ms}$ (16s)",
+        r"E-Core (1-NFE, $11.13\mathrm{M}$): $30.2\,\mathrm{ms}$ Cold ($33.1/\mathrm{s}$)"
+        r"  |  P-Core (6-step, $16{\times}16$ only, $22.29\mathrm{M}$): $55.0\,\mathrm{ms}$ Cold ($18.2/\mathrm{s}$)",
         ha="center",
         va="center",
-        fontsize=6.4,
+        fontsize=6.2,
         weight="bold",
         color="#713F12",
         zorder=5,
@@ -1200,16 +1200,16 @@ def build_architecture() -> None:
         0.84,
         1.64,
         4.00,
-        r"Op. III · PRISM-Dec $\mathcal{D}_\star$",
+        r"Op. III · CLEAVE-Dec $\mathcal{D}_\star$",
         body_fc="#FFF1F2",
         border_col="#BE123C",
         header_fc="#BE123C",
         header_h=0.25,
-        title_fs=8.35,
+        title_fs=8.25,
     )
 
-    ax.text(11.82, 4.41, r"$49.5\mathrm{M}\!\to\!\mathbf{10.7\mathrm{M}}$", ha="center", va="center", fontsize=7.95, weight="bold", color="#881337", zorder=6)
-    ax.text(11.82, 4.21, r"$(-78.5\%\;\mathrm{Params},\;3.15\times\;\mathrm{Faster})$", ha="center", va="center", fontsize=6.6, weight="bold", color="#9F1239", zorder=6)
+    ax.text(11.82, 4.41, r"$49.5\mathrm{M}\!\to\!10.66\mathrm{M}$", ha="center", va="center", fontsize=7.85, weight="bold", color="#881337", zorder=6)
+    ax.text(11.82, 4.21, r"$(-78.5\%\;\mathrm{Params},\;12.5\,\mathrm{ms})$", ha="center", va="center", fontsize=6.55, weight="bold", color="#9F1239", zorder=6)
 
     # Bottom-aligned 4-stage expanding channel-pruned pyramid (base y = 2.12)
     stage_xs = [11.12, 11.46, 11.81, 12.16]
@@ -1258,7 +1258,7 @@ def build_architecture() -> None:
     card(ax, 11.09, 0.92, 1.46, 0.90, fc="#FFE4E6", ec="#E11D48", lw=1.0, rad=0.06, zorder=5)
     ax.text(11.82, 1.65, "Spectral Regularizer", ha="center", va="center", fontsize=7.1, weight="bold", color="#881337", zorder=6)
     ax.text(11.82, 1.40, "Suppresses Source\nTexture Retraction", ha="center", va="center", fontsize=6.6, color="#4C0519", zorder=6)
-    ax.text(11.82, 1.07, r"$+3.17\mathrm{pp}$ Top-1 ($p\!<\!.01$)", ha="center", va="center", fontsize=6.9, weight="bold", color="#BE123C", zorder=6)
+    ax.text(11.82, 1.07, r"$+4.49\mathrm{pp}$ Top-1 ($p\!<\!.05$)", ha="center", va="center", fontsize=6.85, weight="bold", color="#BE123C", zorder=6)
 
     # Stylized Output x_hat + 2.5x Zoom Comparison Column
     ax.text(13.54, 4.68, r"Stylized Output $\hat{x}$", ha="center", va="bottom", fontsize=8.9, weight="bold", color="#881337")
@@ -1273,12 +1273,12 @@ def build_architecture() -> None:
     ax.text(13.227, 1.87, r"Source $x_s$", ha="center", va="center", fontsize=6.55, color="#334155", weight="bold", zorder=6)
 
     framed_image(ax, out_zoom, 13.575, 2.00, 0.525, 0.68, ec="#BE123C", lw=1.05, shadow=False, zorder=6)
-    ax.text(13.837, 1.87, r"PRISM $\hat{x}$", ha="center", va="center", fontsize=6.55, color="#9F1239", weight="bold", zorder=6)
+    ax.text(13.837, 1.87, r"CLEAVE $\hat{x}$", ha="center", va="center", fontsize=6.55, color="#9F1239", weight="bold", zorder=6)
 
     card(ax, 12.965, 0.93, 1.135, 0.80, fc="#FFF1F2", ec="#FDA4AF", lw=0.85, rad=0.05, zorder=5)
-    ax.text(13.535, 1.56, "Zero Source-ID", ha="center", va="center", fontsize=6.8, weight="bold", color="#881337", zorder=6)
-    ax.text(13.535, 1.33, r"$0.744$ DINO-C", ha="center", va="center", fontsize=6.85, weight="bold", color="#0F172A", zorder=6)
-    ax.text(13.535, 1.10, r"$0.668$ Style Affinity", ha="center", va="center", fontsize=6.85, weight="bold", color="#BE123C", zorder=6)
+    ax.text(13.535, 1.56, "CLEAVE P/E-Core", ha="center", va="center", fontsize=6.75, weight="bold", color="#881337", zorder=6)
+    ax.text(13.535, 1.33, "62.3%–80.2% Top-1", ha="center", va="center", fontsize=6.7, weight="bold", color="#0F172A", zorder=6)
+    ax.text(13.535, 1.10, "18.2–33.1 img/s Cold", ha="center", va="center", fontsize=6.65, weight="bold", color="#BE123C", zorder=6)
 
     # Arrows: Op II -> Op III -> x_hat (centered cleanly in inter-pillar corridors with white border halos!)
     rounded_ortho_arrow(ax, [(10.58, y_hg), (10.89, y_hg), (10.89, 2.40), (11.11, 2.40)], col="#1E293B", lw=1.45, rad=0.05, halo=True, hs=8.0)
@@ -1295,12 +1295,12 @@ def build_architecture() -> None:
     ax.text(1.36, 0.24, "(0 ms Inference Cost)", ha="center", va="center", fontsize=6.55, color="#92400E", zorder=5)
 
     card(ax, 2.57, 0.15, 3.64, 0.42, fc="#FFFFFF", ec="#EAB308", lw=0.85, rad=0.05, zorder=4)
-    ax.text(4.39, 0.43, r"1. Intra-Train $k$-NN Core & Anisotropic Trajectory Teacher", ha="center", va="center", fontsize=6.85, weight="bold", color="#0F172A", zorder=5)
-    ax.text(4.39, 0.24, r"Filters boundary outliers; 2-step search ($\rho_Y\!\ll\!\rho_C$, $59.0\text{--}64.3\%$ Top-1)", ha="center", va="center", fontsize=6.45, color="#475569", zorder=5)
+    ax.text(4.39, 0.43, r"1. In-Domain Reversed Real-Painting Pairs (Pool C, $15\%$ Mix)", ha="center", va="center", fontsize=6.75, weight="bold", color="#0F172A", zorder=5)
+    ax.text(4.39, 0.24, r"600 ER + 600 Uki real GT targets + $k$-NN-30 core break Posterior Source-Lock", ha="center", va="center", fontsize=6.35, color="#475569", zorder=5)
 
     card(ax, 6.33, 0.15, 3.84, 0.42, fc="#FFFFFF", ec="#EAB308", lw=0.85, rad=0.05, zorder=4)
-    ax.text(8.25, 0.43, r"2. Un-Normalized VGG-16 + Oklab Moment Supervision", ha="center", va="center", fontsize=6.85, weight="bold", color="#0F172A", zorder=5)
-    ax.text(8.25, 0.24, r"$\mathcal{L}_{\mathrm{VGG+Oklab}}(\mathcal{D}_\star(\hat{z})) + \mathcal{L}_{\mathrm{Huber}} + \lambda_{\mathrm{HF}}\mathcal{L}_{\mathrm{Haar}}$ (retains palette moments)", ha="center", va="center", fontsize=6.45, color="#475569", zorder=5)
+    ax.text(8.25, 0.43, r"2. High-$\tau$ Endpoint Pixel-Space SWD & Projected GAN Duel", ha="center", va="center", fontsize=6.8, weight="bold", color="#0F172A", zorder=5)
+    ax.text(8.25, 0.24, r"$\mathcal{L}_{\mathrm{SWD}}(\mathcal{D}_\star(\hat{z}_1)) + \mathcal{L}_{\mathrm{pHuber}} + \mathcal{L}_{\mathrm{LCN}}$ (multi-scale ConvNeXt/VGG critic)", ha="center", va="center", fontsize=6.35, color="#475569", zorder=5)
 
     card(ax, 10.29, 0.15, 3.76, 0.42, fc="#FFFFFF", ec="#EAB308", lw=0.85, rad=0.05, zorder=4)
     ax.text(12.17, 0.43, r"3. 4-Stream Taylor Pruning & Fast BF16 Pixel Bridge", ha="center", va="center", fontsize=6.85, weight="bold", color="#0F172A", zorder=5)
@@ -1320,7 +1320,7 @@ def build_architecture() -> None:
     ax.text(
         10.19,
         0.737,
-        r"BF16 Grad $\nabla_z \mathcal{L}_{\mathrm{VGG+Oklab}}(\mathcal{D}_\star(\hat{z}))$",
+        r"BF16 Grad $\nabla_z \mathcal{L}_{\mathrm{SWD}}(\mathcal{D}_\star(\hat{z}_1))$",
         ha="center",
         va="center",
         fontsize=6.45,

@@ -15,10 +15,10 @@ import numpy as np
 ICME_DIR = Path(__file__).resolve().parent
 FIG_DIR = ICME_DIR / "figures"
 
-METHOD = "PRISM"
-FLOW_NAME = "PRISM-Flow (Ours)"
-FAST_NAME = "PRISM (1-Step, Ours)"
-DEC_NAME = "PRISM-Dec (Pruned)"
+METHOD = "CLEAVE"
+FLOW_NAME = "CLEAVE P-Core (Ours)"
+FAST_NAME = "CLEAVE E-Core (Ours)"
+DEC_NAME = "CLEAVE-Dec (Pruned)"
 
 INK = "#182A42"
 MUTED = "#62758B"
@@ -214,7 +214,7 @@ def plot_fig1_pareto_zoom():
 
 
 def plot_fig2_three_paradoxes():
-    fig, axes = plt.subplots(1, 3, figsize=(15.0, 4.45), facecolor=BG)
+    fig, axes = plt.subplots(1, 3, figsize=(15.0, 3.75), facecolor=BG)
     for ax in axes:
         ax.set_facecolor(BG)
         ax.grid(color=GRID, lw=0.85, axis="y")
@@ -237,10 +237,10 @@ def plot_fig2_three_paradoxes():
     ax.annotate("6.67% (59% Source-Lock!)", xy=(34.19, 6.67), xytext=(2.2, 16.0),
                 fontsize=8.7, weight="bold", color=CRIMSON,
                 arrowprops=dict(arrowstyle="->", color=CRIMSON, lw=1.3))
-    ax.set_title("(a) 260× Self-Paired Scaling Paradox", fontsize=10.6, weight="bold", color=INK, pad=10)
-    ax.legend(frameon=False, fontsize=8.5, loc="upper left")
+    ax.set_title("(a) 260× Self-Paired Scaling Paradox", fontsize=10.6, weight="bold", color=INK, pad=8)
+    ax.legend(frameon=False, fontsize=8.4, loc="upper left")
 
-    # (b) Pruned Decoder Regularization Paradox (Closed-Set PRISM-Flow Latents, Step 1 Attribution)
+    # (b) Pruned Decoder Regularization Paradox (Closed-Set CLEAVE Latents, Step 1 Attribution)
     ax = axes[1]
     models_b = ["Full SD-VAE\n(Frozen, 49.5M)", "Full SD-VAE\n(WikiArt FT, 49.5M)", f"{DEC_NAME}\n(10.7M, 3.15×)"]
     top1_b = [53.50, 55.83, 60.33]
@@ -256,34 +256,34 @@ def plot_fig2_three_paradoxes():
     ax.set_xticks(x)
     ax.set_xticklabels(models_b, fontsize=8.3, weight="bold", color=INK)
     ax.set_ylim(0, 78)
-    ax.set_title("(b) Spectral Bottleneck Decoder (+4.49pp vs FT, p<0.05)", fontsize=10.3, weight="bold", color=INK, pad=10)
+    ax.set_title("(b) Spectral Bottleneck Decoder (+4.49pp vs FT, p<0.05)", fontsize=10.3, weight="bold", color=INK, pad=8)
     ax.legend(frameon=False, fontsize=8.4, loc="upper left")
 
-    # (c) Counterfactual Causal Specificity Ladder
+    # (c) Counterfactual Causal Specificity Ladder (CLEAVE P/E-Core)
     ax = axes[2]
-    arms_c = ["Post-Hoc\nSubband", "De-Styled\nFlow (τ0=0)", f"{METHOD}-1\n(58 ms)", f"{METHOD}-Flow\n(Ours)"]
-    corr_v = [12.33, 18.67, 44.33, 60.50]
-    wrong_v = [13.00, 8.83, 0.83, 2.33]
+    arms_c = ["Post-Hoc\nSubband", "De-Styled\nFlow (τ0=0)", "E-Core (1-NFE)\n(s=1.00)", "P-Core (6-Step)\n(s=1.50)"]
+    corr_v = [12.33, 18.67, 67.17, 80.17]
+    wrong_v = [13.00, 8.83, 1.17, 2.17]
     xc = np.arange(4)
     w_c = 0.34
     b_c = ax.bar(xc - w_c/2, corr_v, w_c, color=CRIMSON, edgecolor=INK, lw=0.9, label="True Target Label")
     b_w = ax.bar(xc + w_c/2, wrong_v, w_c, color=GREY, edgecolor=INK, lw=0.9, label="Counterfactual Wrong ID")
     for bar, val in zip(b_c, corr_v):
-        ax.text(bar.get_x() + bar.get_width()*0.40, val + 0.9, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.0, weight="bold", color=CRIMSON)
+        ax.text(bar.get_x() + bar.get_width()*0.45, val + 0.9, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.0, weight="bold", color=CRIMSON)
     for bar, val in zip(b_w, wrong_v):
         ax.text(bar.get_x() + bar.get_width()*0.62, val + 0.9, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.0, weight="bold", color=MUTED)
-    ax.annotate("+58.2pp Causal\nSpecificity!", xy=(3 - w_c/2 - 0.04, 56.0), xytext=(1.05, 53.0),
-                fontsize=8.4, weight="bold", color=CRIMSON, ha="center",
+    ax.annotate("+66.0–78.0pp\nCausal Specificity!", xy=(2 - w_c/2 - 0.04, 60.0), xytext=(0.72, 54.0),
+                fontsize=8.3, weight="bold", color=CRIMSON, ha="center",
                 arrowprops=dict(arrowstyle="->", color=CRIMSON, lw=1.4))
     ax.set_xticks(xc)
-    ax.set_xticklabels(arms_c, fontsize=8.6, weight="bold", color=INK)
-    ax.set_ylim(0, 72)
-    ax.set_title("(c) Counterfactual Specificity Audit", fontsize=10.6, weight="bold", color=INK, pad=10)
-    ax.legend(frameon=False, fontsize=8.5, loc="upper left")
+    ax.set_xticklabels(arms_c, fontsize=8.4, weight="bold", color=INK)
+    ax.set_ylim(0, 91)
+    ax.set_title("(c) Counterfactual Specificity Audit", fontsize=10.6, weight="bold", color=INK, pad=8)
+    ax.legend(frameon=False, fontsize=8.4, loc="upper left")
 
     fig.suptitle("More Capacity Can Preserve the Wrong Information — Source-Style Lock in Latent Transport & Decoding",
-                 fontsize=12.4, weight="bold", color=INK, y=0.995)
-    fig.tight_layout(rect=[0, 0, 1, 0.93], pad=1.1)
+                 fontsize=12.0, weight="bold", color=INK, y=0.992)
+    fig.tight_layout(rect=[0, 0, 1, 0.925], pad=0.9)
     _save(fig, "fig2_three_paradoxes")
 
 
@@ -402,8 +402,7 @@ if __name__ == "__main__":
     repo = Path(__file__).resolve().parents[2]
     if str(repo) not in sys.path:
         sys.path.insert(0, str(repo))
-    from exp.v25.plot_ours_pareto import main as build_fig1
-    build_fig1()
+    from exp.v32_nodino.plot_v32_pareto import plot_v32_pareto
+    plot_v32_pareto()
     plot_fig2_three_paradoxes()
-    plot_fig4_specificity_frontier()
     plot_fig4_specificity_frontier()

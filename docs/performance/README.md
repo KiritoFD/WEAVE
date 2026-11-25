@@ -24,3 +24,5 @@ python tools/plot_metrics_750.py --vector
 1. **`q2a_oracle_cross600`（现行主协议）**：`tasks_750.json` Cross600 主读数 + Same150 恒等控制，`S10` 解码器（`s10_p5_lowlr/decoder.pt`），冻结 `src/eval/measure.py` 四裁判（CSD-ViT-L / DINOv2-small / CLIP-ViT-B/32 / LPIPS）。
 2. **`v8_sdvae_cross600`（V8 历史口径）**：V8 41 臂使用原版 SD-VAE 解码器评分，仅限 V8 内部机制对比，不与 S10 口径直接混排（同模型换 S10 平均 Top-1 +3.2pp、DINO-S −0.010）。
 3. **诊断控制臂隔离**：`Identity`、`SD-Turbo`、`*_wrong`（错标签控制）、`*_swap_*`（强制单标签探针）以及 `t0=0.0`（无源图锚点的纯噪声无条件生成）均标记 `is_diagnostic=True`，不参与跨风格迁移帕累托前沿判定。
+
+`Pareto` 图的外部名单、非支配计算与图例规范见 [pareto.md](pareto.md)。

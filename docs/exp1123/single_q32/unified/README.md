@@ -87,3 +87,5 @@ python -m exp.v27_single.unified.train --eval-only --checkpoint ema_s4000.pt
 ```
 
 [完整评测与门槛](results_s4000.json) · [前沿 PNG](pareto.png) · [SVG](pareto.svg)
+
+虚线是外部公开文献前沿，WEAVE 历史点用独立标记显示。[画图口径](../../../performance/pareto.md)

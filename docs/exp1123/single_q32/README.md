@@ -32,3 +32,5 @@ python -m exp.v27_single.bare_q32
 | M4 零 u_vivid | .5458 | .4305 | 33.67% | 9 | 0 |
 
 [原始记录](results.json)
+
+公开文献前沿和内部历史点的口径见 [pareto.md](../../performance/pareto.md)。

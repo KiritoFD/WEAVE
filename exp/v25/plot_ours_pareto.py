@@ -13,9 +13,11 @@
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import math
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -24,6 +26,10 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 ROOT = Path(__file__).resolve().parents[2]
+if __package__ in (None, ""):
+    sys.path.insert(0, str(ROOT))
+from src.eval.pareto import is_public_literature
+
 CSV_PATH = ROOT / "docs/performance/metrics.csv"
 BENCH_3060_PATH = ROOT / "runs/v25/r15_3060_maxbatch_bench.json"
 R16_3060_PATH = ROOT / "runs/v25/r16_3060_stage_and_dec_bench.json"
@@ -89,6 +95,7 @@ def load_data():
             rows.append({
                 "arm": r["arm"],
                 "group": r["group"],
+                "eligible_literature": r["n_cross"] == "600" and r["is_diagnostic"].lower() == "false",
                 "dc": float(r["dino_c"]),
                 "ds": float(r["dino_s"]),
                 "top1": float(r["target_top1"]) * 100.0,
@@ -164,6 +171,9 @@ def draw_radius_legend(ax, loc="lower left"):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--paper-figures", action="store_true", help="Also export into the ICME paper directory.")
+    args = parser.parse_args()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     rows, by_arm = load_data()
     spd = load_3060_speeds()
@@ -204,15 +214,16 @@ def main():
                 label=f"Explored configuration cloud (n={len(cloud)})", zorder=2)
 
     # 外部基线包络
-    base_rows = [by_arm[k] for k in all_baselines if k in by_arm]
+    base_rows = [by_arm[k] for k in all_baselines if k in by_arm and is_public_literature(k)
+                 and by_arm[k]["eligible_literature"]]
     env_b_ds = pareto_envelope([(r["dc"], r["ds"]) for r in base_rows])
     env_b_t1 = pareto_envelope([(r["dc"], r["top1"]) for r in base_rows])
     ax1.plot([p[0] for p in env_b_ds], [p[1] for p in env_b_ds],
              color="#475569", linestyle="--", linewidth=1.35, alpha=0.68,
-             label="External Baselines Envelope", zorder=3)
+             label="External Literature Pareto", zorder=3)
     ax2.plot([p[0] for p in env_b_t1], [p[1] for p in env_b_t1],
              color="#475569", linestyle="--", linewidth=1.35, alpha=0.68,
-             label="External Baselines Envelope", zorder=3)
+             label="External Literature Pareto", zorder=3)
 
     # 1) Diffusion-Heavy Baselines (蓝色)
     for k, (lbl, off1, off2, fallback_ms) in DIFFUSION_BASELINES.items():
@@ -241,10 +252,11 @@ def main():
         r = by_arm[k]
         ms = r["ms"] if r["ms"] else fallback_ms
         sz = img_s_to_area(1000.0 / ms)
-        ax1.scatter([r["dc"]], [r["ds"]], marker="s", s=sz, c="#334155", edgecolors="white", linewidths=0.9, zorder=7)
+        mk = "s" if is_public_literature(k) else "D"
+        ax1.scatter([r["dc"]], [r["ds"]], marker=mk, s=sz, c="#334155", edgecolors="white", linewidths=0.9, zorder=7)
         ax1.annotate(lbl, (r["dc"], r["ds"]), xytext=(off1[0], off1[1]), textcoords="offset points",
                      fontsize=7.5, color="#334155", ha=off1[2], zorder=9)
-        ax2.scatter([r["dc"]], [r["top1"]], marker="s", s=sz, c="#334155", edgecolors="white", linewidths=0.9, zorder=7)
+        ax2.scatter([r["dc"]], [r["top1"]], marker=mk, s=sz, c="#334155", edgecolors="white", linewidths=0.9, zorder=7)
         ax2.annotate(lbl, (r["dc"], r["top1"]), xytext=(off2[0], off2[1]), textcoords="offset points",
                      fontsize=7.5, color="#334155", ha=off2[2], zorder=9)
 
@@ -252,6 +264,9 @@ def main():
     ax1.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Arbitrary-Ref Lightweight (0.2–3.0 s/img)")
     ax2.scatter([], [], marker="*", s=75, c="#2563eb", edgecolors="#1e3a8a", label="Arbitrary-Ref Diffusion (5.0–30.4 s/img)")
     ax2.scatter([], [], marker="s", s=45, c="#334155", edgecolors="white", label="Arbitrary-Ref Lightweight (0.2–3.0 s/img)")
+    if "Seedream 4.5" in by_arm:
+        for ax in (ax1, ax2):
+            ax.scatter([], [], marker="D", s=45, c="#334155", edgecolors="white", label="Commercial reference")
 
     # 3) 单一橙红色全局 PRISM Pareto 线 + 收束代表点
     ds_pts = [(by_arm[a], lbl, off, spd.get(eng, 3.0)) for a, lbl, off, eng in OURS_PARETO_DS if a in by_arm]
@@ -323,12 +338,14 @@ def main():
     svg_p = OUT_DIR / "ours_pareto.svg"
     fig.savefig(png_p, dpi=240)
     fig.savefig(svg_p)
+    lines = svg_p.read_text(encoding="utf-8").splitlines()
+    svg_p.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
     icme_fig_dir = ROOT / "docs/icme2027/figures"
-    if icme_fig_dir.exists():
+    if args.paper_figures and icme_fig_dir.exists():
         for ext in ("pdf", "png", "svg"):
             fig.savefig(icme_fig_dir / f"fig1_prism_pareto.{ext}", dpi=240 if ext == "png" else None)
     plt.close(fig)
-    print(f"Saved: {png_p} & {svg_p} (+ fig1_prism_pareto)")
+    print(f"Saved: {png_p} & {svg_p}")
 
 
 if __name__ == "__main__":

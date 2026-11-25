@@ -207,3 +207,59 @@ def test_bridge4_identity_projected_d_and_duel_isolation() -> None:
     duel_src = (ROOT / "exp/v28_unified/train_duel.py").read_text(encoding="utf-8")
     for bad in ("csd_model", "csd_prototypes", "load_dino_model", "encode_dino", "featurestack", "lpips", "dino_16"):
         assert bad not in duel_src.lower(), f"Referee leakage in train_duel: {bad}"
+
+
+def test_unleashed_unet_skip_zero_and_dmd2_sign() -> None:
+    from exp.v28_unified.dmd2_unleashed import ProjectedUnleashedD, dmd2_surrogate_loss
+    from exp.v28_unified.student_models import UnifiedUnleashedUNet
+
+    m = UnifiedUnleashedUNet(stats_dim=27).eval()
+    n_params = sum(p.numel() for p in m.parameters())
+    assert 16_000_000 <= n_params <= 24_000_000, f"Unexpected param count: {n_params:,}"
+
+    B = 2
+    src = torch.randn(B, 4, 64, 64)
+    c64 = torch.randn(B, 4, 64, 64)
+    q32 = torch.randn(B, 32, 16, 16)
+    tid = torch.tensor([0, 4])
+    stats = torch.randn(5, 27)
+    priors = {
+        "P_Y": torch.eye(4)[:1].repeat(4, 1) * 0.25,
+        "P_C": torch.eye(4) - 0.25,
+        "mu_c": torch.randn(5, 4, 1, 1),
+        "std_c": torch.ones(5, 4, 1, 1),
+    }
+    uv = torch.randn(B, 128)
+    with torch.no_grad():
+        out0 = m(src, c64, q32, tid, torch.zeros(B), stats, priors, noise=torch.randn_like(src), u_vivid=uv)
+        assert float((out0 - src).abs().max()) == 0.0
+
+        # At lambda=1.0, changing source high-freq c64 must have exact 0 effect!
+        c64_alt = torch.randn_like(c64) * 50.0
+        eps = torch.randn_like(src)
+        out1_a = m(src, c64, q32, tid, torch.ones(B), stats, priors, noise=eps, u_vivid=uv)
+        out1_b = m(src, c64_alt, q32, tid, torch.ones(B), stats, priors, noise=eps, u_vivid=uv)
+        assert float((out1_a - out1_b).abs().max()) == 0.0
+
+    # Verify DMD2 surrogate gradient moves z_hat toward +(v_real - v_fake)
+    z_hat = torch.zeros(1, 4, 4, 4, requires_grad=True)
+    v_real = torch.ones(1, 4, 4, 4) * 2.0
+    v_fake = torch.ones(1, 4, 4, 4) * 0.5
+    loss = dmd2_surrogate_loss(z_hat, v_real, v_fake, torch.tensor([0.5]))
+    loss.backward()
+    assert (z_hat.grad < 0).all(), "Gradient descent (-grad) must move z_hat toward +(v_real - v_fake)"
+
+    disc = ProjectedUnleashedD()
+    feats = {
+        "vgg_s2": torch.randn(2, 128, 32, 32),
+        "vgg_s3": torch.randn(2, 256, 16, 16),
+        "vgg_s4": torch.randn(2, 512, 16, 16),
+        "cnx_s1": torch.randn(2, 96, 32, 32),
+        "cnx_s2": torch.randn(2, 192, 24, 24),
+        "cnx_s3": torch.randn(2, 384, 16, 16),
+        "cnx_s4": torch.randn(2, 768, 12, 12),
+    }
+    assert disc(feats, tid).shape == (2,)
+    dmd_src = (ROOT / "exp/v28_unified/dmd2_unleashed.py").read_text(encoding="utf-8")
+    for bad in ("csd_model", "csd_prototypes", "load_dino_model", "encode_dino", "featurestack", "lpips"):
+        assert bad not in dmd_src.lower(), f"Forbidden referee symbol {bad!r} found in dmd2_unleashed.py"

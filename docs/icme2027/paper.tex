@@ -17,12 +17,12 @@
 
 \newtheorem{proposition}{Proposition}
 
-\setlength{\textfloatsep}{3.6pt plus 0.8pt minus 1.2pt}
-\setlength{\floatsep}{3.2pt plus 0.8pt minus 1.0pt}
-\setlength{\dbltextfloatsep}{4.0pt plus 0.8pt minus 1.2pt}
-\setlength{\dblfloatsep}{3.4pt plus 0.8pt minus 1.0pt}
-\setlength{\abovedisplayskip}{2.6pt plus 0.8pt minus 0.8pt}
-\setlength{\belowdisplayskip}{2.6pt plus 0.8pt minus 0.8pt}
+\setlength{\textfloatsep}{2.4pt plus 0.6pt minus 0.8pt}
+\setlength{\floatsep}{2.0pt plus 0.6pt minus 0.8pt}
+\setlength{\dbltextfloatsep}{2.6pt plus 0.6pt minus 0.8pt}
+\setlength{\dblfloatsep}{2.2pt plus 0.6pt minus 0.8pt}
+\setlength{\abovedisplayskip}{2.0pt plus 0.5pt minus 0.5pt}
+\setlength{\belowdisplayskip}{2.0pt plus 0.5pt minus 0.5pt}
 
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\E}{\mathbb{E}}
@@ -30,9 +30,10 @@
 \newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
 
 \begin{document}
+\renewcommand{\baselinestretch}{0.945}\selectfont
 \bstctlcite{IEEEexample:BSTcontrol}
 
-\title{\method: Breaking Source-Style Lock to Redefine the Content--Style--Speed Frontier}
+\title{\method: Real-Time Quotient-Guided P/E-Core Transport for Full-Spectrum Style Transfer}
 
 \author{\IEEEauthorblockN{Anonymous ICME Submission}
 \IEEEauthorblockA{Paper ID: ****}}
@@ -40,11 +41,11 @@
 \maketitle
 
 \begin{abstract}
-Scaling a self-paired latent flow by $260\times$ ($0.13\text{M}\!\to\!34.2\text{M}$) improves unconditional generation ($20.0\%\!\to\!49.3\%$), yet makes cross-style transfer worse ($10.67\%\!\to\!6.67\%$). We identify \emph{Source-Style Lock} as a fundamental failure mode of reconstruction-oriented latent transport: self-paired trajectories, diagonal feature whitening, and over-parameterized decoders retain source-domain texture cues that pull edited latents back toward the input style. We propose \textbf{\method} (\emph{Projected Invariant Style Mapping}), an orthogonal quotient--fiber framework $\mathcal{D}_\star \circ \mathcal{T}_{s\to\tau} \circ (\Pi_\perp,\Pi_\parallel)$ that blocks source-style backflow while steering transport along a source-label-free target chord through a pruned spectral-bottleneck decoder. Across a 750-task benchmark on a single consumer RTX~3060, \textbf{\method} redefines the content--style--compute frontier: its high-content regime reaches $\hcDinoC$ DINO-C and $\hcDinoS$ DINO-S ($\hcLpips$ LPIPS, $\hcBatchMs$), its generative flow reaches $\flowBalTopOne$ target accuracy and $\flowBalDinoS$ DINO-S (surpassing diffusion cross-attention StyleGallery at $30.4\,\text{s/img}$), and its real-time regime executes in $\fastMs$ cached ($\fastBatchEtoEMs$ end-to-end RGB$\to$RGB; $\fastConsumerFps$ under $3.9\,\text{GB}$ VRAM).
+Interactive artistic authoring demands a single real-time engine that sweeps smoothly across the full style--content spectrum, from structure-faithful local recoloring to abstract painterly reorganization. Across $300+$ controlled runs, we show why a single latent network fails to span both regimes: high-content editing is an injective $1$-to-$1$ transport problem requiring zero identity drift, whereas strong stylization is a stochastic $1$-to-many synthesis task. Scaling a self-paired flow by $260\times$ ($0.13\text{M}\!\to\!34.2\text{M}$) lifts unconditional generation ($20.0\%\!\to\!49.3\%$) yet degrades cross-style SDEdit ($10.67\%\!\to\!6.67\%$) due to Posterior Source-Lock. We propose \textbf{\method} (\textbf{C}ontinuous \textbf{L}atent \textbf{E}diting and \textbf{A}bstraction \textbf{V}elocity \textbf{E}ngine), a real-time performance-hybrid \textbf{Performance--Efficiency (P/E)-Core} latent transport framework controlled by a single knob $s \in [0, 1.50]$. First, to block source-style leakage without heavy ViT backbones, we project a $\cnxParams$ ConvNeXt-Tiny Stage-3 extractor ($0.985\,\text{ms/img}$) onto a \textbf{Stiefel Polar Quotient} ($Q_{32}^{\mathrm{cnx}}$), clamping 2nd-order Gram matrices to $I_{32}$ and suppressing 5-way linear style predictability from $91.33\%$ to $20.67\%$ (chance floor). Second, a Hybrid Director dispatches regimes across asymmetric cores: a 1-NFE \textbf{\methodecore} ($\ecoreParams$) governs high-content editing ($s \in [0, 0.75]$) with exact $s=0$ identity ($\max\lvert\hat{z}-z_s\rvert=0.0$) and generates $1\,\text{ms}$ structural drafts $z_{\mathrm{E}}$, while a 6-step DPM-2M \textbf{\methodpcore} ($\pcoreParams$) takes over mid-to-extreme abstraction ($s \in [0.80, 1.50]$) via strict $16\times 16$ bottleneck conditioning and in-domain reversed real-painting pairs. Third, a $\decPrune$-pruned spectral-bottleneck decoder (\textbf{\methoddec}, $\decParams$) suppresses source-texture retraction ($\decGain\text{--}\decClosedGain$ Top-1) at $\decSpeedup$ speed. On a 750-task benchmark, \textbf{\method} spans $\sZeroFortyC \to \sOneFiftyC$ DINO-C and $\sZeroFortyTop \to \sOneFiftyTop$ CSD Top-1 at $\pcoreColdBatchFps\text{--}\ecoreColdBatchFps$ true cold-start RGB$\to$RGB ($\pcoreHotBatchFps\text{--}\ecoreHotBatchFps$ hot interactive)---$550\times\text{--}1{,}000\times$ faster than StyleGallery ($30.4\,\text{s/img}$) under $100\%$ blind cross-architecture evaluation.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Artistic style transfer, latent flow matching, orthogonal disentanglement, content--style--compute frontier, decoder pruning
+performance-hybrid P/E-Core transport, Stiefel polar quotient, full-spectrum style transfer, decoder pruning
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -52,304 +53,309 @@ Artistic style transfer, latent flow matching, orthogonal disentanglement, conte
 
 \begin{figure*}[b]
 \centering
-\vspace{-1.0mm}
-\includegraphics[width=0.96\textwidth]{figures/fig1_prism_pareto.pdf}
-\vspace{-4.8mm}
-\caption{Content--style--compute paradigm confrontation on 600 cross-style pairs ($512\times 512$, RTX~3060). Bubble radius scales with measured RTX~3060 max-batch end-to-end throughput ($\text{img/s}$); slow baselines are annotated with latency ($\text{s/img}$). The single orange-red curve traces the global \textbf{\method} Pareto frontier across six representative operating points per panel.}
+\vspace{-1.5mm}
+\includegraphics[width=0.98\textwidth]{figures/fig1_prism_pareto.pdf}
+\vspace{-3.2mm}
+\caption{Full-spectrum style--content--compute Pareto frontier of \textbf{\method} on \textbf{Cross600} ($512\times 512$). A single continuous knob $s\in[0,1.50]$ transitions seamlessly from our 1-NFE \textbf{\methodecore} ($s\in\{0.40,0.60,0.75\}$, teal diamonds, $\ecoreColdBatchFps$ cold RGB$\to$RGB) across the Hybrid Director bridge to our 6-step \textbf{\methodpcore} ($s\in[0.80,1.50]$, vermilion circles, $\pcoreColdBatchFps\text{--}\pcoreTauZeroColdFps$ cold RGB$\to$RGB), with matched operating points across \textbf{(a) DINO-C vs.\ DINO-S}, \textbf{(b) DINO-C vs.\ CSD Top-1}, and \textbf{(c) Cold-Start RGB$\to$RGB Throughput vs.\ CSD Top-1}. Standalone hollow diamond denotes 1-NFE \textbf{\methodecore} at $s=1.00$ ($\ecoreMaxTop$ Top-1 at $\ecoreColdBatchFps$).}
 \label{fig:page1}
 \end{figure*}
 
-Why should artistic style transfer require billion-parameter diffusion backbones and tens of seconds of per-image optimization when a compact latent model operates at $1/8$ spatial resolution? In principle, encoding images into a frozen variational autoencoder (VAE)~\cite{rombach2022high} should reduce conditional stylization—rendering an unlabeled input $x_s$ in target style $\tau$ while preserving scene geometry—to millisecond-scale latent transport. In practice, existing multimedia generators split into two incompatible computational paradigms (Fig.~\ref{fig:page1}): diffusion-heavy editors~\cite{gao2024styleshot,chung2024style,hertz2024style,he2026stylegallery} achieve strong stylization only via $5\text{--}30\,\text{s/img}$ of iterative inversion or attention optimization, whereas conventional lightweight translators~\cite{deng2022stytr2,hong2023aespa,park2020cut,liu2024samam,afifi2021histogan} cluster in weak-stylization or high-distortion regimes.
+Interactive multimedia authoring requires a real-time engine that sweeps continuously across the style--content spectrum, from subtle structure-faithful palette adaptation to bold, abstract brushstroke reorganization. Operating in the $1/8$-resolution latent space of a variational autoencoder (VAE)~\cite{rombach2022high} should in principle make full-spectrum control achievable within milliseconds. Yet existing methods remain split into two incompatible regimes (Fig.~\ref{fig:page1}): billion-parameter zero-shot diffusion and foundation editors~\cite{gao2024styleshot,chung2024style,he2026stylegallery,seedream2025} require $5\text{--}30.4\,\text{s/img}$ of iterative inversion or attention optimization, whereas lightweight feed-forward networks~\cite{deng2022stytr2,hong2023aespa,park2020cut,liu2024samam,afifi2021histogan} either under-stylize to protect contours ($<40\%$ CSD Top-1) or collapse spatial geometry under global moment shifts.
 
-Across $300+$ controlled runs on a 750-task benchmark, we trace this barrier to \textbf{Source-Style Lock}: trajectories, feature normalizers, and decoders trained for \emph{self-reconstruction} preserve source-domain mutual information $I(\cdot\,;Y_s\mid C)$ that actively resists cross-style transport. Crucially, our experiments challenge three prevailing assumptions in generative style transfer (Fig.~\ref{fig:paradoxes}):
+Through $300+$ controlled runs on a 750-task benchmark, we trace this gap to three intrinsic physical bottlenecks across the latent style transfer pipeline (Fig.~\ref{fig:paradoxes}):
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.96\textwidth]{figures/fig2_three_paradoxes.pdf}
-\vspace{-5.8mm}
-\caption{More capacity can preserve the wrong information: empirical diagnosis of Source-Style Lock. \textbf{(a) $260\times$ Self-Paired Scaling Paradox:} Scaling a flow U-Net from $0.13\text{M}$ to $34.2\text{M}$ lifts unconditional generation ($\tau_0=0$) Top-1 to $49.3\%$, yet \emph{degrades} cross-style SDEdit ($\tau_0=0.7$) from $10.67\%$ to $6.67\%$ ($59\%$ source-locked). \textbf{(b) Reconstruction--Stylization Decoder Paradox:} On paired \textbf{\methodflow} latents, \textbf{\methoddec} ($10.7\text{M}$, $\decSpeedup$ faster) outperforms both frozen ($53.50\%$) and WikiArt fine-tuned ($55.83\%$) full $49.5\text{M}$ SD-VAE decoders by \textbf{\decClosedGain} Top-1 ($p<0.05$, and $+3.17\text{pp}$ on Q2A, $p<0.01$). \textbf{(c) Counterfactual Specificity Audit:} Post-hoc subband scalers score higher on \emph{wrong} target labels than true ones ($13.0\%$ vs.\ $12.3\%$), whereas \textbf{\method} achieves $+43.5\text{pp}$ and $\flowCausalGap$ causal specificity.}
+\includegraphics[width=0.95\textwidth]{figures/fig2_three_paradoxes.pdf}
+\vspace{-2.8mm}
+\caption{Three intrinsic bottlenecks motivating \textbf{\method}: \textbf{(a) $260\times$ Self-Paired Scaling Paradox:} expanding a single flow U-Net ($0.13\text{M}\!\to\!34.2\text{M}$) improves $\tau_0=0$ generation ($20.0\%\!\to\!49.3\%$) yet worsens $\tau_0=0.7$ cross-style SDEdit ($10.67\%\!\to\!6.67\%$, $59\%$ source-locked). \textbf{(b) Decoder Retraction:} $\decPrune$-pruned \textbf{\methoddec} ($\decParams$) outperforms frozen and WikiArt-finetuned $49.5\text{M}$ SD-VAE decoders by $+4.49\text{pp}$ Top-1 ($p<0.05$) at $\decSpeedup$ speed. \textbf{(c) Counterfactual Specificity Audit:} \textbf{\method}'s P/E cores achieve $67.2\%\text{--}80.2\%$ Top-1 on true targets vs.\ $1.2\%\text{--}2.2\%$ under wrong target IDs ($+66.0\text{--}78.0\text{pp}$ causal specificity).}
 \label{fig:paradoxes}
-\vspace{-1.2mm}
+\vspace{-1.0mm}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/fig3_prism_architecture.pdf}
+\vspace{-5.2mm}
+\caption{System architecture of \textbf{\method} (\textbf{C}ontinuous \textbf{L}atent \textbf{E}diting and \textbf{A}bstraction \textbf{V}elocity \textbf{E}ngine). \textbf{Operator I:} Grayscale $C_{64}$ and truncated \textbf{ConvNeXt-Tiny Stage-3} ($\cnxParams$, $0.985\,\text{ms}$) produce Stiefel Polar Quotient $Q_{32}^{\mathrm{cnx}}$ ($91.33\%\!\to\!20.67\%$ Gram probe) and a 417-D $K=8$ sub-school style bank. \textbf{Operator II:} Single-Knob Hybrid Director dispatches $s\in[0,0.75]$ to 1-NFE \textbf{\methodecore} ($\ecoreParams$, exact $s=0$ identity and $0.99\,\text{ms}$ draft $z_{\mathrm{E}}$) and $s\in[0.80,1.50]$ to 6-step DPM-2M \textbf{\methodpcore} ($\pcoreParams$, strict $16\times 16$ bottleneck conditioning). \textbf{Operator III:} $\decPrune$-pruned \textbf{\methoddec} ($\decParams$) blocks source-texture retraction at $\decSpeedup$ speed (detailed stage timings in Table~\ref{tab:system}).}
+\label{fig:arch}
+\vspace{-1.5mm}
 \end{figure*}
 
 \begin{enumerate}
-\item \textbf{Scaling Does Not Solve Style Transfer ($260\times$ Scaling Paradox, Fig.~\ref{fig:paradoxes}a):} Scaling a self-paired rectified flow~\cite{lipman2022flow,meng2021sdedit} by $260\times$ ($0.13\text{M}\!\to\!34.2\text{M}$) lifts pure noise generation ($\tau_0=0$) Top-1 from $20.0\%$ to $49.3\%$, yet monotonically \emph{degrades} cross-style SDEdit ($\tau_0=0.7$) from $10.67\%$ to $\mathbf{6.67\%}$ ($59\%$ predicted back as source style $y_s$). Even $\tau_0=0$ flows conditioned on $64\times 64$ chrominance-free edges stall at $18.67\%$ because self-paired training ($x_s\mapsto x_s$) inverts 2D stroke cadence back into $y_s$.
-\item \textbf{Reconstruction Fidelity Can Fight Stylization (Fig.~\ref{fig:paradoxes}b):} More capacity can preserve the wrong information not only in the flow, but also in the decoder. Full $49.5\text{M}$ SD-VAE synthesis filters memorize source-domain texture priors; pruning $\decPrune$ of channels (\textbf{\methoddec}, $\decParams$) yields a $\decSpeedup$ speedup while \emph{increasing} cross-style Top-1 by \textbf{\decGain} ($p<0.01$).
-\item \textbf{Evaluation Mirages Obscure True Specificity (Fig.~\ref{fig:paradoxes}c):} Standard diagonal feature whitening retains $92.33\%$ off-diagonal Gram style leakage, while unanchored post-hoc scalers score \emph{higher} under counterfactual \emph{wrong} target labels than true ones ($13.0\%$ vs.\ $12.3\%$).
+\item \textbf{Single-Core Spectrum Conflict (The P/E-Core Necessity, Fig.~\ref{fig:paradoxes}a):} High-content editing ($s\le 0.75$) is an injective $1$-to-$1$ local transport problem requiring exact contour preservation and zero identity drift at $s=0$, whereas strong abstraction ($s\ge 0.80$) is a stochastic $1$-to-many synthesis task that must dissolve source micro-edges and reorganize macro planes. Forcing one self-paired flow~\cite{lipman2022flow,meng2021sdedit} to span both regimes triggers \emph{Posterior Source-Lock}: scaling capacity by $260\times$ ($0.13\text{M}\!\to\!34.2\text{M}$) lifts unconditional generation ($\tau_0=0$) from $20.0\%$ to $49.3\%$, yet sharpens reconstruction basins around $z_s$ and degrades cross-style SDEdit ($\tau_0=0.7$) from $10.67\%$ to $\mathbf{6.67\%}$ ($59\%$ predicted back as source style).
+\item \textbf{Condition Style Leakage and Front-End Bottleneck:} Raw spatial feature tokens carry up to $91.33\%$ 5-way source style predictability in their 2nd-order Gram matrices, causing conditional flows to reconstruct source brushwork. Conversely, conditioning on $86\text{M}\text{--}304\text{M}$ DINOv2~\cite{oquab2023dinov2} ViT backbones burdens cold-start latency and couples the generator to ViT-based evaluation referees.
+\item \textbf{Decoder Texture Retraction (Fig.~\ref{fig:paradoxes}b):} Over-parameterized $49.5\text{M}$ SD-VAE synthesis filters memorize natural-image texture priors that pull stylized latents back toward unedited appearance; pruning $\decPrune$ of decoder channels accelerates synthesis by $\decSpeedup$ while \emph{improving} cross-style Top-1 by $\decGain\text{--}\decClosedGain$.
 \end{enumerate}
 
-To break Source-Style Lock without billion-parameter diffusion or test-time source labels, we propose \textbf{\method} (\emph{Projected Invariant Style Mapping}), built on \textbf{Orthogonal Quotient--Fiber Duality} $(\Pi_\perp,\Pi_\parallel)$. While $\Pi_\perp(x_s)$ projects onto chrominance-free contrast and a Stiefel polar semantic layout with exact zero 2nd-order sample Gram leakage ($20.00\%$ 5-way Gram probe, uniform chance), its complement $\Pi_\parallel(x_s)$ collects the discarded color quantiles and DINO spatial moments ($97.33\%$ style accuracy) to form a \emph{source-label-free target chord} $e(x_s\!\to\!\tau)=u_\tau-\phi(\Pi_\parallel(x_s))$. Splitting $\R^4=\mathrm{span}(\hat{w}_Y)\oplus\hat{w}_Y^\perp$ pairs structural luminance preservation with target-directed transport through \textbf{\methoddec}, supporting real-time feed-forward (\textbf{\methodfast}), high-content half-NFE hybrid (\textbf{\methodhc}), and generative exemplar flow (\textbf{\methodflow}) regimes.
-
-\textbf{Contributions.}
-(1)~\emph{A Scaling Paradox in Latent Style Transfer:} Through large-scale controlled experiments and theoretical analysis (Prop.~\ref{prop:sourcelock}), we reveal \emph{Source-Style Lock}—showing that expanding self-paired flow capacity or decoder reconstruction fidelity can reinforce source-domain bias rather than improve cross-style transfer.
-(2)~\emph{\method: Structure-Invariant, Style-Directed Latent Transport:} We introduce Quotient--Fiber disentanglement (Prop.~\ref{prop:stiefel}--\ref{prop:antisym}) and target-directed latent transport with spectral-bottleneck decoding (\textbf{\methoddec}), blocking source-texture backflow while preserving semantic geometry.
-(3)~\emph{A New Content--Style--Compute Frontier:} We establish competitive cross-movement stylization across strong-style and high-content regimes at orders-of-magnitude lower compute ($\fastMs$ cached / $\fastBatchEtoEMs\text{--}\hcBatchMs$ batched RGB$\to$RGB; $\flowFps\text{--}\fastConsumerFps$ under $<3.9\,\text{GB}$ VRAM on a single consumer RTX~3060), verified by paired cluster bootstrap CIs and counterfactual controls.
+We resolve all three bottlenecks with \textbf{\method} (\textbf{C}ontinuous \textbf{L}atent \textbf{E}diting and \textbf{A}bstraction \textbf{V}elocity \textbf{E}ngine)---a name reflecting its dual action: \emph{cleaving} away source style via quotient projection, orthogonal luma--chroma splitting, P/E dual-core decoupling, and decoder pruning, while \emph{cleaving closely} to source geometry with zero drift in high-content editing (Fig.~\ref{fig:arch}):
+(1)~\emph{Performance-Hybrid P/E-Core Transport \& Single-Knob Hybrid Director:} Inspired by performance-hybrid processor design, a 1-NFE efficiency core (\textbf{\methodecore}, $\ecoreParams$) governs $s\in[0,0.75]$ with exact mathematical identity at $s=0$ ($\max\lvert\hat{z}-z_s\rvert=0.0$) and generates $0.99\,\text{ms}$ structural drafts $z_{\mathrm{E}}(\lambda_{\mathrm{draft}}(s))$ for higher regimes. For $s\in[0.80,1.50]$, a 6-step DPM-2M performance core (\textbf{\methodpcore}, $\pcoreParams$) initializes from $z_{\mathrm{E}}$, restricts structural injection strictly to its $16\times 16$ bottleneck, and trains on $15\%$ in-domain reversed real-painting pairs (\texttt{Pool C}) to break Posterior Source-Lock.
+(2)~\emph{Lightweight Convolutional Stiefel Polar Quotient \& Orthogonal Luma--Chroma Split:} A truncated $\cnxParams$ \textbf{ConvNeXt-Tiny Stage-3} front-end ($0.985\,\text{ms/img}$ at \texttt{b=16}) paired with Stiefel polar projection ($Q_{32}^{\mathrm{cnx}}$) clamps sample Gram matrices to $I_{32}$ (error $1.95\times 10^{-4}$), driving 5-way Gram style predictability from $91.33\%$ to the $20.67\%$ chance floor alongside an orthogonal $P_Y\oplus P_C$ latent split and a 417-D $K=8$ sub-school style bank.
+(3)~\emph{Spectral-Bottleneck Decoding (\methoddec) \& Blind Systems Audit:} Taylor-pruned \textbf{\methoddec} ($\decParams$) suppresses source retraction at $\decSpeedup$ speed. Across 750 tasks, we disclose both true cold-start RGB$\to$RGB ($\pcoreColdBatchFps\text{--}\ecoreColdBatchFps$, $\coldTotalParams$) and hot interactive ($\pcoreHotBatchFps\text{--}\ecoreHotBatchFps$, $\hotTotalParams$) budgets, and conduct a 6-arm $Q_{32}$ causal diagnosis plus paired DINO-vs.-ConvNeXt ablations that prove backbone-independence and quantify a $\sim 0.025$ homologous \emph{DINO-C} scale offset.
 
 \section{Related Work}
 \label{sec:related}
 
-\textbf{Conventional Lightweight Style Transfer.}
-Classical NST evolved from iterative Gram matching~\cite{gatys2016image,simonyan2014vgg} to feed-forward moment alignment (AdaIN~\cite{huang2017arbitrary}, WCT~\cite{li2017universal}), pattern attention/transformers (StyTr$^2$~\cite{deng2022stytr2}, AesPA-Net~\cite{hong2023aespa}, AesFA~\cite{kwon2024aesfa}), unpaired contrastive translation (CUT~\cite{park2020cut}), histogram matching (Hist2Style~\cite{afifi2021histogan}), and state-space models (SaMam~\cite{liu2024samam}, SaMST~\cite{liu2024samst}). While lightweight ($0.2\text{--}3.0\,\text{s/img}$), global moment transforms corrupt boundaries ($\mathrm{DINO\text{-}C}<0.23$), whereas contrastive/Mamba translators preserve content by under-stylizing ($<12\%$ CSD Top-1).
+\textbf{Lightweight Feed-Forward Style Transfer.}
+Classical neural style transfer evolved from iterative Gram optimization~\cite{gatys2016image,simonyan2014vgg} to feed-forward moment matching (AdaIN~\cite{huang2017arbitrary}, WCT~\cite{li2017universal}), attention/transformer networks (StyTr$^2$~\cite{deng2022stytr2}, AesPA-Net~\cite{hong2023aespa}, AesFA~\cite{kwon2024aesfa}), unpaired contrastive translation (CUT~\cite{park2020cut}), histogram alignment (Hist2Style~\cite{afifi2021histogan}), and state-space models (SaMam~\cite{liu2024samam}, SaMST~\cite{liu2024samst}). While compact ($0.1\text{M}\text{--}48\text{M}$ parameters), global moment matching degrades object boundaries, whereas conservative translators protect contours by barely shifting artistic style. \textbf{\method} overcomes this trade-off via orthogonal quotient--fiber conditioning and asymmetric P/E-Core specialization.
 
-\textbf{Diffusion-Heavy Editors, Flows, and Latent Tokenizers.}
-Pretrained diffusion stylizers~\cite{meng2021sdedit,zhang2023inst,ye2023ipadapter,hertz2024style,chung2024style,gao2024styleshot,he2026stylegallery} achieve rich textures but incur massive compute: StyleShot ($2.4\text{B}$, $24.5\,\text{s/img}$) overwrites scene layout ($\mathrm{DINO\text{-}C}=0.3569$), while StyleGallery~\cite{he2026stylegallery} ($950\text{M}$, $30.4\,\text{s/img}$) requires 50-step DDIM inversion, feature clustering, and per-image attention optimization. Latent bridges~\cite{lipman2022flow,liu2022rectified,chadebec2025lbm,kim2024latentsb} and spatial adapters~\cite{zhang2023controlnet,park2019spade} reduce step counts, yet self-paired $64\times 64$ conditioning locks onto source strokes. Unlike reconstruction-oriented VAE compression~\cite{sadat2024litevae,lin2023favae,molchanov2019importance}, \textbf{\methoddec} uses structured pruning as a spectral bottleneck regularizer that suppresses source-texture retraction while accelerating decoding. We evaluate all paradigms under CSD~\cite{somepalli2024csd}, DINOv2~\cite{oquab2023dinov2}, CLIP~\cite{radford2021clip}, LPIPS~\cite{zhang2018unreasonable}, validity corridors~\cite{ioannou2024evaluation}, and counterfactual gates.
+\textbf{Zero-Shot Diffusion Editors, Latent Bridges, and Decoder Pruning.}
+Large pretrained diffusion and foundation models~\cite{meng2021sdedit,zhang2023inst,ye2023ipadapter,hertz2024style,chung2024style,gao2024styleshot,he2026stylegallery,seedream2025} synthesize vivid textures at heavy compute cost ($0.95\text{B}\text{--}15\text{B}$ parameters, $5\text{--}30.4\,\text{s/img}$), including attention injection (StyleID~\cite{chung2024style}, StyleShot~\cite{gao2024styleshot}), commercial multimodal generation (Seedream~4.5~\cite{seedream2025}), and 150-step DINOv2-guided inversion/matching (StyleGallery~\cite{he2026stylegallery}). Latent flow bridges~\cite{lipman2022flow,liu2022rectified,chadebec2025lbm,kim2024latentsb} and spatial adapters~\cite{zhang2023controlnet,park2019spade} reduce step counts, yet self-paired $64\times 64$ conditioning locks onto source strokes. Moreover, unlike reconstruction-driven VAE pruning~\cite{sadat2024litevae,lin2023favae,molchanov2019importance}, \textbf{\methoddec} exploits structured channel pruning as a spectral regularizer that blocks source-texture retraction.
 
 \section{Theory and Methodology}
 \label{sec:method}
 
-Given an unlabeled source image $x_s \in [0,1]^{3\times H\times W}$ with latent $z_s = \mathcal{E}(x_s) \in \R^{4\times h\times w}$ ($h=H/8, w=W/8$) and target specification $\tau$ (style class $y_t$ or exemplar $x_{\mathrm{ref}}$), \textbf{\method} synthesizes $\hat{x}_{s\to\tau} = \mathcal{D}_\star(\mathcal{T}_\tau(z_s, \Pi_\perp(x_s), \Pi_\parallel(x_s)))$ by explicitly blocking source-style backflow across three stages (Fig.~\ref{fig:arch}).
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.96\textwidth]{figures/fig3_prism_architecture.pdf}
-\vspace{-5.8mm}
-\caption{Blocking source-style backflow in \textbf{\method}. \textbf{Left (Operator I):} Input $x_s$ is split into an invariant layout quotient $\Pi_\perp(x_s)=(C_{64},Q_{32})$ that blocks 2nd-order Gram style leakage ($92.3\%\!\to\!20.0\%$ chance floor) and a complementary style fiber $\Pi_\parallel(x_s)$ ($97.3\%$ style accuracy) that forms a source-label-free target chord $e(x_s\!\to\!\tau)$. \textbf{Center (Operator II):} Splitting $\R^4=\mathrm{span}(\hat{w}_Y)\oplus\hat{w}_Y^\perp$ enables controlled transport via a $58.5\,\text{ms}$ cached ($5.97\,\text{img/s}$ E2E) 1-step network (\textbf{\methodfast}), a B4-anchored half-NFE high-content hybrid (\textbf{\methodhc}), or a coarse-$16\times 16$ bottleneck flow (\textbf{\methodflow}). \textbf{Right (Operator III):} Structured $\decPrune$-pruned \textbf{\methoddec} ($10.7\text{M}$) suppresses source-texture retraction ($\decGain$ Top-1) at $\decSpeedup$ speed.}
-\label{fig:arch}
-\vspace{-1.2mm}
-\end{figure*}
+Given an unlabeled source image $x_s \in [0,1]^{3\times H\times W}$ with VAE latent $z_s = \mathcal{E}(x_s) \in \R^{4\times 64\times 64}$ ($H=W=512$) and target movement $y_t \in \{1,\dots,5\}$ under single knob $s \in [0, 1.50]$, \textbf{\method} synthesizes $\hat{x}_{s\to y_t}(s) = \mathcal{D}_\star(\mathcal{T}_{\mathrm{P/E}}(z_s, \Pi_\perp^{\mathrm{cnx}}(x_s), \Pi_\parallel^{\mathrm{cnx}}(x_s, y_t); s))$ (Fig.~\ref{fig:arch}).
 
 \subsection{Posterior Source-Lock in Self-Paired Flows}
 \label{sec:sourcelock}
 
-In self-paired flow matching~\cite{lipman2022flow}, velocity network $v_\theta(z_\tau,\tau,y)$ is trained on $z_\tau = (1-\tau)\epsilon + \tau z$. At inference, SDEdit~\cite{meng2021sdedit} initializes at $z_{\tau_0} = (1-\tau_0)\epsilon + \tau_0 z_s$ ($z_s\sim\Prob_{y_s}$) under target $y_t \neq y_s$.
+In standard self-paired flow matching~\cite{lipman2022flow}, velocity field $v_\theta(z_\tau,\tau,y)$ is trained on $z_\tau = (1-\tau)\epsilon + \tau z$. At test time, SDEdit~\cite{meng2021sdedit} initializes at $z_{\tau_0} = (1-\tau_0)\epsilon + \tau_0 z_s$ ($z_s\sim\Prob_{y_s}$) under target $y_t \neq y_s$.
 
 \begin{proposition}[Posterior Source-Lock]
 \label{prop:sourcelock}
-With label dropout $p_{\mathrm{drop}}\in(0,1)$, the Bayes-optimal velocity at $(z_{\tau_0},\tau_0,y_t)$ is $\frac{\hat{z}_{\tau_0}(y_t)-z_{\tau_0}}{1-\tau_0}$, with posterior expectation under $\tilde{\Prob}_{y_t}=(1-\eta)\Prob_{y_t}+\eta\sum_k\pi_k\Prob_k$:
+With label dropout $p_{\mathrm{drop}}\in(0,1)$, the Bayes-optimal velocity at $(z_{\tau_0},\tau_0,y_t)$ is $\frac{\hat{z}_{\tau_0}(y_t)-z_{\tau_0}}{1-\tau_0}$, where the posterior expectation under $\tilde{\Prob}_{y_t}=(1-\eta)\Prob_{y_t}+\eta\sum_k\pi_k\Prob_k$ is
 \begin{equation}
 \hat{z}_{\tau_0}(y_t) = \frac{\int_{\mathcal{Z}} z \, \exp\!\Big(-\frac{\norm{z_{\tau_0} - \tau_0 z}_2^2}{2(1-\tau_0)^2}\Big) d\tilde{\Prob}_{y_t}(z)}{\int_{\mathcal{Z}} \exp\!\Big(-\frac{\norm{z_{\tau_0} - \tau_0 z}_2^2}{2(1-\tau_0)^2}\Big) d\tilde{\Prob}_{y_t}(z)}.
 \label{eq:posterior-lock}
 \end{equation}
-For $\Delta_{s\to t}(z_s)=\mathrm{dist}(z_s,\mathrm{supp}(\Prob_{y_t}))^2$, whenever $\frac{\tau_0^2\Delta_{s\to t}(z_s)}{2(1-\tau_0)^2} \gg \log\frac{1-\eta}{\eta\pi_{y_s}}$, the Gaussian kernel concentrates exponentially on $z_s\in\mathrm{supp}(\Prob_{y_s})$, giving $\norm{\hat{z}_{\tau_0}(y_t)-z_s}_2=\mathcal{O}(1-\tau_0)$ regardless of $y_t$.
+For $\Delta_{s\to t}(z_s)=\mathrm{dist}(z_s,\mathrm{supp}(\Prob_{y_t}))^2$, whenever $\frac{\tau_0^2\Delta_{s\to t}(z_s)}{2(1-\tau_0)^2} \gg \log\frac{1-\eta}{\eta\pi_{y_s}}$, the Gaussian kernel concentrates exponentially on $z_s\in\mathrm{supp}(\Prob_{y_s})$, yielding $\norm{\hat{z}_{\tau_0}(y_t)-z_s}_2=\mathcal{O}(1-\tau_0)$ regardless of $y_t$.
 \end{proposition}
-Expanding capacity ($0.13\text{M}\!\to\!34.2\text{M}$) sharpens local score curvature around $z_{\tau_0}$, worsening source-lock ($10.67\%\!\to\!6.67\%$), while $\tau_0=0$ self-paired $64\times 64$ edge conditioning still leaks 2D stroke cadence ($18.67\%$ ceiling).
+Prop.~\ref{prop:sourcelock} proves why a single network cannot span the full spectrum: high $\tau_0$ locks a flow onto $z_s$, whereas lowering $\tau_0$ without a stylistically pre-shifted draft destroys fine content geometry, motivating our asymmetric P/E-Core decomposition.
 
-\subsection{Operator I: Orthogonal Quotient--Fiber Duality $(\Pi_\perp, \Pi_\parallel)$}
+\subsection{Quotient-Guided Orthogonal Conditioning}
 \label{sec:quotient}
 
-To prevent source texture leakage from entering the structural condition, we decompose $x$ under $\mathcal{G}_{\mathrm{style}} = \ker(w_Y^\top) \times (\R^D\rtimes\R_+^D)$ into invariant quotient and complementary fiber coordinates:
+To prevent source-style leakage through spatial conditioning while maintaining sub-millisecond front-end latency, we construct an orthogonal quotient--fiber representation:
 
-\textbf{1) Invariant Structural Quotient $\Pi_\perp(x)=(C_{64},Q_k)$:}
-From grayscale luminance $Y(x)=w_Y^\top x$ downsampled to $Y_{64}$ with local residual $\Delta_k Y=Y_{64}-\mathcal{A}_k(Y_{64})$ ($k\in\{5,13\}$), gradient-safe Local Contrast Normalization is
+\textbf{1) Luminance Structure $C_{64}$ and Coarse $Y_{16}$:}
+From ITU-R BT.601 grayscale luminance $Y(x)=w_Y^\top x$ downsampled to $Y_{64}$ with local residual $\Delta_k Y=Y_{64}-\mathcal{A}_k(Y_{64})$ ($k\in\{5,13\}$), gradient-safe Local Contrast Normalization is
 \begin{equation}
 \mathrm{LCN}_k(Y_{64}) = \tfrac{1}{3}\mathrm{clip}\!\left(\frac{\Delta_k Y}{\sqrt{\max(\mathcal{A}_k(\Delta_k Y^2),\delta_0)} + \varepsilon_k},-3,3\right),
 \label{eq:lcn}
 \end{equation}
-($\delta_0=10^{-8}$), forming $C_{64}(x)\in[-1,1]^{4\times 64^2}$ with quantile Sobel and RMS Laplacian maps. For semantic layout, we extract DINOv2-small~\cite{oquab2023dinov2} patch tokens $P\in\R^{D\times N}$ ($D=384, N=256$) from grayscale $[Y,Y,Y]$. Standard per-channel diagonal whitening $\hat{P}_d = (P_d - \mu_{\mathrm{sp}}(P_d))/(\sigma_{\mathrm{sp}}(P_d) + \varepsilon)$ only normalizes diagonal variances while leaving off-diagonal channel correlations intact, leaking $92.33\%$ 5-way style identity via 2nd-order Gram matrices.
+($\delta_0=10^{-8}$), stacked with 95th-percentile Sobel and RMS Laplacian maps into $C_{64}(x)\in[-1,1]^{4\times 64\times 64}$ for \textbf{\methodecore}, and pooled to $16\times 16$ $\mathrm{LCN}_3(Y_{16})\in[-1,1]^{1\times 16\times 16}$ (32px blocks, zero micro-stroke edges) for \textbf{\methodpcore}.
 
-\begin{proposition}[Stiefel Polar Quotient \& Zero 2nd-Order Gram Leakage]
+\textbf{2) ConvNeXt-Stage3 Stiefel Polar Quotient $Q_{32}^{\mathrm{cnx}}$:}
+We truncate an ImageNet-pretrained ConvNeXt-Tiny backbone at Stage~3 (\texttt{features[:6]}, $\cnxParams$ parameters, $D=384$ at stride~$16$). Feeding $256\times 256$ grayscale $[Y,Y,Y]$ yields spatial tokens $P_{\mathrm{cnx}}\in\R^{384\times 256}$ in $\mathbf{0.985\,\text{ms/img}}$ (\texttt{b=16}), avoiding both $86\text{M}+$ ViT latency and evaluator homology. Because standard diagonal channel whitening leaves off-diagonal correlations intact ($91.33\%$ 5-way Gram style leakage), we project onto the Stiefel manifold:
+
+\begin{proposition}[Stiefel Polar Quotient \& Zero 2nd-Order Gram Predictability]
 \label{prop:stiefel}
-Let $W_k \in \R^{D\times k}$ ($k=32 \ll N$) be an orthogonal semantic basis. For centered projection $Z = W_k^\top P(I_N - \frac{1}{N}\mathbf{1}\mathbf{1}^\top) \in \R^{k\times N}$ with compact SVD $Z = U \Sigma V^\top$ ($U\in O(k), V^\top V = I_k$), the Stiefel Polar Quotient
+Let $W_{32}^{\mathrm{cnx}} \in \R^{384\times 32}$ be the principal semantic basis fit on training grayscale tokens. For spatially centered projection $Z = (W_{32}^{\mathrm{cnx}})^\top P_{\mathrm{cnx}}(I_N - \frac{1}{N}\mathbf{1}\mathbf{1}^\top) \in \R^{32\times N}$ ($N=256$) with compact SVD $Z = U \Sigma V^\top$ ($U\in O(32), V^\top V = I_{32}$), the Stiefel Polar Quotient
 \begin{equation}
-Q_k(x) = \sqrt{N}\, U V^\top \in \R^{k\times N}
+Q_{32}^{\mathrm{cnx}}(x) = \sqrt{N}\, U V^\top \in \R^{32\times 16\times 16}
 \label{eq:stiefel-q}
 \end{equation}
-is the unique Frobenius-nearest matrix to $Z$ satisfying exact zero spatial mean ($Q_k(x)\mathbf{1} \equiv \mathbf{0}$) and exact identity sample Gram matrix ($\frac{1}{N} Q_k(x) Q_k(x)^\top \equiv I_k$).
+is the unique Frobenius-nearest tensor to $Z$ satisfying exact zero spatial mean ($Q_{32}^{\mathrm{cnx}}\mathbf{1} \equiv \mathbf{0}$) and exact identity sample Gram matrix ($\frac{1}{N} Q_{32}^{\mathrm{cnx}} (Q_{32}^{\mathrm{cnx}})^\top \equiv I_{32}$).
 \end{proposition}
-By clamping all 2nd-order channel Gram statistics to $I_k$, $Q_{32}$ reduces 5-way Gram style probe accuracy on holdout paintings from $92.33\%$ to $\mathbf{20.00\%}$ (exact uniform-chance floor, numerical error $<2.3\times 10^{-4}$).
+On 300 holdout paintings, $Q_{32}^{\mathrm{cnx}}$ achieves a maximum Gram identity numerical error of $1.95\times 10^{-4}$ and slashes 5-way Gram style probe accuracy from $91.33\%$ to $\mathbf{20.67\%}$ (matching the $20.0\%$ uniform random baseline).
 
-\textbf{2) Complementary Style Fiber $\Pi_\parallel(x)$ \& Target Style Chord:}
-Conversely, $\Pi_\parallel(x)\in\R^{795}$ collects the discarded statistics—27-D Oklab color moments/quantiles/covariance plus 768-D raw RGB DINOv2 spatial $(\mu_{\mathrm{sp}},\sigma_{\mathrm{sp}})$. A 2-layer spherical encoder $\phi_\eta:\R^{795}\to\mathbb{S}^{127}$ trained with class barycenters $\{\bar{u}_y\}_{y=1}^K$ defines the \emph{source-label-free target chord}:
-\begin{equation}
-e(x_s\!\to\!\tau) = u_\tau - \phi_\eta(\Pi_\parallel(x_s)), \quad u_\tau \in \{\bar{u}_{y_t},\, \phi_\eta(\Pi_\parallel(x_{\mathrm{ref}}))\}.
-\label{eq:universal-chord}
-\end{equation}
+\textbf{3) 417-D $K=8$ Sub-School Style Bank and Scene Router:}
+To capture fine intra-movement sub-styles, we extract $f_{417}(x) = [\text{Oklab}_{27}(x) \;\|\; \text{Haar}_{6}(x) \;\|\; \mu_{\mathrm{RGB}}^{\mathrm{ConvNeXt\text{-}S3}}(x)] \in \R^{417}$, combining 27-D Oklab color moments/quantiles/covariances, 6-D 3-level Haar wavelet log-energy ratios, and the 384-D global spatial mean of RGB ConvNeXt-Stage3 features. Within each style's $k$-NN-30 core training manifold, spherical $k$-means partitions exemplars into $K=8$ sub-schools with centroids $\{u_{y_t,k}^{\mathrm{cnx}}\}_{k=1}^8 \subset \R^{417}$ and $4\times 4$-pooled grayscale scene descriptors $\{s_{y_t,k}^{\mathrm{cnx}}\}_{k=1}^8 \subset \R^{6144}$. At inference ($0.025\,\text{ms/img}$), source scene layout $s(x_s)=\mathrm{norm}(\mathrm{AvgPool}_{4\times 4}(P_{\mathrm{cnx}}(x_s)))$ routes to the compatible target sub-school $k^\star = \arg\max_k \langle s(x_s), s_{y_t,k}^{\mathrm{cnx}}\rangle$.
 
-\begin{proposition}[Quotient--Fiber Orthogonality \& Antisymmetry]
-\label{prop:antisym}
-For any chrominance shift $\Delta x\in\ker(w_Y^\top)$, $\Pi_\perp(x+\Delta x)\equiv\Pi_\perp(x)$ and $\mu_{\mathrm{sp}}(Q_k)\equiv\mathbf{0}$. Under self-reference ($x_{\mathrm{ref}}=x_s$), $e(x_s\to x_s)\equiv\mathbf{0}$ identically without style labels, and $e(\tau_1\!\to\!\tau_2)=-e(\tau_2\!\to\!\tau_1)$.
-\end{proposition}
-
-\subsection{Operator II: Controlled Latent Transport ($\mathcal{T}$)}
+\subsection{Performance-Hybrid P/E-Core Transport and \methoddec}
 \label{sec:transport}
 
-Regressing $Y_{64}\approx w_{\mathrm{luma}}^\top z + b_{\mathrm{luma}}$ on training latents yields unit luminance axis $\hat{w}_Y = w_{\mathrm{luma}}/\norm{w_{\mathrm{luma}}}_2 \in \R^4$, splitting $\R^4$ orthogonally into 1-D structural luminance $P_Y = \hat{w}_Y\hat{w}_Y^\top$ and 3-D chrominance $P_C = I_4 - P_Y$. Aligning $P_C z_0$ of wavelet anchor $z_0=\mathcal{F}_{\mathrm{base}}(\mathcal{C}_1(z_s),y_t)$~\cite{daubechies1992ten} toward target chroma moments gives warm-start $z_0^\perp$ while keeping $P_Y z_0$ intact.
+Regressing $Y_{64}\approx w_{\mathrm{luma}}^\top z + b_{\mathrm{luma}}$ splits latent space $\R^4$ orthogonally into 1-D structural luminance $P_Y = \hat{w}_Y\hat{w}_Y^\top$ and 3-D chrominance $P_C = I_4 - P_Y$.
 
-\textbf{1) \methodfast{} (Spatially Routed 1-Step Amortization):}
-We distill $(z_0^\perp, z^\star)$ pairs into a $\fastStudentParams$ network $\Delta_\theta$ ($6$ width-$96$ dilated blocks) using Huber, Haar-HF, and differentiable S10-VGG+Oklab moment losses. A \emph{Semantic-Chord Router} interacts $Q_{32}$ with $e(x_s\!\to\!\tau)$ at $16\times 16$ to predict spatially routed modulation $(\Gamma_{64}, B_{64})$ under continuous strength $\lambda$:
+\textbf{1) Orthogonal Luma--Chroma Split and \methodecore{} ($\ecoreParams$, 1-NFE, $s \in [0, 0.75]$):}
+In the high-content regime, \textbf{\methodecore} executes a single feed-forward pass ($\mathbf{0.986\,\text{ms/img}}$ network, $\ecoreColdBatchMs$ cold RGB$\to$RGB) using a gated hybrid U-Net conditioned on $(z_s, C_{64}, Q_{32}^{\mathrm{cnx}}, y_t, \lambda)$ and class-level 417-D statistics:
 \begin{equation}
-\hat{z}_{s\to\tau}(\lambda) = z_0^\perp \!+\! \lambda\tanh^2(\norm{e}_2/\sigma_e)\Delta_\theta(z_0^\perp,P_Y z_s,C_{64},Q_{32};e).
-\label{eq:prism-1step}
+z_{\mathrm{E}}(x_s, y_t; \lambda) \!=\! z_0^\perp(z_s, y_t; \lambda) + \lambda \Delta_{\theta_{\mathrm{E}}}\!\big(z_s, \gamma_{\mathrm{skip}}(\lambda) C_{64}, Q_{32}^{\mathrm{cnx}}, y_t\big),
+\label{eq:ecore}
 \end{equation}
-When $e=\mathbf{0}$, $\tanh^2(\norm{e}_2/\sigma_e)=0$ enforces exact identity $\hat{z}\equiv z_0^\perp$.
+where $z_0^\perp(z_s,y_t;0)\equiv z_s$ and encoder skip gate $\gamma_{\mathrm{skip}}(\lambda)=\max(0, 1-0.8\lambda)$ progressively releases source high-frequency contours as $\lambda$ increases. At $\lambda=0$ ($s=0$), Eq.~\eqref{eq:ecore} enforces \textbf{exact mathematical identity} $\hat{z}\equiv z_s$ (measured maximum absolute latent drift $\mathbf{0.0}$). For $s > 0.75$, \textbf{\methodecore} acts as a $0.99\,\text{ms}$ draft generator $z_{\mathrm{E}}(\lambda_{\mathrm{draft}}(s))$ that pre-shifts chrominance and coarse brushwork before flow integration.
 
-\textbf{2) \methodflow{} \& \methodhc{} (Coarse-16 Flow \& Segmented CFG):}
-For generative brushstroke synthesis, \textbf{\methodflow} filters training exemplars via intra-train $k$-NN-30 core density (eliminating 3D installation photo outliers) and restricts structural conditioning strictly to the $16\times 16$ bottleneck ($\mathrm{LCN}_{16}(Y)\oplus Q_{32}$ or whitened $P_{16}$) of a $22.0\text{M}$ U-Net, preventing $64\times 64$ source-edge locking. Under matched closed-set training (Table~\ref{tab:ablation}), replacing 384-ch $P_{16}$ with 32-ch $Q_{32}$ improves Top-1 ($55.67\%$ vs.\ $53.83\%$) and DINO-S ($0.5516$ vs.\ $0.5429$) at $12\times$ fewer condition channels. Controlled ablations further establish: (i) $30\%$ content dropout improves target recognition without training-time anchor bridges; (ii) content-conditioned 2-branch CFG (`cs\_j`: $v_{0c} + w_j(v_{sc}-v_{0c})$) halves flow evaluations vs.\ 4-branch `full`, while \textbf{segmented 6-step `e2full`} (applying `full` only on the first 2 of 6 RK2 steps before switching to `cs\_j`) preserves dense-to-sparse layout decluttering ($80.0\%$ \emph{Imp$\to$Min}) at $\flowSixCachedMs$ cached ($\flowSixQMs$ for $Q_{32}$ `cs\_j`). Combining the 1-step $z_0$ anchor (`B4`, $218\text{K}$) with half-NFE `cs\_j` flow and \textbf{\methodfast} linear mixing $(1-\gamma)\hat{z}_{\text{P1}} + \gamma\hat{z}_{\text{flow}}$ yields \textbf{\methodhc} ($\mathrm{DINO\text{-}C}\in[0.729,0.775]$, $\mathrm{LPIPS}\le 0.498$).
+\textbf{2) \methodpcore{} ($\pcoreParams$, 6-Step DPM-2M Flow, $s \in [0.80, 1.50]$):}
+In the abstraction regime, \textbf{\methodpcore} initializes at $z_{\tau_0} = (1-\tau_0(s))\epsilon + \tau_0(s) z_{\mathrm{E}}(x_s, y_t; \lambda_{\mathrm{draft}}(s))$ (with $\tau_0(1.50)=0$ for pure generative synthesis) and integrates 6 steps of 2nd-order multistep DPM-Solver++ (\texttt{dpm2m}) with 4-branch decoupled classifier-free guidance:
+\begin{equation}
+v_{\mathrm{CFG}} = v_{00} + w_c(v_{0c}\!-\!v_{00}) + w_s(v_{sc}\!-\!v_{0c}) + w_{sp}(v_{s0}\!-\!v_{00}).
+\label{eq:pcore-cfg}
+\end{equation}
+To eliminate $64\times 64$ source-edge locking, structural tokens $(\mathrm{LCN}_3(Y_{16}), \gamma_{\mathrm{layout}}(s) Q_{32}^{\mathrm{cnx}})$ are injected \emph{exclusively at the $16\times 16$ bottleneck} (removing $64^2/32^2$ structural skips), while $32\times 32$ and $64\times 64$ synthesis blocks are modulated solely by $u_{y_t,k^\star}^{\mathrm{cnx}}$. To break Posterior Source-Lock during training ($3{,}500$ steps, $27.1\,\text{min}$ on one RTX~4090), each batch mixes $85\%$ $k$-NN-30 core paintings with $15\%$ curated \textbf{in-domain reversed real-painting pairs (\texttt{Pool C})}---pairing real ground-truth targets ($z_{\mathrm{real}}, y_t$) from under-represented movements (600 ER + 600 Uki) with de-styled structural tokens $(\mathrm{LCN}_3(Y_{16}), Q_{32}^{\mathrm{cnx}})$ extracted from synthetic cross-style sources---jointly supervised by high-$\tau$ pixel-space sliced Wasserstein distance (SWD) through \textbf{\methoddec}.
 
-\subsection{Operator III: Spectral-Bottleneck Decoding ($\mathcal{D}_\star$)}
-\label{sec:s10}
-
-Partitioning the $49.49\text{M}$ SD-VAE decoder into four coupled channel streams, Taylor importance pruning~\cite{molchanov2019importance} reduces widths to $[64,128,192,256]$, yielding \textbf{\methoddec} ($\decParams$, $-\decPrune$). Beyond $\decSpeedup$ faster decoding and $\decGain$ higher cross-style Top-1 ($p<0.01$), its $4.7\times$ smaller memory footprint enables fast BF16 pixel-space gradient supervision during training.
+\textbf{3) Single-Knob Hybrid Director and \methoddec{} ($\decParams$):}
+A lightweight Hybrid Director maps $s\in[0,1.50]$ deterministically to \textbf{\methodecore} ($s\le 0.75$) or \textbf{\methodpcore} ($s\ge 0.80$, calibrating $\tau_0, \lambda_{\mathrm{draft}}, \gamma_{\mathrm{layout}}, w_s$). Finally, structured Taylor channel pruning~\cite{molchanov2019importance} compresses the $49.49\text{M}$ SD-VAE decoder by $\decPrune$ to widths $[64,128,192,256]$ (\textbf{\methoddec}, $\decParams$), serving as a spectral bottleneck that blocks source-texture retraction ($\decGain\text{--}\decClosedGain$ Top-1) at $\decSpeedup$ speed.
 
 \section{Experiments}
 \label{sec:experiments}
 
-\subsection{Benchmark, Unified Referees, and Compute Protocol}
+\subsection{Benchmark, Stratified Baselines, and Dual-Latency Protocol}
 
-We evaluate at $512\times 512$ across five WikiArt movements~\cite{wright2022artfid}: \emph{Early Renaissance} (ER), \emph{Impressionism} (Imp), \emph{Minimalism} (Min), \emph{Rococo} (Roc), and \emph{Ukiyo-e} (Uki). Strictly disjoint from the 4,400 training and 300 holdout paintings, 150 test sources $\times$ 5 targets form \textbf{750 tasks}: \textbf{Cross600} ($600$ cross-style pairs) and \textbf{Same150} ($150$ identity controls). Four frozen referees score all outputs in isolated processes: \textbf{CSD-ViT-L}~\cite{somepalli2024csd} (5-way \emph{Top-1}), \textbf{DINOv2-small}~\cite{oquab2023dinov2} (\emph{DINO-S}, \emph{DINO-C}), \textbf{CLIP ViT-B/32}~\cite{radford2021clip} (\emph{CLIP-S}, \emph{Affinity}), and \textbf{LPIPS}~\cite{zhang2018unreasonable}, guarded by \textbf{Identity (IDT)} ($\dagger$) / \textbf{Target-Copy (TGT)} ($\ddagger$) validity bounds~\cite{ioannou2024evaluation} and counterfactual wrong-target shifts ($\Delta_{\mathrm{causal}}$). For strict setting and compute parity, Table~\ref{tab:main} explicitly separates \textbf{Arb.-Ref} (zero-shot arbitrary exemplar), \textbf{5-Style Amort.} (closed 5-movement amortized, zero test source labels), and \textbf{1-Shot Exemp.} modes on a single 12\,GB RTX~3060, disclosing frozen feature extractors (SD-VAE Enc $34.2\text{M}$ + DINOv2-s $22.1\text{M}$) in full $512^2$ RGB$\to$RGB \textbf{E2E} latency.
+We evaluate at $512\times 512$ across five WikiArt movements~\cite{wright2022artfid}: \emph{Early Renaissance} (ER), \emph{Impressionism} (Imp), \emph{Minimalism} (Min), \emph{Rococo} (Roc), and \emph{Ukiyo-e} (Uki). Strictly disjoint from 4,400 training and 300 holdout paintings, 150 test sources $\times$ 5 targets form \textbf{750 tasks}: \textbf{Cross600} ($600$ cross-style pairs) and \textbf{Same150} ($150$ identity controls). Five frozen referee metrics run in isolated processes: \textbf{CSD-ViT-L}~\cite{somepalli2024csd} (5-way \emph{Top-1} and nearest-neighbor \emph{CSLS} $k=10$), \textbf{DINOv2-small}~\cite{oquab2023dinov2} (\emph{DINO-S} Max and Top-5 Mean; \emph{DINO-C} content cosine), \textbf{CLIP ViT-B/32}~\cite{radford2021clip} (\emph{CLIP-S}), and \textbf{LPIPS}~\cite{zhang2018unreasonable}, audited by counterfactual wrong-target shifts ($\Delta_{\mathrm{causal}}$).
 
 \begin{table*}[t]
 \centering
-\caption{Content--style--compute comparison on the 750-task benchmark ($512\times 512$; primary readout on \textbf{Cross600}; all timings on RTX~3060 12\,GB). \emph{Setting} separates zero-shot arbitrary-reference baselines (\emph{Arb.-Ref}) from closed-set amortized (\emph{5-Style Amort.}) and exemplar-driven (\emph{1-Shot Exemp.}) \textbf{\method} modes. $\dagger$: below IDT style floor; $\ddagger$: violates TGT content bound. Active params exclude frozen SD-VAE Enc ($34.2\text{M}$) + DINOv2-small ($22.1\text{M}$), whose compute is included in \emph{E2E} latency ($<3.9\,\text{GB}$ VRAM). Total compute parity: StyleGallery 750-img inference alone takes $6.33\,\text{h}$, vs.\ $<0.4\,\text{h}$ for \textbf{\method} one-time training + 750-img E2E inference ($>15\times$ total compute savings).}
-\vspace{-2.0mm}
+\caption{Stratified comparison on the 750-task benchmark ($512\times 512$; primary readout on \textbf{Cross600}). External methods are stratified into \textbf{Tier~1: Lightweight Real-Time Baselines} ($0.1\text{M}\text{--}48\text{M}$) and \textbf{Tier~2: Billion-Parameter Zero-Shot Reference Front} ($>0.9\text{B}$, open-domain reference ceiling). For \textbf{\method{} (Ours) P/E-Core} (5-Style Amortized), we report both \textbf{Online Hot Params / Cold Total Params} (including frozen $\vaeEncParams$ SD-VAE Enc + $\cnxParams$ ConvNeXt-S3 + $\decParams$ \methoddec) and dual RTX~4090 timings: \textbf{Hot Interactive} (cached latent) / \textbf{True Cold-Start RGB$\to$RGB} (\texttt{batch=16}, pixel-in to pixel-out). $\dagger$: below IDT style floor; $\ddagger$: violates TGT content bound.}
+\vspace{-2.5mm}
 \label{tab:main}
+\renewcommand{\arraystretch}{0.92}
 \resizebox{\textwidth}{!}{%
-\setlength{\tabcolsep}{3.3pt}
-\begin{tabular}{@{}lllccccccccc@{}}
+\setlength{\tabcolsep}{2.9pt}
+\begin{tabular}{@{}lllcccccccccc@{}}
 \toprule
-\textbf{Paradigm} & \textbf{Setting} & \textbf{Method} & \textbf{CSD Top-1}$\uparrow$ & \textbf{Affinity}$\uparrow$ & \textbf{DINO-S}$\uparrow$ & \textbf{CLIP-S}$\uparrow$ & \textbf{DINO-C}$\uparrow$ & \textbf{LPIPS}$\downarrow$ & \textbf{Active Params} & \textbf{Latency (Cached / E2E)} & \textbf{Throughput (E2E)} \\
+\textbf{Tier / Paradigm} & \textbf{Setting} & \textbf{Method} & \textbf{CSD Top-1}$\uparrow$ & \textbf{CSLS$_{10}$}$\uparrow$ & \textbf{DINO-S}$\uparrow$ & \textbf{D-S Top5}$\uparrow$ & \textbf{CLIP-S}$\uparrow$ & \textbf{DINO-C}$\uparrow$ & \textbf{LPIPS}$\downarrow$ & \textbf{Params (Hot / Cold)} & \textbf{Latency (Hot / Cold)} & \textbf{Cold RGB$\to$RGB} \\
 \midrule
-\multirow{2}{*}{\emph{Anchors}}
-& -- & Identity (IDT) & 0.50\% & 0.4902 & 0.3633 & 0.6170 & 1.0000 & 0.0000 & 0 & -- & -- \\
-& -- & Target-Copy (TGT) & 100.0\% & 0.9275 & 1.0000 & 0.8550 & 0.2200 & 0.7560 & 0 & -- & -- \\
+\multirow{2}{*}{\emph{Protocol Bounds}}
+& -- & Identity (IDT) & 0.50\% & -- & 0.3633 & -- & 0.6170 & 1.0000 & 0.0000 & 0 & -- & -- \\
+& -- & Target-Copy (TGT) & 100.0\% & -- & 1.0000 & -- & 0.8550 & 0.2200 & 0.7560 & 0 & -- & -- \\
 \midrule
-\multirow{4}{*}{\emph{Diffusion-Heavy}}
-& Arb.-Ref & StyleShot~\cite{gao2024styleshot} & 92.60\% & 0.6949 & 0.5750 & 0.8148 & 0.3569 & 0.7697$^\ddagger$ & $2400\text{M}$ & $24{,}480\,\text{ms}$ & $0.04\,\text{img/s}$ \\
-& Arb.-Ref & StyleID~\cite{chung2024style} & 73.20\% & 0.6469 & 0.5143 & 0.7795 & 0.3885 & 0.5554 & $1100\text{M}$ & $5{,}040\,\text{ms}$ & $0.20\,\text{img/s}$ \\
-& Arb.-Ref & StyleGallery~\cite{he2026stylegallery} & 52.50\% & 0.6432 & 0.5604 & 0.7259 & 0.6113 & 0.5576 & $950\text{M}$ & $30{,}400\,\text{ms}$ & $0.03\,\text{img/s}$ \\
-& Arb.-Ref & SD-Turbo~\cite{sauer2023adversarial} & 0.50\%$^\dagger$ & 0.4894$^\dagger$ & 0.3633$^\dagger$ & 0.6155$^\dagger$ & 0.9998 & 0.0048 & $1100\text{M}$ & $400\,\text{ms}$ & $2.50\,\text{img/s}$ \\
+\multirow{7}{*}{\shortstack[l]{\textbf{Tier 1:}\\\emph{Lightweight}\\\emph{Baselines}}}
+& Arb.-Ref & AdaIN~\cite{huang2017arbitrary} & 34.30\% & -- & 0.3426$^\dagger$ & 0.2918 & 0.6279 & 0.2271 & 0.7641$^\ddagger$ & $7.0\text{M}$ & $42\,\text{ms}$ & $23.8\,\text{img/s}$ \\
+& Arb.-Ref & WCT~\cite{li2017universal} & 20.00\% & -- & 0.1542$^\dagger$ & 0.0941 & 0.5774$^\dagger$ & 0.0232$^\ddagger$ & 1.0010$^\ddagger$ & $34.0\text{M}$ & $294\,\text{ms}$ & $3.40\,\text{img/s}$ \\
+& Arb.-Ref & Hist2Style~\cite{afifi2021histogan} & 12.00\% & -- & 0.3643 & 0.3207 & 0.6494 & \textbf{0.9083} & 0.4350 & $0.1\text{M}$ & $200\,\text{ms}$ & $5.00\,\text{img/s}$ \\
+& Arb.-Ref & CUT~\cite{park2020cut} & 5.70\% & -- & 0.3755 & 0.3320 & 0.6432 & 0.8435 & 0.6193 & $7.0\text{M}$ & $400\,\text{ms}$ & $2.50\,\text{img/s}$ \\
+& Arb.-Ref & SaMam~\cite{liu2024samam} & 2.50\% & -- & 0.3832 & 0.3395 & 0.6565 & 0.8239 & \textbf{0.3882} & $8.8\text{M}$ & $1{,}408\,\text{ms}$ & $0.71\,\text{img/s}$ \\
+& Arb.-Ref & AesPA-Net~\cite{hong2023aespa} & 31.00\% & -- & 0.4661 & 0.4094 & 0.6906 & 0.6075 & 0.6247 & $31.0\text{M}$ & $1{,}840\,\text{ms}$ & $0.54\,\text{img/s}$ \\
+& Arb.-Ref & StyTr$^2$~\cite{deng2022stytr2} & 39.50\% & -- & 0.4074 & 0.3713 & 0.6560 & 0.7023 & 0.7386 & $48.0\text{M}$ & $3{,}040\,\text{ms}$ & $0.33\,\text{img/s}$ \\
 \midrule
-\multirow{8}{*}{\emph{Conventional}}
-& Arb.-Ref & AdaIN~\cite{huang2017arbitrary} & 34.30\% & 0.4853$^\dagger$ & 0.3426$^\dagger$ & 0.6279 & 0.2271 & 0.7641$^\ddagger$ & $7.0\text{M}$ & $42\,\text{ms}$ & $23.8\,\text{img/s}$ \\
-& Arb.-Ref & WCT~\cite{li2017universal} & 20.00\% & 0.3658$^\dagger$ & 0.1542$^\dagger$ & 0.5774$^\dagger$ & 0.0232$^\ddagger$ & 1.0010$^\ddagger$ & $34.0\text{M}$ & $294\,\text{ms}$ & $3.40\,\text{img/s}$ \\
-& Arb.-Ref & AesPA-Net~\cite{hong2023aespa} & 31.00\% & 0.5784 & 0.4661 & 0.6906 & 0.6075 & 0.6247 & $31.0\text{M}$ & $1{,}840\,\text{ms}$ & $0.54\,\text{img/s}$ \\
-& Arb.-Ref & StyTr$^2$~\cite{deng2022stytr2} & 39.50\% & 0.5317 & 0.4074 & 0.6560 & 0.7023 & 0.7386 & $48.0\text{M}$ & $3{,}040\,\text{ms}$ & $0.33\,\text{img/s}$ \\
-& Arb.-Ref & Seedream 4.5~\cite{seedream2025} & 37.30\% & 0.5314 & 0.3885 & 0.6744 & 0.7343 & 0.5202 & API (Found.) & $\sim 2{,}000\,\text{ms}$ & $0.50\,\text{img/s}$ \\
-& Arb.-Ref & SaMam~\cite{liu2024samam} & 2.50\% & 0.5199 & 0.3832 & 0.6565 & 0.8239 & \textbf{0.3882} & $8.8\text{M}$ & $1{,}408\,\text{ms}$ & $0.71\,\text{img/s}$ \\
-& Arb.-Ref & CUT~\cite{park2020cut} & 5.70\% & 0.5093 & 0.3755 & 0.6432 & 0.8435 & 0.6193 & $7.0\text{M}$ & $400\,\text{ms}$ & $2.50\,\text{img/s}$ \\
-& Arb.-Ref & Hist2Style~\cite{afifi2021histogan} & 12.00\% & 0.5069 & 0.3643 & 0.6494 & \textbf{0.9083} & 0.4350 & $0.1\text{M}$ & $200\,\text{ms}$ & $5.00\,\text{img/s}$ \\
+\multirow{5}{*}{\shortstack[l]{\textbf{Tier 2:}\\\emph{Zero-Shot Heavy}\\\emph{Reference Front}\\\emph{($>0.9\text{B}$)}}}
+& Arb.-Ref & Seedream 4.5~\cite{seedream2025} & 37.30\% & -- & 0.3885 & 0.3433 & 0.6744 & 0.7343 & 0.5202 & Commercial API & $20{,}000\,\text{ms}$ & $0.05\,\text{img/s}$ \\
+& Arb.-Ref & Qwen-Img-2.1T (\texttt{bnb4}) & 42.17\% & -- & 0.4660 & 0.4112 & 0.6975 & 0.7016 & 0.6256 & $15\text{B}$ ($10.7\text{GB}$ NF4) & $16{,}071\,\text{ms}$ & $0.06\,\text{img/s}$ \\
+& Arb.-Ref & StyleGallery~\cite{he2026stylegallery} & 52.50\% & -- & 0.5604 & 0.5040 & 0.7259 & 0.6113 & 0.5576 & $950\text{M}$ (DINOv2-opt) & $30{,}400\,\text{ms}$ & $0.03\,\text{img/s}$ \\
+& Arb.-Ref & StyleID~\cite{chung2024style} & 73.20\% & -- & 0.5143 & 0.4681 & 0.7795 & 0.3885 & 0.5554 & $1100\text{M}$ & $5{,}040\,\text{ms}$ & $0.20\,\text{img/s}$ \\
+& Arb.-Ref & StyleShot~\cite{gao2024styleshot} & \textbf{92.60\%} & -- & 0.5750 & 0.5353 & \textbf{0.8148} & 0.3569 & 0.7697$^\ddagger$ & $2400\text{M}$ & $24{,}480\,\text{ms}$ & $0.04\,\text{img/s}$ \\
 \midrule
-\multirow{6}{*}{\textbf{\method{} (Ours)}}
-& 5-Style Amort. & \textbf{\methodfast} (1-Step, $\lambda\!=\!1.0$) & 44.33\% & 0.5655 & 0.4431 & 0.6880 & 0.7440 & 0.5057 & $\mathbf{\fastParams}^{+10.7\text{M}}$ & $\mathbf{58.5 / 167.5\,\text{ms}}$ & $\mathbf{5.97\,\text{img/s}}$ \\
-& 1-Shot Exemp. & \textbf{\methodfast} (1-Shot Holdout) & 45.50\% & 0.5664 & 0.4446 & 0.6882 & 0.7362 & 0.5111 & $\fastParams^{+10.7\text{M}}$ & $58.5 / 167.5\,\text{ms}$ & $5.97\,\text{img/s}$ \\
-& 5-Style Amort. & \textbf{\methodhc} (High-Content, $\gamma\!=\!0.55$) & 42.50\% & 0.5752 & 0.4564 & 0.6940 & \underline{0.7723} & \underline{0.4783} & $23.5\text{M}^{+10.7\text{M}}$ & $189.4 / 297.5\,\text{ms}$ & $3.36\,\text{img/s}$ \\
-& 5-Style Amort. & \textbf{\methodflow} (6-Step `e2full`) & 58.00\% & 0.6280 & 0.5278 & 0.7282 & 0.6283 & 0.5563 & $22.0\text{M}^{+10.7\text{M}}$ & $204.9 / 571.9\,\text{ms}$ & $1.75\,\text{img/s}$ \\
-& 5-Style Amort. & \textbf{\methodflow} (Bal-16s) & \textbf{60.50\%} & \textbf{\flowBalAff} & \textbf{\flowBalDinoS} & \textbf{\flowBalClipS} & 0.5335 & 0.6022 & $22.0\text{M}^{+10.7\text{M}}$ & $541.0 / 680.3\,\text{ms}$ & $1.47\,\text{img/s}$ \\
-& 1-Shot Exemp. & \textbf{\methodflow} (1-Shot SG-Ref) & 52.83\% & 0.6761 & 0.6006 & 0.7517 & 0.3970 & 0.6780 & $22.0\text{M}^{+10.7\text{M}}$ & $224.9 / 327.8\,\text{ms}$ & $3.05\,\text{img/s}$ \\
+\multirow{8}{*}{\shortstack[l]{\textbf{\method{} (Ours)}\\\emph{Performance-Hybrid}\\\textbf{P/E-Core}}}
+& 5-Style & \textbf{\methodecore} ($s=0.40$, 1-NFE) & 20.17\% & 0.2233 & 0.4077 & 0.3586 & 0.6703 & \underline{0.8560} & \underline{0.3503} & $21.8\text{M} / 68.3\text{M}$ & $\mathbf{13.0 / 30.2\,\text{ms}}$ & $\mathbf{33.1\,\text{img/s}}$ \\
+& 5-Style & \textbf{\methodecore} ($s=0.60$, 1-NFE) & 38.83\% & 0.3750 & 0.4407 & 0.3894 & 0.6910 & 0.7781 & 0.4322 & $21.8\text{M} / 68.3\text{M}$ & $\mathbf{13.0 / 30.2\,\text{ms}}$ & $\mathbf{33.1\,\text{img/s}}$ \\
+& 5-Style & \textbf{\methodecore} ($s=0.75$, 1-NFE) & 45.17\% & 0.4167 & 0.4671 & 0.4135 & 0.7039 & 0.7204 & 0.4734 & $21.8\text{M} / 68.3\text{M}$ & $\mathbf{13.0 / 30.2\,\text{ms}}$ & $\mathbf{33.1\,\text{img/s}}$ \\
+& 5-Style & \textbf{\methodecore} ($s=1.00$, 1-NFE Max) & 67.17\% & 0.5467 & 0.5077 & 0.4518 & 0.7285 & 0.5674 & 0.5959 & $21.8\text{M} / 68.3\text{M}$ & $\mathbf{13.0 / 30.2\,\text{ms}}$ & $\mathbf{33.1\,\text{img/s}}$ \\
+& 5-Style & \textbf{\methodpcore} ($s=0.85$, 6-Step Cal.) & 62.33\% & 0.5300 & 0.5266 & 0.4668 & 0.7267 & 0.6010 & 0.5511 & $\hotTotalParams / \coldTotalParams$ & $38.3 / 55.0\,\text{ms}$ & $18.2\,\text{img/s}$ \\
+& 5-Style & \textbf{\methodpcore} ($s=1.00$, 6-Step) & 75.17\% & 0.6167 & 0.5628 & 0.5032 & 0.7437 & 0.4896 & 0.6300 & $\hotTotalParams / \coldTotalParams$ & $38.3 / 55.0\,\text{ms}$ & $18.2\,\text{img/s}$ \\
+& 5-Style & \textbf{\methodpcore} ($s=1.25$, 6-Step) & 77.33\% & 0.6233 & 0.5814 & 0.5226 & 0.7538 & 0.4171 & 0.6721 & $\hotTotalParams / \coldTotalParams$ & $37.3 / 54.0\,\text{ms}$ & $18.5\,\text{img/s}$ \\
+& 5-Style & \textbf{\methodpcore} ($s=1.50$, $\tau_0\!=\!0$ Max) & \underline{80.17\%} & \textbf{0.6650} & \textbf{0.6054} & \textbf{0.5461} & 0.7577 & 0.2805 & 0.8275 & $\hotTotalParams / \coldTotalParams$ & $37.3 / 54.0\,\text{ms}$ & $18.5\,\text{img/s}$ \\
 \bottomrule
 \end{tabular}%
 }
-\vspace{-2.0mm}
+\vspace{-2.5mm}
 \end{table*}
+
+\textbf{Two-Tier Baseline Stratification \& Honest Scope:}
+To avoid conflating closed-set amortization with open-domain zero-shot conditioning, Table~\ref{tab:main} stratifies external methods into \textbf{Tier~1 (Lightweight Real-Time Baselines, $0.1\text{M}\text{--}48\text{M}$)} and \textbf{Tier~2 (Billion-Parameter Zero-Shot Reference Front, $0.95\text{B}\text{--}15\text{B}$)}. We disclose both \textbf{True Cold-Start RGB$\to$RGB} latency (including frozen SD-VAE encoding $\vaeEncParams$, ConvNeXt-Stage3 $Q_{32}^{\mathrm{cnx}}$ $\cnxParams$, core transport, and \textbf{\methoddec} $\decParams$) and \textbf{Hot Interactive} latency (knob sweeps on cached latents).
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\textwidth]{figures/fig5_qualitative.pdf}
-\vspace{-1.0mm}
-\caption{Qualitative comparison across artistic movements ($512\times 512$). StyleShot ($24.5\,\text{s}$) hallucinates ungrounded facial features; StyleGallery ($30.4\,\text{s}$) over-smoothes architectural boundaries; Seedream~4.5 ($2.0\,\text{s}$) flattens painterly brushwork into cartoonized fills. In contrast, \textbf{\methodhc} ($297\,\text{ms}$ E2E) preserves crisp anatomical and perspective contours while 6-step `e2full` \textbf{\methodflow} ($205\,\text{ms}$ cached, $0.628$ DINO-C) synthesizes crisp Ukiyo-e ink washes, Minimalist planes, and Impressionist impasto at $50\text{--}150\times$ lower latency on RTX~3060.}
+\includegraphics[width=0.90\textwidth]{figures/fig5_qualitative.pdf}
+\vspace{-2.8mm}
+\caption{Qualitative comparison across artistic movements ($512\times 512$). StyleShot ($24.5\,\text{s}$) overwrites facial and architectural geometry; StyleGallery ($30.4\,\text{s}$) softens structural contours; Seedream~4.5 ($20.0\,\text{s}$) yields conservative color shifts. \textbf{\method}'s performance-hybrid \textbf{P/E-Core} smoothly transitions from structure-faithful editing (\textbf{\method{} \methodecore{}} at $s=0.75$, $\ecoreColdBatchMs$ cold RGB$\to$RGB, $0.720$ DINO-C) to rich Ukiyo-e ink washes, Minimalist plane abstraction, and Impressionist impasto (\textbf{\method{} \methodpcore{}} at $s=1.00$, $\pcoreColdBatchMs$ cold RGB$\to$RGB, $0.563$ DINO-S).}
 \label{fig:qual}
-\vspace{-1.2mm}
+\vspace{-2.0mm}
 \end{figure*}
 
-\subsection{Redefining the Content--Style--Compute Frontier}
+\subsection{Full-Spectrum Pareto Dominance and Representation-Space Affinity Analysis}
 
-Table~\ref{tab:main}, Fig.~\ref{fig:page1}, and Fig.~\ref{fig:qual} demonstrate how \textbf{\method} bridges the gap between lightweight feed-forward nets and heavy diffusion:
+Table~\ref{tab:main}, Fig.~\ref{fig:page1}, and Fig.~\ref{fig:qual} establish three key empirical results across the style--content--speed spectrum:
 
-\textbf{1) Real-Time Single-Step Dominance (\textbf{\methodfast}):}
-Executing in $\fastMs$ protocol-cached ($\fastFps$; $\fastBatchEtoEMs$ max-batch / $\fastEtoEMs$ single-image full RGB$\to$RGB, $\fastConsumerFps$ on RTX~3060) with zero source labels, \textbf{\methodfast} ($\fastTopOne$ Top-1) simultaneously outperforms commercial Seedream~4.5 ($37.30\%$) and transformer-based StyTr$^2$ ($39.50\%$) across all five style, content, and distortion metrics ($+7.03\text{pp}/+4.83\text{pp}$ Top-1, $+0.0546/+0.0357$ DINO-S, $+0.0097/+0.0417$ DINO-C, and $-0.0145/-0.2329$ LPIPS), while achieving $96.7\%$ blind Same150 identity preservation.
+\textbf{1) Dominance Over Tier~1 Lightweight Baselines and High-Content Foundation Models (\methodecore):}
+Running in $\ecoreColdBatchMs$ cold RGB$\to$RGB ($\ecoreColdBatchFps$ at \texttt{b=16}; $\ecoreColdSingleMs / \ecoreColdSingleFps$ at \texttt{b=1}; $\ecoreHotBatchMs / \ecoreHotBatchFps$ hot interactive) with $98.0\%\text{--}98.7\%$ Same150 identity preservation, 1-NFE \textbf{\methodecore} strictly dominates every Tier~1 baseline at matched content levels: at $s=0.40$ ($\sZeroFortyC$ DINO-C, $\sZeroFortyS$ DINO-S, $\sZeroFortyTop$ Top-1, $0.3503$ LPIPS) it beats CUT ($0.8435$ C, $5.7\%$ Top-1) and SaMam ($0.8239$ C, $2.5\%$ Top-1) on all metrics; at $s=0.75$ ($\sZeroSeventyFiveC$ DINO-C, $\sZeroSeventyFiveS$ DINO-S, $\sZeroSeventyFiveTop$ Top-1, $0.4734$ LPIPS) it simultaneously outperforms StyTr$^2$ ($39.5\%$, $3.0\,\text{s}$), Seedream~4.5 ($37.3\%$, $20.0\,\text{s}$), and $15\text{B}$ Qwen-Image-2.1-Turbo ($42.2\%$, $16.1\,\text{s}$) across all five style and content metrics while running $100\times\text{--}660\times$ faster. At $s=1.00$, standalone 1-NFE \textbf{\methodecore} reaches $\mathbf{\ecoreMaxTop}$ Top-1 ($1.17\%$ wrong-label control, $\ecoreCausalGap$ causal specificity).
 
-\textbf{2) High-Content Pareto Breakthrough (\textbf{\methodhc}):}
-In the high-content fidelity regime ($\mathrm{DINO\text{-}C}\in[0.729,0.775]$), combining the $218\text{K}$ `B4` structural anchor with half-NFE `cs\_j` flow (`D6H`) and \textbf{\methodfast} linear mixing pushes out the 3D $(\mathrm{DINO\text{-}C},\mathrm{DINO\text{-}S},\mathrm{LPIPS})$ Pareto frontier (Fig.~\ref{fig:page1}a). At $\gamma=0.55$, \textbf{\methodhc} ($\hcDinoC$ DINO-C, $\hcDinoS$ DINO-S, $\hcLpips$ LPIPS, $\hcTopOne$ Top-1) strictly dominates \textbf{\methodfast} ($\lambda=0.75$) on all four metrics under 150-cluster paired bootstrap CI ($\Delta\mathrm{DINO\text{-}S}=+0.0193\,[+0.0154,+0.0232]$, $\Delta\mathrm{LPIPS}=-0.0065\,[-0.0113,-0.0020]$, $\Delta\mathrm{Top\text{-}1}=+4.83\text{pp}$). At $\gamma=0.70$ ($\hcSeventyDinoC$ DINO-C, $\hcSeventyDinoS$ DINO-S, $\hcSeventyLpips$ LPIPS), it improves over T4-anchored Hybrid ($\gamma=0.25$) by $+0.0095$ DINO-C, $+0.0188$ DINO-S, and $-0.0189$ LPIPS (trading $-4.17\text{pp}$ CSD Top-1 vs.\ T4's sharper classifier margin), while single-model `B4+cs\_j+D6H` ($\gamma=1.0$) reaches $0.7286$ DINO-C and $0.4870$ DINO-S, breaking the $0.7055$ content saturation ceiling of T4-anchored single-model flows.
+\textbf{2) Mid-Spectrum Calibration and Neutral Representation-Space Affinity Comparison vs.\ StyleGallery (\methodpcore):}
+Across $s=0.80\text{--}0.85$ (Fig.~\ref{fig:page1}), 6-step \textbf{\methodpcore} ($\pcoreColdBatchMs$ cold RGB$\to$RGB, $\pcoreColdBatchFps$) bridges smoothly from \textbf{\methodecore}, reaching $\sZeroEightyFiveC$ DINO-C, $\sZeroEightyFiveS$ DINO-S, $0.5300$ CSLS, and $\mathbf{\sZeroEightyFiveTop}$ CSD Top-1 at $s=0.85$ ($+7.83\text{pp}$ Top-1 and $+0.0767$ CSLS over uncalibrated handoff knots, $2.17\%$ wrong-label Top-1, $96.0\%$ Same150). Comparing $s=0.85$ ($\sZeroEightyFiveC$ C) against Tier~2 StyleGallery ($0.6113$ C, $0.5604$ DINO-S, $52.50\%$ Top-1, $30.4\,\text{s/img}$) reveals two objective phenomena:
+(i)~\emph{Representation-Space Affinity vs.\ Disentangled Style Accuracy:} StyleGallery optimizes regional feature matching inside frozen DINOv2 space over 150 diffusion steps, naturally exhibiting strong \emph{representation-space affinity} with the DINOv2-based \emph{DINO-S} referee ($0.5604$ vs.\ $0.5266$). Conversely, on the orthogonal, architecture-independent \emph{CSD Top-1} referee, StyleGallery scores $52.50\%$, whereas our \textbf{\methodpcore} ($s=0.85$) achieves $\mathbf{62.33\%}$ ($\mathbf{+9.83\text{pp}}$) and 1-NFE \textbf{\methodecore} ($s=1.00$) achieves $\mathbf{67.17\%}$ ($\mathbf{+14.67\text{pp}}$) at \textbf{$550\times\text{--}1{,}000\times$ higher cold-start throughput}.
+(ii)~\emph{Figurative Alignment vs.\ Structure-Preserving Minimalism Trade-Off:} At $C\approx 0.60$, our unified schedule preserves object contours on \emph{Minimalism} ($0.5510$ DINO-C, $96.67\%$ Top-1, $0.3337$ DINO-S) rather than erasing geometry into blank canvas, while figurative movements already reach $0.5599\text{--}0.6582$ DINO-S (\emph{Imp} $0.6582$, \emph{Roc} $0.5734$, \emph{ER} $0.5599$). In the strong-abstraction regime ($s=1.00\text{--}1.50$), \textbf{\methodpcore} reaches $\mathbf{0.5628\text{--}0.6054}$ DINO-S Max ($0.5032\text{--}0.5461$ Top-5 Mean) and $\mathbf{75.17\%\text{--}80.17\%}$ Top-1 ($\sOneFiftyCausal$ causal gap), surpassing both StyleGallery ($0.5604$) and $2.4\text{B}$ StyleShot ($0.5750$).
 
-\textbf{3) Surpassing Diffusion Cross-Attention \& 1-Shot Generalization (\textbf{\methodflow}):}
-In the closed 5-style amortized regime, \textbf{\methodflow} reaches \textbf{\flowBalTopOne} Top-1, \textbf{\flowBalDinoS} DINO-S, and \textbf{\flowBalAff} Affinity (up to $76.83\%$ Top-1 in max-style mode), while its 6-step `e2full` mode achieves $58.00\%$ Top-1 and $0.6283$ DINO-C at $\flowSixCachedMs$ cached ($\flowSixEtoEMs$ E2E; and 6-step $Q_{32}$ `cs\_j` reaches $57.00\%$ / $0.6392$ Aff at $\flowSixQMs$ cached). Counterfactual wrong-target shifts drop Top-1 to $2.33\%$ ($\flowCausalGap$ causal specificity). On strict 1-shot exemplar transfer (without test-time class labels), \textbf{\methodfast} reaches $\shotTopOne$ Top-1 and $0.7362$ DINO-C on holdout exemplars, while \textbf{\methodflow} reaches $0.6006$ DINO-S / $0.6761$ Affinity on StyleGallery's exact 5 references ($38.33\%$ / $0.5656$ DINO-S / $0.4976$ DINO-C / $0.5129$ LPIPS on holdout single refs vs.\ $6.00\%$ wrong-ref), at $50\text{--}150\times$ lower latency than StyleGallery ($30.4\,\text{s/img}$).
-
-\subsection{Controlled Mechanism Ablations and Factor Attribution}
-
-\textbf{1) Quotient--Fiber Duality \& Closed-Set Decoder Attribution (Table~\ref{tab:leakage}):}
-On 300 holdout paintings, raw latents leak source style at $72.33\%$, and diagonal whitening retains $92.33\%$ 2nd-order Gram leakage. Our Stiefel polar quotient $Q_{32}$ enforces $\frac{1}{N}Q Q^\top \equiv I_k$, clamping 5-way Gram leakage to the exact $\mathbf{20.00\%}$ uniform-chance floor (layout cos.\ $0.994$), whereas $\Pi_\parallel$ attains $\mathbf{97.33\%}$ style accuracy. In Part~B, paired 150-source cluster bootstrap confirms that \textbf{\methoddec} beats full $49.5\text{M}$ SD-VAE decoding both on Q2A ($+3.17\text{pp}$ Top-1, CI $[+1.42,+4.95]\text{pp}$) and directly on closed-set \textbf{\methodflow} latents: \textbf{\methoddec} ($60.33\%$) outperforms frozen SD-VAE ($53.50\%$) by $+6.83\text{pp}$ and WikiArt fine-tuned full SD-VAE ($55.83\%$) by \textbf{\decClosedGain} Top-1 ($95\%$ CI $[+0.33,+8.50]\text{pp}$, $+0.0652$ DINO-S, $+0.0410$ DINO-C, $-0.0641$ LPIPS, $96.7\%$ vs.\ $90.0\%$ Same150). On $Q_{32}$ flagship latents, \textbf{\methoddec} similarly dominates WikiArt-FT full SD-VAE in Margin ($+0.0158$), DINO-S ($+0.0647$), DINO-C ($+0.0422$), and LPIPS ($-0.0829$).
+\subsection{Quotient Causality and Backbone-Independence Audit}
 
 \begin{table}[t]
 \centering
-\caption{Quotient--Fiber holdout audit (Part A, 300 paintings) and paired cluster-bootstrap decoder audit (Part B, Q2A \& closed-set \textbf{\methodflow} latents).}
-\vspace{-2.0mm}
-\label{tab:leakage}
-\resizebox{\columnwidth}{!}{%
-\setlength{\tabcolsep}{3.0pt}
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-\textbf{A. Representation / Critic} & \textbf{5-Way Acc.} & \textbf{Gram Leak} & \textbf{Layout Cos} & \textbf{Hue Inv.} \\
-\midrule
-Raw Latent Subband Stats ($z_s$) & 72.33\% & 96.33\% & 1.000 & No \\
-Diagonal Whitened $\tilde{P}_{16}(x_s)$ & 18.33\% & 92.33\% & 0.994 & Exact \\
-\textbf{Stiefel Polar Quotient $Q_{32}(x_s)$} & \textbf{18.33\%} & \textbf{20.00\%} & \textbf{0.994} & \textbf{Exact} \\
-Complementary Fiber $\Pi_\parallel(x_s)$ & \textbf{97.33\%} & -- & -- & -- \\
-\midrule
-\textbf{B. Decoder (Paired Latents)} & \textbf{Params / B8 (3060)} & \textbf{CSD Top-1}$\uparrow$ & \textbf{LPIPS}$\downarrow$ & \textbf{Same150}$\uparrow$ \\
-\midrule
-Q2A: Joint Retrained $\mathcal{D}_{\mathrm{edit}}$ & $49.5\text{M} / 214.4\,\text{ms}$ & 19.00\% & 0.6758 & 88.0\% \\
-Q2A: Full SD-VAE $\mathcal{D}_{\phi_0}$ & $49.5\text{M} / 214.4\,\text{ms}$ & 34.50\% & 0.5149 & 94.0\% \\
-\textbf{Q2A: \methoddec{} (Pruned)} & $\mathbf{10.7\text{M} / 68.1\,\text{ms}}$ & \textbf{37.67\%} & \textbf{0.5034} & \textbf{96.0\%} \\
-\midrule
-Flow: Full SD-VAE (Frozen) & $49.5\text{M} / 214.4\,\text{ms}$ & 53.50\% & 0.6027 & \textbf{96.7\%} \\
-Flow: Full SD-VAE (WikiArt FT) & $49.5\text{M} / 214.4\,\text{ms}$ & 55.83\% & 0.6661 & 90.0\% \\
-Flow: \methoddec{} (WikiArt FT) & $10.7\text{M} / 68.1\,\text{ms}$ & 58.17\% & 0.6662 & 92.7\% \\
-\textbf{Flow: \methoddec{} (Pruned)} & $\mathbf{10.7\text{M} / 68.1\,\text{ms}}$ & \textbf{60.33\%} & \textbf{0.6022} & \textbf{96.7\%} \\
-\bottomrule
-\end{tabular}%
-}
+\caption{Part A: 6-arm causal diagnosis of $Q_{32}$ spatial layout on full Test750 (150-source cluster bootstrap CIs vs.\ \texttt{correct}). Part B: Paired cluster-bootstrap comparison between DINOv2-conditioned and ConvNeXt-Stage3 Zero-DINO \textbf{P/E-Core twins}, plus holdout Gram probe and paired decoder audits.}
 \vspace{-2.5mm}
-\end{table}
-
-\textbf{2) Transport, $Q_{32}$ Bottleneck, Segmented CFG, and Negative Controls (Table~\ref{tab:ablation}):}
-Table~\ref{tab:ablation} summarizes controlled Cross600 ablations:
-(i)~\emph{Bottleneck vs.\ Full-Resolution Conditioning:} Self-paired $34.2\text{M}$ SDEdit ($6.67\%$) and $64\times 64$ edge flow ($18.67\%$) suffer source-lock; restricting structure to $16\times 16$ with $k$-NN-30 core prototypes lifts Top-1 to $60.50\%$. Under matched 3000-step from-scratch training, $Q_{32}$ ($32\text{ch}$) beats $P_{16}$ ($384\text{ch}$) by $+1.84\text{pp}$ Top-1 ($55.67\%$ vs.\ $53.83\%$) and $+0.0087$ DINO-S, reaching $57.00\%$ Top-1 / $0.6392$ Aff at 6000 steps.
-(ii)~\emph{Three-Factor Paired CI Disentanglement (\textbf{\methodhc} at $\gamma=0.55$, unified seed):} `B4` contributes $\sim 80\%$ of the content/distortion shift ($\Delta\mathrm{DINO\text{-}C}=+0.0362\,[+0.0332,+0.0392]$, $\Delta\mathrm{LPIPS}=-0.0255$), `D6H` adds $+0.0099$ DINO-C, and half-NFE `cs\_j` adds $+0.0018\,[+0.0011,+0.0024]$ DINO-S.
-(iii)~\emph{Segmented 6-Step CFG (`e2full`):} Using 4-branch `full` only in the first 2 of 6 steps lifts \emph{Imp$\to$Min} from $40.0\%$ (`cs\_j`) to $80.0\%$ ($58.00\%$ Top-1, $0.6283$ DINO-C), whereas late `l2full` stalls ($23.3\%$ on `D2`).
-(iv)~\emph{Negative Controls (Honest Pruning):} Post-hoc spatial gating (`MechA A3`) yields zero gain over global $\gamma$ ($\Delta\mathrm{DINO\text{-}C}\in[-.0006,+.0001]$); likewise, removing an additive $16\times 16$ local Value pathway (`V=0` on 150 cross pairs) restores $+0.0500$ DINO-C ($0.5392\!\to\!0.5892$), proving reference features should enter via norm-preserving modulation rather than additive spatial vectors.
-
-\begin{table}[t]
-\centering
-\caption{Controlled transport, $Q_{32}$ bottleneck, segmented CFG, and negative-control ablations on Cross600 (paired 150-source bootstrap).}
-\vspace{-2.0mm}
 \label{tab:ablation}
+\renewcommand{\arraystretch}{0.94}
 \resizebox{\columnwidth}{!}{%
-\setlength{\tabcolsep}{2.3pt}
+\setlength{\tabcolsep}{2.4pt}
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
-\textbf{Variant / Controlled Comparison} & \textbf{Top-1}$\uparrow$ & \textbf{D-S}$\uparrow$ & \textbf{D-C}$\uparrow$ & \textbf{LP}$\downarrow$ & \textbf{Key Paired CI / Route Effect} & $\boldsymbol{\Delta_{\mathrm{causal}}}$ \\
+\textbf{A. $Q_{32}$ 6-Arm Causal Diagnosis} & \textbf{DINO-C}$\uparrow$ & \textbf{DINO-S}$\uparrow$ & \textbf{Top-1}$\uparrow$ & \textbf{LPIPS}$\downarrow$ & \textbf{Paired $\Delta$C (Excl.\ 0)} & \textbf{Paired $\Delta$S (Excl.\ 0)} \\
 \midrule
-Self-Paired 34.2M ($\tau_0\!=\!0.7$) & 6.67\% & .4445 & \textbf{.8083} & \textbf{.2210} & $59\%$ source-locked to $y_s$ & $+0.2$ \\
-$64\times 64$ Edge Flow ($\tau_0\!=\!0$) & 18.67\% & .4515 & .7222 & .4549 & 2D stroke cadence inversion & $+9.8$ \\
-Coarse-16 Flow (w/o Core-$k$NN) & 47.50\% & .5208 & .6395 & .5491 & Boundary outliers dilute Min/Uki & $+37.2$ \\
-\textbf{\methodflow} (Core-$k$NN, Full) & \textbf{60.50\%} & \textbf{.5672} & .5335 & .6022 & $100\%$ Min; beats StyleGallery & $\mathbf{+58.2}$ \\
+$\tau_0\!=\!0.75$ + $Q_{32}$ \texttt{correct} & \textbf{0.6157} & \textbf{0.5307} & 66.83\% & \textbf{0.5612} & Baseline & Baseline \\
+$\tau_0\!=\!0.75$ + $Q_{32}$ \texttt{zero} & 0.5531 & 0.5279 & 70.00\% & 0.5852 & $-0.0625$ (\textbf{Yes}) & $-0.0028$ (No) \\
+$\tau_0\!=\!0.75$ + $Q_{32}$ \texttt{shuffled} & 0.5415 & 0.5295 & 67.83\% & 0.5946 & $-0.0742$ (\textbf{Yes}) & $-0.0012$ (No) \\
 \midrule
-Matched 3k: $P_{16}$ ($384\text{ch}$) Flow & 53.83\% & .5429 & .6035 & .5692 & Whitened DINO ctrl (6-step `cs\_j`) & -- \\
-\textbf{Matched 3k: $Q_{32}$ ($32\text{ch}$) Flow} & \textbf{55.67\%} & \textbf{.5516} & .5814 & .5836 & $+1.84\text{pp}$ Top-1 / $+.0087$ D-S ($12\times$ fewer ch.) & -- \\
-$Q_{32}$ Flagship (6k, 6-step `cs\_j`) & 57.00\% & .5478 & .5919 & .5803 & $0.6392$ Aff, $80\%$ Imp$\to$Min ($172.8\,\text{ms}$) & -- \\
-6-Step Flow (`cs\_j`, `D2+D5`) & 55.50\% & .5236 & .6519 & .5489 & $40.0\%$ Imp$\to$Min ($172.8\,\text{ms}$ cached) & -- \\
-\textbf{6-Step Flow (`e2full`, `D2+D5`)} & \textbf{58.00\%} & .5278 & .6283 & .5563 & $\mathbf{80.0\%}$ Imp$\to$Min ($204.9\,\text{ms}$ cached) & -- \\
+$\tau_0\!=\!0.00$ + $Q_{32}$ \texttt{correct} & \textbf{0.3009} & \textbf{0.6380} & 83.33\% & \textbf{0.8474} & Baseline (\emph{Roc} $.639$) & Baseline \\
+$\tau_0\!=\!0.00$ + $Q_{32}$ \texttt{zero} & 0.2155 & 0.5503 & 87.00\% & 0.8846 & $-0.0853$ (\textbf{Yes}) & $-0.0877$ (\textbf{Yes}, \emph{Roc} $.371$) \\
+$\tau_0\!=\!0.00$ + $Q_{32}$ \texttt{shuffled} & 0.2483 & 0.6055 & 86.00\% & 0.8888 & $-0.0526$ (\textbf{Yes}) & $-0.0325$ (\textbf{Yes}) \\
 \midrule
-1-Step Latent-Only (w/o $Q_{32}$) & 47.33\% & .3595 & .4677 & .6654 & Layout collapse ($\Delta\text{D-C}\!=\!-0.276$) & $+43.3$ \\
-1-Step Uniform FiLM (w/o Router) & 41.00\% & .4409 & .7511 & .5030 & $-3.33\text{pp}$ Top-1 vs.\ routed & $+40.2$ \\
-\textbf{\methodfast} (1-Step, $\lambda\!=\!1.0$) & 44.33\% & .4431 & .7440 & .5057 & Wrong-ID Top-1 $=0.83\%$ & $+43.5$ \\
+\textbf{B. ConvNeXt vs.\ DINO Twin \& Audits} & \textbf{DINO-C} & \textbf{DINO-S} & \textbf{Top-1} & \textbf{LPIPS} & \textbf{95\% Bootstrap CI ($\Delta$S / $\Delta$C)} & \textbf{Significance} \\
 \midrule
-Hybrid (`T4 + full + D6`, $\gamma\!=\!0.55$) & 52.67\% & .4745 & .7321 & .5053 & Baseline T4-anchored hybrid & -- \\
-\textbf{\methodhc} (`B4 + cs\_j + D6H`, $\gamma\!=\!0.55$) & 42.50\% & .4564 & .7723 & .4783 & vs.\ P1($\lambda 0.75$): $\Delta\text{D-S}\!=\!+0.0193$ (PASS) & -- \\
-Learned Spatial Gate (`MechA A3`) & 42.83\% & .4565 & .7721 & .4784 & vs.\ Global $\gamma$: $\Delta\text{D-C}\!\in\![-.0006,+.0001]$ & -- \\
-Additive $16^2$ Value (`V26 Exp 1`) & -- & .3958 & .5392 & -- & Removing (`V=0`): $\Delta\text{D-C}\!=\!+0.0500$ ($0.5892$) & -- \\
+ConvNeXt vs.\ DINO Twin ($s\!=\!0.90\text{ vs }0.85$) & $-0.0227$ & $\mathbf{+0.0054}$ & $-5.17\text{pp}$ & $\mathbf{-0.0038}$ & $\Delta\text{S}:[+.0002,+.0108]$ / $\Delta\text{LP}:\text{NS}$ & \textbf{D-S $+$, LP Tied} \\
+ConvNeXt vs.\ DINO Twin ($s\!=\!1.00$) & $-0.0324$ & $\mathbf{+0.0023}$ & $-1.83\text{pp}$ & $+0.0107$ & $\Delta\text{S}:[-.0025,+.0072]$ / $\Delta\text{Aff}:\text{NS}$ & \textbf{Style \& Top-1 Tied} \\
+ConvNeXt vs.\ DINO Twin ($s\!=\!1.25$) & $-0.0230$ & $-0.0015$ & $-1.67\text{pp}$ & $+0.0047$ & $\Delta\text{S}:[-.0069,+.0041]$ / $\Delta\text{Top1}:\text{NS}$ & \textbf{Style \& Top-1 Tied} \\
+\midrule
+ConvNeXt-S3 Raw vs.\ \textbf{Stiefel $Q_{32}^{\mathrm{cnx}}$} & \multicolumn{2}{c}{5-Way Gram Probe:} & $91.33\%\!\to\!\mathbf{20.67\%}$ & \multicolumn{2}{c}{$\max|\frac{1}{N}QQ^\top\!-\!I_{32}|=1.95\!\times\!10^{-4}$} & \textbf{Chance Floor ($20\%$)} \\
+Full SD-VAE ($49.5\text{M}$) vs.\ \textbf{\methoddec{} ($\decParams$)} & \multicolumn{2}{c}{Closed-Set Flow:} & $55.83\%\!\to\!\mathbf{60.33\%}$ & \multicolumn{2}{c}{$\mathbf{+4.49\text{pp}}$ Top-1 ($\decGain$ Q2A)} & \textbf{$\decSpeedup$ Faster} \\
 \bottomrule
 \end{tabular}%
 }
 \vspace{-2.5mm}
 \end{table}
 
-\section{System Analysis and Discussion}
+Table~\ref{tab:ablation} summarizes our two methodological audits:
+
+\textbf{1) 6-Arm Causal Diagnosis of $Q_{32}$ (Table~\ref{tab:ablation}A):}
+Evaluating $\tau_0\in\{0.75,0.00\}\times Q_{32}\in\{\texttt{correct},\texttt{zero},\texttt{shuffled}\}$ across Test750 proves that at $\tau_0=0.75$, $Q_{32}$ contributes $+0.0625\text{--}0.0742$ DINO-C ($95\%$ CI excludes 0) while its effect on DINO-S ($+0.0012\text{--}0.0028$) is statistically indistinguishable from zero---confirming that Stiefel-orthogonalized $Q_{32}$ acts as a pure structural scaffold with zero style leakage. At $\tau_0=0.00$, zeroing $Q_{32}$ collapses both content ($-0.0853$ DINO-C) and fine brushwork composition ($-0.0877$ DINO-S, with \emph{Rococo} dropping $0.639\!\to\!0.371$), proving that $16\times 16$ spatial layout conditioning is indispensable.
+
+\textbf{2) Backbone-Independence and Evaluator Homology Offset (Table~\ref{tab:ablation}B):}
+Comparing our ConvNeXt-Stage3 P/E-Core models against DINOv2-conditioned twins trained under identical steps and losses yields two insights:
+First, at $s=1.00$ and $s=1.25$, \emph{DINO-S} ($\Delta=+0.0023$ and $-0.0015$), \emph{Style Affinity} ($\Delta=-0.0002$ at $s=1.00$), and \emph{CSD Top-1} ($\Delta=-1.83\text{pp}$ and $-1.67\text{pp}$) all have $95\%$ CIs spanning zero---proving \textbf{\method}'s quotient--fiber transport is \textbf{backbone-independent}.
+Second, replacing DINOv2 with ConvNeXt-Stage3 shifts \emph{DINO-C} by a uniform $-0.023\text{ to }-0.032$ even when independent perceptual distortion \emph{LPIPS} is tied or slightly improved (e.g., at $s=0.90$ vs.\ $0.85$, $\Delta\mathrm{DINO\text{-}S}=+0.0054$ $[+0.0002,+0.0108]$ and $\Delta\mathrm{LPIPS}=-0.0038$, while $\Delta\mathrm{DINO\text{-}C}=-0.0227$), providing the first controlled measurement of a $\sim 0.025$ \emph{DINO-C} scale offset induced by generator--evaluator ViT homology.
+
+\section{System Ledger and Error Attribution}
 \label{sec:discussion}
 
-\textbf{End-to-End Stage Breakdown \& Consumer GPU Deployment.}
-To clarify why ``NFE'' alone does not determine real-world responsiveness, we profile the full $512^2$ RGB$\to$RGB pipeline ($T_{\mathrm{total}} = T_{\mathrm{enc}} + T_{\mathrm{feat}} + T_{\mathrm{anc}} + T_{\mathrm{flow}} + T_{\mathrm{dec}}$) on a single 12\,GB RTX~3060 (`batch=1` / `batch=16`). At `b=16`, A0 VAE encoding takes $71.4\,\text{ms}$, DINOv2 extraction $57.9\,\text{ms}$, and S10 decoding $74.2\,\text{ms}$ (vs.\ $78.8 / 246.3 / 51.5\,\text{ms}$ at `b=1`). For \textbf{\methodfast}, the 1-step network takes only $\mathbf{5.8\,\text{ms}}$ (`b=1`) and $\mathbf{8.0\,\text{ms}}$ (`b=16`), yielding $\fastMs$ cached ($\fastFps$) and $\fastBatchEtoEMs$ max-batch full RGB$\to$RGB ($\fastConsumerFps$, vs.\ $\fastEtoEMs$ at `b=1`). For 6-step \textbf{\methodflow} (`b=16`), pure 2-branch `cs\_j` takes $98.5\,\text{ms}$ flow ($\flowSixQMs$ cached / $\flowSixQEtoEMs$ E2E with T4 anchor), while segmented `e2full` (2 `full` + 4 `cs\_j` steps) takes $130.7\,\text{ms}$ flow ($\flowSixCachedMs$ cached / $\flowSixEtoEMs$ E2E) vs.\ $520.0\,\text{ms}$ flow for 16-step `full` ($\flowEtoEMs$ E2E, $\flowFps$)—all within $3.7\text{--}3.9\,\text{GB}$ peak VRAM.
+\begin{table}[t]
+\centering
+\caption{Part A: RTX~4090 cold-start RGB$\to$RGB and hot-interactive stage latency breakdown (\texttt{batch=1} and \texttt{batch=16}, $\text{warmup}=6, \text{repeats}=20$) and complete parameter ledger. Part B: $K=8$ sub-school routing hubness audit on 120 cross-style \emph{Rococo} tasks at $s=1.50$ ($\tau_0=0$).}
+\vspace{-2.5mm}
+\label{tab:system}
+\renewcommand{\arraystretch}{0.94}
+\resizebox{\columnwidth}{!}{%
+\setlength{\tabcolsep}{2.6pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{A. Pipeline Stage / System Mode} & \textbf{Params} & \textbf{b=1 Mean} & \textbf{b=1 Throughput} & \textbf{b=16 Mean} & \textbf{b=16 Throughput} \\
+\midrule
+1. Frozen SD-VAE Encoder ($\mathcal{E}$) & $\vaeEncParams$ & $15.58\,\text{ms}$ & $64.2\,\text{img/s}$ & $15.63\,\text{ms}$ & $64.0\,\text{img/s}$ \\
+2. Luminance Structure ($C_{64} + Y_{16}$) & $0$ & $1.52\,\text{ms}$ & $659.9\,\text{img/s}$ & $0.10\,\text{ms}$ & $10{,}045\,\text{img/s}$ \\
+3. ConvNeXt-Stage3 + Stiefel $Q_{32}^{\mathrm{cnx}}$ & $\cnxParams$ & $4.91\,\text{ms}$ & $203.6\,\text{img/s}$ & $\mathbf{0.985\,\text{ms}}$ & $\mathbf{1{,}015\,\text{img/s}}$ \\
+4. $K=8$ Sub-School Scene Router & $0.20\text{M}$ bank & $0.37\,\text{ms}$ & $2{,}688\,\text{img/s}$ & $0.025\,\text{ms}$ & $40{,}798\,\text{img/s}$ \\
+5. \textbf{\methodecore{}} (1-NFE Transport) & $\ecoreParams$ & $8.68\,\text{ms}$ & $115.2\,\text{img/s}$ & $\mathbf{0.986\,\text{ms}}$ & $\mathbf{1{,}015\,\text{img/s}}$ \\
+6. \textbf{\methodpcore{}} (6-NFE DPM-2M Flow) & $\pcoreParams$ & $66.00\,\text{ms}$ & $15.2\,\text{img/s}$ & $24.77\,\text{ms}$ & $40.4\,\text{img/s}$ \\
+7. \textbf{\methoddec{}} ($\decPrune$-Pruned S10 $\mathcal{D}_\star$) & $\decParams$ & $10.99\,\text{ms}$ & $91.0\,\text{img/s}$ & $12.51\,\text{ms}$ & $80.0\,\text{img/s}$ \\
+\midrule
+\textbf{\methodecore{} Hot Interactive} (Latent$\to$RGB) & $21.79\text{M}$ & $19.67\,\text{ms}$ & $50.8\,\text{img/s}$ & $\mathbf{13.00\,\text{ms}}$ & $\mathbf{77.1\,\text{img/s}}$ \\
+\textbf{\methodecore{} True Cold-Start} (RGB$\to$RGB) & $68.30\text{M}$ & $\mathbf{41.68\,\text{ms}}$ & $\mathbf{24.0\,\text{img/s}}$ & $\mathbf{30.20\,\text{ms}}$ & $\mathbf{33.1\,\text{img/s}}$ \\
+\textbf{\methodpcore{} Hot Interactive} (Latent$\to$RGB) & $\hotTotalParams$ & $86.05\,\text{ms}$ & $11.6\,\text{img/s}$ & $\mathbf{38.28\,\text{ms}}$ & $\mathbf{26.1\,\text{img/s}}$ \\
+\textbf{\methodpcore{} True Cold-Start} ($\tau_0\!>\!0$, RGB$\to$RGB) & $\coldTotalParams$ & $108.06\,\text{ms}$ & $9.3\,\text{img/s}$ & $\mathbf{54.99\,\text{ms}}$ & $\mathbf{18.2\,\text{img/s}}$ \\
+\textbf{\methodpcore{} True Cold-Start} ($\tau_0\!=\!0$, RGB$\to$RGB) & $79.46\text{M}$ & $100.20\,\text{ms}$ & $10.0\,\text{img/s}$ & $\mathbf{54.01\,\text{ms}}$ & $\mathbf{18.5\,\text{img/s}}$ \\
+\midrule
+\textbf{B. $s\!=\!1.50$ \emph{Rococo} $K\!=\!8$ Routing Audit} & \textbf{Active Clust.} & \textbf{Max Share} & \textbf{Norm.\ $H/\ln 8$} & \textbf{Non-Hub $c_3 / c_5$ D-S (Top-1)} & \textbf{Hub $c_7$ ($n\!=\!55$) D-S (Top-1)} \\
+\midrule
+Legacy DINO $4\times 4$ Scene Router & $8/8$ & $27.5\%$ ($33/120$) & $\mathbf{0.8687}$ & Balanced across 8 modes & Overall \emph{Roc} D-S $=0.639$ \\
+ConvNeXt-S3 $4\times 4$ Scene Router & $7/8$ & $\mathbf{45.8\%}$ ($55/120$) & $0.7102$ & $\mathbf{0.6614}$ ($\mathbf{100\%}$) / $\mathbf{0.6092}$ ($\mathbf{95.7\%}$) & $0.4879$ ($40.0\%$) $\to$ Mean $0.539$ \\
+\bottomrule
+\end{tabular}%
+}
+\vspace{-2.5mm}
+\end{table}
 
-\textbf{Scope and Limitations.}
-Our analysis shows that reconstruction capacity in tokenizers and self-paired flows is antagonistic to cross-domain editing unless source Gram statistics are projected out ($\Pi_\perp$). A clear boundary is that our headline 5-style models amortize a fixed training style repertoire; zero-label 1-shot exemplar generalization via chord transfer trades $-7.7\text{pp}$ Top-1 or lower DINO-C ($0.397\text{--}0.498$), and extreme layout-stripping routes (\emph{Imp$\to$Min}) require early 4-branch `e2full` CFG rather than pure `cs\_j`.
+\textbf{1) Cold-Start vs.\ Hot-Interactive Engineering Ledger (Table~\ref{tab:system}A):}
+Table~\ref{tab:system}A discloses every stage of the $512\times 512$ pipeline. Because our ConvNeXt-Stage3 front-end and 1-NFE \textbf{\methodecore} each take under $1.0\,\text{ms/img}$ at \texttt{b=16} ($0.985\,\text{ms}$ and $0.986\,\text{ms}$), the frozen VAE encoder ($15.63\,\text{ms}$) and pruned \textbf{\methoddec} ($12.51\,\text{ms}$) account for $93\%$ of \textbf{\methodecore}'s $\ecoreColdBatchMs$ cold-start latency ($\ecoreColdBatchFps$) and $51\%$ of \textbf{\methodpcore}'s $\pcoreColdBatchMs$ cold-start latency ($\pcoreColdBatchFps$). When a user encodes a source image once and sweeps $s\in[0,1.50]$ interactively, throughput reaches $\ecoreHotBatchFps$ (\textbf{\methodecore}) and $\pcoreHotBatchFps$ (\textbf{\methodpcore}). Total online hot parameters are $\hotTotalParams$ ($\ecoreParams+\pcoreParams+\cnxParams+\decParams$) and total cold-start parameters are $\coldTotalParams$ (including the $\vaeEncParams$ frozen SD-VAE encoder)---under $1/10$ the footprint of $\text{SD-1.5}+\text{DINOv2}$ pipelines.
+
+\textbf{2) Error Attribution of the $s=1.50$ Tail Drop via $K=8$ Hubness Audit (Table~\ref{tab:system}B):}
+At the extreme $\tau_0=0$ endpoint ($s=1.50$), ConvNeXt-conditioned \textbf{\methodpcore} reaches $0.6054$ DINO-S vs.\ $0.6379$ for its DINO-conditioned twin, with the gap concentrated on \emph{Rococo} ($0.5387$ vs.\ $0.6390$). Auditing the $K=8$ scene router across all 120 cross-style \emph{Rococo} tasks (Table~\ref{tab:system}B) pinpoints the mechanism: whereas DINO $4\times 4$ tokens distribute queries evenly across all 8 sub-schools ($H/\ln 8 = 0.8687$, max share $27.5\%$), grayscale ConvNeXt $4\times 4$ descriptors exhibit \emph{cosine hubness collapse} onto cluster $c_7$ ($H/\ln 8 = 0.7102$, $45.8\%$ in $c_7$). Tasks routed to non-hub ConvNeXt clusters achieve superior \emph{Rococo} synthesis ($c_3, n=16$: $\mathbf{0.6614}$ DINO-S, $\mathbf{100.0\%}$ Top-1; $c_5, n=23$: $\mathbf{0.6092}$ DINO-S, $\mathbf{95.7\%}$ Top-1), whereas the overloaded hub centroid $c_7$ ($n=55$) scores $0.4879$ DINO-S ($40.0\%$ Top-1), pulling the class mean to $0.5387$. We report this unpatched baseline to maintain strict protocol hygiene, noting Sinkhorn-balanced sub-school routing as a direct refinement.
+
+\textbf{3) Scope and Limitations:}
+\textbf{\method} amortizes a 5-movement repertoire to achieve $18.2\text{--}33.1\,\text{img/s}$ cold-start throughput under blind evaluation. Extending our 417-D ConvNeXt fiber and \texttt{Pool C} reversed-pair training to open-domain 1-shot arbitrary reference images without test-time style indices is a natural next step.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-We showed that scaling self-paired latent flows ($260\times$) and using unpruned reconstruction decoders exacerbate \emph{Source-Style Lock}. By factoring style transfer into Stiefel Quotient--Fiber projections $(\Pi_\perp,\Pi_\parallel)$, target-directed transport $\mathcal{T}$, and a $\decPrune$-pruned spectral-bottleneck decoder $\mathcal{D}_\star$, \textbf{\method} eliminates 2nd-order Gram leakage ($92.3\%\!\to\!20.0\%$) and establishes a new Content--Style--Compute frontier across real-time ($\fastMs$ cached / $\fastBatchEtoEMs$ RGB$\to$RGB), high-content ($\hcDinoC$ DINO-C, $\hcLpips$ LPIPS, $\hcBatchMs$), and 6-step / 16-step generative ($\flowBalTopOne$ Top-1, $\flowBalDinoS$ DINO-S) regimes under $3.9\,\text{GB}$ on RTX~3060.
+We introduced \textbf{\method}, a real-time performance-hybrid \textbf{P/E-Core} latent transport framework that resolves the mathematical conflict between structure-faithful editing and generative brushstroke abstraction. Combining a $\cnxParams$ ConvNeXt-Stage3 Stiefel Polar Quotient $Q_{32}^{\mathrm{cnx}}$ ($91.33\%\!\to\!20.67\%$ Gram probe), a 1-NFE \textbf{\methodecore} ($\ecoreParams$, exact $s=0$ identity and $0.99\,\text{ms}$ structural drafts), a 6-step DPM-2M \textbf{\methodpcore} ($\pcoreParams$, strict $16\times 16$ bottleneck conditioning and in-domain reversed real-painting pairs), and a $\decPrune$-pruned \textbf{\methoddec} ($\decParams$), \textbf{\method} achieves full-spectrum Pareto dominance at $\pcoreColdBatchFps\text{--}\ecoreColdBatchFps$ cold-start RGB$\to$RGB ($\pcoreHotBatchFps\text{--}\ecoreHotBatchFps$ hot interactive) under $100\%$ blind cross-architecture evaluation.
 
 \let\oldthebibliography\thebibliography
-\renewcommand{\thebibliography}[1]{\oldthebibliography{#1}\scriptsize\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\renewcommand{\baselinestretch}{0.92}\selectfont}
+\renewcommand{\thebibliography}[1]{\oldthebibliography{#1}\scriptsize\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\renewcommand{\baselinestretch}{0.91}\selectfont}
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
 

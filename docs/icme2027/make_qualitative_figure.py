@@ -86,34 +86,36 @@ def build_qualitative_grid():
 
     cols_spec = [
         ("Source", None, "Input $x_s$", False),
-        ("StyleShot", "styleshot", "24.5 s · 0.36 D-C", False),
+        ("StyleShot", "styleshot", "24.5 s · .357 D-C", False),
         ("StyleGallery", "stylegallery", "30.4 s · .560 D-S", False),
-        ("Seedream 4.5", "seedream", "2.0 s · .389 D-S", False),
-        ("PRISM-HC (Ours)", "prism_hc", "297 ms · .772 D-C", True),
-        ("PRISM-Flow (Ours)", "prism_flow", "205 ms* · .628 D-C", True),
+        ("Seedream 4.5", "seedream", "20.0 s · .389 D-S", False),
+        ("CLEAVE E-Core (s=0.75)", "ecore_075", "30.2 ms · .720 D-C", True),
+        ("CLEAVE P-Core (s=1.00)", "pcore_100", "55.0 ms · .563 D-S", True),
     ]
 
     n_rows, n_cols = len(rows_spec), len(cols_spec)
     fig, axes = plt.subplots(
         n_rows, n_cols,
-        figsize=(13.2, 6.2),
+        figsize=(13.2, 5.75),
         facecolor="white",
         gridspec_kw={"wspace": 0.045, "hspace": 0.055, "left": 0.068, "right": 0.995, "top": 0.885, "bottom": 0.015},
     )
 
     for r_i, (s_style, stem, t_style, row_lbl) in enumerate(rows_spec):
         src_p = REPO / "data/test" / s_style / f"{stem}.jpg"
-        hc_p = PRISM_HC_DIR / f"{s_style}__{stem}__{t_style}.png"
-        flow_p = PRISM_FLOW_DIR / f"ICME_D2_d5_s6_e2full__{s_style}__{stem}__{t_style}.png"
+        v32_ec = PRISM_FLOW_DIR / f"ECore_NoDINO_l075__{s_style}__{stem}__{t_style}.png"
+        v32_pc = PRISM_FLOW_DIR / f"PCore_NoDINO_s100__{s_style}__{stem}__{t_style}.png"
+        hc_p = v32_ec if v32_ec.exists() else (PRISM_HC_DIR / f"{s_style}__{stem}__{t_style}.png")
+        flow_p = v32_pc if v32_pc.exists() else (PRISM_FLOW_DIR / f"ICME_D2_d5_s6_e2full__{s_style}__{stem}__{t_style}.png")
         tid_str = f"{s_style}/{stem}/{t_style}"
 
         for c_i, (col_title, key, sub_lbl, is_ours) in enumerate(cols_spec):
             ax = axes[r_i, c_i]
             if key is None:
                 img_p = src_p
-            elif key == "prism_hc":
+            elif key == "ecore_075":
                 img_p = hc_p
-            elif key == "prism_flow":
+            elif key == "pcore_100":
                 img_p = flow_p
             elif key == "stylegallery":
                 img_p = sg_map[tid_str]

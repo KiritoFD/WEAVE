@@ -302,6 +302,134 @@ class PixelBridgeV28:
         return (oklab_weight * moments_ps + swd_weight * swd_ps).mean()
 
 
+class UnifiedUnleashedUNet(nn.Module):
+    """~19-20M 1-NFE Student U-Net for RealGAN & Flow-DMD2:
+    - 16x16 image backbone with 2 global BottleneckAttention layers
+    - K=8 scene-matched vivid sub-school conditioning u_vivid (128-D, source-only)
+    - Strict zeroing of encoder 64x64 / 32x32 skips and source direct channels at lambda=1.0
+    - Amplified noise channel (0.28 * lambda * eps) for multi-modal brushstroke synthesis
+    - Exact mathematical identity out == source at lambda=0.0.
+    """
+
+    def __init__(
+        self,
+        stats_dim: int,
+        w0: int = 144,
+        w1: int = 224,
+        w2: int = 352,
+        cond_dim: int = 256,
+        u_dim: int = 128,
+    ):
+        super().__init__()
+        self.stats = nn.Linear(stats_dim, 64)
+        self.u_proj = nn.Linear(u_dim, 64)
+        self.cond = nn.Sequential(
+            nn.Linear(5 + 32 + 64 + 64, cond_dim),
+            nn.SiLU(),
+            nn.Linear(cond_dim, cond_dim),
+        )
+
+        # 4 (z0) + 4 (gated P_Y(z_s)) + 4 (gated c64) + 4 (noise) = 16
+        self.in_conv = nn.Conv2d(16, w0, 3, padding=1)
+        self.enc64 = nn.ModuleList([PureStyleResBlock(w0, cond_dim), PureStyleResBlock(w0, cond_dim)])
+        self.down32 = nn.Conv2d(w0, w1, 3, stride=2, padding=1)
+        self.enc32 = nn.ModuleList([PureStyleResBlock(w1, cond_dim), PureStyleResBlock(w1, cond_dim)])
+        self.down16 = nn.Conv2d(w1, w2, 3, stride=2, padding=1)
+
+        q_ch = 64
+        self.q_proj = nn.Sequential(
+            nn.Conv2d(32, 96, 1), nn.GroupNorm(16, 96), nn.SiLU(inplace=True), nn.Conv2d(96, q_ch, 1),
+        )
+        self.mid1 = SPADEStyleBlock(w2, q_ch, cond_dim)
+        self.mid_attn1 = BottleneckAttention(w2, heads=8)
+        self.mid_res = PureStyleResBlock(w2, cond_dim)
+        self.mid_attn2 = BottleneckAttention(w2, heads=8)
+        self.mid2 = SPADEStyleBlock(w2, q_ch, cond_dim)
+
+        route_ch = 128
+        self.route = nn.Sequential(BottleneckAttention(32, heads=8), nn.Conv2d(32, route_ch, 1))
+        self.route_gate = nn.Linear(cond_dim, route_ch)
+
+        self.up32 = nn.Conv2d(w2, w1, 3, padding=1)
+        self.skip32 = nn.Conv2d(w1 * 2, w1, 1)
+        self.dec32 = nn.ModuleList([
+            SpatialRoutedResBlock(w1, cond_dim, route_ch),
+            SpatialRoutedResBlock(w1, cond_dim, route_ch),
+        ])
+
+        self.up64 = nn.Conv2d(w1, w0, 3, padding=1)
+        self.skip64 = nn.Conv2d(w0 * 2, w0, 1)
+        self.dec64 = nn.ModuleList([
+            SpatialRoutedResBlock(w0, cond_dim, route_ch),
+            SpatialRoutedResBlock(w0, cond_dim, route_ch),
+        ])
+
+        self.out_norm = nn.GroupNorm(16, w0)
+        self.out = nn.Conv2d(w0, 4, 3, padding=1)
+        nn.init.zeros_(self.out.weight)
+        nn.init.zeros_(self.out.bias)
+
+    def forward(
+        self,
+        source: torch.Tensor,
+        c64: torch.Tensor,
+        q32: torch.Tensor,
+        tid: torch.Tensor,
+        strength: torch.Tensor,
+        raw_stats: torch.Tensor,
+        priors: dict,
+        noise: torch.Tensor | None = None,
+        u_vivid: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        amount = strength[:, None, None, None]
+        aligned = apply_latent_chroma_shift(source, tid, priors, alpha=1.0)
+        z0 = source + 0.35 * amount * (aligned - source)
+        luma = torch.einsum("ij,bjhw->bihw", priors["P_Y"], source)
+
+        # Strictly decay both input high-freq guides and 64/32 encoder skips to 0 at lambda=1.0
+        skip_gate = (1.0 - amount).clamp(0.0, 1.0)
+        eps = torch.zeros_like(source) if noise is None else noise
+        noise_ch = 0.28 * amount * eps
+
+        style = self.stats(raw_stats[tid])
+        u_vec = torch.zeros(len(source), 128, device=source.device, dtype=source.dtype) if u_vivid is None else u_vivid
+        u_feat = self.u_proj(u_vec)
+        cond = self.cond(torch.cat((F.one_hot(tid, 5).float(), sinusoidal_time_emb(strength, 32), style, u_feat), 1))
+
+        inp = torch.cat((z0, luma * skip_gate, c64 * skip_gate, noise_ch), dim=1).contiguous(
+            memory_format=torch.channels_last
+        )
+        s16_q = self.q_proj(q32)
+        r16 = self.route(q32) * self.route_gate(cond).tanh()[:, :, None, None]
+        r32 = F.interpolate(r16, size=(32, 32), mode="bilinear", align_corners=False)
+        r64 = F.interpolate(r16, size=(64, 64), mode="bilinear", align_corners=False)
+
+        h64 = self.in_conv(inp)
+        for blk in self.enc64:
+            h64 = blk(h64, cond)
+        h32 = self.down32(h64)
+        for blk in self.enc32:
+            h32 = blk(h32, cond)
+        h16 = self.down16(h32)
+        h16 = self.mid1(h16, s16_q, cond)
+        h16 = self.mid_attn1(h16)
+        h16 = self.mid_res(h16, cond)
+        h16 = self.mid_attn2(h16)
+        h16 = self.mid2(h16, s16_q, cond)
+
+        u32 = self.up32(h16.repeat_interleave(2, dim=-2).repeat_interleave(2, dim=-1))
+        u32 = self.skip32(torch.cat((u32, h32 * skip_gate), dim=1))
+        for blk in self.dec32:
+            u32 = blk(u32, cond, r32)
+
+        u64 = self.up64(u32.repeat_interleave(2, dim=-2).repeat_interleave(2, dim=-1))
+        u64 = self.skip64(torch.cat((u64, h64 * skip_gate), dim=1))
+        for blk in self.dec64:
+            u64 = blk(u64, cond, r64)
+        delta = self.out(F.silu(self.out_norm(u64)))
+        return z0 + amount * delta
+
+
 def build_student_model(arch: str, stats_dim: int, device: str = "cuda") -> nn.Module:
     if arch == "flat":
         return UnifiedEditor(stats_dim).to(device).to(memory_format=torch.channels_last)
@@ -309,4 +437,6 @@ def build_student_model(arch: str, stats_dim: int, device: str = "cuda") -> nn.M
         return UnifiedHybridUNet(stats_dim).to(device).to(memory_format=torch.channels_last)
     if arch == "bridge4":
         return BridgeHybridUNet(stats_dim).to(device).to(memory_format=torch.channels_last)
+    if arch == "unleashed":
+        return UnifiedUnleashedUNet(stats_dim).to(device).to(memory_format=torch.channels_last)
     raise ValueError(f"Unknown student arch: {arch}")

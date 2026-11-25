@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -25,6 +26,10 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 ROOT = Path(__file__).resolve().parents[1]
+if __package__ in (None, ""):
+    sys.path.insert(0, str(ROOT))
+from src.eval.pareto import is_public_literature
+
 D = ROOT / "deliver"
 SCORE = json.loads((D / "q2a_oracle_scores_baseline_protocol.json").read_text(encoding="utf-8"))
 TRT = json.loads((D / "s10_trt_b8_bench.json").read_text(encoding="utf-8"))
@@ -57,7 +62,8 @@ def build_points(ykey):
         y = b["style_affinity"] if ykey == "aff" else b["csd_top1"]
         pts.append({"name": name.replace(" (Published)", ""),
                     "speed": 1000.0 / (mins * 60000.0 / 750.0),
-                    "y": y, "content": b["dino_c"], "kind": "baseline"})
+                    "y": y, "content": b["dino_c"],
+                    "kind": "literature" if is_public_literature(name) else "reference"})
     pts.append({"name": "SD0-S10 (ours)",
                 "speed": OUR_SPEED,
                 "y": C0["style_affinity"] if ykey == "aff" else C0["csd_top1"],
@@ -88,9 +94,10 @@ def main():
          "Speed vs CSD  |  Pareto frontier  (RTX 3060, 750-image protocol)"),
     ):
         pts = build_points(ykey)
-        front = pareto(pts)
-        base = [p for p in pts if p["kind"] == "baseline"]
-        ours = [p for p in pts if p["kind"] == "ours"][0]
+        base = [p for p in pts if p["kind"] == "literature"]
+        front = pareto(base)
+        references = [p for p in pts if p["kind"] == "reference"]
+        ours = next(p for p in pts if p["kind"] == "ours")
 
         fig, ax = plt.subplots(figsize=(14.2, 8.4), dpi=155)
         ax.set_facecolor("#FAFBFD")
@@ -99,8 +106,8 @@ def main():
         # ---- Pareto frontier step line (drawn first, behind dots) ----
         fx = [p["speed"] for p in front]
         fy = [p["y"] for p in front]
-        ax.step(fx + [fx[-1] * 2.6], fy + [fy[-1]], where="post",
-                color=GREEN, lw=2.0, ls=(0, (6, 3)), alpha=0.85, zorder=2)
+        ax.step(fx, fy, where="post", color=GREEN, lw=2.0, ls=(0, (6, 3)), alpha=0.85, zorder=2,
+                label="External literature Pareto")
         ax.scatter(fx, fy, s=170, facecolors="none", edgecolors=GREEN,
                    lw=1.5, zorder=3)
 
@@ -114,7 +121,10 @@ def main():
                    s=[radius_area(p["speed"]) for p in base], c=BLUE,
                    marker="o", edgecolors="#163A55", linewidths=0.9,
                    alpha=0.80, zorder=4,
-                   label="Baselines (paper.tex Train/Infer, RTX 3060)")
+                   label="External literature (RTX 3060)")
+        ax.scatter([p["speed"] for p in references], [p["y"] for p in references],
+                   s=[radius_area(p["speed"]) for p in references], c="#776275",
+                   marker="x", linewidths=1.4, zorder=5, label="Earlier WEAVE / diagnostic reference")
         ax.scatter([ours["speed"]], [ours["y"]],
                    s=radius_area(ours["speed"]), c=RED, marker="o",
                    edgecolors="#7A0E0E", linewidths=1.4, alpha=0.88, zorder=6,
@@ -132,7 +142,7 @@ def main():
             "SD-Turbo": (-8, 12, "right"), "WEAVE": (-10, -20, "right"),
             "SD0-S10 (ours)": (-14, 26, "right"),
         }
-        for p in base + [ours]:
+        for p in base + references + [ours]:
             dx, dy, ha = OFF.get(p["name"], (6, 8, "left"))
             txt = f"{p['name']}  (C {p['content']:.3f})"
             ax.annotate(txt, (p["speed"], p["y"]), xytext=(dx, dy),
@@ -142,7 +152,7 @@ def main():
                         zorder=7)
 
         # highlight callout for our point
-        ax.annotate("PARETO-OPTIMAL\nfastest by 2.13x\n(radius = 21.85 img/s)",
+        ax.annotate(f"SD0-S10 (ours)\n{OUR_SPEED:.2f} img/s",
                     (ours["speed"], ours["y"]), xytext=(-105, 62),
                     textcoords="offset points", fontsize=9.0, color="#A01818",
                     weight="bold", ha="center", zorder=8,
@@ -173,12 +183,11 @@ def main():
                         borderpad=0.8, labelspacing=1.0, handletextpad=1.0)
         leg.set_zorder(10)
 
-        note = ("Speed: baselines from aaai2027_v4/paper.tex main table (Infer min / 750 outputs / RTX 3060); "
+        note = ("Speed for baselines comes from the aaai2027_v4/paper.tex main table. "
                 "ours = TRT decoder 27.08 ms/img measured on the same 3060 + paper enc+WEAVE 18.7 ms/img "
                 "= 45.78 ms/img (spliced estimate, not end-to-end re-measured). "
                 "Bubble radius is strictly linear in img/s; hollow rings mark dots whose true radius is below visibility. "
-                "C in labels = DINO-C content preservation. Pareto front: non-dominated in (speed, style); "
-                "our decoder dominates WEAVE published and all fast baselines, and is the rightmost frontier point.")
+                "C in labels = DINO-C content preservation. The dashed frontier uses external literature only.")
         fig.text(0.5, 0.012, note, ha="center", fontsize=7.5, color="#444444")
         fig.tight_layout(rect=(0, 0.062, 0.83, 1))
         out = D / fname

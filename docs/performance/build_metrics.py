@@ -12,6 +12,7 @@ Outputs:
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import statistics
@@ -21,6 +22,10 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
+if __package__ in (None, ""):
+    sys.path.insert(0, str(ROOT))
+from src.eval.pareto import frontier_indices, is_public_literature
+
 PERF = Path(__file__).resolve().parent
 FIG_DIR = PERF / "figures"
 
@@ -179,7 +184,8 @@ def collect_all() -> list[dict]:
     if lb:
         for item in lb["leaderboard_baseline_methods"]:
             m = item["method"]
-            cat = "Baseline" if item.get("category") == "Baseline" else "V6-Ours"
+            is_weave = m == "WEAVE (Published)" or m.startswith("V6 ")
+            cat = "Baseline" if item.get("category") == "Baseline" and not is_weave else "V6-Ours"
             is_diag = m in ("Identity", "SD-Turbo")
             r = blank_row(m, cat, "q2a_oracle_cross600", item.get("vae", "native / free"),
                           is_diag, "deliver/q2a_oracle_scores_baseline_protocol.json")
@@ -471,6 +477,7 @@ def render_pareto_dashboard(rows: list[dict]):
     valid = [
         r for r in rows
         if r["protocol"] == "q2a_oracle_cross600"
+        and str(r["n_cross"]) == "600"
         and not r["is_diagnostic"]
         and None not in (r["dino_s"], r["dino_c"], r["target_top1"], r["lpips"])
     ]
@@ -487,33 +494,49 @@ def render_pareto_dashboard(rows: list[dict]):
         "Hist2Style", "Q2a + R1 Oracle (1 step) + S10", "P1_B4_distill50 (218K) + S10",
         "V9.LD4", "V10.E4", "V15.PT2_P2_s1.t04", "V16.B_teacher", "V17.P2_S4_eval",
     }
-    for r in valid:
-        if r["group"] in ("V18", "V19-PRISM", "V20-PRISM") and r["pareto"]:
-            highlight_names.add(r["arm"])
+    def ours(row):
+        return (not row["group"].startswith("Baseline")
+                or row["arm"] == "WEAVE (Published)" or row["arm"].startswith("V6 "))
+
+    external = [r for r in valid if is_public_literature(r["arm"])]
+    internal = [r for r in valid if ours(r)]
 
     for ax, xk, yk, xl, yl in panels:
         ax.set_facecolor("#FCFDFE")
+        public_xy = [(r[xk], r[yk]) for r in external]
+        public_idx = frontier_indices(public_xy, minimize_x=xk == "lpips")
+        own_idx = frontier_indices([(r[xk], r[yk]) for r in internal], minimize_x=xk == "lpips")
+        public_front = {external[i]["arm"] for i in public_idx}
+        own_front = {internal[i]["arm"] for i in own_idx}
+        if public_idx:
+            ax.plot(*zip(*(public_xy[i] for i in public_idx)), color="#2B5B84",
+                    ls="--", lw=1.1, label="External literature Pareto", zorder=2)
         for r in valid:
-            is_ext = r["group"].startswith("Baseline")
+            is_ext = is_public_literature(r["arm"])
+            is_ours = ours(r)
             is_prism = r["group"] in ("V19-PRISM", "V20-PRISM")
             is_v18 = r["group"] == "V18"
-            if is_prism and r["pareto"]:
+            if is_prism and r["arm"] in own_front:
                 c, mk, sz, zo = "#C81D25", "*", 230, 7
             elif is_prism:
                 c, mk, sz, zo = "#ED553B", "o", 56, 5
             elif is_v18:
                 c, mk, sz, zo = "#E65100", "*", 165, 6
-            elif r["pareto"] and not is_ext:
+            elif r["arm"] in own_front:
                 c, mk, sz, zo = "#F59E0B", "*", 140, 5
-            elif r["pareto"] and is_ext:
+            elif r["arm"] in public_front:
                 c, mk, sz, zo = "#2B5B84", "D", 68, 4
-            elif not is_ext:
+            elif is_ours:
                 c, mk, sz, zo = "#7A4FA3", "o", 36, 3
-            else:
+            elif is_ext:
                 c, mk, sz, zo = "#9AA5B1", "X", 36, 2
+            else:
+                c, mk, sz, zo = "#776275", "P", 42, 3
             ax.scatter(r[xk], r[yk], c=c, marker=mk, s=sz, alpha=0.88,
                        edgecolors="#182A42", linewidths=0.45, zorder=zo)
-            if r["arm"] in highlight_names:
+            if r["arm"] in highlight_names or r["arm"] in public_front or (
+                r["arm"] in own_front and r["group"] in ("V18", "V19-PRISM", "V20-PRISM")
+            ):
                 short_lbl = (
                     r["arm"]
                     .replace(" (1 step) + S10", "")
@@ -529,16 +552,33 @@ def render_pareto_dashboard(rows: list[dict]):
     axes[1].set_title("B. Style Similarity (DINO-S) vs Content Fidelity (DINO-C)", fontsize=11, fontweight="bold", color="#182A42")
     fig.suptitle(
         "WEAVE Unified Cross600 Performance Landscape (S10 Referee Protocol) — "
-        "Orange/Red ★ = WEAVE Pareto, Blue ◆ = External Pareto",
+        "Orange/Red ★ = within WEAVE, Blue ◆ = external literature Pareto",
         fontsize=11.5, fontweight="bold", color="#182A42",
     )
     fig.tight_layout(rect=[0, 0, 1, 0.95])
     for ext in ("png", "svg"):
-        fig.savefig(FIG_DIR / f"pareto_frontier_cross600.{ext}")
+        path = FIG_DIR / f"pareto_frontier_cross600.{ext}"
+        fig.savefig(path)
+        if ext == "svg":
+            lines = path.read_text(encoding="utf-8").splitlines()
+            path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
     plt.close(fig)
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--plot-existing-ledger", action="store_true",
+                        help="Render the figure without rebuilding metrics.csv or metrics.json.")
+    args = parser.parse_args()
+    if args.plot_existing_ledger:
+        with (PERF / "metrics.csv").open(encoding="utf-8-sig", newline="") as f:
+            rows = list(csv.DictReader(f))
+        for r in rows:
+            r["is_diagnostic"] = r["is_diagnostic"].lower() == "true"
+            for key in ("dino_s", "dino_c", "target_top1", "lpips"):
+                r[key] = float(r[key]) if r[key] else None
+        render_pareto_dashboard(rows)
+        return
     rows = collect_all()
     mark_pareto(rows)
     PERF.mkdir(parents=True, exist_ok=True)
