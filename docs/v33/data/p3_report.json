@@ -1,0 +1,47 @@
+{
+  "updated_utc": "2026-11-25T21:33:57.702035+00:00",
+  "status": "SKIPPED_NO_FRONTIER_PUSH",
+  "frontier_check": {
+    "winner": "P2_S2_hi32_pert30",
+    "max_delta_s_at_same_c": 0.0007,
+    "pushed_frontier": false,
+    "per_point": {
+      "tau000": {
+        "dino_c": 0.3505,
+        "dino_s": 0.5938,
+        "v32_s_at_same_c": 0.5931,
+        "delta_s": 0.0007
+      },
+      "tau035": {
+        "dino_c": 0.5019,
+        "dino_s": 0.544,
+        "v32_s_at_same_c": 0.5592,
+        "delta_s": -0.0152
+      },
+      "tau050": {
+        "dino_c": 0.5423,
+        "dino_s": 0.5341,
+        "v32_s_at_same_c": 0.5475,
+        "delta_s": -0.0134
+      },
+      "tau065": {
+        "dino_c": 0.5749,
+        "dino_s": 0.5289,
+        "v32_s_at_same_c": 0.5363,
+        "delta_s": -0.0074
+      },
+      "tau075": {
+        "dino_c": 0.6186,
+        "dino_s": 0.5186,
+        "v32_s_at_same_c": 0.5211,
+        "delta_s": -0.0025
+      },
+      "tau079": {
+        "dino_c": 0.6375,
+        "dino_s": 0.5134,
+        "v32_s_at_same_c": 0.5152,
+        "delta_s": -0.0018
+      }
+    }
+  }
+}

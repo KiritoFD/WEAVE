@@ -45,6 +45,7 @@ runs/*
 data/
 !docs/v26/4090/data/
 !docs/exp1123/data/
+!docs/v33/data/
 datasets/
 results/
 exp/*

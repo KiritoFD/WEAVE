@@ -1,0 +1,63 @@
+{
+  "updated_utc": "2026-11-25T18:23:21.161821+00:00",
+  "stage": "smoke",
+  "results": {
+    "p1_smoke": {
+      "probes": {
+        "gram_5way_leak_chance_0.20": {
+          "Q0_zero_pad": 0.2,
+          "Q1_q64_plus": 0.2,
+          "Q2_partial_whiten": 0.9533
+        },
+        "spatial_relation_cos": {
+          "Q0_zero_pad": 0.7912,
+          "Q1_q64_plus": 0.7278,
+          "Q2_partial_whiten": 0.9075
+        },
+        "q64_plus_max_gram_err": 0.000556
+      },
+      "smoke": {
+        "P1_Q0_zero_pad": {
+          "arm": "P1_Q0_zero_pad",
+          "mode": "zero",
+          "adapter_params": 2131856,
+          "peak_vram_gb": 13.475,
+          "elapsed_min": 0.17
+        },
+        "P1_Q1_q64_plus": {
+          "arm": "P1_Q1_q64_plus",
+          "mode": "q64_plus",
+          "adapter_params": 2131856,
+          "peak_vram_gb": 11.453,
+          "elapsed_min": 0.11
+        }
+      }
+    },
+    "p2_smoke": {
+      "smoke": {
+        "P2_S0_upsample16": {
+          "arm": "P2_S0_upsample16",
+          "mode": "upsample16",
+          "ctrl_params": 6976800,
+          "peak_vram_gb": 11.702,
+          "elapsed_min": 0.15
+        },
+        "P2_S1_hi32": {
+          "arm": "P2_S1_hi32",
+          "mode": "true32",
+          "ctrl_params": 6976800,
+          "peak_vram_gb": 11.687,
+          "elapsed_min": 0.13
+        },
+        "P2_S2_hi32_pert30": {
+          "arm": "P2_S2_hi32_pert30",
+          "mode": "true32",
+          "ctrl_params": 6976800,
+          "peak_vram_gb": 13.183,
+          "elapsed_min": 0.14
+        }
+      }
+    }
+  },
+  "errors": {}
+}
