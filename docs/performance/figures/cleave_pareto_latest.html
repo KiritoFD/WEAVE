@@ -10,18 +10,16 @@ body {
   padding: 0;
   margin: 0;
 }
-.wrap { width: 100%; display: flex; flex-direction: column; gap: 10px; }
-.toolbar {
-  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between;
-}
+.wrap { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
 .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 .btn {
   border: 1px solid var(--border, #334155);
   background: var(--secondary, #1e293b);
   color: var(--foreground, #e2e8f0);
-  border-radius: var(--radius, 8px);
-  padding: 5px 10px;
-  font-size: 12px;
+  border-radius: var(--radius, 6px);
+  padding: 4px 9px;
+  font-size: 11px;
   cursor: pointer;
 }
 .btn.active {
@@ -34,197 +32,246 @@ body {
   background: var(--card, #111827);
   border: 1px solid var(--border, #334155);
   border-radius: var(--radius, 8px);
-  padding: 12px 14px;
+  padding: 10px 10px 8px 10px;
 }
 .legend {
-  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; font-size: 10.5px; color: var(--muted-foreground, #cbd5e1);
 }
-.pill {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 8px; border-radius: 999px; font-size: 11px;
-  border: 1px solid var(--border, #334155);
-  background: var(--secondary, #1e293b);
-  color: var(--foreground, #e2e8f0);
-  cursor: pointer; opacity: 1;
-}
-.pill.off { opacity: 0.35; }
-.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.lg-item { display: inline-flex; align-items: center; gap: 4px; }
+.swatch { width: 14px; height: 3px; display: inline-block; border-radius: 2px; }
 .info-bar {
   font-family: var(--font-mono, monospace);
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--muted-foreground, #94a3b8);
-  padding: 6px 10px;
+  padding: 5px 8px;
   background: var(--muted, #0f172a);
   border-radius: var(--radius, 6px);
-  min-height: 28px;
+  margin-top: 6px;
+  min-height: 24px;
 }
-svg { width: 100%; height: 390px; display: block; }
-.grid-line { stroke: var(--border, #334155); stroke-opacity: 0.45; stroke-width: 1; }
-.axis-text { fill: var(--muted-foreground, #94a3b8); font-size: 10.5px; }
-.ext-label { fill: var(--muted-foreground, #cbd5e1); font-size: 9.8px; paint-order: stroke; stroke: var(--card, #111827); stroke-width: 3px; stroke-linejoin: round; }
+svg { width: 100%; height: 300px; display: block; }
+.grid { stroke: var(--border, #334155); stroke-opacity: 0.45; stroke-width: 0.8; }
+.ax-lbl { fill: var(--muted-foreground, #94a3b8); font-size: 9px; }
+.ax-title { fill: var(--foreground, #e2e8f0); font-size: 9.5px; font-weight: 700; }
+.pt-lbl { fill: var(--muted-foreground, #cbd5e1); font-size: 8px; paint-order: stroke; stroke: var(--card, #111827); stroke-width: 2.5px; stroke-linejoin: round; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="toolbar">
     <div class="tabs">
-      <button class="btn active" data-mode="dino_s">Cross600: DINO-C vs DINO-S</button>
-      <button class="btn" data-mode="csd_top1">Cross600: DINO-C vs CSD Top-1</button>
-      <button class="btn" data-mode="holdout">Independent Holdout-750</button>
-    </div>
-    <div class="tabs">
-      <button class="btn active" data-preset="main">Main Frontiers</button>
-      <button class="btn" data-preset="all">Show All V32-V34</button>
-      <button class="btn" data-preset="ablation">Stage A/B/C Detail</button>
+      <button class="btn active" data-view="triptych">论文三联图 (V34 vs V32 vs 外部基线)</button>
+      <button class="btn" data-view="ablations">V34 各阶段消融 (Stage A / B / C / D)</button>
+      <button class="btn" data-view="holdout">独立盲测 Holdout-750</button>
     </div>
   </div>
   <div class="card">
-    <svg id="chart" viewBox="0 0 700 390" preserveAspectRatio="xMidYMid meet"></svg>
-    <div class="info-bar" id="info">Hover any point for exact DINO-C / DINO-S / CSD Top-1 / LPIPS readout. Click legend pills to toggle curves.</div>
     <div class="legend" id="legend"></div>
+    <svg id="chart" viewBox="0 0 960 300" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="info-bar" id="info">悬停任意散点查看精确 DINO-C / DINO-S / CSD Top-1 / Cold Speed 数值。</div>
   </div>
 </div>
 <script>
-const DATA = {"external_scatter": [{"label": "SaMST", "dino_c": 0.1628, "dino_s": 0.2738, "csd_top1": 0.2}, {"label": "AdaIN", "dino_c": 0.2271, "dino_s": 0.3426, "csd_top1": 0.343}, {"label": "StyleShot", "dino_c": 0.3569, "dino_s": 0.575, "csd_top1": 0.926}, {"label": "StyleID", "dino_c": 0.3885, "dino_s": 0.5143, "csd_top1": 0.732}, {"label": "AesPA", "dino_c": 0.6075, "dino_s": 0.4661, "csd_top1": 0.31}, {"label": "StyleGallery", "dino_c": 0.6113, "dino_s": 0.5604, "csd_top1": 0.525}, {"label": "StyTr2", "dino_c": 0.7023, "dino_s": 0.4074, "csd_top1": 0.395}, {"label": "SaMAM", "dino_c": 0.8239, "dino_s": 0.3832, "csd_top1": 0.025}, {"label": "CUT", "dino_c": 0.8435, "dino_s": 0.3755, "csd_top1": 0.057}, {"label": "Hist2Style", "dino_c": 0.9083, "dino_s": 0.3643, "csd_top1": 0.12}], "other_refs": [{"label": "WEAVE (Published)", "dino_c": 0.8079, "dino_s": 0.4003, "csd_top1": 0.167}, {"label": "Seedream 4.5", "dino_c": 0.7343, "dino_s": 0.3885, "csd_top1": 0.373}], "series": [{"id": "ext_front", "name": "External Literature Frontier", "group": "external", "style": "dashed", "color": "#64748b", "points": [{"label": "StyleShot", "dino_c": 0.3569, "dino_s": 0.575, "csd_top1": 0.926}, {"label": "StyleGallery", "dino_c": 0.6113, "dino_s": 0.5604, "csd_top1": 0.525}, {"label": "StyTr2", "dino_c": 0.7023, "dino_s": 0.4074, "csd_top1": 0.395}, {"label": "SaMAM", "dino_c": 0.8239, "dino_s": 0.3832, "csd_top1": 0.025}, {"label": "CUT", "dino_c": 0.8435, "dino_s": 0.3755, "csd_top1": 0.057}, {"label": "Hist2Style", "dino_c": 0.9083, "dino_s": 0.3643, "csd_top1": 0.12}]}, {"id": "v32", "name": "V32 PCore_NoDINO (22M)", "group": "baseline", "style": "solid", "color": "#3b82f6", "points": [{"label": "PCore_NoDINO_s150", "dino_c": 0.2805, "dino_s": 0.6054, "csd_top1": 0.8017, "lpips": 0.8275, "same150_top1": 0.8667}, {"label": "PCore_NoDINO_s135", "dino_c": 0.3772, "dino_s": 0.5919, "csd_top1": 0.7733, "lpips": 0.7075, "same150_top1": 0.8933}, {"label": "PCore_NoDINO_s125", "dino_c": 0.4171, "dino_s": 0.5814, "csd_top1": 0.7733, "lpips": 0.6721, "same150_top1": 0.9267}, {"label": "PCore_NoDINO_s100", "dino_c": 0.4896, "dino_s": 0.5628, "csd_top1": 0.7517, "lpips": 0.63, "same150_top1": 0.94}, {"label": "PCore_NoDINO_s093_cal_c10", "dino_c": 0.5524, "dino_s": 0.5446, "csd_top1": 0.6567, "lpips": 0.5838, "same150_top1": 0.9667}, {"label": "PCore_NoDINO_s085_c10", "dino_c": 0.601, "dino_s": 0.5266, "csd_top1": 0.6233, "lpips": 0.5511, "same150_top1": 0.96}, {"label": "PCore_NoDINO_s085", "dino_c": 0.644, "dino_s": 0.5208, "csd_top1": 0.545, "lpips": 0.5232, "same150_top1": 0.9533}, {"label": "PCore_NoDINO_s075_cal_c10", "dino_c": 0.6585, "dino_s": 0.5087, "csd_top1": 0.5233, "lpips": 0.5175, "same150_top1": 0.9667}, {"label": "PCore_NoDINO_s075", "dino_c": 0.7049, "dino_s": 0.4947, "csd_top1": 0.4717, "lpips": 0.4839, "same150_top1": 0.96}, {"label": "PCore_NoDINO_s060", "dino_c": 0.814, "dino_s": 0.421, "csd_top1": 0.315, "lpips": 0.4041, "same150_top1": 0.9867}]}, {"id": "v33_s2", "name": "V33 P2_S2 (22M+7M frozen)", "group": "v33", "style": "dashed", "color": "#8b5cf6", "points": [{"label": "tau000", "dino_c": 0.3505, "dino_s": 0.5938, "csd_top1": 0.67, "lpips": 0.7935, "same150_top1": 0.8267}, {"label": "tau035", "dino_c": 0.5019, "dino_s": 0.544, "csd_top1": 0.6517, "lpips": 0.624, "same150_top1": 0.8933}, {"label": "tau050", "dino_c": 0.5423, "dino_s": 0.5341, "csd_top1": 0.6383, "lpips": 0.6027, "same150_top1": 0.9}, {"label": "tau065", "dino_c": 0.5749, "dino_s": 0.5289, "csd_top1": 0.6333, "lpips": 0.5888, "same150_top1": 0.9}, {"label": "tau075", "dino_c": 0.6186, "dino_s": 0.5186, "csd_top1": 0.5983, "lpips": 0.557, "same150_top1": 0.9467}, {"label": "tau079", "dino_c": 0.6375, "dino_s": 0.5134, "csd_top1": 0.5733, "lpips": 0.5341, "same150_top1": 0.9733}]}, {"id": "v34_stage_a0", "name": "V34 Stage A (A0)", "group": "stage_a", "style": "dotted", "color": "#94a3b8", "points": [{"label": "A0_s100", "dino_c": 0.4896, "dino_s": 0.5629, "csd_top1": 0.7483, "min_s": 0.3415}, {"label": "A0_s085", "dino_c": 0.601, "dino_s": 0.5265, "csd_top1": 0.6183, "min_s": 0.3336}]}, {"id": "v34_stage_a1", "name": "V34 Stage A (A1)", "group": "stage_a", "style": "dotted", "color": "#14b8a6", "points": [{"label": "A1_s100", "dino_c": 0.4884, "dino_s": 0.5674, "csd_top1": 0.7333, "min_s": 0.3571}, {"label": "A1_s085", "dino_c": 0.5965, "dino_s": 0.5304, "csd_top1": 0.6333, "min_s": 0.3411}]}, {"id": "v34_stage_a2", "name": "V34 Stage A (A2)", "group": "stage_a", "style": "dotted", "color": "#f59e0b", "points": [{"label": "A2_s100", "dino_c": 0.5081, "dino_s": 0.5677, "csd_top1": 0.7317, "min_s": 0.3574}, {"label": "A2_s085", "dino_c": 0.6086, "dino_s": 0.5319, "csd_top1": 0.59, "min_s": 0.3521}]}, {"id": "v34_stage_a3", "name": "V34 Stage A (A3)", "group": "stage_a", "style": "dotted", "color": "#ec4899", "points": [{"label": "A3_s100", "dino_c": 0.5076, "dino_s": 0.5725, "csd_top1": 0.7367, "min_s": 0.3718}, {"label": "A3_s085", "dino_c": 0.6042, "dino_s": 0.5357, "csd_top1": 0.6267, "min_s": 0.3564}]}, {"id": "v34_B0_k8_discrete", "name": "V34 B0 (K=8 Discrete)", "group": "stage_b", "style": "solid", "color": "#0ea5e9", "points": [{"label": "s150", "dino_c": 0.3229, "dino_s": 0.5822, "csd_top1": 0.8217, "lpips": 0.7278, "same150_top1": 0.9067}, {"label": "s125", "dino_c": 0.4337, "dino_s": 0.5724, "csd_top1": 0.7583, "lpips": 0.6584, "same150_top1": 0.9133}, {"label": "s100", "dino_c": 0.5388, "dino_s": 0.5485, "csd_top1": 0.6467, "lpips": 0.5818, "same150_top1": 0.92}, {"label": "s085", "dino_c": 0.6669, "dino_s": 0.5084, "csd_top1": 0.5117, "lpips": 0.5096, "same150_top1": 0.96}, {"label": "s075", "dino_c": 0.703, "dino_s": 0.4904, "csd_top1": 0.515, "lpips": 0.502, "same150_top1": 0.9933}]}, {"id": "v34_B1_inst_417", "name": "V34 B1 (Inst 417-D)", "group": "stage_b", "style": "solid", "color": "#f97316", "points": [{"label": "s150", "dino_c": 0.3392, "dino_s": 0.5186, "csd_top1": 0.5067, "lpips": 0.7219, "same150_top1": 0.7}, {"label": "s125", "dino_c": 0.4367, "dino_s": 0.5391, "csd_top1": 0.5933, "lpips": 0.6559, "same150_top1": 0.82}, {"label": "s100", "dino_c": 0.5397, "dino_s": 0.5377, "csd_top1": 0.5883, "lpips": 0.5823, "same150_top1": 0.88}, {"label": "s085", "dino_c": 0.6667, "dino_s": 0.5048, "csd_top1": 0.4867, "lpips": 0.5128, "same150_top1": 0.9733}, {"label": "s075", "dino_c": 0.703, "dino_s": 0.4885, "csd_top1": 0.5033, "lpips": 0.5035, "same150_top1": 0.9867}]}, {"id": "v34_B2_inst_tex1101", "name": "V34 B2 (Inst 1101-D+Tex)", "group": "stage_b", "style": "solid", "color": "#ef4444", "points": [{"label": "s150", "dino_c": 0.3328, "dino_s": 0.5114, "csd_top1": 0.4983, "lpips": 0.7179, "same150_top1": 0.7267}, {"label": "s125", "dino_c": 0.4378, "dino_s": 0.5383, "csd_top1": 0.6, "lpips": 0.6546, "same150_top1": 0.82}, {"label": "s100", "dino_c": 0.54, "dino_s": 0.5377, "csd_top1": 0.61, "lpips": 0.5805, "same150_top1": 0.8933}, {"label": "s085", "dino_c": 0.6664, "dino_s": 0.5058, "csd_top1": 0.51, "lpips": 0.5121, "same150_top1": 0.96}, {"label": "s075", "dino_c": 0.7034, "dino_s": 0.4889, "csd_top1": 0.5133, "lpips": 0.5032, "same150_top1": 0.9867}]}, {"id": "v34_C0_22m_q32", "name": "V34 C0 (22M + Q32)", "group": "stage_c", "style": "solid", "color": "#06b6d4", "points": [{"label": "s150", "dino_c": 0.3214, "dino_s": 0.5651, "csd_top1": 0.76, "lpips": 0.7278, "same150_top1": 0.9067}, {"label": "tau0", "dino_c": 0.3985, "dino_s": 0.5788, "csd_top1": 0.5883, "lpips": 0.7373, "same150_top1": 0.8133}, {"label": "s125", "dino_c": 0.4412, "dino_s": 0.5675, "csd_top1": 0.7467, "lpips": 0.6591, "same150_top1": 0.9133}, {"label": "s100", "dino_c": 0.5425, "dino_s": 0.5498, "csd_top1": 0.635, "lpips": 0.5803, "same150_top1": 0.9133}, {"label": "s085", "dino_c": 0.6689, "dino_s": 0.5085, "csd_top1": 0.5083, "lpips": 0.5083, "same150_top1": 0.96}, {"label": "s075", "dino_c": 0.705, "dino_s": 0.4902, "csd_top1": 0.5117, "lpips": 0.5008, "same150_top1": 0.9933}]}, {"id": "v34_C1_22m_s2_joint", "name": "V34 C1 (22M+S2 Joint)", "group": "stage_c", "style": "solid", "color": "#a855f7", "points": [{"label": "s150", "dino_c": 0.4045, "dino_s": 0.5659, "csd_top1": 0.6467, "lpips": 0.6861, "same150_top1": 0.86}, {"label": "s125", "dino_c": 0.5633, "dino_s": 0.5337, "csd_top1": 0.6017, "lpips": 0.6005, "same150_top1": 0.9}, {"label": "tau0", "dino_c": 0.5735, "dino_s": 0.5192, "csd_top1": 0.4933, "lpips": 0.5897, "same150_top1": 0.8733}, {"label": "s100", "dino_c": 0.6383, "dino_s": 0.51, "csd_top1": 0.5517, "lpips": 0.5349, "same150_top1": 0.9533}, {"label": "s085", "dino_c": 0.7132, "dino_s": 0.4871, "csd_top1": 0.4717, "lpips": 0.4873, "same150_top1": 0.9733}, {"label": "s075", "dino_c": 0.7315, "dino_s": 0.4764, "csd_top1": 0.4733, "lpips": 0.4871, "same150_top1": 0.9933}]}, {"id": "v34_C2_44m_q32", "name": "V34 C2 (44M + Q32)", "group": "stage_c", "style": "solid", "color": "#10b981", "points": [{"label": "s150", "dino_c": 0.3407, "dino_s": 0.589, "csd_top1": 0.9117, "lpips": 0.7208, "same150_top1": 0.9733}, {"label": "tau0", "dino_c": 0.4154, "dino_s": 0.5925, "csd_top1": 0.7367, "lpips": 0.7241, "same150_top1": 0.9067}, {"label": "s125", "dino_c": 0.4511, "dino_s": 0.5718, "csd_top1": 0.7983, "lpips": 0.6504, "same150_top1": 0.9867}, {"label": "s100", "dino_c": 0.5522, "dino_s": 0.5484, "csd_top1": 0.6633, "lpips": 0.5744, "same150_top1": 0.9533}, {"label": "s085", "dino_c": 0.6748, "dino_s": 0.5054, "csd_top1": 0.5217, "lpips": 0.5064, "same150_top1": 0.9667}, {"label": "s075", "dino_c": 0.7081, "dino_s": 0.4877, "csd_top1": 0.515, "lpips": 0.4998, "same150_top1": 0.9933}]}, {"id": "v34_C3_44m_s2_joint", "name": "V34 C3 (44M+S2 Joint)", "group": "stage_c", "style": "solid", "color": "#c084fc", "points": [{"label": "s150", "dino_c": 0.4218, "dino_s": 0.5566, "csd_top1": 0.7983, "lpips": 0.6786, "same150_top1": 0.96}, {"label": "s125", "dino_c": 0.5697, "dino_s": 0.5274, "csd_top1": 0.655, "lpips": 0.5941, "same150_top1": 0.9533}, {"label": "tau0", "dino_c": 0.5844, "dino_s": 0.5173, "csd_top1": 0.4883, "lpips": 0.5822, "same150_top1": 0.9267}, {"label": "s100", "dino_c": 0.6443, "dino_s": 0.5054, "csd_top1": 0.5683, "lpips": 0.529, "same150_top1": 0.96}, {"label": "s085", "dino_c": 0.7191, "dino_s": 0.486, "csd_top1": 0.4733, "lpips": 0.4832, "same150_top1": 0.9733}, {"label": "s075", "dino_c": 0.7366, "dino_s": 0.475, "csd_top1": 0.4733, "lpips": 0.4843, "same150_top1": 0.9867}]}, {"id": "v34_d_merged", "name": "V34 D_merged (44M+A3 Bridge)", "group": "stage_d", "style": "dashed", "color": "#eab308", "points": [{"label": "s150", "dino_c": 0.3002, "dino_s": 0.5572, "csd_top1": 0.7117, "lpips": 0.7584, "same150_top1": 0.8067}, {"label": "tau0", "dino_c": 0.3342, "dino_s": 0.5928, "csd_top1": 0.66, "lpips": 0.7916, "same150_top1": 0.7733}, {"label": "s125", "dino_c": 0.4183, "dino_s": 0.5698, "csd_top1": 0.6317, "lpips": 0.6599, "same150_top1": 0.82}, {"label": "s100", "dino_c": 0.5263, "dino_s": 0.5532, "csd_top1": 0.5917, "lpips": 0.5888, "same150_top1": 0.86}, {"label": "s085", "dino_c": 0.6714, "dino_s": 0.5161, "csd_top1": 0.45, "lpips": 0.5247, "same150_top1": 0.94}, {"label": "s075", "dino_c": 0.7176, "dino_s": 0.4959, "csd_top1": 0.41, "lpips": 0.503, "same150_top1": 0.9467}, {"label": "s065", "dino_c": 0.7725, "dino_s": 0.4693, "csd_top1": 0.3183, "lpips": 0.4724, "same150_top1": 0.9733}]}, {"id": "v34_winner", "name": "V34 Winner (44M C2 + A3 Start)", "group": "winner", "style": "solid", "color": "#22c55e", "width": 3.2, "points": [{"label": "s150", "dino_c": 0.347, "dino_s": 0.5916, "csd_top1": 0.92, "lpips": 0.7158, "same150_top1": 0.98}, {"label": "s125", "dino_c": 0.4668, "dino_s": 0.5782, "csd_top1": 0.805, "lpips": 0.6446, "same150_top1": 0.9733}, {"label": "s100", "dino_c": 0.5628, "dino_s": 0.557, "csd_top1": 0.6833, "lpips": 0.5894, "same150_top1": 0.9467}, {"label": "s085", "dino_c": 0.6734, "dino_s": 0.5143, "csd_top1": 0.5483, "lpips": 0.5365, "same150_top1": 0.9667}, {"label": "s075", "dino_c": 0.7071, "dino_s": 0.4974, "csd_top1": 0.5333, "lpips": 0.5211, "same150_top1": 0.98}]}], "holdout": [{"label": "V32_s085", "dino_c": 0.7004, "dino_s": 0.5164, "csd_top1": 0.48, "lpips": 0.8298, "same150_top1": 0.9267}, {"label": "D_merged_s085", "dino_c": 0.6997, "dino_s": 0.5238, "csd_top1": 0.4233, "lpips": 0.7782, "same150_top1": 0.92}, {"label": "V32_s100", "dino_c": 0.5715, "dino_s": 0.5569, "csd_top1": 0.615, "lpips": 0.8357, "same150_top1": 0.86}, {"label": "D_merged_s100", "dino_c": 0.552, "dino_s": 0.5565, "csd_top1": 0.5517, "lpips": 0.7881, "same150_top1": 0.86}, {"label": "C2_A3_s085", "dino_c": 0.7042, "dino_s": 0.5208, "csd_top1": 0.53, "lpips": 0.8121, "same150_top1": 0.9467}, {"label": "C2_A3_s100", "dino_c": 0.5961, "dino_s": 0.5597, "csd_top1": 0.6817, "lpips": 0.8206, "same150_top1": 0.9267}]};
-let curMode = "dino_s";
-const PRESETS = {
-  main: ["ext_front", "v32", "v33_s2", "v34_stage_a3", "v34_C2_44m_q32", "v34_d_merged", "v34_winner"],
-  all: DATA.series.map(s => s.id),
-  ablation: ["v32", "v34_stage_a0", "v34_stage_a1", "v34_stage_a2", "v34_stage_a3", "v34_B0_k8_discrete", "v34_B1_inst_417", "v34_B2_inst_tex1101", "v34_C0_22m_q32", "v34_C1_22m_s2_joint", "v34_C2_44m_q32", "v34_C3_44m_s2_joint", "v34_winner"]
-};
-const enabled = new Set(PRESETS.main);
-
+const DATA = {"external": [{"name": "StyleGallery (30.4s)", "short": "StyleGallery", "dc": 0.6113, "ds": 0.5604, "t1": 52.5, "sec": 30.4, "ips": 0.0329, "tier": "heavy"}, {"name": "StyleShot (24.5s)", "short": "StyleShot", "dc": 0.3569, "ds": 0.575, "t1": 92.6, "sec": 24.48, "ips": 0.0408, "tier": "heavy"}, {"name": "Seedream 4.5 (20.0s)", "short": "Seedream 4.5", "dc": 0.7343, "ds": 0.3885, "t1": 37.3, "sec": 20.0, "ips": 0.05, "tier": "heavy"}, {"name": "Qwen-Img-2.1T (16.1s)", "short": "Qwen-Img-2.1T", "dc": 0.7016, "ds": 0.466, "t1": 42.17, "sec": 16.07, "ips": 0.0622, "tier": "heavy"}, {"name": "StyleID (5.0s)", "short": "StyleID", "dc": 0.3885, "ds": 0.5143, "t1": 73.2, "sec": 5.04, "ips": 0.1984, "tier": "heavy"}, {"name": "StyTr2 (3.0s)", "short": "StyTr2", "dc": 0.7023, "ds": 0.4074, "t1": 39.5, "sec": 3.04, "ips": 0.3289, "tier": "light"}, {"name": "AesPA-Net (1.8s)", "short": "AesPA-Net", "dc": 0.6075, "ds": 0.4661, "t1": 31.0, "sec": 1.84, "ips": 0.5435, "tier": "light"}, {"name": "SaMAM (1.4s)", "short": "SaMAM", "dc": 0.8239, "ds": 0.3832, "t1": 2.5, "sec": 1.41, "ips": 0.7092, "tier": "light"}, {"name": "CUT (0.4s)", "short": "CUT", "dc": 0.8435, "ds": 0.3755, "t1": 5.7, "sec": 0.4, "ips": 2.5, "tier": "light"}, {"name": "Hist2Style (0.2s)", "short": "Hist2Style", "dc": 0.9083, "ds": 0.3643, "t1": 12.0, "sec": 0.2, "ips": 5.0, "tier": "light"}], "ext_front_a": [{"name": "StyleShot (24.5s)", "short": "StyleShot", "dc": 0.3569, "ds": 0.575, "t1": 92.6, "sec": 24.48, "ips": 0.0408, "tier": "heavy"}, {"name": "StyleGallery (30.4s)", "short": "StyleGallery", "dc": 0.6113, "ds": 0.5604, "t1": 52.5, "sec": 30.4, "ips": 0.0329, "tier": "heavy"}, {"name": "Qwen-Img-2.1T (16.1s)", "short": "Qwen-Img-2.1T", "dc": 0.7016, "ds": 0.466, "t1": 42.17, "sec": 16.07, "ips": 0.0622, "tier": "heavy"}, {"name": "StyTr2 (3.0s)", "short": "StyTr2", "dc": 0.7023, "ds": 0.4074, "t1": 39.5, "sec": 3.04, "ips": 0.3289, "tier": "light"}, {"name": "Seedream 4.5 (20.0s)", "short": "Seedream 4.5", "dc": 0.7343, "ds": 0.3885, "t1": 37.3, "sec": 20.0, "ips": 0.05, "tier": "heavy"}, {"name": "SaMAM (1.4s)", "short": "SaMAM", "dc": 0.8239, "ds": 0.3832, "t1": 2.5, "sec": 1.41, "ips": 0.7092, "tier": "light"}, {"name": "CUT (0.4s)", "short": "CUT", "dc": 0.8435, "ds": 0.3755, "t1": 5.7, "sec": 0.4, "ips": 2.5, "tier": "light"}, {"name": "Hist2Style (0.2s)", "short": "Hist2Style", "dc": 0.9083, "ds": 0.3643, "t1": 12.0, "sec": 0.2, "ips": 5.0, "tier": "light"}], "ext_front_b": [{"name": "StyleShot (24.5s)", "short": "StyleShot", "dc": 0.3569, "ds": 0.575, "t1": 92.6, "sec": 24.48, "ips": 0.0408, "tier": "heavy"}, {"name": "StyleID (5.0s)", "short": "StyleID", "dc": 0.3885, "ds": 0.5143, "t1": 73.2, "sec": 5.04, "ips": 0.1984, "tier": "heavy"}, {"name": "StyleGallery (30.4s)", "short": "StyleGallery", "dc": 0.6113, "ds": 0.5604, "t1": 52.5, "sec": 30.4, "ips": 0.0329, "tier": "heavy"}, {"name": "Qwen-Img-2.1T (16.1s)", "short": "Qwen-Img-2.1T", "dc": 0.7016, "ds": 0.466, "t1": 42.17, "sec": 16.07, "ips": 0.0622, "tier": "heavy"}, {"name": "StyTr2 (3.0s)", "short": "StyTr2", "dc": 0.7023, "ds": 0.4074, "t1": 39.5, "sec": 3.04, "ips": 0.3289, "tier": "light"}, {"name": "Seedream 4.5 (20.0s)", "short": "Seedream 4.5", "dc": 0.7343, "ds": 0.3885, "t1": 37.3, "sec": 20.0, "ips": 0.05, "tier": "heavy"}, {"name": "Hist2Style (0.2s)", "short": "Hist2Style", "dc": 0.9083, "ds": 0.3643, "t1": 12.0, "sec": 0.2, "ips": 5.0, "tier": "light"}], "ext_front_c": [{"name": "StyleShot (24.5s)", "short": "StyleShot", "dc": 0.3569, "ds": 0.575, "t1": 92.6, "sec": 24.48, "ips": 0.0408, "tier": "heavy"}, {"name": "StyleID (5.0s)", "short": "StyleID", "dc": 0.3885, "ds": 0.5143, "t1": 73.2, "sec": 5.04, "ips": 0.1984, "tier": "heavy"}, {"name": "StyTr2 (3.0s)", "short": "StyTr2", "dc": 0.7023, "ds": 0.4074, "t1": 39.5, "sec": 3.04, "ips": 0.3289, "tier": "light"}, {"name": "AesPA-Net (1.8s)", "short": "AesPA-Net", "dc": 0.6075, "ds": 0.4661, "t1": 31.0, "sec": 1.84, "ips": 0.5435, "tier": "light"}, {"name": "Hist2Style (0.2s)", "short": "Hist2Style", "dc": 0.9083, "ds": 0.3643, "t1": 12.0, "sec": 0.2, "ips": 5.0, "tier": "light"}], "v32_ecore": [{"knob": "0.40", "show_lbl": true, "ips": 33.1, "seg": "ecore", "dc": 0.856, "ds": 0.4077, "t1": 20.17}, {"knob": "0.60", "show_lbl": true, "ips": 33.1, "seg": "ecore", "dc": 0.7781, "ds": 0.4407, "t1": 38.83}, {"knob": "0.75", "show_lbl": true, "ips": 33.1, "seg": "ecore", "dc": 0.7204, "ds": 0.4671, "t1": 45.17}], "v32_pcore": [{"knob": "0.80", "show_lbl": false, "ips": 18.2, "seg": "pcore", "dc": 0.6585, "ds": 0.5087, "t1": 52.33}, {"knob": "0.85", "show_lbl": true, "ips": 18.2, "seg": "pcore", "dc": 0.601, "ds": 0.5266, "t1": 62.33}, {"knob": "0.93", "show_lbl": false, "ips": 18.2, "seg": "pcore", "dc": 0.5524, "ds": 0.5446, "t1": 65.67}, {"knob": "1.00", "show_lbl": true, "ips": 18.2, "seg": "pcore", "dc": 0.4896, "ds": 0.5628, "t1": 75.17}, {"knob": "1.25", "show_lbl": true, "ips": 18.5, "seg": "pcore", "dc": 0.4171, "ds": 0.5814, "t1": 77.33}, {"knob": "1.35", "show_lbl": false, "ips": 18.5, "seg": "pcore", "dc": 0.3772, "ds": 0.5919, "t1": 77.33}, {"knob": "1.50", "show_lbl": true, "ips": 18.5, "seg": "pcore", "dc": 0.2805, "ds": 0.6054, "t1": 80.17}], "v32_ec_max": {"lbl": "E-Core (1.00)", "ips": 33.1, "dc": 0.5674, "ds": 0.5077, "t1": 67.17}, "v34_winner": [{"knob": "s150", "dc": 0.347, "ds": 0.5916, "t1": 92.0, "lpips": 0.7158, "same": 98.0, "ips": 14.5}, {"knob": "s125", "dc": 0.4668, "ds": 0.5782, "t1": 80.5, "lpips": 0.6446, "same": 97.3, "ips": 14.5}, {"knob": "s100", "dc": 0.5628, "ds": 0.557, "t1": 68.33, "lpips": 0.5894, "same": 94.7, "ips": 14.5}, {"knob": "s085", "dc": 0.6734, "ds": 0.5143, "t1": 54.83, "lpips": 0.5365, "same": 96.7, "ips": 14.5}, {"knob": "s075", "dc": 0.7071, "ds": 0.4974, "t1": 53.33, "lpips": 0.5211, "same": 98.0, "ips": 14.5}], "v34_c2": [{"knob": "s150", "dc": 0.3407, "ds": 0.589, "t1": 91.17, "lpips": 0.7208, "same": 97.3, "ips": 14.5}, {"knob": "tau0", "dc": 0.4154, "ds": 0.5925, "t1": 73.67, "lpips": 0.7241, "same": 90.7, "ips": 14.5}, {"knob": "s125", "dc": 0.4511, "ds": 0.5718, "t1": 79.83, "lpips": 0.6504, "same": 98.7, "ips": 14.5}, {"knob": "s100", "dc": 0.5522, "ds": 0.5484, "t1": 66.33, "lpips": 0.5744, "same": 95.3, "ips": 14.5}, {"knob": "s085", "dc": 0.6748, "ds": 0.5054, "t1": 52.17, "lpips": 0.5064, "same": 96.7, "ips": 14.5}, {"knob": "s075", "dc": 0.7081, "ds": 0.4877, "t1": 51.5, "lpips": 0.4998, "same": 99.3, "ips": 14.5}], "v34_d_merged": [{"knob": "s150", "dc": 0.3002, "ds": 0.5572, "t1": 71.17, "lpips": 0.7584, "same": 80.7, "ips": 14.5}, {"knob": "tau0", "dc": 0.3342, "ds": 0.5928, "t1": 66.0, "lpips": 0.7916, "same": 77.3, "ips": 14.5}, {"knob": "s125", "dc": 0.4183, "ds": 0.5698, "t1": 63.17, "lpips": 0.6599, "same": 82.0, "ips": 14.5}, {"knob": "s100", "dc": 0.5263, "ds": 0.5532, "t1": 59.17, "lpips": 0.5888, "same": 86.0, "ips": 14.5}, {"knob": "s085", "dc": 0.6714, "ds": 0.5161, "t1": 45.0, "lpips": 0.5247, "same": 94.0, "ips": 14.5}, {"knob": "s075", "dc": 0.7176, "ds": 0.4959, "t1": 41.0, "lpips": 0.503, "same": 94.7, "ips": 14.5}, {"knob": "s065", "dc": 0.7725, "ds": 0.4693, "t1": 31.83, "lpips": 0.4724, "same": 97.3, "ips": 14.5}], "v33_s2": [{"knob": "tau000", "dc": 0.3505, "ds": 0.5938, "t1": 67.0, "lpips": 0.7935, "same": 82.7, "ips": 15.0}, {"knob": "tau035", "dc": 0.5019, "ds": 0.544, "t1": 65.17, "lpips": 0.624, "same": 89.3, "ips": 15.0}, {"knob": "tau050", "dc": 0.5423, "ds": 0.5341, "t1": 63.83, "lpips": 0.6027, "same": 90.0, "ips": 15.0}, {"knob": "tau065", "dc": 0.5749, "ds": 0.5289, "t1": 63.33, "lpips": 0.5888, "same": 90.0, "ips": 15.0}, {"knob": "tau075", "dc": 0.6186, "ds": 0.5186, "t1": 59.83, "lpips": 0.557, "same": 94.7, "ips": 15.0}, {"knob": "tau079", "dc": 0.6375, "ds": 0.5134, "t1": 57.33, "lpips": 0.5341, "same": 97.3, "ips": 15.0}], "v34_ips": 14.5, "stage_a": [{"label": "A0_s085", "mode": "A0", "knot": "s085", "dc": 0.601, "ds": 0.5265, "t1": 61.83, "min_s": 0.3336}, {"label": "A0_s100", "mode": "A0", "knot": "s100", "dc": 0.4896, "ds": 0.5629, "t1": 74.83, "min_s": 0.3415}, {"label": "A1_s085", "mode": "A1", "knot": "s085", "dc": 0.5965, "ds": 0.5304, "t1": 63.33, "min_s": 0.3411}, {"label": "A1_s100", "mode": "A1", "knot": "s100", "dc": 0.4884, "ds": 0.5674, "t1": 73.33, "min_s": 0.3571}, {"label": "A2_s085", "mode": "A2", "knot": "s085", "dc": 0.6086, "ds": 0.5319, "t1": 59.0, "min_s": 0.3521}, {"label": "A2_s100", "mode": "A2", "knot": "s100", "dc": 0.5081, "ds": 0.5677, "t1": 73.17, "min_s": 0.3574}, {"label": "A3_s085", "mode": "A3", "knot": "s085", "dc": 0.6042, "ds": 0.5357, "t1": 62.67, "min_s": 0.3564}, {"label": "A3_s100", "mode": "A3", "knot": "s100", "dc": 0.5076, "ds": 0.5725, "t1": 73.67, "min_s": 0.3718}], "stage_b": {"B0_k8_discrete": [{"knob": "s150", "dc": 0.3229, "ds": 0.5822, "t1": 82.17, "lpips": 0.7278, "same": 90.7, "ips": 18.2}, {"knob": "s125", "dc": 0.4337, "ds": 0.5724, "t1": 75.83, "lpips": 0.6584, "same": 91.3, "ips": 18.2}, {"knob": "s100", "dc": 0.5388, "ds": 0.5485, "t1": 64.67, "lpips": 0.5818, "same": 92.0, "ips": 18.2}, {"knob": "s085", "dc": 0.6669, "ds": 0.5084, "t1": 51.17, "lpips": 0.5096, "same": 96.0, "ips": 18.2}, {"knob": "s075", "dc": 0.703, "ds": 0.4904, "t1": 51.5, "lpips": 0.502, "same": 99.3, "ips": 18.2}], "B1_inst_417": [{"knob": "s150", "dc": 0.3392, "ds": 0.5186, "t1": 50.67, "lpips": 0.7219, "same": 70.0, "ips": 18.2}, {"knob": "s125", "dc": 0.4367, "ds": 0.5391, "t1": 59.33, "lpips": 0.6559, "same": 82.0, "ips": 18.2}, {"knob": "s100", "dc": 0.5397, "ds": 0.5377, "t1": 58.83, "lpips": 0.5823, "same": 88.0, "ips": 18.2}, {"knob": "s085", "dc": 0.6667, "ds": 0.5048, "t1": 48.67, "lpips": 0.5128, "same": 97.3, "ips": 18.2}, {"knob": "s075", "dc": 0.703, "ds": 0.4885, "t1": 50.33, "lpips": 0.5035, "same": 98.7, "ips": 18.2}], "B2_inst_tex1101": [{"knob": "s150", "dc": 0.3328, "ds": 0.5114, "t1": 49.83, "lpips": 0.7179, "same": 72.7, "ips": 18.2}, {"knob": "s125", "dc": 0.4378, "ds": 0.5383, "t1": 60.0, "lpips": 0.6546, "same": 82.0, "ips": 18.2}, {"knob": "s100", "dc": 0.54, "ds": 0.5377, "t1": 61.0, "lpips": 0.5805, "same": 89.3, "ips": 18.2}, {"knob": "s085", "dc": 0.6664, "ds": 0.5058, "t1": 51.0, "lpips": 0.5121, "same": 96.0, "ips": 18.2}, {"knob": "s075", "dc": 0.7034, "ds": 0.4889, "t1": 51.33, "lpips": 0.5032, "same": 98.7, "ips": 18.2}]}, "holdout": [{"label": "V32_s085", "dc": 0.7004, "ds": 0.5164, "t1": 48.0, "lpips": 0.8298, "same": 92.7}, {"label": "D_merged_s085", "dc": 0.6997, "ds": 0.5238, "t1": 42.33, "lpips": 0.7782, "same": 92.0}, {"label": "V32_s100", "dc": 0.5715, "ds": 0.5569, "t1": 61.5, "lpips": 0.8357, "same": 86.0}, {"label": "D_merged_s100", "dc": 0.552, "ds": 0.5565, "t1": 55.17, "lpips": 0.7881, "same": 86.0}, {"label": "C2_A3_s085", "dc": 0.7042, "ds": 0.5208, "t1": 53.0, "lpips": 0.8121, "same": 94.7}, {"label": "C2_A3_s100", "dc": 0.5961, "ds": 0.5597, "t1": 68.17, "lpips": 0.8206, "same": 92.7}]};
 const svg = document.getElementById("chart");
 const info = document.getElementById("info");
 const legendEl = document.getElementById("legend");
+let curView = "triptych";
 
-function el(tag, attrs, text) {
+function el(tag, attrs, txt) {
   const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
   for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, v);
-  if (text !== undefined) n.textContent = text;
+  if (txt !== undefined) n.textContent = txt;
   return n;
 }
 
-function renderLegend() {
-  legendEl.innerHTML = "";
-  if (curMode === "holdout") {
-    legendEl.innerHTML = '<span style="font-size:11px;color:var(--muted-foreground,#94a3b8)">Holdout-750: 150 disjoint unseen sources x 5 target styles scored against 150 disjoint unseen holdout references (Zero-DINO + S10).</span>';
-    return;
+function drawPanel(ox, oy, pw, ph, spec) {
+  const {x0, x1, y0, y1, xTicks, yTicks, xFmt, yFmt, logX, title, xLabel, yLabel, shade} = spec;
+  const sx = v => ox + ((logX ? (Math.log10(v) - Math.log10(x0)) / (Math.log10(x1) - Math.log10(x0)) : (v - x0) / (x1 - x0))) * pw;
+  const sy = v => oy + ph - ((v - y0) / (y1 - y0)) * ph;
+
+  if (shade) {
+    const xA = Math.max(ox, sx(shade[0])), xB = Math.min(ox + pw, sx(shade[1]));
+    svg.appendChild(el("rect", {x: xA, y: oy, width: Math.max(0, xB - xA), height: ph, fill: shade[2], opacity: 0.08}));
   }
-  for (const s of DATA.series) {
-    const btn = document.createElement("span");
-    btn.className = "pill" + (enabled.has(s.id) ? "" : " off");
-    btn.innerHTML = `<span class="dot" style="background:${s.color}"></span>${s.name}`;
-    btn.onclick = () => {
-      if (enabled.has(s.id)) enabled.delete(s.id); else enabled.add(s.id);
-      render();
-    };
-    legendEl.appendChild(btn);
-  }
-}
+  svg.appendChild(el("rect", {x: ox, y: oy, width: pw, height: ph, fill: "none", stroke: "var(--border, #334155)"}));
+  svg.appendChild(el("text", {x: ox + pw / 2, y: oy - 6, "text-anchor": "middle", class: "ax-title"}, title));
 
-function render() {
-  renderLegend();
-  svg.innerHTML = "";
-  const W = 700, H = 390, pl = 52, pr = 18, pt = 18, pb = 38;
-  const pw = W - pl - pr, ph = H - pt - pb;
-
-  let x0 = 0.27, x1 = 0.85, y0 = 0.36, y1 = 0.62, yKey = "dino_s", yTitle = "DINO-S (Style Similarity ↑)";
-  if (curMode === "csd_top1") {
-    y0 = 0.25; y1 = 0.96; yKey = "csd_top1"; yTitle = "CSD Top-1 Accuracy ↑";
-  } else if (curMode === "holdout") {
-    x0 = 0.52; x1 = 0.74; y0 = 0.49; y1 = 0.58; yKey = "dino_s"; yTitle = "Holdout-750 DINO-S ↑";
-  }
-
-  const sx = v => pl + ((v - x0) / (x1 - x0)) * pw;
-  const sy = v => pt + ph - ((v - y0) / (y1 - y0)) * ph;
-
-  svg.appendChild(el("rect", {x: pl, y: pt, width: pw, height: ph, fill: "none", stroke: "var(--border, #334155)"}));
-  const xTicks = curMode === "holdout" ? [0.55, 0.60, 0.65, 0.70] : [0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
   for (const t of xTicks) {
     const px = sx(t);
-    svg.appendChild(el("line", {x1: px, y1: pt, x2: px, y2: pt + ph, class: "grid-line"}));
-    svg.appendChild(el("text", {x: px, y: pt + ph + 16, "text-anchor": "middle", class: "axis-text"}, t.toFixed(2)));
+    svg.appendChild(el("line", {x1: px, y1: oy, x2: px, y2: oy + ph, class: "grid"}));
+    svg.appendChild(el("text", {x: px, y: oy + ph + 12, "text-anchor": "middle", class: "ax-lbl"}, xFmt ? xFmt(t) : t.toFixed(1)));
   }
-  const yTicks = curMode === "csd_top1" ? [0.30, 0.45, 0.60, 0.75, 0.90] : (curMode === "holdout" ? [0.50, 0.52, 0.54, 0.56] : [0.40, 0.45, 0.50, 0.55, 0.60]);
   for (const t of yTicks) {
     const py = sy(t);
-    svg.appendChild(el("line", {x1: pl, y1: py, x2: pl + pw, y2: py, class: "grid-line"}));
-    const lbl = curMode === "csd_top1" ? `${(t*100).toFixed(0)}%` : t.toFixed(2);
-    svg.appendChild(el("text", {x: pl - 6, y: py + 3.5, "text-anchor": "end", class: "axis-text"}, lbl));
+    svg.appendChild(el("line", {x1: ox, y1: py, x2: ox + pw, y2: py, class: "grid"}));
+    svg.appendChild(el("text", {x: ox - 4, y: py + 3, "text-anchor": "end", class: "ax-lbl"}, yFmt ? yFmt(t) : t.toFixed(2)));
   }
-  svg.appendChild(el("text", {x: pl + pw / 2, y: H - 6, "text-anchor": "middle", class: "axis-text"}, "DINO-C (Content Preservation ↑)"));
-  svg.appendChild(el("text", {x: 14, y: pt + ph / 2, "text-anchor": "middle", class: "axis-text", transform: `rotate(-90 14 ${pt+ph/2})`}, yTitle));
+  svg.appendChild(el("text", {x: ox + pw / 2, y: oy + ph + 26, "text-anchor": "middle", class: "ax-lbl"}, xLabel));
+  svg.appendChild(el("text", {x: ox - 30, y: oy + ph / 2, "text-anchor": "middle", class: "ax-lbl", transform: `rotate(-90 ${ox - 30} ${oy + ph / 2})`}, yLabel));
+  return {sx, sy, ox, oy, pw, ph};
+}
 
-  if (curMode === "holdout") {
-    const colors = {V32_s085: "#3b82f6", V32_s100: "#3b82f6", D_merged_s085: "#eab308", D_merged_s100: "#eab308", C2_A3_s085: "#22c55e", C2_A3_s100: "#22c55e"};
-    for (const pair of [["V32_s100", "V32_s085", "#3b82f6"], ["D_merged_s100", "D_merged_s085", "#eab308"], ["C2_A3_s100", "C2_A3_s085", "#22c55e"]]) {
-      const p0 = DATA.holdout.find(p => p.label === pair[0]);
-      const p1 = DATA.holdout.find(p => p.label === pair[1]);
-      if (p0 && p1) {
-        svg.appendChild(el("line", {x1: sx(p0.dino_c), y1: sy(p0.dino_s), x2: sx(p1.dino_c), y2: sy(p1.dino_s), stroke: pair[2], "stroke-width": 2.6}));
+function renderTriptych() {
+  legendEl.innerHTML = `
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span><b>CLEAVE V34 (44M C2+A3, 14.5 img/s)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>CLEAVE V32 (22M, 18.2-18.5 img/s)</span>
+    <span class="lg-item"><span class="swatch" style="background:#14b8a6"></span>E-Core 1-NFE (33.1 img/s)</span>
+    <span class="lg-item"><span class="swatch" style="background:#a78bfa"></span>StyleGallery (30.4s) / Heavy (&gt;1B)</span>
+    <span class="lg-item"><span class="swatch" style="background:#94a3b8"></span>External Pareto Frontier</span>
+  `;
+  const panels = [
+    {ox: 44,  oy: 22, pw: 264, ph: 242, x0: 0.24, x1: 0.94, y0: 0.34, y1: 0.63, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.35, 0.40, 0.45, 0.50, 0.55, 0.60], title: "(a) Full-Spectrum Quality Control", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑", shade: [0.65, 0.94, "#10b981"], xKey: "dc", yKey: "ds", extFront: DATA.ext_front_a},
+    {ox: 368, oy: 22, pw: 264, ph: 242, x0: 0.24, x1: 0.94, y0: 0.0,  y1: 99.0, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(b) Stronger Style Specificity", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑", shade: [0.65, 0.94, "#10b981"], xKey: "dc", yKey: "t1", extFront: DATA.ext_front_b},
+    {ox: 690, oy: 22, pw: 256, ph: 242, x0: 0.02, x1: 180.0, y0: 0.0, y1: 99.0, logX: true, xTicks: [0.1, 1, 10, 100], xFmt: v => v < 1 ? v.toFixed(1) : v.toFixed(0), yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(c) Real-Time Performance at Scale", xLabel: "Cold RGB->RGB Throughput (img/s, log) ↑", yLabel: "CSD Top-1 (%) ↑", shade: [10.0, 180.0, "#f43f5e"], xKey: "ips", yKey: "t1", extFront: DATA.ext_front_c},
+  ];
+
+  for (const sp of panels) {
+    const p = drawPanel(sp.ox, sp.oy, sp.pw, sp.ph, sp);
+    const {sx, sy} = p;
+    const {xKey, yKey} = sp;
+
+    // External frontier dashed
+    svg.appendChild(el("path", {d: sp.extFront.map((b, i) => `${i ? "L" : "M"}${sx(b[xKey]).toFixed(1)},${sy(b[yKey]).toFixed(1)}`).join(" "), fill: "none", stroke: "#94a3b8", "stroke-width": 1.3, "stroke-dasharray": "4,3"}));
+    for (const b of DATA.external) {
+      const cx = sx(b[xKey]), cy = sy(b[yKey]);
+      const col = b.short === "StyleGallery" ? "#c084fc" : (b.tier === "heavy" ? "#8b5cf6" : "#38bdf8");
+      const r = b.short === "StyleGallery" ? 5 : 3.2;
+      const dot = el("circle", {cx, cy, r, fill: col, stroke: "#0f172a", "stroke-width": 0.8});
+      dot.onmouseenter = () => { info.textContent = `[External] ${b.name} | C=${b.dc.toFixed(4)} S=${b.ds.toFixed(4)} Top1=${b.t1.toFixed(2)}% Speed=${b.ips} img/s`; };
+      svg.appendChild(dot);
+      if (["StyleGallery", "StyleShot", "StyleID", "StyTr2", "Seedream 4.5"].includes(b.short)) {
+        const isSGb = b.short === "StyleGallery" && xKey === "dc" && yKey === "t1";
+        const dy = (b.short === "StyleShot" || isSGb) ? 10 : -5;
+        const dx = isSGb ? -6 : 4;
+        const anc = isSGb ? "end" : "start";
+        svg.appendChild(el("text", {x: cx + dx, y: cy + dy, "text-anchor": anc, class: "pt-lbl"}, b.short));
       }
     }
-    for (const p of DATA.holdout) {
-      const cx = sx(p.dino_c), cy = sy(p.dino_s), col = colors[p.label] || "#22c55e";
-      const c = el("circle", {cx, cy, r: 6, fill: col, stroke: "#0f172a", "stroke-width": 1.2});
-      c.onmouseenter = () => { info.textContent = `[Holdout-750] ${p.label} | C=${p.dino_c.toFixed(4)} S=${p.dino_s.toFixed(4)} Top1=${(p.csd_top1*100).toFixed(2)}% LP=${p.lpips.toFixed(4)} Same=${(p.same150_top1*100).toFixed(1)}%`; };
-      svg.appendChild(c);
-      svg.appendChild(el("text", {x: cx + 8, y: cy + 4, class: "axis-text", style: `fill:${col};font-weight:600`}, `${p.label} (${(p.csd_top1*100).toFixed(1)}%)`));
+
+    // E-Core + V32 P-Core
+    const ec = DATA.v32_ecore, pc = DATA.v32_pcore, ecm = DATA.v32_ec_max;
+    svg.appendChild(el("path", {d: ec.map((d, i) => `${i ? "L" : "M"}${sx(d[xKey]).toFixed(1)},${sy(d[yKey]).toFixed(1)}`).join(" "), fill: "none", stroke: "#14b8a6", "stroke-width": 2.2}));
+    svg.appendChild(el("line", {x1: sx(ec[ec.length-1][xKey]), y1: sy(ec[ec.length-1][yKey]), x2: sx(pc[0][xKey]), y2: sy(pc[0][yKey]), stroke: "#64748b", "stroke-width": 1.3, "stroke-dasharray": "2,2"}));
+    svg.appendChild(el("path", {d: pc.map((d, i) => `${i ? "L" : "M"}${sx(d[xKey]).toFixed(1)},${sy(d[yKey]).toFixed(1)}`).join(" "), fill: "none", stroke: "#3b82f6", "stroke-width": 1.8, "stroke-dasharray": "4,2"}));
+    for (const d of ec) {
+      const cx = sx(d[xKey]), cy = sy(d[yKey]);
+      const pt = el("rect", {x: cx - 3.5, y: cy - 3.5, width: 7, height: 7, fill: "#14b8a6", transform: `rotate(45 ${cx} ${cy})`});
+      pt.onmouseenter = () => { info.textContent = `[V32 E-Core s=${d.knob}] C=${d.dc.toFixed(4)} S=${d.ds.toFixed(4)} Top1=${d.t1.toFixed(2)}% Speed=${d.ips} img/s`; };
+      svg.appendChild(pt);
     }
-    return;
-  }
+    for (const d of pc) {
+      const dot = el("circle", {cx: sx(d[xKey]), cy: sy(d[yKey]), r: 3.1, fill: "#3b82f6", opacity: 0.85});
+      dot.onmouseenter = () => { info.textContent = `[V32 22M P-Core s=${d.knob}] C=${d.dc.toFixed(4)} S=${d.ds.toFixed(4)} Top1=${d.t1.toFixed(2)}% Speed=${d.ips} img/s`; };
+      svg.appendChild(dot);
+    }
+    const ecmPt = el("rect", {x: sx(ecm[xKey]) - 3.5, y: sy(ecm[yKey]) - 3.5, width: 7, height: 7, fill: "none", stroke: "#14b8a6", "stroke-width": 1.6, transform: `rotate(45 ${sx(ecm[xKey])} ${sy(ecm[yKey])})`});
+    ecmPt.onmouseenter = () => { info.textContent = `[V32 E-Core standalone s=1.00] C=${ecm.dc.toFixed(4)} S=${ecm.ds.toFixed(4)} Top1=${ecm.t1.toFixed(2)}% Speed=${ecm.ips} img/s`; };
+    svg.appendChild(ecmPt);
 
-  // External scatter
-  for (const p of DATA.external_scatter) {
-    const cx = sx(p.dino_c), cy = sy(p[yKey]);
-    if (cx < pl || cx > pl + pw || cy < pt || cy > pt + ph) continue;
-    const c = el("circle", {cx, cy, r: 4, fill: "#94a3b8", opacity: 0.85});
-    c.onmouseenter = () => { info.textContent = `[External] ${p.label} | DINO-C=${p.dino_c.toFixed(4)} DINO-S=${p.dino_s.toFixed(4)} Top1=${(p.csd_top1*100).toFixed(1)}%`; };
-    svg.appendChild(c);
-    const below = p.label === "StyleShot" || p.label === "CUT";
-    svg.appendChild(el("text", {x: cx + 5, y: cy + (below ? 12 : -5), class: "ext-label"}, p.label));
-  }
-
-  // Series curves
-  for (const s of DATA.series) {
-    if (!enabled.has(s.id)) continue;
-    const pts = s.points.filter(p => p.dino_c >= x0 - 0.01 && p.dino_c <= x1 + 0.01);
-    if (!pts.length) continue;
-    const d = pts.map((p, i) => `${i ? "L" : "M"}${sx(p.dino_c).toFixed(1)},${sy(p[yKey]).toFixed(1)}`).join(" ");
-    const dash = s.style === "dashed" ? "5,4" : (s.style === "dotted" ? "2,3" : "");
-    const sw = s.width || 2.1;
-    const pathAttrs = {d, fill: "none", stroke: s.color, "stroke-width": sw};
-    if (dash) pathAttrs["stroke-dasharray"] = dash;
-    svg.appendChild(el("path", pathAttrs));
-    for (const p of pts) {
-      const cx = sx(p.dino_c), cy = sy(p[yKey]);
-      if (cy < pt - 2 || cy > pt + ph + 2) continue;
-      const c = el("circle", {cx, cy, r: sw + 1.8, fill: s.color, stroke: "var(--card, #111827)", "stroke-width": 1});
-      c.onmouseenter = () => {
-        const lp = p.lpips ? ` LP=${p.lpips.toFixed(4)}` : "";
-        const sm = p.same150_top1 ? ` Same=${(p.same150_top1*100).toFixed(1)}%` : "";
-        info.textContent = `${s.name} [${p.label}] | C=${p.dino_c.toFixed(4)} S=${p.dino_s.toFixed(4)} Top1=${(p.csd_top1*100).toFixed(2)}%${lp}${sm}`;
-      };
-      svg.appendChild(c);
+    // V34 Winner (44M C2 + A3 Start)
+    const v34 = DATA.v34_winner;
+    svg.appendChild(el("path", {d: v34.map((d, i) => `${i ? "L" : "M"}${sx(d[xKey]).toFixed(1)},${sy(d[yKey]).toFixed(1)}`).join(" "), fill: "none", stroke: "#f43f5e", "stroke-width": 2.9}));
+    for (const d of v34) {
+      const cx = sx(d[xKey]), cy = sy(d[yKey]);
+      const dot = el("circle", {cx, cy, r: 4.3, fill: "#f43f5e", stroke: "#fff", "stroke-width": 0.9});
+      dot.onmouseenter = () => { info.textContent = `[V34 Winner 44M C2+A3 ${d.knob}] C=${d.dc.toFixed(4)} S=${d.ds.toFixed(4)} Top1=${d.t1.toFixed(2)}% LP=${d.lpips} Same=${d.same}% Speed=${d.ips} img/s`; };
+      svg.appendChild(dot);
+      if (xKey === "dc" && ["s085", "s100", "s150"].includes(d.knob)) {
+        const lbl = "s=" + d.knob[1] + "." + d.knob.slice(2);
+        const isA100 = (yKey === "ds" && d.knob === "s100");
+        svg.appendChild(el("text", {x: cx + (isA100 ? -6 : 5), y: cy + (isA100 ? 11 : -6), "text-anchor": isA100 ? "end" : "start", class: "pt-lbl", style: "fill:#fda4af;font-weight:700"}, lbl));
+      }
     }
   }
 }
 
-document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
-  document.querySelectorAll("[data-mode]").forEach(x => x.classList.remove("active"));
+function renderAblations() {
+  legendEl.innerHTML = `
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V34 Winner (44M C2+A3)</span>
+    <span class="lg-item"><span class="swatch" style="background:#eab308"></span>V34 D_merged (44M+A3 Bridge Retrain)</span>
+    <span class="lg-item"><span class="swatch" style="background:#10b981"></span>V34 C2 (44M+Q32)</span>
+    <span class="lg-item"><span class="swatch" style="background:#a855f7"></span>V33/V34 S2 (32x32 Joint)</span>
+    <span class="lg-item"><span class="swatch" style="background:#f97316"></span>V34 B2 (Inst 1101-D+Tex)</span>
+    <span class="lg-item"><span class="swatch" style="background:#ec4899"></span>V34 Stage A (A3 Zero-Train)</span>
+  `;
+  const spL = drawPanel(48, 22, 415, 242, {x0: 0.28, x1: 0.78, y0: 0.44, y1: 0.61, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7], yTicks: [0.45, 0.50, 0.55, 0.60], title: "(a) Stage A-D Curves: DINO-C vs DINO-S", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑"});
+  const spR = drawPanel(520, 22, 415, 242, {x0: 0.28, x1: 0.78, y0: 30, y1: 96, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7], yTicks: [40, 60, 80], yFmt: v => v + "%", title: "(b) Stage A-D Curves: DINO-C vs CSD Top-1 (%)", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑"});
+  const curves = [
+    ["V34 B2 (Inst 1101-D+Tex)", DATA.stage_b.B2_inst_tex1101 || [], "#f97316", ""],
+    ["V33 P2_S2 (Frozen 22M+S2)", DATA.v33_s2 || [], "#a855f7", "4,3"],
+    ["V34 C2 (44M + Q32)", DATA.v34_c2 || [], "#10b981", ""],
+    ["V34 D_merged (44M+A3 Bridge)", DATA.v34_d_merged || [], "#eab308", "4,3"],
+    ["V34 Winner (44M C2 + A3 Start)", DATA.v34_winner || [], "#f43f5e", ""],
+  ];
+  for (const [name, pts, col, dash] of curves) {
+    if (!pts.length) continue;
+    for (const [sp, yK] of [[spL, "ds"], [spR, "t1"]]) {
+      const p = pts.filter(d => d.dc >= 0.28 && d.dc <= 0.78);
+      svg.appendChild(el("path", {d: p.map((d, i) => `${i ? "L" : "M"}${sp.sx(d.dc).toFixed(1)},${sp.sy(d[yK]).toFixed(1)}`).join(" "), fill: "none", stroke: col, "stroke-width": name.includes("Winner") ? 2.8 : 1.9, ...(dash ? {"stroke-dasharray": dash} : {})}));
+      for (const d of p) {
+        const c = el("circle", {cx: sp.sx(d.dc), cy: sp.sy(d[yK]), r: 3.6, fill: col});
+        c.onmouseenter = () => { info.textContent = `${name} [${d.knob}] | C=${d.dc.toFixed(4)} S=${d.ds.toFixed(4)} Top1=${d.t1.toFixed(2)}%`; };
+        svg.appendChild(c);
+      }
+    }
+  }
+  for (const a of DATA.stage_a) {
+    if (a.mode === "A3" || a.mode === "A0") {
+      const col = a.mode === "A3" ? "#ec4899" : "#94a3b8";
+      for (const [sp, yK] of [[spL, "ds"], [spR, "t1"]]) {
+        const c = el("rect", {x: sp.sx(a.dc) - 3.5, y: sp.sy(a[yK]) - 3.5, width: 7, height: 7, fill: col, transform: `rotate(45 ${sp.sx(a.dc)} ${sp.sy(a[yK])})`});
+        c.onmouseenter = () => { info.textContent = `Stage A (${a.label}) | C=${a.dc.toFixed(4)} S=${a.ds.toFixed(4)} Top1=${a.t1.toFixed(2)}% Min_S=${a.min_s}`; };
+        svg.appendChild(c);
+      }
+    }
+  }
+}
+
+function renderHoldout() {
+  legendEl.innerHTML = `
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V34 Winner (44M C2+A3)</span>
+    <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>V32 Baseline (22M)</span>
+    <span class="lg-item"><span class="swatch" style="background:#eab308"></span>V34 D_merged (Bridge Retrain)</span>
+    <span class="lg-item">150 Disjoint Unseen Holdout Sources x 5 Targets vs 150 Unseen References</span>
+  `;
+  const spL = drawPanel(52, 22, 410, 242, {x0: 0.53, x1: 0.73, y0: 0.50, y1: 0.58, xTicks: [0.55, 0.60, 0.65, 0.70], yTicks: [0.51, 0.53, 0.55, 0.57], title: "(a) Holdout-750 Blind Split: DINO-C vs DINO-S", xLabel: "Holdout DINO-C ↑", yLabel: "Holdout DINO-S ↑"});
+  const spR = drawPanel(520, 22, 415, 242, {x0: 0.53, x1: 0.73, y0: 38, y1: 72, xTicks: [0.55, 0.60, 0.65, 0.70], yTicks: [40, 50, 60, 70], yFmt: v => v + "%", title: "(b) Holdout-750 Blind Split: DINO-C vs CSD Top-1 (%)", xLabel: "Holdout DINO-C ↑", yLabel: "Holdout CSD Top-1 (%) ↑"});
+  const cols = {V32_s085: "#3b82f6", V32_s100: "#3b82f6", D_merged_s085: "#eab308", D_merged_s100: "#eab308", C2_A3_s085: "#f43f5e", C2_A3_s100: "#f43f5e"};
+  for (const [a, b, col] of [["V32_s100", "V32_s085", "#3b82f6"], ["D_merged_s100", "D_merged_s085", "#eab308"], ["C2_A3_s100", "C2_A3_s085", "#f43f5e"]]) {
+    const p0 = DATA.holdout.find(x => x.label === a), p1 = DATA.holdout.find(x => x.label === b);
+    if (p0 && p1) {
+      for (const [sp, yK] of [[spL, "ds"], [spR, "t1"]]) {
+        svg.appendChild(el("line", {x1: sp.sx(p0.dc), y1: sp.sy(p0[yK]), x2: sp.sx(p1.dc), y2: sp.sy(p1[yK]), stroke: col, "stroke-width": 2.4}));
+      }
+    }
+  }
+  for (const p of DATA.holdout) {
+    const col = cols[p.label] || "#f43f5e";
+    for (const [sp, yK] of [[spL, "ds"], [spR, "t1"]]) {
+      const cx = sp.sx(p.dc), cy = sp.sy(p[yK]);
+      const c = el("circle", {cx, cy, r: 5.5, fill: col, stroke: "#fff", "stroke-width": 1});
+      c.onmouseenter = () => { info.textContent = `[Holdout-750] ${p.label} | C=${p.dc.toFixed(4)} S=${p.ds.toFixed(4)} Top1=${p.t1.toFixed(2)}% LP=${p.lpips} Same=${p.same}%`; };
+      svg.appendChild(c);
+      svg.appendChild(el("text", {x: cx + 7, y: cy - 5, class: "pt-lbl", style: `fill:${col};font-weight:700`}, p.label));
+    }
+  }
+}
+
+function draw() {
+  svg.innerHTML = "";
+  if (curView === "triptych") renderTriptych();
+  else if (curView === "ablations") renderAblations();
+  else renderHoldout();
+}
+
+document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-view]").forEach(x => x.classList.remove("active"));
   b.classList.add("active");
-  curMode = b.dataset.mode;
-  render();
+  curView = b.dataset.view;
+  draw();
 });
-document.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => {
-  document.querySelectorAll("[data-preset]").forEach(x => x.classList.remove("active"));
-  b.classList.add("active");
-  enabled.clear();
-  for (const id of PRESETS[b.dataset.preset]) enabled.add(id);
-  render();
-});
-render();
+draw();
 </script>
 </body>
 </html>
