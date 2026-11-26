@@ -47,7 +47,7 @@ from exp.v34_frontier import (
 from exp.v34_frontier.stage_a_startpoint import build_or_load_analytic_priors, reconstruct_analytic_draft
 from src.utils import decode_s10, load_s10_decoder
 from src.utils.protocol import EVAL_SEED, pick_wrong_cross_tid
-from src.utils.runtime import bf16_autocast, read_json, sanitize_cuda_env, save_json, seed_all, tier_micro_accum, utc
+from src.utils.runtime import auto_vram_budget_gb, bf16_autocast, read_json, sanitize_cuda_env, save_json, seed_all, tier_micro_accum, utc, vram_total_gb
 from src.utils.structure import dwt2_haar, rgb_to_gray
 
 
@@ -316,6 +316,103 @@ def build_pcore_v34(
     return model, cfg
 
 
+def run_pcore_train_step(
+    *,
+    model: nn.Module,
+    opt: torch.optim.Optimizer,
+    ema: nn.Module,
+    params_list: list[nn.Parameter],
+    swd_critic: _HighTEndpointSWDCritic,
+    w_luma: torch.Tensor,
+    b_luma: torch.Tensor,
+    z1: torch.Tensor,
+    zt: torch.Tensor,
+    target_v: torch.Tensor,
+    y16: torch.Tensor,
+    y16_aug: torch.Tensor,
+    y16_clean_m: torch.Tensor,
+    q16_aug: torch.Tensor,
+    tid: torch.Tensor,
+    u_in: torch.Tensor,
+    tau: torch.Tensor,
+    ds: torch.Tensor,
+    dc: torch.Tensor,
+    lscale: torch.Tensor,
+    gamma_b: torch.Tensor,
+    micro: int,
+    accum: int,
+    swd_micro: int,
+    step: int,
+    seed_base: int,
+    use_adapter: bool = False,
+    q32_hi_aug: torch.Tensor | None = None,
+    device: str = "cuda",
+) -> tuple[float, float, float, float]:
+    """Execute one micro-batched PHuber + Y16 + norm-balanced SWD critic training step and EMA update."""
+    opt.zero_grad(set_to_none=True)
+    phuber_acc, st_acc = 0.0, 0.0
+    for m in range(accum):
+        sl = slice(m * micro, (m + 1) * micro)
+        q32_sl = q32_hi_aug[sl] if q32_hi_aug is not None else None
+        with bf16_autocast(device):
+            pred_v = _forward_model(
+                model, zt[sl], y16_aug[sl], q16_aug[sl], tid[sl], u_in[sl], tau[sl],
+                use_adapter=use_adapter, q32_hi=q32_sl,
+                drop_style=ds[sl], drop_content=dc[sl], layout_scale=lscale[sl], gamma=gamma_b[sl],
+            )
+            phuber_m = _pseudo_huber_velocity(pred_v, target_v[sl], delta=0.05)
+            z1_hat = (zt[sl] + (1.0 - tau[sl]).view(-1, 1, 1, 1) * pred_v.float()).clamp(-5.5, 5.5)
+            y16_hat = project_latent_y16_lcn(z1_hat, w_luma, b_luma)
+            w_st = (tau[sl] > 0.25).float() * (~dc[sl]).float() * y16_clean_m[sl].float() * (gamma_b[sl] > 0.75).float()
+            st_m = ((y16_hat - y16[sl]).abs().mean(dim=(1, 2, 3)) * w_st).sum() / w_st.sum().clamp_min(1.0)
+            loss_m = (phuber_m + 0.10 * st_m) / float(accum)
+        loss_m.backward()
+        phuber_acc += float(phuber_m.item()) / float(accum)
+        st_acc += float(st_m.item()) / float(accum)
+
+    pix_val = 0.0
+    if step % 2 == 0:
+        hi_idx = ((tau >= 0.60) & (tau <= 0.95) & (~dc)).nonzero().flatten()
+        if len(hi_idx) >= 2:
+            pick = hi_idx[:6]
+            n_pick = len(pick)
+            g_main = [p.grad.detach().clone() if p.grad is not None else None for p in params_list]
+            norm_main = math.sqrt(sum(float(g.square().sum().item()) for g in g_main if g is not None))
+            opt.zero_grad(set_to_none=True)
+
+            pg_s = torch.Generator(device=device).manual_seed(seed_base + 9000 + step)
+            proj = tuple(torch.linalg.qr(torch.randn(c, 64, device=device, generator=pg_s), mode="reduced").Q for c in (64, 128, 256))
+            for s_st in range(0, n_pick, swd_micro):
+                sub = pick[s_st:s_st + swd_micro]
+                w_sub = float(len(sub)) / float(n_pick)
+                with bf16_autocast(device):
+                    q32_pick = q32_hi_aug[sub] if q32_hi_aug is not None else None
+                    pv_hi = _forward_model(
+                        model, zt[sub], y16_aug[sub], q16_aug[sub], tid[sub], u_in[sub], tau[sub],
+                        use_adapter=use_adapter, q32_hi=q32_pick,
+                        drop_style=ds[sub], drop_content=dc[sub], layout_scale=lscale[sub], gamma=gamma_b[sub],
+                    )
+                    z1_hi = (zt[sub] + (1.0 - tau[sub]).view(-1, 1, 1, 1) * pv_hi.float()).clamp(-5.5, 5.5)
+                    l_pix_sub = swd_critic.loss(z1_hi, z1[sub], proj) * w_sub
+                    pix_val += float(l_pix_sub.item())
+                l_pix_sub.backward()
+
+            norm_pix = math.sqrt(sum(float(p.grad.square().sum().item()) for p in params_list if p.grad is not None))
+            scale = min(2.0, (0.25 * norm_main) / max(norm_pix, 1e-6))
+            for p, gm in zip(params_list, g_main):
+                if p.grad is not None and gm is not None:
+                    p.grad.mul_(scale).add_(gm)
+                elif gm is not None:
+                    p.grad = gm
+            del g_main
+
+    gn = torch.nn.utils.clip_grad_norm_(params_list, 1.0, error_if_nonfinite=True)
+    opt.step()
+    with torch.no_grad():
+        torch._foreach_lerp_(list(ema.parameters()), [p.detach() for p in params_list], 0.004)
+    return phuber_acc, st_acc, pix_val, float(gn)
+
+
 def _forward_model(
     model: nn.Module,
     zt: torch.Tensor,
@@ -477,9 +574,11 @@ def train_pcore_v34(
         start_step = int(r_sv["step"])
         print(f"[{arm_name}] Resuming from step {start_step}/{updates}", flush=True)
 
-    # Cap micro-batch safely to keep peak VRAM << 18.5GB on 4090 (64x2 for 22M, 32x4 for 44M)
-    default_micro_24 = 32 if base_dim >= 192 else 64
+    # Saturate 24GB 4090 cleanly (128x1 for 22M, 64x2 for 44M/68M) while keeping 12GB/8GB safe
+    default_micro_24 = 64 if base_dim >= 192 else 128
     micro, accum = tier_micro_accum(batch_size, default_micro_24gb=default_micro_24, max_micro_12gb=32, max_micro_8gb=16, device=device)
+    swd_micro = (6 if base_dim <= 224 else 3) if vram_total_gb(device) > 13.5 else 2
+    vram_budget_gb = auto_vram_budget_gb(device)
     torch.cuda.empty_cache()
     if str(device).startswith("cuda"):
         torch.cuda.reset_peak_memory_stats(device)
@@ -588,68 +687,15 @@ def train_pcore_v34(
                 zt[a_pos] = zt_br
                 target_v[a_pos] = tv_br
 
-        opt.zero_grad(set_to_none=True)
-        phuber_acc, st_acc = 0.0, 0.0
-        for m in range(accum):
-            sl = slice(m * micro, (m + 1) * micro)
-            q32_sl = q32_hi_aug[sl] if q32_hi_aug is not None else None
-            with bf16_autocast(device):
-                pred_v = _forward_model(
-                    model, zt[sl], y16_aug[sl], q16_aug[sl], tid[sl], u_in[sl], tau[sl],
-                    use_adapter=use_adapter, q32_hi=q32_sl,
-                    drop_style=ds[sl], drop_content=dc[sl], layout_scale=lscale[sl], gamma=gamma_b[sl],
-                )
-                phuber_m = _pseudo_huber_velocity(pred_v, target_v[sl], delta=0.05)
-                z1_hat = (zt[sl] + (1.0 - tau[sl]).view(-1, 1, 1, 1) * pred_v.float()).clamp(-5.5, 5.5)
-                y16_hat = project_latent_y16_lcn(z1_hat, w_luma, b_luma)
-                w_st = (tau[sl] > 0.25).float() * (~dc[sl]).float() * y16_clean_m[sl].float() * (gamma_b[sl] > 0.75).float()
-                st_m = ((y16_hat - y16[sl]).abs().mean(dim=(1, 2, 3)) * w_st).sum() / w_st.sum().clamp_min(1.0)
-                loss_m = (phuber_m + 0.10 * st_m) / float(accum)
-            loss_m.backward()
-            phuber_acc += float(phuber_m.item()) / float(accum)
-            st_acc += float(st_m.item()) / float(accum)
-
-        pix_val = 0.0
-        if step % 2 == 0:
-            hi_idx = ((tau >= 0.60) & (tau <= 0.95) & (~dc)).nonzero().flatten()
-            if len(hi_idx) >= 2:
-                pick = hi_idx[:6]
-                n_pick = len(pick)
-                g_main = [p.grad.detach().clone() if p.grad is not None else None for p in params_list]
-                norm_main = math.sqrt(sum(float(g.square().sum().item()) for g in g_main if g is not None))
-                opt.zero_grad(set_to_none=True)
-
-                pg_s = torch.Generator(device=device).manual_seed(SEED_V34 + 9000 + step)
-                proj = tuple(torch.linalg.qr(torch.randn(c, 64, device=device, generator=pg_s), mode="reduced").Q for c in (64, 128, 256))
-                swd_micro = 2
-                for s_st in range(0, n_pick, swd_micro):
-                    sub = pick[s_st:s_st + swd_micro]
-                    w_sub = float(len(sub)) / float(n_pick)
-                    with bf16_autocast(device):
-                        q32_pick = q32_hi_aug[sub] if q32_hi_aug is not None else None
-                        pv_hi = _forward_model(
-                            model, zt[sub], y16_aug[sub], q16_aug[sub], tid[sub], u_in[sub], tau[sub],
-                            use_adapter=use_adapter, q32_hi=q32_pick,
-                            drop_style=ds[sub], drop_content=dc[sub], layout_scale=lscale[sub], gamma=gamma_b[sub],
-                        )
-                        z1_hi = (zt[sub] + (1.0 - tau[sub]).view(-1, 1, 1, 1) * pv_hi.float()).clamp(-5.5, 5.5)
-                        l_pix_sub = swd_critic.loss(z1_hi, z1[sub], proj) * w_sub
-                        pix_val += float(l_pix_sub.item())
-                    l_pix_sub.backward()
-
-                norm_pix = math.sqrt(sum(float(p.grad.square().sum().item()) for p in params_list if p.grad is not None))
-                scale = min(2.0, (0.25 * norm_main) / max(norm_pix, 1e-6))
-                for p, gm in zip(params_list, g_main):
-                    if p.grad is not None and gm is not None:
-                        p.grad.mul_(scale).add_(gm)
-                    elif gm is not None:
-                        p.grad = gm
-                del g_main
-
-        gn = torch.nn.utils.clip_grad_norm_(params_list, 1.0, error_if_nonfinite=True)
-        opt.step()
-        with torch.no_grad():
-            torch._foreach_lerp_(list(ema.parameters()), [p.detach() for p in params_list], 0.004)
+        phuber_acc, st_acc, pix_val, gn = run_pcore_train_step(
+            model=model, opt=opt, ema=ema, params_list=params_list, swd_critic=swd_critic,
+            w_luma=w_luma, b_luma=b_luma,
+            z1=z1, zt=zt, target_v=target_v,
+            y16=y16, y16_aug=y16_aug, y16_clean_m=y16_clean_m, q16_aug=q16_aug,
+            tid=tid, u_in=u_in, tau=tau, ds=ds, dc=dc, lscale=lscale, gamma_b=gamma_b,
+            micro=micro, accum=accum, swd_micro=swd_micro, step=step, seed_base=SEED_V34,
+            use_adapter=use_adapter, q32_hi_aug=q32_hi_aug, device=device,
+        )
 
         if step == 1 or step % 400 == 0 or step == target_steps:
             dt = (time.monotonic() - t0) / max(1, step - start_step)
@@ -668,7 +714,9 @@ def train_pcore_v34(
                 "cfg": cfg,
             }, resume_p)
 
-    vram_gb = assert_vram_budget(device=device, tag=arm_name)
+    vram_gb = assert_vram_budget(limit_gb=vram_budget_gb, device=device, tag=arm_name)
+    tot_gb = vram_total_gb(device)
+    print(f"[{arm_name}] Peak VRAM = {vram_gb:.2f} / {tot_gb:.1f} GB ({(100.0 * vram_gb / tot_gb) if tot_gb > 0 else 0:.1f}%)", flush=True)
     elapsed_min = round((time.monotonic() - t0) / 60.0, 2)
     del model, opt, swd_critic
     gc.collect()

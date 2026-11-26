@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from src.utils.protocol import STYLES
-from src.utils.runtime import read_json, run_isolated_python, save_json, utc
+from src.utils.runtime import auto_referee_batch, read_json, run_isolated_python, save_json, utc
 
 
 def summarize_measured_arm(arm_name: str, meas_dir: Path | str) -> dict:
@@ -47,6 +47,41 @@ def summarize_measured_arm(arm_name: str, meas_dir: Path | str) -> dict:
     }
 
 
+def run_measure_batch_subprocess(
+    items: list[tuple[Path | str, Path | str, str | None]],
+    *,
+    device: str = "cuda",
+    write_png: bool = False,
+    micro_batch: int | None = None,
+    force: bool = False,
+) -> dict[str, dict]:
+    """Measure multiple arms inside ONE isolated subprocess so FeatureStack loads only once."""
+    mb = int(micro_batch) if micro_batch is not None else auto_referee_batch(device)
+    pending_pairs: list[str] = []
+    normalized: list[tuple[Path, Path, str]] = []
+    for raw_dir, meas_dir, arm_name in items:
+        raw_p, meas_p = Path(raw_dir), Path(meas_dir)
+        name = arm_name or raw_p.name
+        normalized.append((raw_p, meas_p, name))
+        if force or not (meas_p / "eval.json").exists():
+            pending_pairs.append(f"{raw_p}::{meas_p}")
+
+    if pending_pairs:
+        args = ["--pairs", *pending_pairs, "--device", device, "--micro-batch", str(mb)]
+        if not write_png:
+            args.append("--no-png")
+        rc = run_isolated_python("src.eval.measure", args)
+        if rc != 0:
+            raise RuntimeError(f"src.eval.measure --pairs failed (rc={rc})")
+
+    out: dict[str, dict] = {}
+    for _, meas_p, name in normalized:
+        summary = summarize_measured_arm(name, meas_p)
+        save_json(meas_p / "summary_arm.json", summary)
+        out[name] = summary
+    return out
+
+
 def run_measure_subprocess(
     raw_dir: Path | str,
     meas_dir: Path | str,
@@ -54,23 +89,15 @@ def run_measure_subprocess(
     arm_name: str | None = None,
     device: str = "cuda",
     write_png: bool = False,
-    micro_batch: int = 8,
+    micro_batch: int | None = None,
     force: bool = False,
 ) -> dict:
     raw_p, meas_p = Path(raw_dir), Path(meas_dir)
     name = arm_name or raw_p.name
-    if force or not (meas_p / "eval.json").exists():
-        args = [
-            "--raw", str(raw_p),
-            "--out", str(meas_p),
-            "--device", device,
-            "--micro-batch", str(micro_batch),
-        ]
-        if not write_png:
-            args.append("--no-png")
-        rc = run_isolated_python("src.eval.measure", args)
-        if rc != 0:
-            raise RuntimeError(f"src.eval.measure failed for {name} (rc={rc})")
-    summary = summarize_measured_arm(name, meas_p)
-    save_json(meas_p / "summary_arm.json", summary)
-    return summary
+    return run_measure_batch_subprocess(
+        [(raw_p, meas_p, name)],
+        device=device,
+        write_png=write_png,
+        micro_batch=micro_batch,
+        force=force,
+    )[name]

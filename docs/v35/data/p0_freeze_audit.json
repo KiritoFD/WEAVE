@@ -1,0 +1,253 @@
+{
+  "updated_utc": "2026-11-26T12:38:41.582207+00:00",
+  "wall_sec": 352.59,
+  "stage": "P0_freeze_and_audit",
+  "ckpt_audit": {
+    "c2_ckpt": "/root/Workspace/WEAVE/runs/v34_frontier/stage_c/C2_44m_q32/C2_44m_q32_final.pt",
+    "keys": [
+      "ema",
+      "cfg",
+      "step",
+      "train_min",
+      "peak_vram_gb",
+      "nodino"
+    ],
+    "step": 3500,
+    "has_ema": true,
+    "has_online": false,
+    "has_optimizer": false,
+    "note": "C2_44m_q32_final.pt saves EMA weights only; P5 continuation re-warms AdamW moments for 100 steps.",
+    "cfg": {
+      "base_dim": 208,
+      "u_dim": 417,
+      "cond_dim": 384,
+      "use_adapter": false,
+      "d_q16": 32,
+      "d_q32": 32,
+      "ctrl_w32": 144,
+      "ctrl_w16": 256,
+      "pcore_params": 44540532,
+      "ctrl_params": 0,
+      "total_params": 44540532,
+      "style_mode": "k8",
+      "analytic_mode": "A0",
+      "updates": 3500
+    }
+  },
+  "schedule_diff": {
+    "s150": {
+      "tau0": 0.36,
+      "ws": 5.6,
+      "wc": 0.75,
+      "wsp": 4.55,
+      "rescale_phi": 0.48,
+      "gamma": 0.25,
+      "lscale": 0.58,
+      "draft_lambda": 1.0
+    },
+    "tau0_pure_noise": {
+      "tau0": 0.0,
+      "ws": 4.5,
+      "wc": 1.8,
+      "wsp": 1.35,
+      "rescale_phi": 0.4,
+      "gamma": 0.35,
+      "lscale": 0.72,
+      "draft_lambda": 0.75
+    }
+  },
+  "wrong_target_audit": {
+    "n_tasks": 750,
+    "all_wrong_differ_from_src": false,
+    "all_wrong_differ_from_tgt": false
+  },
+  "holdout_isolation_audit": {
+    "n_train": 4400,
+    "n_holdout_total": 300,
+    "n_holdout_src": 150,
+    "n_holdout_ref": 150,
+    "pid_overlap_ho_train": 0,
+    "pid_overlap_ho_test750": 0,
+    "src_ref_idx_overlap": 0,
+    "artist_overlap_ho_train": 5,
+    "artist_overlap_ho_src_ref": 5,
+    "note": "Zero painting-level overlap across train_4400 / test750 / holdout-src / holdout-ref; holdout used previously in V34 verification so P6 calibration strictly uses train_calib_300 instead."
+  },
+  "repro_levels": {
+    "s085": {
+      "arm": "P0_BaseA3_s085",
+      "dino_c": 0.6734,
+      "dino_s": 0.5143,
+      "dino_s_top5": 0.4549,
+      "csls_k10": 0.4883,
+      "csd_top1": 0.55,
+      "clip_s": 0.7149,
+      "lpips": 0.5365,
+      "style_affinity": 0.6146,
+      "pred_eq_src": 0.3533,
+      "same150_top1": 0.96,
+      "same150_dino_c": 0.8583,
+      "per_tgt_dino_s": {
+        "Ear": 0.5405,
+        "Imp": 0.6442,
+        "Min": 0.3254,
+        "Roc": 0.5592,
+        "Uki": 0.5025
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.7004,
+        "Imp": 0.6191,
+        "Min": 0.6522,
+        "Roc": 0.6643,
+        "Uki": 0.7308
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.25,
+        "Imp": 0.9,
+        "Min": 0.9167,
+        "Roc": 0.4667,
+        "Uki": 0.2167
+      }
+    },
+    "s100": {
+      "arm": "P0_BaseA3_s100",
+      "dino_c": 0.5628,
+      "dino_s": 0.557,
+      "dino_s_top5": 0.4952,
+      "csls_k10": 0.57,
+      "csd_top1": 0.69,
+      "clip_s": 0.7358,
+      "lpips": 0.5894,
+      "style_affinity": 0.6464,
+      "pred_eq_src": 0.2033,
+      "same150_top1": 0.9467,
+      "same150_dino_c": 0.7541,
+      "per_tgt_dino_s": {
+        "Ear": 0.602,
+        "Imp": 0.6847,
+        "Min": 0.353,
+        "Roc": 0.6052,
+        "Uki": 0.5401
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.5543,
+        "Imp": 0.5293,
+        "Min": 0.5427,
+        "Roc": 0.5778,
+        "Uki": 0.6098
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.475,
+        "Imp": 0.975,
+        "Min": 1.0,
+        "Roc": 0.5833,
+        "Uki": 0.4167
+      }
+    },
+    "s150": {
+      "arm": "P0_BaseA3_s150",
+      "dino_c": 0.3472,
+      "dino_s": 0.5915,
+      "dino_s_top5": 0.5353,
+      "csls_k10": 0.8267,
+      "csd_top1": 0.9183,
+      "clip_s": 0.7688,
+      "lpips": 0.7158,
+      "style_affinity": 0.6802,
+      "pred_eq_src": 0.0483,
+      "same150_top1": 0.98,
+      "same150_dino_c": 0.5432,
+      "per_tgt_dino_s": {
+        "Ear": 0.6559,
+        "Imp": 0.7424,
+        "Min": 0.3714,
+        "Roc": 0.6039,
+        "Uki": 0.5841
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.3633,
+        "Imp": 0.3094,
+        "Min": 0.2882,
+        "Roc": 0.4127,
+        "Uki": 0.3623
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.9083,
+        "Imp": 1.0,
+        "Min": 1.0,
+        "Roc": 0.8917,
+        "Uki": 0.7917
+      }
+    },
+    "tau0": {
+      "arm": "P0_BaseA3_tau0",
+      "dino_c": 0.4155,
+      "dino_s": 0.5925,
+      "dino_s_top5": 0.5344,
+      "csls_k10": 0.6433,
+      "csd_top1": 0.74,
+      "clip_s": 0.7596,
+      "lpips": 0.724,
+      "style_affinity": 0.676,
+      "pred_eq_src": 0.1433,
+      "same150_top1": 0.9067,
+      "same150_dino_c": 0.5674,
+      "per_tgt_dino_s": {
+        "Ear": 0.6631,
+        "Imp": 0.7331,
+        "Min": 0.3594,
+        "Roc": 0.6055,
+        "Uki": 0.6015
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.462,
+        "Imp": 0.3905,
+        "Min": 0.3657,
+        "Roc": 0.4453,
+        "Uki": 0.4139
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.425,
+        "Imp": 0.9917,
+        "Min": 0.9167,
+        "Roc": 0.5667,
+        "Uki": 0.8
+      }
+    },
+    "s085_wrong": {
+      "arm": "P0_BaseA3_s085_wrong",
+      "dino_c": 0.6727,
+      "dino_s": 0.4541,
+      "dino_s_top5": 0.3994,
+      "csls_k10": 0.025,
+      "csd_top1": 0.015,
+      "clip_s": 0.6772,
+      "lpips": 0.5364,
+      "style_affinity": 0.5656,
+      "pred_eq_src": 0.33,
+      "same150_top1": 0.96,
+      "same150_dino_c": 0.8583,
+      "per_tgt_dino_s": {
+        "Ear": 0.481,
+        "Imp": 0.5323,
+        "Min": 0.2938,
+        "Roc": 0.4965,
+        "Uki": 0.4666
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.6416,
+        "Imp": 0.6053,
+        "Min": 0.7147,
+        "Roc": 0.7297,
+        "Uki": 0.672
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.0,
+        "Imp": 0.0583,
+        "Min": 0.0167,
+        "Roc": 0.0,
+        "Uki": 0.0
+      }
+    }
+  }
+}

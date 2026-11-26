@@ -30,10 +30,23 @@ def _unused_feature_models(device: str):
     raise NotImplementedError("feature loading moved to src.utils.FeatureStack")
 
 
-def measure(raw_dir: Path, out: Path, *, device: str = "cuda", write_png: bool = True,
-            limit: int = 0, micro_batch: int = 8) -> list[dict]:
+def _measure_with_context(
+    raw_dir: Path,
+    out: Path,
+    *,
+    by_id: dict[str, dict],
+    src: dict,
+    ref_manifest: dict,
+    stack,
+    proto,
+    rd,
+    rc,
+    write_png: bool,
+    limit: int,
+    micro_batch: int,
+) -> list[dict]:
+    from PIL import Image
     from .metrics import enrich_rows, summarize_rows
-    from src.utils import FeatureStack, reference_bank
     from src.utils.raw_io import save_png_batch_fast
 
     raw_dir, out = Path(raw_dir), Path(out)
@@ -42,18 +55,6 @@ def measure(raw_dir: Path, out: Path, *, device: str = "cuda", write_png: bool =
         (out / "images").mkdir(exist_ok=True)
 
     meta = json.loads((raw_dir / "meta.json").read_text(encoding="utf-8"))
-    tasks = json.loads((REPO / "eval_protocol/tasks_750.json").read_text(encoding="utf-8"))["tasks"]
-    by_id = {t["task_id"]: t for t in tasks}
-    src = torch.load(REPO / "runs/v6_r2/cache/tasks750_source_features.pt",
-                     map_location="cpu", weights_only=False)
-    ref_manifest = json.loads((REPO / "eval_protocol/references_v1.json").read_text(encoding="utf-8"))["references"]
-
-    stack = FeatureStack(device)
-    bank = reference_bank(device)
-    proto = stack.csd_prototypes
-    rd, rc = bank["dino"], bank["clip"]
-
-    from PIL import Image
     rows, feats = [], {"dino": [], "csd": [], "clip": []}
     t0 = time.time()
     for entry in meta["batches"]:
@@ -101,7 +102,7 @@ def measure(raw_dir: Path, out: Path, *, device: str = "cuda", write_png: bool =
             })
         feats["dino"].append(df.cpu()); feats["csd"].append(torch.from_numpy(cf))
         feats["clip"].append(clf.cpu())
-        print(f"  measure {len(rows)} {time.time() - t0:.1f}s", flush=True)
+        print(f"  measure [{raw_dir.name}] {len(rows)} {time.time() - t0:.1f}s", flush=True)
 
     rows = enrich_rows(rows, styles=STYLES)
     full = len(rows) == 750 and not limit
@@ -116,20 +117,73 @@ def measure(raw_dir: Path, out: Path, *, device: str = "cuda", write_png: bool =
     return rows
 
 
+def measure_batch(
+    pairs: list[tuple[Path, Path]],
+    *,
+    device: str = "cuda",
+    write_png: bool = True,
+    limit: int = 0,
+    micro_batch: int | None = None,
+) -> list[list[dict]]:
+    """Measure multiple test750 raw directories in a single FeatureStack initialization."""
+    from src.utils import FeatureStack, auto_referee_batch, reference_bank
+
+    mb = int(micro_batch) if micro_batch is not None else auto_referee_batch(device)
+    tasks = json.loads((REPO / "eval_protocol/tasks_750.json").read_text(encoding="utf-8"))["tasks"]
+    by_id = {t["task_id"]: t for t in tasks}
+    src = torch.load(REPO / "runs/v6_r2/cache/tasks750_source_features.pt",
+                     map_location="cpu", weights_only=False)
+    ref_manifest = json.loads((REPO / "eval_protocol/references_v1.json").read_text(encoding="utf-8"))["references"]
+
+    stack = FeatureStack(device)
+    bank = reference_bank(device)
+    proto = stack.csd_prototypes
+    rd, rc = bank["dino"], bank["clip"]
+
+    return [
+        _measure_with_context(
+            Path(r_dir), Path(o_dir),
+            by_id=by_id, src=src, ref_manifest=ref_manifest,
+            stack=stack, proto=proto, rd=rd, rc=rc,
+            write_png=write_png, limit=limit, micro_batch=mb,
+        )
+        for r_dir, o_dir in pairs
+    ]
+
+
+def measure(raw_dir: Path, out: Path, *, device: str = "cuda", write_png: bool = True,
+            limit: int = 0, micro_batch: int | None = None) -> list[dict]:
+    return measure_batch(
+        [(raw_dir, out)], device=device, write_png=write_png, limit=limit, micro_batch=micro_batch
+    )[0]
+
+
 def main():
     import argparse
     default_dev = "cuda" if torch.cuda.is_available() else "cpu"
     ap = argparse.ArgumentParser(description="Measure metrics from stored raw outputs")
-    ap.add_argument("--raw", required=True, help="directory written by src.infer.run")
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--raw", help="directory written by src.infer.run")
+    ap.add_argument("--out")
+    ap.add_argument("--pairs", nargs="+", help="one or more raw_dir::out_dir pairs for single-load batch eval")
     ap.add_argument("--device", default=default_dev)
     ap.add_argument("--no-png", action="store_true")
     ap.add_argument("--limit", type=int, default=0)
-    ap.add_argument("--micro-batch", type=int, default=8)
+    ap.add_argument("--micro-batch", type=int, default=0)
     a = ap.parse_args()
-    rows = measure(Path(a.raw), Path(a.out), device=a.device,
-                   write_png=not a.no_png, limit=a.limit, micro_batch=a.micro_batch)
-    print(f"EVAL_DONE {len(rows)} rows", flush=True)
+    mb = a.micro_batch if a.micro_batch > 0 else None
+    if a.pairs:
+        pairs = []
+        for spec in a.pairs:
+            raw_s, out_s = spec.split("::", 1)
+            pairs.append((Path(raw_s), Path(out_s)))
+        res = measure_batch(pairs, device=a.device, write_png=not a.no_png, limit=a.limit, micro_batch=mb)
+        print(f"EVAL_BATCH_DONE {len(res)} arms", flush=True)
+    else:
+        if not a.raw or not a.out:
+            ap.error("Either --pairs or both --raw and --out are required")
+        rows = measure(Path(a.raw), Path(a.out), device=a.device,
+                       write_png=not a.no_png, limit=a.limit, micro_batch=mb)
+        print(f"EVAL_DONE {len(rows)} rows", flush=True)
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ from .metrics import enrich_rows, summarize_rows
 from .runner import summarize_measured_arm
 from src.utils.protocol import STYLES
 from src.utils.raw_io import save_png_batch_fast
-from src.utils.runtime import REPO, run_isolated_python, save_json
+from src.utils.runtime import REPO, auto_referee_batch, run_isolated_python, save_json
 
 HOLDOUT_SPEC_PATH = REPO / "runs/v34_frontier/holdout/holdout_750_spec.pt"
 
@@ -212,11 +212,12 @@ def run_holdout_measure_subprocess(
     *,
     arm_name: str | None = None,
     device: str = "cuda",
-    micro_batch: int = 8,
+    micro_batch: int | None = None,
     force: bool = False,
 ) -> dict[str, Any]:
     raw_p, meas_p = Path(raw_dir), Path(meas_dir)
     name = arm_name or raw_p.name
+    mb = int(micro_batch) if micro_batch is not None else auto_referee_batch(device)
     if force or not (meas_p / "eval.json").exists():
         rc = run_isolated_python(
             "src.eval.holdout",
@@ -224,7 +225,7 @@ def run_holdout_measure_subprocess(
                 "--raw", str(raw_p),
                 "--out", str(meas_p),
                 "--device", device,
-                "--micro-batch", str(micro_batch),
+                "--micro-batch", str(mb),
             ],
         )
         if rc != 0:

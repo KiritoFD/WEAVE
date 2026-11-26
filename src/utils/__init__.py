@@ -4,9 +4,11 @@ from .vae import (DEFAULT_BATCH, S10_DECODER, StudentDecoder, decode,
                   s10_scaling_factor)
 from .features import FeatureStack, STYLES, reference_bank
 from .raw_io import RawWriter, export_raw_pngs, save_png_batch_fast
-from .runtime import (bf16_autocast, read_json, run_isolated_python,
-                      sanitize_cuda_env, save_json, seed_all, sha256_file,
-                      tier_micro_accum, utc, vram_total_gb)
+from .runtime import (auto_decode_batch, auto_infer_batch, auto_referee_batch,
+                      auto_vram_budget_gb, bf16_autocast, read_json,
+                      run_isolated_python, sanitize_cuda_env, save_json,
+                      seed_all, sha256_file, tier_micro_accum, utc,
+                      vram_total_gb)
 from .protocol import (EVAL_SEED, canonical_pid, load_tasks_750,
                        load_vgg16_features_offline, pick_wrong_cross_tid)
 from .pool import clean_balanced_pool
@@ -17,7 +19,8 @@ from .structure import (extract_color_fiber_27d, extract_whitened_dino_layout,
 
 __all__ = [
     "DEFAULT_BATCH", "EVAL_SEED", "FeatureStack", "RawWriter", "S10_DECODER",
-    "STYLES", "StudentDecoder", "bf16_autocast", "canonical_pid",
+    "STYLES", "StudentDecoder", "auto_decode_batch", "auto_infer_batch",
+    "auto_referee_batch", "auto_vram_budget_gb", "bf16_autocast", "canonical_pid",
     "clean_balanced_pool", "decode", "decode_s10", "export_raw_pngs",
     "extract_color_fiber_27d", "extract_whitened_dino_layout",
     "latent_to_structure_64", "load_s10_decoder", "load_tasks_750",

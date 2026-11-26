@@ -49,6 +49,47 @@ V32_FALLBACK_CANONICAL = [
 ]
 V32_FALLBACK_EC_MAX = {"lbl": "E-Core (1.00)", "ips": 33.1, "dc": 0.5674, "ds": 0.5077, "t1": 67.17}
 
+V35_FALLBACK_REPORTS = [
+    {"arm": "O0_t50",     "group": "O0", "tau0": 0.50, "steps": 6, "dc": 0.6586, "ds": 0.4964, "t1": 14.50, "causal": 5.33,  "art": 66.67, "mv": 80.83, "inst": 69.17, "sg_aff": 0.3946, "ips": 1.35, "b8_ips": None},
+    {"arm": "O1_t50",     "group": "O1", "tau0": 0.50, "steps": 6, "dc": 0.6598, "ds": 0.4954, "t1": 14.83, "causal": 6.17,  "art": 67.50, "mv": 75.00, "inst": 72.50, "sg_aff": 0.3949, "ips": 1.48, "b8_ips": None},
+    {"arm": "O1_dpm_t25", "group": "O1", "tau0": 0.25, "steps": 6, "dc": 0.5332, "ds": 0.5388, "t1": 24.50, "causal": 16.33, "art": 68.33, "mv": 85.83, "inst": 75.83, "sg_aff": 0.4496, "ips": 3.52, "b8_ips": 3.31},
+    {"arm": "O1_t20_w35", "group": "O1", "tau0": 0.20, "steps": 6, "dc": 0.4785, "ds": 0.5510, "t1": 29.50, "causal": 21.17, "art": 77.50, "mv": 86.67, "inst": 72.50, "sg_aff": 0.4667, "ips": 2.58, "b8_ips": 3.10},
+    {"arm": "O1_t00_w35", "group": "O1", "tau0": 0.00, "steps": 6, "dc": 0.3705, "ds": 0.5658, "t1": 52.50, "causal": 40.67, "art": 82.50, "mv": 93.33, "inst": 81.67, "sg_aff": 0.4912, "ips": 1.76, "b8_ips": 2.42},
+    {"arm": "O2_t30",     "group": "O2", "tau0": 0.30, "steps": 6, "dc": 0.4941, "ds": 0.5491, "t1": 34.50, "causal": 25.00, "art": 74.17, "mv": 84.17, "inst": 75.00, "sg_aff": 0.4572, "ips": 3.40, "b8_ips": 2.56},
+    {"arm": "O3_t00",     "group": "O3", "tau0": 0.00, "steps": 6, "dc": 0.3221, "ds": 0.5470, "t1": 48.50, "causal": 36.00, "art": 89.17, "mv": 91.67, "inst": 79.17, "sg_aff": 0.4943, "ips": 3.30, "b8_ips": 2.39},
+    {"arm": "O3_t30",     "group": "O3", "tau0": 0.30, "steps": 6, "dc": 0.4177, "ds": 0.5583, "t1": 42.67, "causal": 30.83, "art": 85.83, "mv": 92.50, "inst": 83.33, "sg_aff": 0.4907, "ips": 3.17, "b8_ips": 2.42},
+    {"arm": "O3_t35",     "group": "O3", "tau0": 0.35, "steps": 6, "dc": 0.4361, "ds": 0.5540, "t1": 40.50, "causal": 29.00, "art": 78.33, "mv": 93.33, "inst": 85.00, "sg_aff": 0.4833, "ips": 3.46, "b8_ips": 4.41},
+]
+
+
+def _collect_v35_reports() -> list[dict[str, Any]]:
+    """Load completed V35 CLEAVE-One full reports from disk if present, else embedded snapshot."""
+    v35_dir = REPO / "runs/v35_cleave_one/measured"
+    loaded = []
+    if v35_dir.exists():
+        for fn in sorted(v35_dir.glob("*_full_report.json")):
+            d = read_json(fn)
+            c = d["test750_cross600"]
+            sg = d.get("sg25") or {}
+            arm = d["arm"]
+            loaded.append({
+                "arm": arm,
+                "group": arm.split("_")[0],
+                "tau0": float(d["tau0"]),
+                "steps": int(d["steps"]),
+                "dc": round(float(c["dino_c"]), 4),
+                "ds": round(float(c["dino_s"]), 4),
+                "t1": round(float(c["csd_top1"]) * 100.0, 2),
+                "causal": round(float(d["test750_wrong_ctrl"]["causal_delta_pp"]), 2),
+                "art": round(float(d["artist_ood"]["follow_2way"]) * 100.0, 2),
+                "mv": round(float(d["movement_ood"]["follow_2way"]) * 100.0, 2),
+                "inst": round(float(d["instance_swap"]["follow_2way"]) * 100.0, 2),
+                "sg_aff": round(float(sg.get("style_affinity", 0.0)), 4),
+                "ips": float(sg.get("e2e_img_per_sec", 0.0)),
+                "b8_ips": sg.get("e2e_batch8_img_per_sec"),
+            })
+    return loaded if len(loaded) >= len(V35_FALLBACK_REPORTS) else V35_FALLBACK_REPORTS
+
 
 def _load_json(path: Path) -> dict[str, Any] | None:
     if not path.exists():
@@ -169,6 +210,10 @@ def collect_triptych_data() -> dict[str, Any]:
             if k in sb["arms"]:
                 stage_b_curves[k] = _extract_curve(sb["arms"][k]["levels"], ips=18.2)
 
+    v35_all = _collect_v35_reports()
+    v35_o3 = sorted([r for r in v35_all if r["group"] == "O3"], key=lambda p: p["dc"])
+    v35_o1 = sorted([r for r in v35_all if r["group"] == "O1"], key=lambda p: p["dc"])
+
     return {
         "external": ext_list,
         "ext_front_a": [ext_list[i] for i in fa_idx],
@@ -182,6 +227,9 @@ def collect_triptych_data() -> dict[str, Any]:
         "v34_d_merged": v34_d_merged,
         "v33_s2": v33_s2,
         "v34_ips": v34_ips,
+        "v35_all": v35_all,
+        "v35_o3": v35_o3,
+        "v35_o1": v35_o1,
         "stage_a": stage_a_pts,
         "stage_b": stage_b_curves,
         "holdout": holdout_pts,
@@ -198,6 +246,8 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     TEAL, TEAL_DARK = "#0d9488", "#115e59"
     BLUE_V32, BLUE_DARK = "#2563eb", "#1e3a8a"
     WIN_RED, WIN_DARK = "#e11d48", "#881337"
+    V35_AMB, V35_DARK = "#f59e0b", "#92400e"
+    V35_O1_COL = "#fb923c"
     HEAVY_PURPLE = "#7c3aed"
     LIGHT_BLUE = "#0284c7"
     SLATE_FRONT = "#64748b"
@@ -220,6 +270,8 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     pc32 = data["v32_pcore"]
     ec_m = data["v32_ec_max"]
     v34 = data["v34_winner"]
+    v35_o3 = data["v35_o3"]
+    v35_o1 = data["v35_o1"]
     ext = data["external"]
 
     def _draw_ext(ax, x_key: str, y_key: str, front_pts: list[dict], *, show_sg_star: bool = True):
@@ -249,6 +301,12 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     ax_a.scatter([p["dc"] for p in pc32], [p["ds"] for p in pc32], marker="o", s=34, c=BLUE_V32, edgecolors=BLUE_DARK, lw=0.8, alpha=0.85, zorder=6)
     ax_a.scatter([p["dc"] for p in v34], [p["ds"] for p in v34], marker="o", s=54, c=WIN_RED, edgecolors=WIN_DARK, lw=1.1, zorder=9)
     ax_a.scatter([ec_m["dc"]], [ec_m["ds"]], marker="D", s=42, facecolors="none", edgecolors=TEAL, lw=1.5, zorder=6)
+    ax_a.plot([p["dc"] for p in v35_o1], [p["ds"] for p in v35_o1], ":", color=V35_O1_COL, lw=1.6, zorder=7)
+    ax_a.scatter([p["dc"] for p in v35_o1], [p["ds"] for p in v35_o1], marker="^", s=36, c=V35_O1_COL, edgecolors=V35_DARK, lw=0.7, zorder=8)
+    ax_a.plot([p["dc"] for p in v35_o3], [p["ds"] for p in v35_o3], "-", color=V35_AMB, lw=2.5, zorder=9)
+    ax_a.scatter([p["dc"] for p in v35_o3], [p["ds"] for p in v35_o3], marker="*", s=110, c=V35_AMB, edgecolors=V35_DARK, lw=0.8, zorder=10)
+    if v35_o3:
+        _ann(ax_a, "V35 O3 (1-Shot)", (v35_o3[0]["dc"], v35_o3[0]["ds"]), (-4, -14), ha="left", col=V35_DARK, bold=True, fs=7.2)
 
     for b in ext:
         offs = {
@@ -294,6 +352,12 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     ax_b.scatter([p["dc"] for p in pc32], [p["t1"] for p in pc32], marker="o", s=34, c=BLUE_V32, edgecolors=BLUE_DARK, lw=0.8, alpha=0.85, zorder=6)
     ax_b.scatter([p["dc"] for p in v34], [p["t1"] for p in v34], marker="o", s=54, c=WIN_RED, edgecolors=WIN_DARK, lw=1.1, zorder=9)
     ax_b.scatter([ec_m["dc"]], [ec_m["t1"]], marker="D", s=42, facecolors="none", edgecolors=TEAL, lw=1.5, zorder=6)
+    ax_b.plot([p["dc"] for p in v35_o1], [p["t1"] for p in v35_o1], ":", color=V35_O1_COL, lw=1.6, zorder=7)
+    ax_b.scatter([p["dc"] for p in v35_o1], [p["t1"] for p in v35_o1], marker="^", s=36, c=V35_O1_COL, edgecolors=V35_DARK, lw=0.7, zorder=8)
+    ax_b.plot([p["dc"] for p in v35_o3], [p["t1"] for p in v35_o3], "-", color=V35_AMB, lw=2.5, zorder=9)
+    ax_b.scatter([p["dc"] for p in v35_o3], [p["t1"] for p in v35_o3], marker="*", s=110, c=V35_AMB, edgecolors=V35_DARK, lw=0.8, zorder=10)
+    if v35_o3:
+        _ann(ax_b, "V35 O3 (1-Shot)", (v35_o3[0]["dc"], v35_o3[0]["t1"]), (-4, -13), ha="left", col=V35_DARK, bold=True, fs=7.2)
 
     for b in ext:
         offs_b = {
@@ -334,6 +398,11 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     ax_c.scatter([p["ips"] for p in pc32], [p["t1"] for p in pc32], marker="o", s=34, c=BLUE_V32, edgecolors=BLUE_DARK, lw=0.8, alpha=0.85, zorder=6)
     ax_c.scatter([p["ips"] for p in v34], [p["t1"] for p in v34], marker="o", s=54, c=WIN_RED, edgecolors=WIN_DARK, lw=1.1, zorder=9)
     ax_c.scatter([ec_m["ips"]], [ec_m["t1"]], marker="D", s=42, facecolors="none", edgecolors=TEAL, lw=1.5, zorder=6)
+    ax_c.plot([p["ips"] for p in v35_o3], [p["t1"] for p in v35_o3], "-", color=V35_AMB, lw=2.2, zorder=9)
+    ax_c.scatter([p["ips"] for p in v35_o3], [p["t1"] for p in v35_o3], marker="*", s=105, c=V35_AMB, edgecolors=V35_DARK, lw=0.8, zorder=10)
+    if v35_o3:
+        p30 = v35_o3[1] if len(v35_o3) > 1 else v35_o3[0]
+        _ann(ax_c, f"V35 O3 1-Shot\n({p30['ips']} img/s @ 3060)", (p30["ips"], p30["t1"]), (-6, 8), ha="right", col=V35_DARK, bold=True, fs=6.9)
 
     for b in ext:
         offs_c = {
@@ -366,9 +435,13 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
 
     handles = [
         Line2D([0], [0], color=WIN_RED, marker="o", ms=6.2, lw=2.8, mfc=WIN_RED, mec=WIN_DARK,
-               label=f"CLEAVE V34 Winner: 44M C2 + A3 Start ({data['v34_ips']:.1f} img/s @ b16)"),
+               label=f"CLEAVE V34 Closed-Set Winner: 44M ({data['v34_ips']:.1f} img/s @ 4090)"),
+        Line2D([0], [0], color=V35_AMB, marker="*", ms=9.0, lw=2.4, mfc=V35_AMB, mec=V35_DARK,
+               label="CLEAVE V35 O3 Open-Domain 1-Shot (3060, 3.2-5.5 img/s)"),
+        Line2D([0], [0], color=V35_O1_COL, marker="^", ms=5.5, lw=1.6, ls=":", mfc=V35_O1_COL, mec=V35_DARK,
+               label="CLEAVE V35 O1 Open-Domain (MLP EncA)"),
         Line2D([0], [0], color=BLUE_V32, marker="o", ms=5.2, lw=1.9, ls="--", mfc=BLUE_V32, mec=BLUE_DARK,
-               label="CLEAVE V32 Baseline: 22M P-Core (18.2-18.5 img/s)"),
+               label="CLEAVE V32 Closed-Set: 22M P-Core (18.2-18.5 img/s)"),
         Line2D([0], [0], color=TEAL, marker="D", ms=5.6, lw=2.4, mfc=TEAL, mec=TEAL_DARK,
                label="CLEAVE E-Core: 1-NFE (33.1 img/s)"),
         Line2D([0], [0], color="none", marker="*", ms=8.5, mfc=HEAVY_PURPLE, mec="#3b0764", label="StyleGallery (30.4s)"),
@@ -376,9 +449,9 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
         Line2D([0], [0], color="none", marker="s", ms=5.2, mfc=LIGHT_BLUE, mec="#075985", label="Lightweight Baselines (0.2-3.0s)"),
         Line2D([0], [0], color=SLATE_FRONT, ls="--", lw=1.35, label="External Pareto Frontier"),
     ]
-    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 1.005), ncol=4,
-               frameon=True, facecolor="#f8fafc", edgecolor="#cbd5e1", fontsize=7.6)
-    fig.subplots_adjust(left=0.055, right=0.985, top=0.77, bottom=0.14, wspace=0.25)
+    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 1.015), ncol=3,
+               frameon=True, facecolor="#f8fafc", edgecolor="#cbd5e1", fontsize=7.3)
+    fig.subplots_adjust(left=0.055, right=0.985, top=0.73, bottom=0.14, wspace=0.25)
 
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     for stem in ("cleave_pareto_triptych", "cleave_pareto_latest"):
@@ -453,8 +526,9 @@ svg {{ width: 100%; height: 300px; display: block; }}
 <div class="wrap">
   <div class="toolbar">
     <div class="tabs">
-      <button class="btn active" data-view="triptych">论文三联图 (V34 vs V32 vs 外部基线)</button>
-      <button class="btn" data-view="ablations">V34 各阶段消融 (Stage A / B / C / D)</button>
+      <button class="btn active" data-view="triptych">论文三联图 (V35 1-Shot + V34/V32 + 外部基线)</button>
+      <button class="btn" data-view="v35">V35 开放域 1-Shot (O0–O3 消融 &amp; OOD)</button>
+      <button class="btn" data-view="ablations">V34 各阶段消融 (Stage A–D)</button>
       <button class="btn" data-view="holdout">独立盲测 Holdout-750</button>
     </div>
   </div>
@@ -507,11 +581,12 @@ function drawPanel(ox, oy, pw, ph, spec) {{
 
 function renderTriptych() {{
   legendEl.innerHTML = `
-    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span><b>CLEAVE V34 (44M C2+A3, 14.5 img/s)</b></span>
-    <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>CLEAVE V32 (22M, 18.2-18.5 img/s)</span>
-    <span class="lg-item"><span class="swatch" style="background:#14b8a6"></span>E-Core 1-NFE (33.1 img/s)</span>
-    <span class="lg-item"><span class="swatch" style="background:#a78bfa"></span>StyleGallery (30.4s) / Heavy (&gt;1B)</span>
-    <span class="lg-item"><span class="swatch" style="background:#94a3b8"></span>External Pareto Frontier</span>
+    <span class="lg-item"><span class="swatch" style="background:#f59e0b"></span><b>CLEAVE V35 O3 开放域 1-Shot (3060, 3.2–5.5 img/s)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#fb923c"></span>V35 O1 (MLP EncA)</span>
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>CLEAVE V34 闭集 (44M, 14.5 img/s)</span>
+    <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>V32 闭集 (22M, 18.2 img/s)</span>
+    <span class="lg-item"><span class="swatch" style="background:#14b8a6"></span>E-Core (33.1 img/s)</span>
+    <span class="lg-item"><span class="swatch" style="background:#a78bfa"></span>StyleGallery / 外部基线</span>
   `;
   const panels = [
     {{ox: 44,  oy: 22, pw: 264, ph: 242, x0: 0.24, x1: 0.94, y0: 0.34, y1: 0.63, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.35, 0.40, 0.45, 0.50, 0.55, 0.60], title: "(a) Full-Spectrum Quality Control", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑", shade: [0.65, 0.94, "#10b981"], xKey: "dc", yKey: "ds", extFront: DATA.ext_front_a}},
@@ -575,6 +650,69 @@ function renderTriptych() {{
         const isA100 = (yKey === "ds" && d.knob === "s100");
         svg.appendChild(el("text", {{x: cx + (isA100 ? -6 : 5), y: cy + (isA100 ? 11 : -6), "text-anchor": isA100 ? "end" : "start", class: "pt-lbl", style: "fill:#fda4af;font-weight:700"}}, lbl));
       }}
+    }}
+
+    // V35 CLEAVE-One (Open-Domain 1-Shot)
+    const o1 = DATA.v35_o1 || [];
+    const o3 = DATA.v35_o3 || [];
+    if (o1.length) {{
+      svg.appendChild(el("path", {{d: o1.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#fb923c", "stroke-width": 1.6, "stroke-dasharray": "3,2"}}));
+      for (const d of o1) {{
+        const dot = el("circle", {{cx: sx(d[xKey]), cy: sy(d[yKey]), r: 3.3, fill: "#fb923c"}});
+        dot.onmouseenter = () => {{ info.textContent = `[V35 Open-Domain ${{d.arm}}] τ0=${{d.tau0}} | C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Causal=+${{d.causal}}pp MvOOD=${{d.mv}}% Inst=${{d.inst}}% | ${{d.ips}} img/s`; }};
+        svg.appendChild(dot);
+      }}
+    }}
+    if (o3.length) {{
+      svg.appendChild(el("path", {{d: o3.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#f59e0b", "stroke-width": 2.6}}));
+      for (const d of o3) {{
+        const cx = sx(d[xKey]), cy = sy(d[yKey]);
+        const dot = el("rect", {{x: cx - 4, y: cy - 4, width: 8, height: 8, fill: "#f59e0b", stroke: "#fff", "stroke-width": 0.9, transform: `rotate(45 ${{cx}} ${{cy}})`}});
+        dot.onmouseenter = () => {{ info.textContent = `[V35 Open-Domain 1-Shot ${{d.arm}}] τ0=${{d.tau0}} | C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Causal=+${{d.causal}}pp MvOOD=${{d.mv}}% Inst=${{d.inst}}% | ${{d.ips}} img/s (3060)`; }};
+        svg.appendChild(dot);
+      }}
+      const tagPt = o3[0];
+      svg.appendChild(el("text", {{x: sx(tagPt[xKey]) - 2, y: sy(tagPt[yKey]) + 14, class: "pt-lbl", style: "fill:#fcd34d;font-weight:700"}}, "V35 O3"));
+    }}
+  }}
+}}
+
+function renderV35() {{
+  legendEl.innerHTML = `
+    <span class="lg-item"><span class="swatch" style="background:#f59e0b"></span><b>O3 (StyleEncoderC + VGG Swap)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#eab308"></span>O2 (EncC, No Swap)</span>
+    <span class="lg-item"><span class="swatch" style="background:#fb923c"></span>O1 (MLP EncA)</span>
+    <span class="lg-item"><span class="swatch" style="background:#94a3b8"></span>O0 (417-D Baseline)</span>
+    <span class="lg-item"><span class="swatch" style="background:#38bdf8"></span>External Pareto (Ref)</span>
+  `;
+  const spL = drawPanel(50, 22, 410, 242, {{x0: 0.28, x1: 0.72, y0: 5, y1: 62, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7], yTicks: [10, 20, 30, 40, 50, 60], yFmt: v => v + "%", title: "(a) V35 Open-Domain 1-Shot: DINO-C vs CSD Top-1 (%)", xLabel: "test750 Cross600 DINO-C ↑", yLabel: "CSD Top-1 (%) ↑"}});
+  const spR = drawPanel(520, 22, 415, 242, {{x0: 66, x1: 96, y0: 62, y1: 88, xTicks: [70, 75, 80, 85, 90, 95], xFmt: v => v + "%", yTicks: [65, 70, 75, 80, 85], yFmt: v => v + "%", title: "(b) Unseen-OOD Generalization: Movement-OOD vs Instance-Swap", xLabel: "Movement-OOD 2-Way Follow (%) ↑", yLabel: "Instance-Swap 2-Way Follow (%) ↑"}});
+  // Target thresholds on right panel
+  svg.appendChild(el("line", {{x1: spR.sx(75), y1: spR.oy, x2: spR.sx(75), y2: spR.oy + spR.ph, stroke: "#10b981", "stroke-width": 1.1, "stroke-dasharray": "4,3"}}));
+  svg.appendChild(el("line", {{x1: spR.ox, y1: spR.sy(65), x2: spR.ox + spR.pw, y2: spR.sy(65), stroke: "#10b981", "stroke-width": 1.1, "stroke-dasharray": "4,3"}}));
+
+  const cols = {{O0: "#94a3b8", O1: "#fb923c", O2: "#eab308", O3: "#f59e0b"}};
+  for (const grp of ["O1", "O3"]) {{
+    const pts = (DATA.v35_all || []).filter(d => d.group === grp).sort((a, b) => a.dc - b.dc);
+    if (pts.length > 1) {{
+      svg.appendChild(el("path", {{d: pts.map((d, i) => `${{i ? "L" : "M"}}${{spL.sx(d.dc).toFixed(1)}},${{spL.sy(d.t1).toFixed(1)}}`).join(" "), fill: "none", stroke: cols[grp], "stroke-width": grp === "O3" ? 2.8 : 1.9, "stroke-dasharray": grp === "O3" ? "" : "4,3"}}));
+    }}
+  }}
+  for (const b of DATA.external) {{
+    if (b.dc >= 0.28 && b.dc <= 0.72 && b.t1 >= 5 && b.t1 <= 62) {{
+      const dot = el("circle", {{cx: spL.sx(b.dc), cy: spL.sy(b.t1), r: 3.0, fill: "#38bdf8", opacity: 0.7}});
+      dot.onmouseenter = () => {{ info.textContent = `[External] ${{b.name}} | C=${{b.dc.toFixed(4)}} S=${{b.ds.toFixed(4)}} Top1=${{b.t1.toFixed(2)}}%`; }};
+      svg.appendChild(dot);
+    }}
+  }}
+  for (const d of (DATA.v35_all || [])) {{
+    const col = cols[d.group] || "#f59e0b";
+    for (const [sp, xk, yk] of [[spL, "dc", "t1"], [spR, "mv", "inst"]]) {{
+      const cx = sp.sx(d[xk]), cy = sp.sy(d[yk]);
+      const c = el("circle", {{cx, cy, r: d.group === "O3" ? 5.2 : 4.1, fill: col, stroke: "#fff", "stroke-width": 0.9}});
+      c.onmouseenter = () => {{ info.textContent = `[V35 ${{d.arm}}] τ0=${{d.tau0}} | C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Causal=+${{d.causal}}pp | Art=${{d.art}}% Mv=${{d.mv}}% Inst=${{d.inst}}% | SG-Aff=${{d.sg_aff}}`; }};
+      svg.appendChild(c);
+      svg.appendChild(el("text", {{x: cx + 6, y: cy - 5, class: "pt-lbl", style: `fill:${{col}};font-weight:700`}}, d.arm));
     }}
   }}
 }}
@@ -654,6 +792,7 @@ function renderHoldout() {{
 function draw() {{
   svg.innerHTML = "";
   if (curView === "triptych") renderTriptych();
+  else if (curView === "v35") renderV35();
   else if (curView === "ablations") renderAblations();
   else renderHoldout();
 }}

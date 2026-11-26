@@ -65,6 +65,48 @@ def vram_total_gb(device: str = "cuda") -> float:
     return float(torch.cuda.get_device_properties(idx).total_memory) / (1024.0 ** 3)
 
 
+def auto_vram_budget_gb(device: str = "cuda", *, total_gb_override: float | None = None) -> float:
+    """Compute safe hardware-proportional peak VRAM budget (keeps 24GB 4090 ~21.8GB instead of 18.5GB)."""
+    gb = vram_total_gb(device) if total_gb_override is None else float(total_gb_override)
+    if gb <= 0.0:
+        return 0.0
+    if gb <= 9.0:
+        return 7.2
+    if gb <= 13.5:
+        return 10.5
+    return round(max(18.5, gb - 2.2), 1)
+
+
+def auto_infer_batch(device: str = "cuda", *, total_gb_override: float | None = None) -> int:
+    """Hardware-tiered latent trajectory inference batch size (saturates 24GB 4090 at 128)."""
+    gb = vram_total_gb(device) if total_gb_override is None else float(total_gb_override)
+    if gb <= 0.0 or gb <= 9.0:
+        return 16
+    if gb <= 13.5:
+        return 32
+    return 128
+
+
+def auto_decode_batch(device: str = "cuda", *, total_gb_override: float | None = None) -> int:
+    """Hardware-tiered 512px S10 decoder batch size (64 on 24GB 4090 avoids 512px UpBlock OOM at 128)."""
+    gb = vram_total_gb(device) if total_gb_override is None else float(total_gb_override)
+    if gb <= 0.0 or gb <= 9.0:
+        return 16
+    if gb <= 13.5:
+        return 32
+    return 64
+
+
+def auto_referee_batch(device: str = "cuda", *, total_gb_override: float | None = None) -> int:
+    """Hardware-tiered frozen FeatureStack batch size (saturates 24GB 4090 at 64)."""
+    gb = vram_total_gb(device) if total_gb_override is None else float(total_gb_override)
+    if gb <= 0.0 or gb <= 9.0:
+        return 8
+    if gb <= 13.5:
+        return 16
+    return 64
+
+
 def tier_micro_accum(
     effective_batch: int,
     *,
