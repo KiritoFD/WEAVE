@@ -1,0 +1,1508 @@
+{
+  "updated_utc": "2026-11-26T07:54:42.183779+00:00",
+  "stage": "C_capacity_and_joint_training",
+  "winner_arm": "C2_44m_q32",
+  "winner_spec": {
+    "base_dim": 208,
+    "cond_dim": 384,
+    "use_adapter": false,
+    "label": "44M + Q32"
+  },
+  "winner_effective": true,
+  "factorial_effects_at_C50_61_70": {
+    "c_grid": [
+      0.5,
+      0.61,
+      0.7
+    ],
+    "semantic_control_on_22M (C1-C0)": [
+      -0.0107,
+      -0.0137,
+      -0.0016
+    ],
+    "capacity_on_Q32 (C2-C0)": [
+      0.0033,
+      0.0004,
+      -0.0007
+    ],
+    "semantic_control_on_44M (C3-C2)": [
+      -0.0193,
+      -0.0159,
+      -0.001
+    ],
+    "capacity_on_S2 (C3-C1)": [
+      -0.0053,
+      -0.0018,
+      -0.0001
+    ],
+    "interaction ((C3-C2)-(C1-C0))": [
+      -0.0086,
+      -0.0022,
+      0.0006
+    ]
+  },
+  "arm_summary": {
+    "C0_22m_q32": {
+      "spec": {
+        "base_dim": 144,
+        "cond_dim": 320,
+        "use_adapter": false,
+        "label": "22M + Q32"
+      },
+      "cfg": {
+        "base_dim": 144,
+        "u_dim": 417,
+        "cond_dim": 320,
+        "use_adapter": false,
+        "d_q16": 32,
+        "d_q32": 32,
+        "ctrl_w32": 144,
+        "ctrl_w16": 256,
+        "pcore_params": 22290164,
+        "ctrl_params": 0,
+        "total_params": 22290164,
+        "style_mode": "k8",
+        "analytic_mode": "A0",
+        "updates": 3500
+      },
+      "c_grid": [
+        0.5,
+        0.61,
+        0.7
+      ],
+      "dino_s_at_c_grid": [
+        0.5572,
+        0.5277,
+        0.4927
+      ],
+      "csd_top1_at_c_grid": [
+        0.6819,
+        0.5673,
+        0.5112
+      ],
+      "delta_s_vs_C0": [
+        -0.0,
+        -0.0,
+        -0.0
+      ],
+      "delta_top1_vs_C0": [
+        0.0,
+        -0.0,
+        -0.0
+      ],
+      "delta_s_vs_V32": [
+        -0.0026,
+        0.0039,
+        0.0119
+      ],
+      "mean_delta_s_vs_C0": 0.0,
+      "mean_delta_top1_vs_C0": 0.0,
+      "ci_s085_vs_C0": null
+    },
+    "C1_22m_s2_joint": {
+      "spec": {
+        "base_dim": 144,
+        "cond_dim": 320,
+        "use_adapter": true,
+        "label": "22M + 7M V33 S2 joint"
+      },
+      "cfg": {
+        "base_dim": 144,
+        "u_dim": 417,
+        "cond_dim": 320,
+        "use_adapter": true,
+        "d_q16": 32,
+        "d_q32": 32,
+        "ctrl_w32": 144,
+        "ctrl_w16": 256,
+        "pcore_params": 22290164,
+        "ctrl_params": 6976800,
+        "total_params": 29266964,
+        "style_mode": "k8",
+        "analytic_mode": "A0",
+        "updates": 3500
+      },
+      "c_grid": [
+        0.5,
+        0.61,
+        0.7
+      ],
+      "dino_s_at_c_grid": [
+        0.5465,
+        0.514,
+        0.4911
+      ],
+      "csd_top1_at_c_grid": [
+        0.6196,
+        0.5262,
+        0.4858
+      ],
+      "delta_s_vs_C0": [
+        -0.0107,
+        -0.0137,
+        -0.0016
+      ],
+      "delta_top1_vs_C0": [
+        -0.0623,
+        -0.0411,
+        -0.0254
+      ],
+      "delta_s_vs_V32": [
+        -0.0133,
+        -0.0098,
+        0.0103
+      ],
+      "mean_delta_s_vs_C0": -0.0087,
+      "mean_delta_top1_vs_C0": -0.0429,
+      "ci_s085_vs_C0": {
+        "n_tasks": 600,
+        "dino_c": {
+          "cand": 0.7132,
+          "base": 0.6689,
+          "diff": 0.0443,
+          "ci95": [
+            0.0402,
+            0.0486
+          ],
+          "excludes_zero": true
+        },
+        "dino_s": {
+          "cand": 0.4871,
+          "base": 0.5085,
+          "diff": -0.0214,
+          "ci95": [
+            -0.0256,
+            -0.0173
+          ],
+          "excludes_zero": true
+        },
+        "lpips": {
+          "cand": 0.4873,
+          "base": 0.5083,
+          "diff": -0.021,
+          "ci95": [
+            -0.0226,
+            -0.0195
+          ],
+          "excludes_zero": true
+        },
+        "target_top1": {
+          "cand": 0.4717,
+          "base": 0.5083,
+          "diff": -0.0367,
+          "ci95": [
+            -0.0583,
+            -0.0167
+          ],
+          "excludes_zero": true
+        },
+        "clip_s": {
+          "cand": 0.7075,
+          "base": 0.7167,
+          "diff": -0.0092,
+          "ci95": [
+            -0.0107,
+            -0.0077
+          ],
+          "excludes_zero": true
+        }
+      }
+    },
+    "C2_44m_q32": {
+      "spec": {
+        "base_dim": 208,
+        "cond_dim": 384,
+        "use_adapter": false,
+        "label": "44M + Q32"
+      },
+      "cfg": {
+        "base_dim": 208,
+        "u_dim": 417,
+        "cond_dim": 384,
+        "use_adapter": false,
+        "d_q16": 32,
+        "d_q32": 32,
+        "ctrl_w32": 144,
+        "ctrl_w16": 256,
+        "pcore_params": 44540532,
+        "ctrl_params": 0,
+        "total_params": 44540532,
+        "style_mode": "k8",
+        "analytic_mode": "A0",
+        "updates": 3500
+      },
+      "c_grid": [
+        0.5,
+        0.61,
+        0.7
+      ],
+      "dino_s_at_c_grid": [
+        0.5605,
+        0.5281,
+        0.492
+      ],
+      "csd_top1_at_c_grid": [
+        0.733,
+        0.5965,
+        0.5166
+      ],
+      "delta_s_vs_C0": [
+        0.0033,
+        0.0004,
+        -0.0007
+      ],
+      "delta_top1_vs_C0": [
+        0.0511,
+        0.0292,
+        0.0054
+      ],
+      "delta_s_vs_V32": [
+        0.0007,
+        0.0043,
+        0.0112
+      ],
+      "mean_delta_s_vs_C0": 0.001,
+      "mean_delta_top1_vs_C0": 0.0286,
+      "ci_s085_vs_C0": {
+        "n_tasks": 600,
+        "dino_c": {
+          "cand": 0.6748,
+          "base": 0.6689,
+          "diff": 0.0059,
+          "ci95": [
+            0.0035,
+            0.0082
+          ],
+          "excludes_zero": true
+        },
+        "dino_s": {
+          "cand": 0.5054,
+          "base": 0.5085,
+          "diff": -0.0031,
+          "ci95": [
+            -0.005,
+            -0.0011
+          ],
+          "excludes_zero": true
+        },
+        "lpips": {
+          "cand": 0.5064,
+          "base": 0.5083,
+          "diff": -0.0019,
+          "ci95": [
+            -0.0028,
+            -0.0009
+          ],
+          "excludes_zero": true
+        },
+        "target_top1": {
+          "cand": 0.5217,
+          "base": 0.5083,
+          "diff": 0.0133,
+          "ci95": [
+            -0.0067,
+            0.0333
+          ],
+          "excludes_zero": false
+        },
+        "clip_s": {
+          "cand": 0.7161,
+          "base": 0.7167,
+          "diff": -0.0007,
+          "ci95": [
+            -0.0015,
+            0.0002
+          ],
+          "excludes_zero": false
+        }
+      }
+    },
+    "C3_44m_s2_joint": {
+      "spec": {
+        "base_dim": 208,
+        "cond_dim": 384,
+        "use_adapter": true,
+        "label": "44M + 7M V33 S2 joint"
+      },
+      "cfg": {
+        "base_dim": 208,
+        "u_dim": 417,
+        "cond_dim": 384,
+        "use_adapter": true,
+        "d_q16": 32,
+        "d_q32": 32,
+        "ctrl_w32": 144,
+        "ctrl_w16": 256,
+        "pcore_params": 44540532,
+        "ctrl_params": 7165536,
+        "total_params": 51706068,
+        "style_mode": "k8",
+        "analytic_mode": "A0",
+        "updates": 3500
+      },
+      "c_grid": [
+        0.5,
+        0.61,
+        0.7
+      ],
+      "dino_s_at_c_grid": [
+        0.5412,
+        0.5122,
+        0.491
+      ],
+      "csd_top1_at_c_grid": [
+        0.7225,
+        0.5225,
+        0.4976
+      ],
+      "delta_s_vs_C0": [
+        -0.016,
+        -0.0155,
+        -0.0017
+      ],
+      "delta_top1_vs_C0": [
+        0.0406,
+        -0.0448,
+        -0.0136
+      ],
+      "delta_s_vs_V32": [
+        -0.0186,
+        -0.0116,
+        0.0102
+      ],
+      "mean_delta_s_vs_C0": -0.0111,
+      "mean_delta_top1_vs_C0": -0.0059,
+      "ci_s085_vs_C0": {
+        "n_tasks": 600,
+        "dino_c": {
+          "cand": 0.7191,
+          "base": 0.6689,
+          "diff": 0.0502,
+          "ci95": [
+            0.0458,
+            0.0546
+          ],
+          "excludes_zero": true
+        },
+        "dino_s": {
+          "cand": 0.486,
+          "base": 0.5085,
+          "diff": -0.0225,
+          "ci95": [
+            -0.0266,
+            -0.0187
+          ],
+          "excludes_zero": true
+        },
+        "lpips": {
+          "cand": 0.4832,
+          "base": 0.5083,
+          "diff": -0.0251,
+          "ci95": [
+            -0.0267,
+            -0.0235
+          ],
+          "excludes_zero": true
+        },
+        "target_top1": {
+          "cand": 0.4733,
+          "base": 0.5083,
+          "diff": -0.035,
+          "ci95": [
+            -0.0583,
+            -0.0133
+          ],
+          "excludes_zero": true
+        },
+        "clip_s": {
+          "cand": 0.7069,
+          "base": 0.7167,
+          "diff": -0.0098,
+          "ci95": [
+            -0.0115,
+            -0.0081
+          ],
+          "excludes_zero": true
+        }
+      }
+    }
+  },
+  "arms": {
+    "C0_22m_q32": {
+      "arm": "C0_22m_q32",
+      "ckpt": "/root/Workspace/WEAVE/runs/v34_frontier/stage_c/C0_22m_q32/C0_22m_q32_final.pt",
+      "cfg": {
+        "base_dim": 144,
+        "u_dim": 417,
+        "cond_dim": 320,
+        "use_adapter": false,
+        "d_q16": 32,
+        "d_q32": 32,
+        "ctrl_w32": 144,
+        "ctrl_w16": 256,
+        "pcore_params": 22290164,
+        "ctrl_params": 0,
+        "total_params": 22290164,
+        "style_mode": "k8",
+        "analytic_mode": "A0",
+        "updates": 3500
+      },
+      "train_min": 33.56,
+      "peak_vram_gb": 8.3,
+      "levels": {
+        "s075": {
+          "arm": "C0_22m_q32_s075",
+          "dino_c": 0.705,
+          "dino_s": 0.4902,
+          "dino_s_top5": 0.4335,
+          "csls_k10": 0.465,
+          "csd_top1": 0.5117,
+          "clip_s": 0.7123,
+          "lpips": 0.5008,
+          "style_affinity": 0.6012,
+          "pred_eq_src": 0.4217,
+          "same150_top1": 0.9933,
+          "same150_dino_c": 0.8895,
+          "per_tgt_dino_s": {
+            "Ear": 0.5222,
+            "Imp": 0.6185,
+            "Min": 0.2935,
+            "Roc": 0.5383,
+            "Uki": 0.4786
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.7331,
+            "Imp": 0.6675,
+            "Min": 0.6662,
+            "Roc": 0.6904,
+            "Uki": 0.7679
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.2333,
+            "Imp": 0.7917,
+            "Min": 0.8917,
+            "Roc": 0.4917,
+            "Uki": 0.15
+          }
+        },
+        "s085": {
+          "arm": "C0_22m_q32_s085",
+          "dino_c": 0.6689,
+          "dino_s": 0.5085,
+          "dino_s_top5": 0.4507,
+          "csls_k10": 0.455,
+          "csd_top1": 0.5083,
+          "clip_s": 0.7167,
+          "lpips": 0.5083,
+          "style_affinity": 0.6126,
+          "pred_eq_src": 0.3883,
+          "same150_top1": 0.96,
+          "same150_dino_c": 0.8714,
+          "per_tgt_dino_s": {
+            "Ear": 0.5439,
+            "Imp": 0.6374,
+            "Min": 0.3146,
+            "Roc": 0.5566,
+            "Uki": 0.49
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.6964,
+            "Imp": 0.6218,
+            "Min": 0.6324,
+            "Roc": 0.6641,
+            "Uki": 0.7298
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.2667,
+            "Imp": 0.8083,
+            "Min": 0.9167,
+            "Roc": 0.3917,
+            "Uki": 0.1583
+          }
+        },
+        "s100": {
+          "arm": "C0_22m_q32_s100",
+          "dino_c": 0.5425,
+          "dino_s": 0.5498,
+          "dino_s_top5": 0.4893,
+          "csls_k10": 0.5383,
+          "csd_top1": 0.635,
+          "clip_s": 0.7359,
+          "lpips": 0.5803,
+          "style_affinity": 0.6429,
+          "pred_eq_src": 0.24,
+          "same150_top1": 0.9133,
+          "same150_dino_c": 0.7468,
+          "per_tgt_dino_s": {
+            "Ear": 0.6094,
+            "Imp": 0.6795,
+            "Min": 0.3379,
+            "Roc": 0.597,
+            "Uki": 0.5253
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.5331,
+            "Imp": 0.5188,
+            "Min": 0.4952,
+            "Roc": 0.573,
+            "Uki": 0.5925
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.4333,
+            "Imp": 0.95,
+            "Min": 0.9917,
+            "Roc": 0.5167,
+            "Uki": 0.2833
+          }
+        },
+        "s125": {
+          "arm": "C0_22m_q32_s125",
+          "dino_c": 0.4412,
+          "dino_s": 0.5675,
+          "dino_s_top5": 0.51,
+          "csls_k10": 0.6067,
+          "csd_top1": 0.7467,
+          "clip_s": 0.7499,
+          "lpips": 0.6591,
+          "style_affinity": 0.6587,
+          "pred_eq_src": 0.1267,
+          "same150_top1": 0.9133,
+          "same150_dino_c": 0.6009,
+          "per_tgt_dino_s": {
+            "Ear": 0.6366,
+            "Imp": 0.7172,
+            "Min": 0.3396,
+            "Roc": 0.5944,
+            "Uki": 0.5496
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.4383,
+            "Imp": 0.4061,
+            "Min": 0.4052,
+            "Roc": 0.5008,
+            "Uki": 0.4554
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.7917,
+            "Imp": 1.0,
+            "Min": 1.0,
+            "Roc": 0.5833,
+            "Uki": 0.3583
+          }
+        },
+        "s150": {
+          "arm": "C0_22m_q32_s150",
+          "dino_c": 0.3214,
+          "dino_s": 0.5651,
+          "dino_s_top5": 0.5074,
+          "csls_k10": 0.6633,
+          "csd_top1": 0.76,
+          "clip_s": 0.7529,
+          "lpips": 0.7278,
+          "style_affinity": 0.659,
+          "pred_eq_src": 0.095,
+          "same150_top1": 0.9067,
+          "same150_dino_c": 0.4959,
+          "per_tgt_dino_s": {
+            "Ear": 0.6262,
+            "Imp": 0.7266,
+            "Min": 0.3995,
+            "Roc": 0.5504,
+            "Uki": 0.5227
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.342,
+            "Imp": 0.2816,
+            "Min": 0.292,
+            "Roc": 0.3791,
+            "Uki": 0.312
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.95,
+            "Imp": 1.0,
+            "Min": 1.0,
+            "Roc": 0.5583,
+            "Uki": 0.2917
+          }
+        },
+        "tau0": {
+          "arm": "C0_22m_q32_tau0",
+          "dino_c": 0.3985,
+          "dino_s": 0.5788,
+          "dino_s_top5": 0.5212,
+          "csls_k10": 0.5167,
+          "csd_top1": 0.5883,
+          "clip_s": 0.7489,
+          "lpips": 0.7373,
+          "style_affinity": 0.6639,
+          "pred_eq_src": 0.195,
+          "same150_top1": 0.8133,
+          "same150_dino_c": 0.5425,
+          "per_tgt_dino_s": {
+            "Ear": 0.6477,
+            "Imp": 0.7369,
+            "Min": 0.3689,
+            "Roc": 0.567,
+            "Uki": 0.5736
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.4521,
+            "Imp": 0.3717,
+            "Min": 0.3504,
+            "Roc": 0.4376,
+            "Uki": 0.3807
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.3167,
+            "Imp": 0.9833,
+            "Min": 0.925,
+            "Roc": 0.3167,
+            "Uki": 0.4
+          }
+        },
+        "s085_wrong": {
+          "arm": "C0_22m_q32_s085_wrong",
+          "dino_c": 0.6686,
+          "dino_s": 0.4495,
+          "dino_s_top5": 0.3943,
+          "csls_k10": 0.0233,
+          "csd_top1": 0.0167,
+          "clip_s": 0.679,
+          "lpips": 0.5083,
+          "style_affinity": 0.5643,
+          "pred_eq_src": 0.3817,
+          "same150_top1": 0.96,
+          "same150_dino_c": 0.8714,
+          "per_tgt_dino_s": {
+            "Ear": 0.4773,
+            "Imp": 0.5145,
+            "Min": 0.3011,
+            "Roc": 0.4928,
+            "Uki": 0.4616
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.6386,
+            "Imp": 0.5902,
+            "Min": 0.7117,
+            "Roc": 0.7306,
+            "Uki": 0.6721
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.0,
+            "Imp": 0.025,
+            "Min": 0.0583,
+            "Roc": 0.0,
+            "Uki": 0.0
+          }
+        }
+      }
+    },
+    "C1_22m_s2_joint": {
+      "arm": "C1_22m_s2_joint",
+      "ckpt": "/root/Workspace/WEAVE/runs/v34_frontier/stage_c/C1_22m_s2_joint/C1_22m_s2_joint_final.pt",
+      "cfg": {
+        "base_dim": 144,
+        "u_dim": 417,
+        "cond_dim": 320,
+        "use_adapter": true,
+        "d_q16": 32,
+        "d_q32": 32,
+        "ctrl_w32": 144,
+        "ctrl_w16": 256,
+        "pcore_params": 22290164,
+        "ctrl_params": 6976800,
+        "total_params": 29266964,
+        "style_mode": "k8",
+        "analytic_mode": "A0",
+        "updates": 3500
+      },
+      "train_min": 39.02,
+      "peak_vram_gb": 9.999,
+      "levels": {
+        "s075": {
+          "arm": "C1_22m_s2_joint_s075",
+          "dino_c": 0.7315,
+          "dino_s": 0.4764,
+          "dino_s_top5": 0.4213,
+          "csls_k10": 0.4567,
+          "csd_top1": 0.4733,
+          "clip_s": 0.7065,
+          "lpips": 0.4871,
+          "style_affinity": 0.5915,
+          "pred_eq_src": 0.4583,
+          "same150_top1": 0.9933,
+          "same150_dino_c": 0.8974,
+          "per_tgt_dino_s": {
+            "Ear": 0.5069,
+            "Imp": 0.6004,
+            "Min": 0.2784,
+            "Roc": 0.5242,
+            "Uki": 0.4723
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.765,
+            "Imp": 0.7001,
+            "Min": 0.6903,
+            "Roc": 0.7137,
+            "Uki": 0.7886
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.1917,
+            "Imp": 0.775,
+            "Min": 0.8833,
+            "Roc": 0.4417,
+            "Uki": 0.075
+          }
+        },
+        "s085": {
+          "arm": "C1_22m_s2_joint_s085",
+          "dino_c": 0.7132,
+          "dino_s": 0.4871,
+          "dino_s_top5": 0.4319,
+          "csls_k10": 0.43,
+          "csd_top1": 0.4717,
+          "clip_s": 0.7075,
+          "lpips": 0.4873,
+          "style_affinity": 0.5973,
+          "pred_eq_src": 0.435,
+          "same150_top1": 0.9733,
+          "same150_dino_c": 0.8823,
+          "per_tgt_dino_s": {
+            "Ear": 0.5162,
+            "Imp": 0.6135,
+            "Min": 0.2849,
+            "Roc": 0.5378,
+            "Uki": 0.4831
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.7496,
+            "Imp": 0.6754,
+            "Min": 0.6752,
+            "Roc": 0.6992,
+            "Uki": 0.7665
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.175,
+            "Imp": 0.8,
+            "Min": 0.875,
+            "Roc": 0.4,
+            "Uki": 0.1083
+          }
+        },
+        "s100": {
+          "arm": "C1_22m_s2_joint_s100",
+          "dino_c": 0.6383,
+          "dino_s": 0.51,
+          "dino_s_top5": 0.4543,
+          "csls_k10": 0.4767,
+          "csd_top1": 0.5517,
+          "clip_s": 0.7174,
+          "lpips": 0.5349,
+          "style_affinity": 0.6137,
+          "pred_eq_src": 0.3317,
+          "same150_top1": 0.9533,
+          "same150_dino_c": 0.7985,
+          "per_tgt_dino_s": {
+            "Ear": 0.5503,
+            "Imp": 0.6417,
+            "Min": 0.296,
+            "Roc": 0.5578,
+            "Uki": 0.504
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.6513,
+            "Imp": 0.6133,
+            "Min": 0.5991,
+            "Roc": 0.6446,
+            "Uki": 0.6834
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.2,
+            "Imp": 0.9167,
+            "Min": 0.9917,
+            "Roc": 0.5,
+            "Uki": 0.15
+          }
+        },
+        "s125": {
+          "arm": "C1_22m_s2_joint_s125",
+          "dino_c": 0.5633,
+          "dino_s": 0.5337,
+          "dino_s_top5": 0.4777,
+          "csls_k10": 0.525,
+          "csd_top1": 0.6017,
+          "clip_s": 0.7309,
+          "lpips": 0.6005,
+          "style_affinity": 0.6323,
+          "pred_eq_src": 0.2417,
+          "same150_top1": 0.9,
+          "same150_dino_c": 0.689,
+          "per_tgt_dino_s": {
+            "Ear": 0.5757,
+            "Imp": 0.6725,
+            "Min": 0.3131,
+            "Roc": 0.5768,
+            "Uki": 0.5303
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.5753,
+            "Imp": 0.5273,
+            "Min": 0.5381,
+            "Roc": 0.5854,
+            "Uki": 0.5904
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.2667,
+            "Imp": 1.0,
+            "Min": 1.0,
+            "Roc": 0.525,
+            "Uki": 0.2167
+          }
+        },
+        "s150": {
+          "arm": "C1_22m_s2_joint_s150",
+          "dino_c": 0.4045,
+          "dino_s": 0.5659,
+          "dino_s_top5": 0.5093,
+          "csls_k10": 0.5533,
+          "csd_top1": 0.6467,
+          "clip_s": 0.7447,
+          "lpips": 0.6861,
+          "style_affinity": 0.6553,
+          "pred_eq_src": 0.1633,
+          "same150_top1": 0.86,
+          "same150_dino_c": 0.5719,
+          "per_tgt_dino_s": {
+            "Ear": 0.6034,
+            "Imp": 0.7239,
+            "Min": 0.3878,
+            "Roc": 0.5713,
+            "Uki": 0.5431
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.465,
+            "Imp": 0.3502,
+            "Min": 0.3384,
+            "Roc": 0.4352,
+            "Uki": 0.4338
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.4667,
+            "Imp": 1.0,
+            "Min": 1.0,
+            "Roc": 0.5167,
+            "Uki": 0.25
+          }
+        },
+        "tau0": {
+          "arm": "C1_22m_s2_joint_tau0",
+          "dino_c": 0.5735,
+          "dino_s": 0.5192,
+          "dino_s_top5": 0.4656,
+          "csls_k10": 0.435,
+          "csd_top1": 0.4933,
+          "clip_s": 0.7088,
+          "lpips": 0.5897,
+          "style_affinity": 0.614,
+          "pred_eq_src": 0.3383,
+          "same150_top1": 0.8733,
+          "same150_dino_c": 0.6459,
+          "per_tgt_dino_s": {
+            "Ear": 0.5479,
+            "Imp": 0.6779,
+            "Min": 0.316,
+            "Roc": 0.5156,
+            "Uki": 0.5386
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.593,
+            "Imp": 0.5392,
+            "Min": 0.6046,
+            "Roc": 0.5652,
+            "Uki": 0.5656
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.1083,
+            "Imp": 0.9,
+            "Min": 0.85,
+            "Roc": 0.3667,
+            "Uki": 0.2417
+          }
+        },
+        "s085_wrong": {
+          "arm": "C1_22m_s2_joint_s085_wrong",
+          "dino_c": 0.7127,
+          "dino_s": 0.4396,
+          "dino_s_top5": 0.3871,
+          "csls_k10": 0.0217,
+          "csd_top1": 0.015,
+          "clip_s": 0.6736,
+          "lpips": 0.4872,
+          "style_affinity": 0.5566,
+          "pred_eq_src": 0.4317,
+          "same150_top1": 0.9733,
+          "same150_dino_c": 0.8823,
+          "per_tgt_dino_s": {
+            "Ear": 0.485,
+            "Imp": 0.4929,
+            "Min": 0.2857,
+            "Roc": 0.4788,
+            "Uki": 0.4557
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.6818,
+            "Imp": 0.635,
+            "Min": 0.7512,
+            "Roc": 0.7645,
+            "Uki": 0.7312
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.0,
+            "Imp": 0.0333,
+            "Min": 0.0417,
+            "Roc": 0.0,
+            "Uki": 0.0
+          }
+        }
+      }
+    },
+    "C2_44m_q32": {
+      "arm": "C2_44m_q32",
+      "ckpt": "/root/Workspace/WEAVE/runs/v34_frontier/stage_c/C2_44m_q32/C2_44m_q32_final.pt",
+      "cfg": {
+        "base_dim": 208,
+        "u_dim": 417,
+        "cond_dim": 384,
+        "use_adapter": false,
+        "d_q16": 32,
+        "d_q32": 32,
+        "ctrl_w32": 144,
+        "ctrl_w16": 256,
+        "pcore_params": 44540532,
+        "ctrl_params": 0,
+        "total_params": 44540532,
+        "style_mode": "k8",
+        "analytic_mode": "A0",
+        "updates": 3500
+      },
+      "train_min": 44.34,
+      "peak_vram_gb": 7.248,
+      "levels": {
+        "s075": {
+          "arm": "C2_44m_q32_s075",
+          "dino_c": 0.7081,
+          "dino_s": 0.4877,
+          "dino_s_top5": 0.4309,
+          "csls_k10": 0.4683,
+          "csd_top1": 0.515,
+          "clip_s": 0.7123,
+          "lpips": 0.4998,
+          "style_affinity": 0.6,
+          "pred_eq_src": 0.4233,
+          "same150_top1": 0.9933,
+          "same150_dino_c": 0.8941,
+          "per_tgt_dino_s": {
+            "Ear": 0.5197,
+            "Imp": 0.6156,
+            "Min": 0.2889,
+            "Roc": 0.5342,
+            "Uki": 0.4799
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.7392,
+            "Imp": 0.6673,
+            "Min": 0.6738,
+            "Roc": 0.6916,
+            "Uki": 0.7688
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.225,
+            "Imp": 0.7833,
+            "Min": 0.8833,
+            "Roc": 0.5083,
+            "Uki": 0.175
+          }
+        },
+        "s085": {
+          "arm": "C2_44m_q32_s085",
+          "dino_c": 0.6748,
+          "dino_s": 0.5054,
+          "dino_s_top5": 0.4472,
+          "csls_k10": 0.46,
+          "csd_top1": 0.5217,
+          "clip_s": 0.7161,
+          "lpips": 0.5064,
+          "style_affinity": 0.6107,
+          "pred_eq_src": 0.3933,
+          "same150_top1": 0.9667,
+          "same150_dino_c": 0.8783,
+          "per_tgt_dino_s": {
+            "Ear": 0.5382,
+            "Imp": 0.635,
+            "Min": 0.3089,
+            "Roc": 0.5509,
+            "Uki": 0.494
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.7069,
+            "Imp": 0.6268,
+            "Min": 0.6395,
+            "Roc": 0.667,
+            "Uki": 0.7337
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.2333,
+            "Imp": 0.8083,
+            "Min": 0.8917,
+            "Roc": 0.425,
+            "Uki": 0.25
+          }
+        },
+        "s100": {
+          "arm": "C2_44m_q32_s100",
+          "dino_c": 0.5522,
+          "dino_s": 0.5484,
+          "dino_s_top5": 0.4879,
+          "csls_k10": 0.5833,
+          "csd_top1": 0.6633,
+          "clip_s": 0.7368,
+          "lpips": 0.5744,
+          "style_affinity": 0.6426,
+          "pred_eq_src": 0.2417,
+          "same150_top1": 0.9533,
+          "same150_dino_c": 0.7667,
+          "per_tgt_dino_s": {
+            "Ear": 0.6003,
+            "Imp": 0.6776,
+            "Min": 0.3332,
+            "Roc": 0.5969,
+            "Uki": 0.5339
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.5517,
+            "Imp": 0.5347,
+            "Min": 0.4958,
+            "Roc": 0.5759,
+            "Uki": 0.6031
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.425,
+            "Imp": 0.95,
+            "Min": 0.9917,
+            "Roc": 0.6,
+            "Uki": 0.35
+          }
+        },
+        "s125": {
+          "arm": "C2_44m_q32_s125",
+          "dino_c": 0.4511,
+          "dino_s": 0.5718,
+          "dino_s_top5": 0.5139,
+          "csls_k10": 0.6833,
+          "csd_top1": 0.7983,
+          "clip_s": 0.754,
+          "lpips": 0.6504,
+          "style_affinity": 0.6629,
+          "pred_eq_src": 0.1033,
+          "same150_top1": 0.9867,
+          "same150_dino_c": 0.6306,
+          "per_tgt_dino_s": {
+            "Ear": 0.6351,
+            "Imp": 0.71,
+            "Min": 0.3349,
+            "Roc": 0.6084,
+            "Uki": 0.5708
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.4578,
+            "Imp": 0.4235,
+            "Min": 0.4012,
+            "Roc": 0.5027,
+            "Uki": 0.4703
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.7083,
+            "Imp": 1.0,
+            "Min": 1.0,
+            "Roc": 0.725,
+            "Uki": 0.5583
+          }
+        },
+        "s150": {
+          "arm": "C2_44m_q32_s150",
+          "dino_c": 0.3407,
+          "dino_s": 0.589,
+          "dino_s_top5": 0.5322,
+          "csls_k10": 0.8133,
+          "csd_top1": 0.9117,
+          "clip_s": 0.7681,
+          "lpips": 0.7208,
+          "style_affinity": 0.6786,
+          "pred_eq_src": 0.0483,
+          "same150_top1": 0.9733,
+          "same150_dino_c": 0.5446,
+          "per_tgt_dino_s": {
+            "Ear": 0.6496,
+            "Imp": 0.7399,
+            "Min": 0.3772,
+            "Roc": 0.6022,
+            "Uki": 0.5761
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.3579,
+            "Imp": 0.3038,
+            "Min": 0.2829,
+            "Roc": 0.4143,
+            "Uki": 0.3446
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.9417,
+            "Imp": 1.0,
+            "Min": 1.0,
+            "Roc": 0.875,
+            "Uki": 0.7417
+          }
+        },
+        "tau0": {
+          "arm": "C2_44m_q32_tau0",
+          "dino_c": 0.4154,
+          "dino_s": 0.5925,
+          "dino_s_top5": 0.5344,
+          "csls_k10": 0.645,
+          "csd_top1": 0.7367,
+          "clip_s": 0.7597,
+          "lpips": 0.7241,
+          "style_affinity": 0.6761,
+          "pred_eq_src": 0.1433,
+          "same150_top1": 0.9067,
+          "same150_dino_c": 0.5674,
+          "per_tgt_dino_s": {
+            "Ear": 0.663,
+            "Imp": 0.7329,
+            "Min": 0.3593,
+            "Roc": 0.6058,
+            "Uki": 0.6017
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.4618,
+            "Imp": 0.3904,
+            "Min": 0.365,
+            "Roc": 0.4452,
+            "Uki": 0.4144
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.4167,
+            "Imp": 0.9917,
+            "Min": 0.9167,
+            "Roc": 0.5667,
+            "Uki": 0.7917
+          }
+        },
+        "s085_wrong": {
+          "arm": "C2_44m_q32_s085_wrong",
+          "dino_c": 0.6761,
+          "dino_s": 0.4466,
+          "dino_s_top5": 0.3919,
+          "csls_k10": 0.0233,
+          "csd_top1": 0.015,
+          "clip_s": 0.6783,
+          "lpips": 0.5064,
+          "style_affinity": 0.5625,
+          "pred_eq_src": 0.3933,
+          "same150_top1": 0.9667,
+          "same150_dino_c": 0.8783,
+          "per_tgt_dino_s": {
+            "Ear": 0.4785,
+            "Imp": 0.5116,
+            "Min": 0.2936,
+            "Roc": 0.4895,
+            "Uki": 0.4598
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.6436,
+            "Imp": 0.6008,
+            "Min": 0.7218,
+            "Roc": 0.7335,
+            "Uki": 0.681
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.0,
+            "Imp": 0.0333,
+            "Min": 0.0417,
+            "Roc": 0.0,
+            "Uki": 0.0
+          }
+        }
+      }
+    },
+    "C3_44m_s2_joint": {
+      "arm": "C3_44m_s2_joint",
+      "ckpt": "/root/Workspace/WEAVE/runs/v34_frontier/stage_c/C3_44m_s2_joint/C3_44m_s2_joint_final.pt",
+      "cfg": {
+        "base_dim": 208,
+        "u_dim": 417,
+        "cond_dim": 384,
+        "use_adapter": true,
+        "d_q16": 32,
+        "d_q32": 32,
+        "ctrl_w32": 144,
+        "ctrl_w16": 256,
+        "pcore_params": 44540532,
+        "ctrl_params": 7165536,
+        "total_params": 51706068,
+        "style_mode": "k8",
+        "analytic_mode": "A0",
+        "updates": 3500
+      },
+      "train_min": 49.82,
+      "peak_vram_gb": 7.61,
+      "levels": {
+        "s075": {
+          "arm": "C3_44m_s2_joint_s075",
+          "dino_c": 0.7366,
+          "dino_s": 0.475,
+          "dino_s_top5": 0.42,
+          "csls_k10": 0.455,
+          "csd_top1": 0.4733,
+          "clip_s": 0.706,
+          "lpips": 0.4843,
+          "style_affinity": 0.5905,
+          "pred_eq_src": 0.4667,
+          "same150_top1": 0.9867,
+          "same150_dino_c": 0.9015,
+          "per_tgt_dino_s": {
+            "Ear": 0.5082,
+            "Imp": 0.601,
+            "Min": 0.2725,
+            "Roc": 0.5204,
+            "Uki": 0.4729
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.772,
+            "Imp": 0.7075,
+            "Min": 0.6965,
+            "Roc": 0.7178,
+            "Uki": 0.7894
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.1417,
+            "Imp": 0.75,
+            "Min": 0.8833,
+            "Roc": 0.475,
+            "Uki": 0.1167
+          }
+        },
+        "s085": {
+          "arm": "C3_44m_s2_joint_s085",
+          "dino_c": 0.7191,
+          "dino_s": 0.486,
+          "dino_s_top5": 0.4306,
+          "csls_k10": 0.4417,
+          "csd_top1": 0.4733,
+          "clip_s": 0.7069,
+          "lpips": 0.4832,
+          "style_affinity": 0.5965,
+          "pred_eq_src": 0.4517,
+          "same150_top1": 0.9733,
+          "same150_dino_c": 0.8886,
+          "per_tgt_dino_s": {
+            "Ear": 0.5206,
+            "Imp": 0.6138,
+            "Min": 0.2818,
+            "Roc": 0.5318,
+            "Uki": 0.4819
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.756,
+            "Imp": 0.6818,
+            "Min": 0.6839,
+            "Roc": 0.7049,
+            "Uki": 0.769
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.15,
+            "Imp": 0.7667,
+            "Min": 0.8917,
+            "Roc": 0.4333,
+            "Uki": 0.125
+          }
+        },
+        "s100": {
+          "arm": "C3_44m_s2_joint_s100",
+          "dino_c": 0.6443,
+          "dino_s": 0.5054,
+          "dino_s_top5": 0.4505,
+          "csls_k10": 0.505,
+          "csd_top1": 0.5683,
+          "clip_s": 0.7158,
+          "lpips": 0.529,
+          "style_affinity": 0.6106,
+          "pred_eq_src": 0.3317,
+          "same150_top1": 0.96,
+          "same150_dino_c": 0.8098,
+          "per_tgt_dino_s": {
+            "Ear": 0.5488,
+            "Imp": 0.6435,
+            "Min": 0.2771,
+            "Roc": 0.5532,
+            "Uki": 0.5044
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.6619,
+            "Imp": 0.6215,
+            "Min": 0.5972,
+            "Roc": 0.646,
+            "Uki": 0.6947
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.2083,
+            "Imp": 0.925,
+            "Min": 0.975,
+            "Roc": 0.5333,
+            "Uki": 0.2
+          }
+        },
+        "s125": {
+          "arm": "C3_44m_s2_joint_s125",
+          "dino_c": 0.5697,
+          "dino_s": 0.5274,
+          "dino_s_top5": 0.4731,
+          "csls_k10": 0.5617,
+          "csd_top1": 0.655,
+          "clip_s": 0.7294,
+          "lpips": 0.5941,
+          "style_affinity": 0.6284,
+          "pred_eq_src": 0.2333,
+          "same150_top1": 0.9533,
+          "same150_dino_c": 0.7062,
+          "per_tgt_dino_s": {
+            "Ear": 0.5732,
+            "Imp": 0.674,
+            "Min": 0.2814,
+            "Roc": 0.573,
+            "Uki": 0.5356
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.5838,
+            "Imp": 0.5312,
+            "Min": 0.5386,
+            "Roc": 0.5859,
+            "Uki": 0.6089
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.2917,
+            "Imp": 1.0,
+            "Min": 0.9917,
+            "Roc": 0.6333,
+            "Uki": 0.3583
+          }
+        },
+        "s150": {
+          "arm": "C3_44m_s2_joint_s150",
+          "dino_c": 0.4218,
+          "dino_s": 0.5566,
+          "dino_s_top5": 0.501,
+          "csls_k10": 0.66,
+          "csd_top1": 0.7983,
+          "clip_s": 0.7451,
+          "lpips": 0.6786,
+          "style_affinity": 0.6509,
+          "pred_eq_src": 0.1267,
+          "same150_top1": 0.96,
+          "same150_dino_c": 0.5974,
+          "per_tgt_dino_s": {
+            "Ear": 0.6016,
+            "Imp": 0.7223,
+            "Min": 0.3148,
+            "Roc": 0.5822,
+            "Uki": 0.5622
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.4569,
+            "Imp": 0.3678,
+            "Min": 0.3785,
+            "Roc": 0.4659,
+            "Uki": 0.4398
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.675,
+            "Imp": 1.0,
+            "Min": 1.0,
+            "Roc": 0.75,
+            "Uki": 0.5667
+          }
+        },
+        "tau0": {
+          "arm": "C3_44m_s2_joint_tau0",
+          "dino_c": 0.5844,
+          "dino_s": 0.5173,
+          "dino_s_top5": 0.4637,
+          "csls_k10": 0.425,
+          "csd_top1": 0.4883,
+          "clip_s": 0.7099,
+          "lpips": 0.5822,
+          "style_affinity": 0.6136,
+          "pred_eq_src": 0.3517,
+          "same150_top1": 0.9267,
+          "same150_dino_c": 0.6638,
+          "per_tgt_dino_s": {
+            "Ear": 0.5593,
+            "Imp": 0.6803,
+            "Min": 0.286,
+            "Roc": 0.5105,
+            "Uki": 0.5503
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.6061,
+            "Imp": 0.5527,
+            "Min": 0.6044,
+            "Roc": 0.5724,
+            "Uki": 0.5864
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.175,
+            "Imp": 0.9417,
+            "Min": 0.7,
+            "Roc": 0.3083,
+            "Uki": 0.3167
+          }
+        },
+        "s085_wrong": {
+          "arm": "C3_44m_s2_joint_s085_wrong",
+          "dino_c": 0.7178,
+          "dino_s": 0.437,
+          "dino_s_top5": 0.3846,
+          "csls_k10": 0.0167,
+          "csd_top1": 0.01,
+          "clip_s": 0.6724,
+          "lpips": 0.483,
+          "style_affinity": 0.5547,
+          "pred_eq_src": 0.445,
+          "same150_top1": 0.9733,
+          "same150_dino_c": 0.8886,
+          "per_tgt_dino_s": {
+            "Ear": 0.4857,
+            "Imp": 0.4823,
+            "Min": 0.2818,
+            "Roc": 0.4777,
+            "Uki": 0.4576
+          },
+          "per_tgt_dino_c": {
+            "Ear": 0.6889,
+            "Imp": 0.639,
+            "Min": 0.7572,
+            "Roc": 0.7661,
+            "Uki": 0.7378
+          },
+          "per_tgt_csd_top1": {
+            "Ear": 0.0,
+            "Imp": 0.025,
+            "Min": 0.025,
+            "Roc": 0.0,
+            "Uki": 0.0
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "updated_utc": "2026-11-26T02:23:26.639418+00:00",
+  "smoke_B2": {
+    "arm": "smoke_B2_inst_tex1101",
+    "cfg": {
+      "base_dim": 144,
+      "u_dim": 1101,
+      "cond_dim": 320,
+      "use_adapter": false,
+      "d_q16": 32,
+      "d_q32": 32,
+      "ctrl_w32": 144,
+      "ctrl_w16": 256,
+      "pcore_params": 22509044,
+      "ctrl_params": 0,
+      "total_params": 22509044,
+      "style_mode": "inst_1101",
+      "analytic_mode": "A0",
+      "updates": 100
+    },
+    "peak_vram_gb": 10.412,
+    "elapsed_min": 0.14
+  },
+  "smoke_C3": {
+    "arm": "smoke_C3_44m_s2",
+    "cfg": {
+      "base_dim": 208,
+      "u_dim": 417,
+      "cond_dim": 384,
+      "use_adapter": true,
+      "d_q16": 32,
+      "d_q32": 32,
+      "ctrl_w32": 144,
+      "ctrl_w16": 256,
+      "pcore_params": 44540532,
+      "ctrl_params": 7165536,
+      "total_params": 51706068,
+      "style_mode": "k8",
+      "analytic_mode": "A0",
+      "updates": 100
+    },
+    "peak_vram_gb": 7.617,
+    "elapsed_min": 0.17
+  }
+}

@@ -33,6 +33,7 @@
 | `exp/v25/` | 完成 / 部分模型冻结 | R12/R13 极高内容工作点、C2nt 参考条件、端到端成本核算 | [`r13_highcontent_r12.py`](v25/r13_highcontent_r12.py) · [V25 台账](../docs/v25/ABLATION_LEDGER.md) |
 | `exp/v26/` | 诊断完成 | Q32、RefAttn、SR-CFG、局部性 Exp1/Exp2、跨画派教师、Full Decoder matched 与少步 | [`gpu4090/`](v26/gpu4090/) · [V26 文档索引](../docs/1120/README.md) |
 | `exp/v33_semantic_control/` | 实测收官（P0–P2+CFG 探针，P3 按门控跳过） | P0 路由 CSLS 与 Y16 亮度解耦、P1 `Q64+` 正交补空间与部分白化泄漏审计、P2 `16×16+32×32` SemanticControlAdapter 与 CFG 重平衡瓶颈定位 | [`run_v33.py`](v33_semantic_control/run_v33.py) · [V33 报告](../docs/v33/V33_SEMANTIC_CONTROL_REPORT.md) |
+| `exp/v34_frontier/` | 实测收官（A/B/C/D + Holdout-300） | Stage A 解析起点 `A3` ($L_{\rm low}+P_C$)、Stage B 连续条件 `417D`/`1101D` 响应与前沿消融、Stage C 2×2 `44M Q32` 容量解锁及独立留出集复验 | [`run_v34.py`](v34_frontier/run_v34.py) · [V34 报告](../docs/v34/V34_FRONTIER_REPORT.md) |
 
 **关键纠偏**：V25 主线多数使用 `dino_16`，不能将 V21 的硬 Q32 当作所有生成模型的统一输入；C2nt 旧局部 `V` 在 V26 K1/Exp1 被判为不值得原样继承。V26-L L1 的早期 **F2=11% 因教师目标条件反置已作废**。[当前执行记录](../docs/1120/PROGRESS.md)。
 

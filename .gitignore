@@ -46,6 +46,7 @@ data/
 !docs/v26/4090/data/
 !docs/exp1123/data/
 !docs/v33/data/
+!docs/v34/data/
 datasets/
 results/
 exp/*
@@ -74,6 +75,7 @@ exp/*
 !exp/v27_single/
 !exp/v28_unified/
 !exp/v33_semantic_control/
+!exp/v34_frontier/
 experiments/
 state/
 archives/
