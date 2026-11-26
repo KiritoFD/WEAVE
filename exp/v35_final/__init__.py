@@ -35,13 +35,13 @@ from exp.v34_frontier.stage_a_startpoint import (
     decompose_py_luma,
 )
 from src.eval.runner import run_measure_batch_subprocess, run_measure_subprocess
-from src.utils import auto_decode_batch, decode_s10, load_s10_decoder
+from src.utils import S10_DECODER, auto_decode_batch, decode_s10, load_s10_decoder
 from src.utils.runtime import REPO as ROOT, save_json
 
 OUT = ROOT / "runs/v35_final"
 SEED_V35 = 20261135
 C2_V34_CKPT = ROOT / "runs/v34_frontier/stage_c/C2_44m_q32/C2_44m_q32_final.pt"
-S10B_CKPT = ROOT / "deliver/checkpoints/s10b_standalone/decoder.pt"
+S10B_CKPT = S10_DECODER
 D0_FULL_VAE_DIR = ROOT / "runs/v26/cache/sd0_vae_full"
 D1_FULL_FT_CKPT = ROOT / "runs/v27/icme_dec/D1_full_ft.pt"
 
@@ -49,8 +49,9 @@ D1_FULL_FT_CKPT = ROOT / "runs/v27/icme_dec/D1_full_ft.pt"
 class RawWriterV35(RawWriterV33):
     """RawWriter saving batches directly under runs/v35_final/raw/<arm> with hardware-scaled S10 decoding."""
 
-    def __init__(self, arm_name: str, dec=None, device: str = "cuda", *, raw_root: Path | None = None):
+    def __init__(self, arm_name: str, dec=None, device: str = "cuda", *, raw_root: Path | None = None, expected_tasks: int = 750):
         super().__init__(arm_name, dec=dec, device=device)
+        self.expected_tasks = int(expected_tasks)
         self.path = (raw_root or (OUT / "raw")) / arm_name
         self.path.mkdir(parents=True, exist_ok=True)
         self._decode_batch = auto_decode_batch(device)

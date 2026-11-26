@@ -1,0 +1,743 @@
+{
+  "updated_utc": "2026-11-26T18:49:49.495872+00:00",
+  "wall_sec": 672.29,
+  "stage": "P8_final_acceptance",
+  "locked_ckpt": "/root/Workspace/WEAVE/runs/v34_frontier/stage_c/C2_44m_q32/C2_44m_q32_final.pt",
+  "locked_weight": "ema",
+  "locked_step": 3500,
+  "final_schedule_cfg": {
+    "source_scan": "combined",
+    "ws_mul": 1.0,
+    "wc_mul": 1.2,
+    "dtau0": -0.05,
+    "steps": 6,
+    "alpha_y": 1.0,
+    "alpha_c": 1.0
+  },
+  "seed2_long_note": "P4 R0 trained 3500 steps; matched locked step=3500.",
+  "test750_matched_c": {
+    "c_grid": [
+      0.5,
+      0.61,
+      0.7
+    ],
+    "dino_s_at_c": [
+      0.569,
+      0.5398,
+      0.5101
+    ],
+    "csd_top1_at_c": [
+      0.7647,
+      0.6267,
+      0.5567
+    ],
+    "delta_s_vs_v32": [
+      0.0092,
+      0.016,
+      0.0293
+    ],
+    "mean_delta_s_vs_v32": 0.0182
+  },
+  "test750_levels": {
+    "s075": {
+      "arm": "P8_CLEAVE_Final_s075",
+      "dino_c": 0.6875,
+      "dino_s": 0.5101,
+      "dino_s_top5": 0.4507,
+      "csls_k10": 0.5,
+      "csd_top1": 0.5567,
+      "clip_s": 0.714,
+      "lpips": 0.5317,
+      "style_affinity": 0.612,
+      "pred_eq_src": 0.35,
+      "same150_top1": 0.9733,
+      "same150_dino_c": 0.8506,
+      "per_tgt_dino_s": {
+        "Ear": 0.5449,
+        "Imp": 0.6385,
+        "Min": 0.3131,
+        "Roc": 0.5538,
+        "Uki": 0.5
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.7016,
+        "Imp": 0.6424,
+        "Min": 0.6735,
+        "Roc": 0.678,
+        "Uki": 0.7417
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.2667,
+        "Imp": 0.9,
+        "Min": 0.9167,
+        "Roc": 0.5083,
+        "Uki": 0.1917
+      }
+    },
+    "s085": {
+      "arm": "P8_CLEAVE_Final_s085",
+      "dino_c": 0.6514,
+      "dino_s": 0.5261,
+      "dino_s_top5": 0.4665,
+      "csls_k10": 0.5217,
+      "csd_top1": 0.5783,
+      "clip_s": 0.7189,
+      "lpips": 0.5473,
+      "style_affinity": 0.6225,
+      "pred_eq_src": 0.315,
+      "same150_top1": 0.96,
+      "same150_dino_c": 0.8293,
+      "per_tgt_dino_s": {
+        "Ear": 0.5622,
+        "Imp": 0.6565,
+        "Min": 0.3268,
+        "Roc": 0.5724,
+        "Uki": 0.5128
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.6681,
+        "Imp": 0.6038,
+        "Min": 0.6336,
+        "Roc": 0.6483,
+        "Uki": 0.7032
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.2583,
+        "Imp": 0.9333,
+        "Min": 0.925,
+        "Roc": 0.5083,
+        "Uki": 0.2667
+      }
+    },
+    "s100": {
+      "arm": "P8_CLEAVE_Final_s100",
+      "dino_c": 0.5502,
+      "dino_s": 0.5597,
+      "dino_s_top5": 0.4988,
+      "csls_k10": 0.5917,
+      "csd_top1": 0.6967,
+      "clip_s": 0.7366,
+      "lpips": 0.596,
+      "style_affinity": 0.6481,
+      "pred_eq_src": 0.1917,
+      "same150_top1": 0.9467,
+      "same150_dino_c": 0.7218,
+      "per_tgt_dino_s": {
+        "Ear": 0.6107,
+        "Imp": 0.6869,
+        "Min": 0.3384,
+        "Roc": 0.6085,
+        "Uki": 0.5538
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.5383,
+        "Imp": 0.5331,
+        "Min": 0.5316,
+        "Roc": 0.5609,
+        "Uki": 0.5873
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.4583,
+        "Imp": 0.975,
+        "Min": 1.0,
+        "Roc": 0.6417,
+        "Uki": 0.4083
+      }
+    },
+    "s125": {
+      "arm": "P8_CLEAVE_Final_s125",
+      "dino_c": 0.4678,
+      "dino_s": 0.5749,
+      "dino_s_top5": 0.5179,
+      "csls_k10": 0.6933,
+      "csd_top1": 0.8083,
+      "clip_s": 0.7524,
+      "lpips": 0.6442,
+      "style_affinity": 0.6637,
+      "pred_eq_src": 0.1117,
+      "same150_top1": 0.9667,
+      "same150_dino_c": 0.6217,
+      "per_tgt_dino_s": {
+        "Ear": 0.6397,
+        "Imp": 0.7149,
+        "Min": 0.3277,
+        "Roc": 0.6101,
+        "Uki": 0.5822
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.4638,
+        "Imp": 0.4372,
+        "Min": 0.4543,
+        "Roc": 0.5031,
+        "Uki": 0.4808
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.5833,
+        "Imp": 1.0,
+        "Min": 1.0,
+        "Roc": 0.7833,
+        "Uki": 0.675
+      }
+    },
+    "s150": {
+      "arm": "P8_CLEAVE_Final_s150",
+      "dino_c": 0.3435,
+      "dino_s": 0.5919,
+      "dino_s_top5": 0.5358,
+      "csls_k10": 0.8067,
+      "csd_top1": 0.9117,
+      "clip_s": 0.7686,
+      "lpips": 0.7233,
+      "style_affinity": 0.6802,
+      "pred_eq_src": 0.0517,
+      "same150_top1": 0.9733,
+      "same150_dino_c": 0.5372,
+      "per_tgt_dino_s": {
+        "Ear": 0.653,
+        "Imp": 0.7457,
+        "Min": 0.378,
+        "Roc": 0.6002,
+        "Uki": 0.5826
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.3589,
+        "Imp": 0.3075,
+        "Min": 0.282,
+        "Roc": 0.4116,
+        "Uki": 0.3573
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.9083,
+        "Imp": 1.0,
+        "Min": 1.0,
+        "Roc": 0.8583,
+        "Uki": 0.7917
+      }
+    },
+    "tau0": {
+      "arm": "P8_CLEAVE_Final_tau0",
+      "dino_c": 0.4295,
+      "dino_s": 0.5883,
+      "dino_s_top5": 0.53,
+      "csls_k10": 0.625,
+      "csd_top1": 0.7033,
+      "clip_s": 0.7553,
+      "lpips": 0.7106,
+      "style_affinity": 0.6718,
+      "pred_eq_src": 0.1633,
+      "same150_top1": 0.9133,
+      "same150_dino_c": 0.5725,
+      "per_tgt_dino_s": {
+        "Ear": 0.6614,
+        "Imp": 0.7277,
+        "Min": 0.3493,
+        "Roc": 0.6029,
+        "Uki": 0.6001
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.4736,
+        "Imp": 0.4054,
+        "Min": 0.3959,
+        "Roc": 0.4503,
+        "Uki": 0.4222
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.3417,
+        "Imp": 1.0,
+        "Min": 0.8917,
+        "Roc": 0.4917,
+        "Uki": 0.7917
+      }
+    },
+    "s085_wrong": {
+      "arm": "P8_CLEAVE_Final_s085_wrong",
+      "dino_c": 0.6517,
+      "dino_s": 0.4642,
+      "dino_s_top5": 0.4082,
+      "csls_k10": 0.02,
+      "csd_top1": 0.015,
+      "clip_s": 0.6789,
+      "lpips": 0.5472,
+      "style_affinity": 0.5715,
+      "pred_eq_src": 0.295,
+      "same150_top1": 0.96,
+      "same150_dino_c": 0.8293,
+      "per_tgt_dino_s": {
+        "Ear": 0.4965,
+        "Imp": 0.5425,
+        "Min": 0.2943,
+        "Roc": 0.5084,
+        "Uki": 0.4792
+      },
+      "per_tgt_dino_c": {
+        "Ear": 0.6246,
+        "Imp": 0.5868,
+        "Min": 0.7007,
+        "Roc": 0.7006,
+        "Uki": 0.646
+      },
+      "per_tgt_csd_top1": {
+        "Ear": 0.0,
+        "Imp": 0.0583,
+        "Min": 0.0167,
+        "Roc": 0.0,
+        "Uki": 0.0
+      }
+    }
+  },
+  "holdout_s085": {
+    "final": {
+      "arm": "P8_CLEAVE_Final_ho_s085",
+      "utc": "2026-11-26T18:48:08.253589+00:00",
+      "cross600": {
+        "n": 600,
+        "csd_top1": 0.585,
+        "csd_margin": 0.04324310986946026,
+        "dT": 0.13264127737532058,
+        "dino_s": 0.5323874803384145,
+        "clip_s": 0.7680556936065356,
+        "style_affinity": 0.650221586972475,
+        "dino_c": 0.6831347710390886,
+        "lpips": 0.8127497632304828,
+        "pred_eq_src": 0.2916666666666667,
+        "pred_eq_imp": 0.415
+      },
+      "same150": {
+        "n": 150,
+        "csd_top1": 0.9466666666666667,
+        "csd_margin": 0.267380629380544,
+        "dT": -0.08164121607939402,
+        "dino_s": 0.6563178320725759,
+        "clip_s": 0.8594544891516368,
+        "style_affinity": 0.7578861606121063,
+        "dino_c": 0.8443962725003561,
+        "lpips": 0.763005473613739,
+        "pred_eq_src": 0.9466666666666667,
+        "pred_eq_imp": 0.25333333333333335
+      },
+      "per_target_cross120": {
+        "Early_Renaissance": {
+          "n": 120,
+          "csd_top1": 0.21666666666666667,
+          "csd_margin": -0.08345551192760467,
+          "dT": 0.0738030166986088,
+          "dino_s": 0.5542349631587664,
+          "clip_s": 0.750333230694135,
+          "style_affinity": 0.6522840969264507,
+          "dino_c": 0.6998430490493774,
+          "lpips": 0.8092792804042498,
+          "pred_eq_src": 0.5166666666666667,
+          "pred_eq_imp": 0.5166666666666667
+        },
+        "Impressionism": {
+          "n": 120,
+          "csd_top1": 0.9083333333333333,
+          "csd_margin": 0.20822874046862125,
+          "dT": 0.24331828678647677,
+          "dino_s": 0.6317545643697182,
+          "clip_s": 0.8195011888941129,
+          "style_affinity": 0.7256278766319155,
+          "dino_c": 0.6482899544139703,
+          "lpips": 0.8446476166447003,
+          "pred_eq_src": 0.08333333333333333,
+          "pred_eq_imp": 0.9083333333333333
+        },
+        "Minimalism": {
+          "n": 120,
+          "csd_top1": 0.9083333333333333,
+          "csd_margin": 0.15447832588106394,
+          "dT": 0.18861631869028012,
+          "dino_s": 0.3426855567842722,
+          "clip_s": 0.8067255263527234,
+          "style_affinity": 0.5747055415684978,
+          "dino_c": 0.6780470406015714,
+          "lpips": 0.7594452152649561,
+          "pred_eq_src": 0.075,
+          "pred_eq_imp": 0.041666666666666664
+        },
+        "Rococo": {
+          "n": 120,
+          "csd_top1": 0.625,
+          "csd_margin": 0.007339188456535339,
+          "dT": 0.09074722056587538,
+          "dino_s": 0.5647448964416981,
+          "clip_s": 0.7298614040017128,
+          "style_affinity": 0.6473031502217055,
+          "dino_c": 0.670198709021012,
+          "lpips": 0.8789879366755485,
+          "pred_eq_src": 0.26666666666666666,
+          "pred_eq_imp": 0.225
+        },
+        "Ukiyo_e": {
+          "n": 120,
+          "csd_top1": 0.26666666666666666,
+          "csd_margin": -0.07037519353131454,
+          "dT": 0.06672154413536191,
+          "dino_s": 0.5685174209376176,
+          "clip_s": 0.7338571180899938,
+          "style_affinity": 0.6511872695138057,
+          "dino_c": 0.7192951021095116,
+          "lpips": 0.7713887671629588,
+          "pred_eq_src": 0.5166666666666667,
+          "pred_eq_imp": 0.38333333333333336
+        }
+      }
+    },
+    "seed2_r0": {
+      "arm": "P8_Seed2_R0_ho_s085",
+      "utc": "2026-11-26T18:49:29.840024+00:00",
+      "cross600": {
+        "n": 600,
+        "csd_top1": 0.5816666666666667,
+        "csd_margin": 0.04148005307962497,
+        "dT": 0.13389881746843457,
+        "dino_s": 0.5333020035425822,
+        "clip_s": 0.7674532521764438,
+        "style_affinity": 0.650377627859513,
+        "dino_c": 0.6819275315850973,
+        "lpips": 0.811712024907271,
+        "pred_eq_src": 0.28833333333333333,
+        "pred_eq_imp": 0.435
+      },
+      "same150": {
+        "n": 150,
+        "csd_top1": 0.9466666666666667,
+        "csd_margin": 0.264448996980985,
+        "dT": -0.08078397125005722,
+        "dino_s": 0.6564823498328527,
+        "clip_s": 0.8602226829528808,
+        "style_affinity": 0.7583525163928668,
+        "dino_c": 0.8427618432044983,
+        "lpips": 0.7619964655240377,
+        "pred_eq_src": 0.9466666666666667,
+        "pred_eq_imp": 0.25333333333333335
+      },
+      "per_target_cross120": {
+        "Early_Renaissance": {
+          "n": 120,
+          "csd_top1": 0.25,
+          "csd_margin": -0.07678490616381169,
+          "dT": 0.07973418381686012,
+          "dino_s": 0.5573153962691625,
+          "clip_s": 0.7507885639866193,
+          "style_affinity": 0.6540519801278909,
+          "dino_c": 0.7010599731157223,
+          "lpips": 0.8073389525214831,
+          "pred_eq_src": 0.48333333333333334,
+          "pred_eq_imp": 0.5166666666666667
+        },
+        "Impressionism": {
+          "n": 120,
+          "csd_top1": 0.9166666666666666,
+          "csd_margin": 0.2090498941640059,
+          "dT": 0.24259643132487932,
+          "dino_s": 0.6317116800695658,
+          "clip_s": 0.819599271317323,
+          "style_affinity": 0.7256554756934444,
+          "dino_c": 0.643169995273153,
+          "lpips": 0.8445348143577576,
+          "pred_eq_src": 0.08333333333333333,
+          "pred_eq_imp": 0.9166666666666666
+        },
+        "Minimalism": {
+          "n": 120,
+          "csd_top1": 0.9166666666666666,
+          "csd_margin": 0.15209458420674007,
+          "dT": 0.18626327781627575,
+          "dino_s": 0.3448736301312844,
+          "clip_s": 0.8017087166508039,
+          "style_affinity": 0.5732911733910442,
+          "dino_c": 0.6835584610700607,
+          "lpips": 0.757682591676712,
+          "pred_eq_src": 0.06666666666666667,
+          "pred_eq_imp": 0.041666666666666664
+        },
+        "Rococo": {
+          "n": 120,
+          "csd_top1": 0.5333333333333333,
+          "csd_margin": -0.004549857911964258,
+          "dT": 0.08170769748588404,
+          "dino_s": 0.5620410442352295,
+          "clip_s": 0.7296205560366312,
+          "style_affinity": 0.6458308001359303,
+          "dino_c": 0.6641197387129069,
+          "lpips": 0.883011823395888,
+          "pred_eq_src": 0.3333333333333333,
+          "pred_eq_imp": 0.2916666666666667
+        },
+        "Ukiyo_e": {
+          "n": 120,
+          "csd_top1": 0.2916666666666667,
+          "csd_margin": -0.07240944889684518,
+          "dT": 0.07919249689827362,
+          "dino_s": 0.5705682670076688,
+          "clip_s": 0.7355491528908412,
+          "style_affinity": 0.6530587099492551,
+          "dino_c": 0.7177294897536437,
+          "lpips": 0.7659919425845146,
+          "pred_eq_src": 0.475,
+          "pred_eq_imp": 0.4083333333333333
+        }
+      }
+    }
+  },
+  "perf_4090": {
+    "speed": {
+      "b1_ms_per_img": 108.7,
+      "b1_ips": 9.2,
+      "b1_peak_vram_gb": 0.83,
+      "b16_ms_per_img": 69.82,
+      "b16_ips": 14.3,
+      "b16_peak_vram_gb": 6.52
+    },
+    "breakdown_b16_ms_per_img": {
+      "a0_encode_struct_ms": 15.79,
+      "convnext_stiefel_ms": 1.0,
+      "ecore_a3_ms": 1.05,
+      "pcore_ode_ms": 39.49,
+      "s10_decode_ms": 12.49
+    },
+    "param_ledger": {
+      "a0_vae_encoder_params": 34163664,
+      "convnext_s3_params": 12348000,
+      "ecore_params": 11131268,
+      "pcore_params": 44540532,
+      "s10_decoder_params": 10657943,
+      "e2e_nfe": {
+        "ecore": 1,
+        "pcore_steps": 6,
+        "pcore_cfg_evals": 24,
+        "total_flow_evals": 25
+      },
+      "gen_plus_dec_total": 66329743,
+      "full_e2e_total": 112841407
+    }
+  },
+  "ci_vs_v32": {
+    "s085_vs_V32": {
+      "n_tasks": 600,
+      "dino_c": {
+        "cand": 0.6514,
+        "base": 0.601,
+        "diff": 0.0504,
+        "ci95": [
+          0.0439,
+          0.0572
+        ],
+        "excludes_zero": true
+      },
+      "dino_s": {
+        "cand": 0.5261,
+        "base": 0.5266,
+        "diff": -0.0004,
+        "ci95": [
+          -0.0041,
+          0.0034
+        ],
+        "excludes_zero": false
+      },
+      "lpips": {
+        "cand": 0.5473,
+        "base": 0.5511,
+        "diff": -0.0038,
+        "ci95": [
+          -0.0094,
+          0.0022
+        ],
+        "excludes_zero": false
+      },
+      "target_top1": {
+        "cand": 0.5783,
+        "base": 0.6233,
+        "diff": -0.045,
+        "ci95": [
+          -0.0717,
+          -0.0183
+        ],
+        "excludes_zero": true
+      },
+      "clip_s": {
+        "cand": 0.7189,
+        "base": 0.7267,
+        "diff": -0.0078,
+        "ci95": [
+          -0.0096,
+          -0.0061
+        ],
+        "excludes_zero": true
+      }
+    }
+  },
+  "visual_strip": {
+    "grid_path": "docs/v35/figures/v35_fixed_task_comparison.png",
+    "task_ids": [
+      {
+        "task_id": "Impressionism/Impressionism__armand-guillaumin_valley-in-pontgibaud-1890/Early_Renaissance",
+        "src": "Impressionism",
+        "tgt": "Early_Renaissance"
+      },
+      {
+        "task_id": "Early_Renaissance/Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464/Impressionism",
+        "src": "Early_Renaissance",
+        "tgt": "Impressionism"
+      },
+      {
+        "task_id": "Early_Renaissance/Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464/Minimalism",
+        "src": "Early_Renaissance",
+        "tgt": "Minimalism"
+      },
+      {
+        "task_id": "Early_Renaissance/Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464/Rococo",
+        "src": "Early_Renaissance",
+        "tgt": "Rococo"
+      },
+      {
+        "task_id": "Early_Renaissance/Early_Renaissance__andrea-mantegna_the-circumcision-of-christ-1464/Ukiyo_e",
+        "src": "Early_Renaissance",
+        "tgt": "Ukiyo_e"
+      }
+    ]
+  },
+  "p3_matched_c_summary": {
+    "P3_Q0_stiefel_poolc": {
+      "c_grid": [
+        0.5,
+        0.61,
+        0.7
+      ],
+      "dino_s_at_c": [
+        0.5708,
+        0.5388,
+        0.501
+      ],
+      "csd_top1_at_c": [
+        0.7673,
+        0.6303,
+        0.5342
+      ],
+      "delta_s_vs_v32": [
+        0.011,
+        0.015,
+        0.0202
+      ],
+      "mean_delta_s_vs_v32": 0.0154
+    },
+    "P3_Q1_whiten_poolc": {
+      "c_grid": [
+        0.5,
+        0.61,
+        0.7
+      ],
+      "dino_s_at_c": [
+        0.566,
+        0.5355,
+        0.5013
+      ],
+      "csd_top1_at_c": [
+        0.758,
+        0.6211,
+        0.524
+      ],
+      "delta_s_vs_v32": [
+        0.0062,
+        0.0117,
+        0.0205
+      ],
+      "mean_delta_s_vs_v32": 0.0128
+    },
+    "P3_Q2_pca32_poolc": {
+      "c_grid": [
+        0.5,
+        0.61,
+        0.7
+      ],
+      "dino_s_at_c": [
+        0.5593,
+        0.5328,
+        0.5013
+      ],
+      "csd_top1_at_c": [
+        0.745,
+        0.6142,
+        0.5209
+      ],
+      "delta_s_vs_v32": [
+        -0.0005,
+        0.009,
+        0.0205
+      ],
+      "mean_delta_s_vs_v32": 0.0097
+    },
+    "P3_Q3_stiefel_nopc": {
+      "c_grid": [
+        0.5,
+        0.61,
+        0.7
+      ],
+      "dino_s_at_c": [
+        0.5698,
+        0.5395,
+        0.5023
+      ],
+      "csd_top1_at_c": [
+        0.7493,
+        0.62,
+        0.5309
+      ],
+      "delta_s_vs_v32": [
+        0.01,
+        0.0157,
+        0.0215
+      ],
+      "mean_delta_s_vs_v32": 0.0157
+    }
+  },
+  "p4_matched_c_summary": {
+    "P4_R0_stiefel_seed2": {
+      "c_grid": [
+        0.5,
+        0.61,
+        0.7
+      ],
+      "dino_s_at_c": [
+        0.5689,
+        0.5376,
+        0.5011
+      ],
+      "csd_top1_at_c": [
+        0.7715,
+        0.6339,
+        0.5369
+      ],
+      "delta_s_vs_v32": [
+        0.0091,
+        0.0138,
+        0.0203
+      ],
+      "mean_delta_s_vs_v32": 0.0144
+    },
+    "P4_R1_whiten_seed2": {
+      "c_grid": [
+        0.5,
+        0.61,
+        0.7
+      ],
+      "dino_s_at_c": [
+        0.5636,
+        0.534,
+        0.502
+      ],
+      "csd_top1_at_c": [
+        0.7698,
+        0.6121,
+        0.5203
+      ],
+      "delta_s_vs_v32": [
+        0.0038,
+        0.0102,
+        0.0212
+      ],
+      "mean_delta_s_vs_v32": 0.0117
+    }
+  }
+}

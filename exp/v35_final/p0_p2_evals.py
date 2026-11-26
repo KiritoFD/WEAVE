@@ -381,8 +381,9 @@ def run_p2(*, device: str = "cuda") -> dict[str, Any]:
         ("D1_wikiart_ft", "full", D1_FULL_FT_CKPT, D1_FULL_FT_CKPT.exists()),
         ("D2_s10b", "s10", S10B_CKPT, S10B_CKPT.exists()),
     ]
+    dec_ms_p = OUT / "p2/decode_ms.json"
     dec_params: dict[str, int] = {}
-    dec_ms: dict[str, float] = {}
+    dec_ms: dict[str, float] = read_json(dec_ms_p) if dec_ms_p.exists() else {}
     tex_stats: dict[str, dict[str, float]] = {}
     arms_to_measure: list[str] = []
     arm_meta: list[tuple[str, str, str]] = []
@@ -432,6 +433,7 @@ def run_p2(*, device: str = "cuda") -> dict[str, Any]:
                 torch.cuda.synchronize()
                 if l_tag == "pcore_s085":
                     dec_ms[d_tag] = round((time.perf_counter() - td_0) * 1000.0 / len(tasks), 3)
+                    save_json(dec_ms_p, dec_ms)
                 tex_stats[arm] = {tk: round(tv / max(1, n_chunks), 6) for tk, tv in accum_t.items()}
                 writer.finalize(arm=arm, decoder=d_tag, latent_source=l_tag)
 

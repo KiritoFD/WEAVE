@@ -29,7 +29,7 @@ WEAVE → PRISM 的研究不是一份越积越长的实验流水账。我们把�
 | **V26** | C2nt 局部 Value 判负；SR-CFG、跨画派采样单独使用都没有解决根因 | [六问总结](1120/V26_RESULTS_SUMMARY.md) · [L0](v26/4090/L0_CROSSSTYLE_CAUSAL.md) |
 | **V32–V33** | V32 全链路去 DINO（ConvNeXt-Stage3）；V33 验证路由/Y16/Q64+/32×32控制均未抬升冻结 22M 主干 Pareto 上限，锁定真正瓶颈 | [V32 Zero-DINO](v32/NODINO_REPORT.md) · [V33 实验报告](v33/V33_SEMANTIC_CONTROL_REPORT.md) |
 | **V34** | **解析起点 `A3` ($L_{\rm low}+P_C$) + `44.54M Q32` 扩容 (`C2`) 打破容量瓶颈**，在 `test750`（`+0.011–0.020 S`）与 `holdout-300` 盲测集显著推升 Zero-DINO Pareto 前沿 | [V34 实验报告](v34/V34_FRONTIER_REPORT.md) |
-| **V35** | **CLEAVE-One 开放域单图风格迁移（零 class slot / 零 kNN / Zero-DINO）**：验证自监督 `StyleEncoderC` + 可微 `S10+VGG Reference Swap`（`O3` 在未见画派 2-way 跟随达 **`92.5%–93.3%`**、同画派实例交换 **`83.3%–85.0%`**、`test750` 错标签因果差 **`+30.83pp–+36.00pp`**） | [V35 实验报告](v35/CLEAVE_ONE_RESULTS.md) |
+| **V35** | **CLEAVE 终稿定型（Zero-DINO / P0–P8 因果归因 + P0 校准收敛）**：`44.54M P-Core + 11.13M E-Core + 10.66M S10B`（Zero-DINO），经 `A3=(1.0,1.0)` 解析起点与 `P6` 校准（`wc×1.2, Δτ0=-0.05, 6 步`）后达 **`C=0.5502 / S=0.5597 / Top-1=69.67%`**（`s100`）、**`Top-1=91.17%`**（`s150`）、Matched-C 较 V32 均增 **`+0.0182 S`**（`C=0.70` 处 **`+0.0293`**），`4090` 冷启端到端 **`14.3 img/s` (`69.82 ms/img`)**；并完成开放域 `CLEAVE-One` (`O3` 92.5%–93.3%) | [V35 终稿报告](v35/V35_FINAL_REPORT.md) · [CLEAVE-One](v35/CLEAVE_ONE_RESULTS.md) |
 
 ## Decoder 独立研究线
 

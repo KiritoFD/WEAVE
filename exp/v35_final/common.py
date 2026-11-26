@@ -377,7 +377,7 @@ def eval_pcore_train_calib(
                 draft_cache[lam] = torch.cat(chunks, 0)
             ze_pool = draft_cache.get(lam)
 
-            writer = RawWriterV35(full_tag, dec=dec, device=device, raw_root=OUT / "calib/raw")
+            writer = RawWriterV35(full_tag, dec=dec, device=device, raw_root=OUT / "calib/raw", expected_tasks=len(tasks))
             kw_call = {k: v for k, v in kw.items() if k != "draft_lambda"}
             for st in range(0, len(tasks), infer_bs):
                 sl = slice(st, min(st + infer_bs, len(tasks)))

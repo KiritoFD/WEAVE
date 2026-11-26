@@ -16,7 +16,7 @@ import torch
 from exp.v21.stiefel_ref_cache import stiefel_polar_quotient
 from exp.v29_biglittle.pcore_model import PCoreSLFUNet
 from exp.v34_frontier.stage_a_startpoint import _py_unit_vec, reconstruct_analytic_draft
-from exp.v35_final import build_pcore_startpoint, summarize_matched_c
+from exp.v35_final import RawWriterV35, build_pcore_startpoint, summarize_matched_c
 from exp.v35_final.common import compute_pca32_raw, compute_whiten32, make_v35_schedule
 from src.utils.runtime import auto_decode_batch, auto_infer_batch, auto_referee_batch, auto_vram_budget_gb, tier_micro_accum
 
@@ -141,3 +141,8 @@ def test_content_ablation_reps_and_s0_identity() -> None:
 
     kw_zero = make_v35_schedule(0.0)
     assert kw_zero["tau0"] == 1.0 and kw_zero["draft_lambda"] == 0.0 and kw_zero["wsp"] == 0.0
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        wr = RawWriterV35("unit_calib_tmp", dec=None, device="cpu", raw_root=Path(td), expected_tasks=300)
+        assert wr.expected_tasks == 300

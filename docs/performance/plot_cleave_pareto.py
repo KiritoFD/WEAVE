@@ -210,6 +210,46 @@ def collect_triptych_data() -> dict[str, Any]:
             if k in sb["arms"]:
                 stage_b_curves[k] = _extract_curve(sb["arms"][k]["levels"], ips=18.2)
 
+    p8 = _load_json(REPO / "docs/v35/data/p8_final_report.json")
+    p7 = _load_json(REPO / "docs/v35/data/p7_biglittle_report.json")
+    p3 = _load_json(REPO / "docs/v35/data/p3_stiefel_poolc_report.json")
+    p4 = _load_json(REPO / "docs/v35/data/p4_seed2_report.json")
+    p5 = _load_json(REPO / "docs/v35/data/p5_duration_report.json")
+
+    v35_final_ips = float(p8["perf_4090"]["speed"]["b16_ips"]) if p8 else 14.3
+    v35_final = _extract_curve(p8["test750_levels"], ips=v35_final_ips) if p8 else []
+    v35_eonly = _extract_curve(p7["e_only"], ips=33.1) if p7 else []
+    v35_ponly = _extract_curve(p7["p_only_src_chroma"], ips=None) if p7 else []
+
+    if p8 and "holdout_s085" in p8:
+        for hk, hlabel in [("final", "V35_Final_s085"), ("seed2_r0", "V35_Seed2_s085")]:
+            if hk in p8["holdout_s085"]:
+                c = p8["holdout_s085"][hk]["cross600"]
+                holdout_pts.append({
+                    "label": hlabel, "dc": round(c["dino_c"], 4), "ds": round(c["dino_s"], 4),
+                    "t1": round(c["csd_top1"] * 100.0, 2), "lpips": round(c["lpips"], 4),
+                    "same": round(p8["holdout_s085"][hk]["same150"]["csd_top1"] * 100.0, 1),
+                })
+
+    p3_curves = {}
+    if p3 and "arms" in p3:
+        for k, a in p3["arms"].items():
+            p3_curves[k] = _extract_curve(a["levels"], ips=v35_final_ips)
+    p4_curves = {}
+    if p4 and "arms" in p4:
+        for k, a in p4["arms"].items():
+            p4_curves[k] = _extract_curve(a["levels"], ips=v35_final_ips)
+    p5_points = []
+    if p5 and "curve" in p5:
+        for k, a in p5["curve"].items():
+            m = a["s100"]
+            p5_points.append({
+                "label": k, "step": int(a["step"]), "weight": a["weight"],
+                "dc": round(float(m["dino_c"]), 4), "ds": round(float(m["dino_s"]), 4),
+                "t1": round(float(m["csd_top1"]) * 100.0, 2),
+                "same": round(float(m["same150_top1"]) * 100.0, 1),
+            })
+
     v35_all = _collect_v35_reports()
     v35_o3 = sorted([r for r in v35_all if r["group"] == "O3"], key=lambda p: p["dc"])
     v35_o1 = sorted([r for r in v35_all if r["group"] == "O1"], key=lambda p: p["dc"])
@@ -227,6 +267,13 @@ def collect_triptych_data() -> dict[str, Any]:
         "v34_d_merged": v34_d_merged,
         "v33_s2": v33_s2,
         "v34_ips": v34_ips,
+        "v35_final": v35_final,
+        "v35_final_ips": v35_final_ips,
+        "v35_eonly": v35_eonly,
+        "v35_ponly": v35_ponly,
+        "p3_curves": p3_curves,
+        "p4_curves": p4_curves,
+        "p5_points": p5_points,
         "v35_all": v35_all,
         "v35_o3": v35_o3,
         "v35_o1": v35_o1,
@@ -246,6 +293,7 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     TEAL, TEAL_DARK = "#0d9488", "#115e59"
     BLUE_V32, BLUE_DARK = "#2563eb", "#1e3a8a"
     WIN_RED, WIN_DARK = "#e11d48", "#881337"
+    FINAL_GRN, FINAL_DARK = "#059669", "#064e3b"
     V35_AMB, V35_DARK = "#f59e0b", "#92400e"
     V35_O1_COL = "#fb923c"
     HEAVY_PURPLE = "#7c3aed"
@@ -270,6 +318,7 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     pc32 = data["v32_pcore"]
     ec_m = data["v32_ec_max"]
     v34 = data["v34_winner"]
+    v35f = [p for p in (data.get("v35_final") or []) if p["knob"] != "tau0"]
     v35_o3 = data["v35_o3"]
     v35_o1 = data["v35_o1"]
     ext = data["external"]
@@ -296,10 +345,13 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     ax_a.plot([p["dc"] for p in ec], [p["ds"] for p in ec], "-", color=TEAL, lw=2.4, zorder=5)
     ax_a.plot([ec[-1]["dc"], pc32[0]["dc"]], [ec[-1]["ds"], pc32[0]["ds"]], ":", color="#64748b", lw=1.4, zorder=4)
     ax_a.plot([p["dc"] for p in pc32], [p["ds"] for p in pc32], "--", color=BLUE_V32, lw=1.9, alpha=0.85, zorder=5)
-    ax_a.plot([p["dc"] for p in v34], [p["ds"] for p in v34], "-", color=WIN_RED, lw=3.0, zorder=8)
+    ax_a.plot([p["dc"] for p in v34], [p["ds"] for p in v34], ":", color=WIN_RED, lw=1.7, alpha=0.75, zorder=7)
     ax_a.scatter([p["dc"] for p in ec], [p["ds"] for p in ec], marker="D", s=40, c=TEAL, edgecolors=TEAL_DARK, lw=0.9, zorder=6)
     ax_a.scatter([p["dc"] for p in pc32], [p["ds"] for p in pc32], marker="o", s=34, c=BLUE_V32, edgecolors=BLUE_DARK, lw=0.8, alpha=0.85, zorder=6)
-    ax_a.scatter([p["dc"] for p in v34], [p["ds"] for p in v34], marker="o", s=54, c=WIN_RED, edgecolors=WIN_DARK, lw=1.1, zorder=9)
+    ax_a.scatter([p["dc"] for p in v34], [p["ds"] for p in v34], marker="o", s=32, c=WIN_RED, edgecolors=WIN_DARK, lw=0.7, alpha=0.75, zorder=7)
+    if v35f:
+        ax_a.plot([p["dc"] for p in v35f], [p["ds"] for p in v35f], "-", color=FINAL_GRN, lw=3.0, zorder=9)
+        ax_a.scatter([p["dc"] for p in v35f], [p["ds"] for p in v35f], marker="o", s=54, c=FINAL_GRN, edgecolors=FINAL_DARK, lw=1.0, zorder=10)
     ax_a.scatter([ec_m["dc"]], [ec_m["ds"]], marker="D", s=42, facecolors="none", edgecolors=TEAL, lw=1.5, zorder=6)
     ax_a.plot([p["dc"] for p in v35_o1], [p["ds"] for p in v35_o1], ":", color=V35_O1_COL, lw=1.6, zorder=7)
     ax_a.scatter([p["dc"] for p in v35_o1], [p["ds"] for p in v35_o1], marker="^", s=36, c=V35_O1_COL, edgecolors=V35_DARK, lw=0.7, zorder=8)
@@ -326,12 +378,12 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
             _ann(ax_a, b["name"] if b["short"] == "StyleGallery" else b["short"], (b["dc"], b["ds"]), o,
                  ha=ha, col="#4c1d95" if b["short"] == "StyleGallery" else "#475569", bold=(b["short"] == "StyleGallery"), leader=ldr)
 
-    for p in v34:
+    for p in (v35f or v34):
         if p["knob"] in ("s075", "s085", "s100", "s125", "s150"):
             lbl_s = "s=" + p["knob"][1] + "." + p["knob"][2:]
-            off_map = {"s075": (5, 6), "s085": (6, 7), "s100": (-5, -10), "s125": (5, 9), "s150": (4, 10)}
+            off_map = {"s075": (5, 7), "s085": (5, 8), "s100": (-5, -10), "s125": (5, 9), "s150": (4, 10)}
             ha_m = "right" if p["knob"] == "s100" else "left"
-            _ann(ax_a, lbl_s, (p["dc"], p["ds"]), off_map[p["knob"]], ha=ha_m, col=WIN_DARK, bold=True, fs=7.5)
+            _ann(ax_a, lbl_s, (p["dc"], p["ds"]), off_map[p["knob"]], ha=ha_m, col=FINAL_DARK if v35f else WIN_DARK, bold=True, fs=7.4)
     _ann(ax_a, "V32 22M", (0.2805, 0.6054), (4, 8), ha="left", col=BLUE_DARK, bold=True, fs=7.1)
     _ann(ax_a, "E-Core s=0.75", (ec[-1]["dc"], ec[-1]["ds"]), (5, 7), ha="left", col=TEAL_DARK, bold=True, fs=7.2)
     ax_a.set_xlim(0.24, 0.94)
@@ -347,10 +399,13 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     ax_b.plot([p["dc"] for p in ec], [p["t1"] for p in ec], "-", color=TEAL, lw=2.4, zorder=5)
     ax_b.plot([ec[-1]["dc"], pc32[0]["dc"]], [ec[-1]["t1"], pc32[0]["t1"]], ":", color="#64748b", lw=1.4, zorder=4)
     ax_b.plot([p["dc"] for p in pc32], [p["t1"] for p in pc32], "--", color=BLUE_V32, lw=1.9, alpha=0.85, zorder=5)
-    ax_b.plot([p["dc"] for p in v34], [p["t1"] for p in v34], "-", color=WIN_RED, lw=3.0, zorder=8)
+    ax_b.plot([p["dc"] for p in v34], [p["t1"] for p in v34], ":", color=WIN_RED, lw=1.7, alpha=0.75, zorder=7)
     ax_b.scatter([p["dc"] for p in ec], [p["t1"] for p in ec], marker="D", s=40, c=TEAL, edgecolors=TEAL_DARK, lw=0.9, zorder=6)
     ax_b.scatter([p["dc"] for p in pc32], [p["t1"] for p in pc32], marker="o", s=34, c=BLUE_V32, edgecolors=BLUE_DARK, lw=0.8, alpha=0.85, zorder=6)
-    ax_b.scatter([p["dc"] for p in v34], [p["t1"] for p in v34], marker="o", s=54, c=WIN_RED, edgecolors=WIN_DARK, lw=1.1, zorder=9)
+    ax_b.scatter([p["dc"] for p in v34], [p["t1"] for p in v34], marker="o", s=32, c=WIN_RED, edgecolors=WIN_DARK, lw=0.7, alpha=0.75, zorder=7)
+    if v35f:
+        ax_b.plot([p["dc"] for p in v35f], [p["t1"] for p in v35f], "-", color=FINAL_GRN, lw=3.0, zorder=9)
+        ax_b.scatter([p["dc"] for p in v35f], [p["t1"] for p in v35f], marker="o", s=54, c=FINAL_GRN, edgecolors=FINAL_DARK, lw=1.0, zorder=10)
     ax_b.scatter([ec_m["dc"]], [ec_m["t1"]], marker="D", s=42, facecolors="none", edgecolors=TEAL, lw=1.5, zorder=6)
     ax_b.plot([p["dc"] for p in v35_o1], [p["t1"] for p in v35_o1], ":", color=V35_O1_COL, lw=1.6, zorder=7)
     ax_b.scatter([p["dc"] for p in v35_o1], [p["t1"] for p in v35_o1], marker="^", s=36, c=V35_O1_COL, edgecolors=V35_DARK, lw=0.7, zorder=8)
@@ -373,12 +428,12 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
             o, ha, ldr = offs_b[b["short"]]
             _ann(ax_b, b["name"] if b["short"] == "StyleGallery" else b["short"], (b["dc"], b["t1"]), o,
                  ha=ha, col="#4c1d95" if b["short"] == "StyleGallery" else "#475569", bold=(b["short"] == "StyleGallery"), leader=ldr)
-    for p in v34:
+    for p in (v35f or v34):
         if p["knob"] in ("s075", "s085", "s100", "s125", "s150"):
             lbl_s = "s=" + p["knob"][1] + "." + p["knob"][2:]
             off_b = {"s075": (5, -7), "s085": (5, 7), "s100": (6, 7), "s125": (6, 6), "s150": (-5, -10)}
             ha_b = "right" if p["knob"] == "s150" else "left"
-            _ann(ax_b, lbl_s, (p["dc"], p["t1"]), off_b[p["knob"]], ha=ha_b, col=WIN_DARK, bold=True, fs=7.5)
+            _ann(ax_b, lbl_s, (p["dc"], p["t1"]), off_b[p["knob"]], ha=ha_b, col=FINAL_DARK if v35f else WIN_DARK, bold=True, fs=7.4)
     ax_b.set_xlim(0.24, 0.94)
     ax_b.set_ylim(-1.0, 99.0)
     ax_b.set_title("(b) Stronger Style Specificity", fontweight="bold", pad=8)
@@ -387,16 +442,19 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     ax_b.grid(True, ls="--", lw=0.45, alpha=0.45)
 
     # Panel (c): Speed vs CSD Top-1
-    ax_c.axvspan(10.0, 180.0, color="#fff1f2", alpha=0.48, zorder=0)
-    ax_c.axvline(10.0, color=WIN_RED, ls=":", lw=1.0, alpha=0.45, zorder=1)
+    ax_c.axvspan(10.0, 180.0, color="#ecfdf5", alpha=0.52, zorder=0)
+    ax_c.axvline(10.0, color=FINAL_GRN, ls=":", lw=1.0, alpha=0.45, zorder=1)
     _draw_ext(ax_c, "ips", "t1", data["ext_front_c"])
     ax_c.plot([p["ips"] for p in ec], [p["t1"] for p in ec], "-", color=TEAL, lw=2.4, zorder=5)
     ax_c.plot([ec[-1]["ips"], pc32[0]["ips"]], [ec[-1]["t1"], pc32[0]["t1"]], ":", color="#64748b", lw=1.3, zorder=4)
     ax_c.plot([p["ips"] for p in pc32], [p["t1"] for p in pc32], "--", color=BLUE_V32, lw=1.9, alpha=0.85, zorder=5)
-    ax_c.plot([p["ips"] for p in v34], [p["t1"] for p in v34], "-", color=WIN_RED, lw=3.0, zorder=8)
+    ax_c.plot([p["ips"] for p in v34], [p["t1"] for p in v34], ":", color=WIN_RED, lw=1.7, alpha=0.7, zorder=7)
     ax_c.scatter([p["ips"] for p in ec], [p["t1"] for p in ec], marker="D", s=40, c=TEAL, edgecolors=TEAL_DARK, lw=0.9, zorder=6)
     ax_c.scatter([p["ips"] for p in pc32], [p["t1"] for p in pc32], marker="o", s=34, c=BLUE_V32, edgecolors=BLUE_DARK, lw=0.8, alpha=0.85, zorder=6)
-    ax_c.scatter([p["ips"] for p in v34], [p["t1"] for p in v34], marker="o", s=54, c=WIN_RED, edgecolors=WIN_DARK, lw=1.1, zorder=9)
+    ax_c.scatter([p["ips"] for p in v34], [p["t1"] for p in v34], marker="o", s=32, c=WIN_RED, edgecolors=WIN_DARK, lw=0.7, alpha=0.7, zorder=7)
+    if v35f:
+        ax_c.plot([p["ips"] for p in v35f], [p["t1"] for p in v35f], "-", color=FINAL_GRN, lw=3.0, zorder=9)
+        ax_c.scatter([p["ips"] for p in v35f], [p["t1"] for p in v35f], marker="o", s=54, c=FINAL_GRN, edgecolors=FINAL_DARK, lw=1.0, zorder=10)
     ax_c.scatter([ec_m["ips"]], [ec_m["t1"]], marker="D", s=42, facecolors="none", edgecolors=TEAL, lw=1.5, zorder=6)
     ax_c.plot([p["ips"] for p in v35_o3], [p["t1"] for p in v35_o3], "-", color=V35_AMB, lw=2.2, zorder=9)
     ax_c.scatter([p["ips"] for p in v35_o3], [p["t1"] for p in v35_o3], marker="*", s=105, c=V35_AMB, edgecolors=V35_DARK, lw=0.8, zorder=10)
@@ -418,12 +476,14 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
             o, ha = offs_c[b["short"]]
             _ann(ax_c, b["short"], (b["ips"], b["t1"]), o, ha=ha,
                  col="#4c1d95" if b["short"] == "StyleGallery" else "#475569", bold=(b["short"] == "StyleGallery"), fs=7.0)
-    _ann(ax_c, f"V34 s=1.50 (92.0%)", (v34[0]["ips"], v34[0]["t1"]), (-6, 5), ha="right", col=WIN_DARK, bold=True, fs=7.1)
-    _ann(ax_c, f"V34 s=1.00 (68.3%)", (v34[2]["ips"], v34[2]["t1"]), (-6, -2), ha="right", col=WIN_DARK, bold=True, fs=7.1)
+    c_curve = v35f or v34
+    _ann(ax_c, f"Final s=1.50 ({c_curve[0]['t1']:.1f}%)", (c_curve[0]["ips"], c_curve[0]["t1"]), (-6, 5), ha="right", col=FINAL_DARK, bold=True, fs=7.1)
+    c_100 = [x for x in c_curve if x["knob"] == "s100"][0]
+    _ann(ax_c, f"Final s=1.00 ({c_100['t1']:.1f}%)", (c_100["ips"], c_100["t1"]), (-6, -2), ha="right", col=FINAL_DARK, bold=True, fs=7.1)
     _ann(ax_c, f"E-Core 1.00\n67.2%", (ec_m["ips"], ec_m["t1"]), (6, 2), ha="left", col=TEAL_DARK, bold=True, fs=7.0)
-    ax_c.text(0.45, 0.85, f"V34 44M: {data['v34_ips']:.1f} img/s\nV32 22M: 18.2-33.1 img/s",
-              transform=ax_c.transAxes, ha="center", va="top", fontsize=6.8, fontweight="bold", color=WIN_DARK,
-              bbox=dict(boxstyle="round,pad=0.25", fc="#fff1f2", ec=WIN_RED, lw=0.8, alpha=0.92))
+    ax_c.text(0.42, 0.85, f"V35 Final 44M: {data.get('v35_final_ips', 14.3):.1f} img/s\nV32 22M: 18.2-33.1 img/s",
+              transform=ax_c.transAxes, ha="center", va="top", fontsize=6.8, fontweight="bold", color=FINAL_DARK,
+              bbox=dict(boxstyle="round,pad=0.25", fc="#ecfdf5", ec=FINAL_GRN, lw=0.8, alpha=0.92))
 
     ax_c.set_xscale("log")
     ax_c.set_xlim(0.02, 180.0)
@@ -434,12 +494,12 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     ax_c.grid(True, ls="--", lw=0.45, alpha=0.45)
 
     handles = [
-        Line2D([0], [0], color=WIN_RED, marker="o", ms=6.2, lw=2.8, mfc=WIN_RED, mec=WIN_DARK,
-               label=f"CLEAVE V34 Closed-Set Winner: 44M ({data['v34_ips']:.1f} img/s @ 4090)"),
+        Line2D([0], [0], color=FINAL_GRN, marker="o", ms=6.2, lw=2.8, mfc=FINAL_GRN, mec=FINAL_DARK,
+               label=f"CLEAVE V35 Final Calibrated (44M, {data.get('v35_final_ips', 14.3):.1f} img/s @ 4090)"),
+        Line2D([0], [0], color=WIN_RED, marker="o", ms=4.5, lw=1.7, ls=":", mfc=WIN_RED, mec=WIN_DARK,
+               label=f"CLEAVE V34 Uncalibrated C2+A3 ({data['v34_ips']:.1f} img/s)"),
         Line2D([0], [0], color=V35_AMB, marker="*", ms=9.0, lw=2.4, mfc=V35_AMB, mec=V35_DARK,
                label="CLEAVE V35 O3 Open-Domain 1-Shot (3060, 3.2-5.5 img/s)"),
-        Line2D([0], [0], color=V35_O1_COL, marker="^", ms=5.5, lw=1.6, ls=":", mfc=V35_O1_COL, mec=V35_DARK,
-               label="CLEAVE V35 O1 Open-Domain (MLP EncA)"),
         Line2D([0], [0], color=BLUE_V32, marker="o", ms=5.2, lw=1.9, ls="--", mfc=BLUE_V32, mec=BLUE_DARK,
                label="CLEAVE V32 Closed-Set: 22M P-Core (18.2-18.5 img/s)"),
         Line2D([0], [0], color=TEAL, marker="D", ms=5.6, lw=2.4, mfc=TEAL, mec=TEAL_DARK,
@@ -449,9 +509,9 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
         Line2D([0], [0], color="none", marker="s", ms=5.2, mfc=LIGHT_BLUE, mec="#075985", label="Lightweight Baselines (0.2-3.0s)"),
         Line2D([0], [0], color=SLATE_FRONT, ls="--", lw=1.35, label="External Pareto Frontier"),
     ]
-    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 1.015), ncol=3,
-               frameon=True, facecolor="#f8fafc", edgecolor="#cbd5e1", fontsize=7.3)
-    fig.subplots_adjust(left=0.055, right=0.985, top=0.73, bottom=0.14, wspace=0.25)
+    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.985), ncol=3,
+               frameon=True, facecolor="#f8fafc", edgecolor="#cbd5e1", fontsize=7.2)
+    fig.subplots_adjust(left=0.055, right=0.985, top=0.71, bottom=0.14, wspace=0.25)
 
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     for stem in ("cleave_pareto_triptych", "cleave_pareto_latest"):
@@ -526,10 +586,11 @@ svg {{ width: 100%; height: 300px; display: block; }}
 <div class="wrap">
   <div class="toolbar">
     <div class="tabs">
-      <button class="btn active" data-view="triptych">论文三联图 (V35 1-Shot + V34/V32 + 外部基线)</button>
-      <button class="btn" data-view="v35">V35 开放域 1-Shot (O0–O3 消融 &amp; OOD)</button>
-      <button class="btn" data-view="ablations">V34 各阶段消融 (Stage A–D)</button>
-      <button class="btn" data-view="holdout">独立盲测 Holdout-750</button>
+      <button class="btn active" data-view="triptych">论文三联图 (V35 Final + O3 1-Shot + 外部基线)</button>
+      <button class="btn" data-view="v35_final">V35 P0–P8 定型消融 (Stiefel / E+P)</button>
+      <button class="btn" data-view="v35">V35 开放域 1-Shot (O0–O3)</button>
+      <button class="btn" data-view="ablations">V34 各阶段 (Stage A–D)</button>
+      <button class="btn" data-view="holdout">盲测 Holdout-750</button>
     </div>
   </div>
   <div class="card">
@@ -581,9 +642,9 @@ function drawPanel(ox, oy, pw, ph, spec) {{
 
 function renderTriptych() {{
   legendEl.innerHTML = `
-    <span class="lg-item"><span class="swatch" style="background:#f59e0b"></span><b>CLEAVE V35 O3 开放域 1-Shot (3060, 3.2–5.5 img/s)</b></span>
-    <span class="lg-item"><span class="swatch" style="background:#fb923c"></span>V35 O1 (MLP EncA)</span>
-    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>CLEAVE V34 闭集 (44M, 14.5 img/s)</span>
+    <span class="lg-item"><span class="swatch" style="background:#10b981"></span><b>CLEAVE V35 Final 校准定型 (44M, ${{DATA.v35_final_ips || 14.3}} img/s @ 4090)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V34 未校准 (44M, 14.5 img/s)</span>
+    <span class="lg-item"><span class="swatch" style="background:#f59e0b"></span><b>V35 O3 开放域 1-Shot (3060)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>V32 闭集 (22M, 18.2 img/s)</span>
     <span class="lg-item"><span class="swatch" style="background:#14b8a6"></span>E-Core (33.1 img/s)</span>
     <span class="lg-item"><span class="swatch" style="background:#a78bfa"></span>StyleGallery / 外部基线</span>
@@ -591,7 +652,7 @@ function renderTriptych() {{
   const panels = [
     {{ox: 44,  oy: 22, pw: 264, ph: 242, x0: 0.24, x1: 0.94, y0: 0.34, y1: 0.63, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.35, 0.40, 0.45, 0.50, 0.55, 0.60], title: "(a) Full-Spectrum Quality Control", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑", shade: [0.65, 0.94, "#10b981"], xKey: "dc", yKey: "ds", extFront: DATA.ext_front_a}},
     {{ox: 368, oy: 22, pw: 264, ph: 242, x0: 0.24, x1: 0.94, y0: 0.0,  y1: 99.0, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(b) Stronger Style Specificity", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑", shade: [0.65, 0.94, "#10b981"], xKey: "dc", yKey: "t1", extFront: DATA.ext_front_b}},
-    {{ox: 690, oy: 22, pw: 256, ph: 242, x0: 0.02, x1: 180.0, y0: 0.0, y1: 99.0, logX: true, xTicks: [0.1, 1, 10, 100], xFmt: v => v < 1 ? v.toFixed(1) : v.toFixed(0), yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(c) Real-Time Performance at Scale", xLabel: "Cold RGB->RGB Throughput (img/s, log) ↑", yLabel: "CSD Top-1 (%) ↑", shade: [10.0, 180.0, "#f43f5e"], xKey: "ips", yKey: "t1", extFront: DATA.ext_front_c}},
+    {{ox: 690, oy: 22, pw: 256, ph: 242, x0: 0.02, x1: 180.0, y0: 0.0, y1: 99.0, logX: true, xTicks: [0.1, 1, 10, 100], xFmt: v => v < 1 ? v.toFixed(1) : v.toFixed(0), yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(c) Real-Time Performance at Scale", xLabel: "Cold RGB->RGB Throughput (img/s, log) ↑", yLabel: "CSD Top-1 (%) ↑", shade: [10.0, 180.0, "#10b981"], xKey: "ips", yKey: "t1", extFront: DATA.ext_front_c}},
   ];
 
   for (const sp of panels) {{
@@ -637,18 +698,29 @@ function renderTriptych() {{
     ecmPt.onmouseenter = () => {{ info.textContent = `[V32 E-Core standalone s=1.00] C=${{ecm.dc.toFixed(4)}} S=${{ecm.ds.toFixed(4)}} Top1=${{ecm.t1.toFixed(2)}}% Speed=${{ecm.ips}} img/s`; }};
     svg.appendChild(ecmPt);
 
-    // V34 Winner (44M C2 + A3 Start)
+    // V34 Uncalibrated (thin dotted rose)
     const v34 = DATA.v34_winner;
-    svg.appendChild(el("path", {{d: v34.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#f43f5e", "stroke-width": 2.9}}));
+    svg.appendChild(el("path", {{d: v34.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#f43f5e", "stroke-width": 1.6, "stroke-dasharray": "3,2", opacity: 0.78}}));
     for (const d of v34) {{
-      const cx = sx(d[xKey]), cy = sy(d[yKey]);
-      const dot = el("circle", {{cx, cy, r: 4.3, fill: "#f43f5e", stroke: "#fff", "stroke-width": 0.9}});
-      dot.onmouseenter = () => {{ info.textContent = `[V34 Winner 44M C2+A3 ${{d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% LP=${{d.lpips}} Same=${{d.same}}% Speed=${{d.ips}} img/s`; }};
+      const dot = el("circle", {{cx: sx(d[xKey]), cy: sy(d[yKey]), r: 3.0, fill: "#f43f5e", opacity: 0.78}});
+      dot.onmouseenter = () => {{ info.textContent = `[V34 Uncalib 44M C2+A3 ${{d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% LP=${{d.lpips}} Same=${{d.same}}% Speed=${{d.ips}} img/s`; }};
       svg.appendChild(dot);
-      if (xKey === "dc" && ["s085", "s100", "s150"].includes(d.knob)) {{
-        const lbl = "s=" + d.knob[1] + "." + d.knob.slice(2);
-        const isA100 = (yKey === "ds" && d.knob === "s100");
-        svg.appendChild(el("text", {{x: cx + (isA100 ? -6 : 5), y: cy + (isA100 ? 11 : -6), "text-anchor": isA100 ? "end" : "start", class: "pt-lbl", style: "fill:#fda4af;font-weight:700"}}, lbl));
+    }}
+
+    // V35 Final Calibrated Winner (Emerald)
+    const v35f = (DATA.v35_final || []).filter(d => d.knob !== "tau0");
+    if (v35f.length) {{
+      svg.appendChild(el("path", {{d: v35f.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#10b981", "stroke-width": 2.9}}));
+      for (const d of v35f) {{
+        const cx = sx(d[xKey]), cy = sy(d[yKey]);
+        const dot = el("circle", {{cx, cy, r: 4.4, fill: "#10b981", stroke: "#fff", "stroke-width": 0.9}});
+        dot.onmouseenter = () => {{ info.textContent = `[V35 Final Calibrated ${{d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% LP=${{d.lpips}} Same=${{d.same}}% Speed=${{d.ips}} img/s (4090)`; }};
+        svg.appendChild(dot);
+        if (xKey === "dc" && ["s075", "s100", "s150"].includes(d.knob)) {{
+          const lbl = "s=" + d.knob[1] + "." + d.knob.slice(2);
+          const isA100 = (yKey === "ds" && d.knob === "s100");
+          svg.appendChild(el("text", {{x: cx + (isA100 ? -6 : 5), y: cy + (isA100 ? 11 : -6), "text-anchor": isA100 ? "end" : "start", class: "pt-lbl", style: "fill:#6ee7b7;font-weight:700"}}, lbl));
+        }}
       }}
     }}
 
@@ -673,6 +745,42 @@ function renderTriptych() {{
       }}
       const tagPt = o3[0];
       svg.appendChild(el("text", {{x: sx(tagPt[xKey]) - 2, y: sy(tagPt[yKey]) + 14, class: "pt-lbl", style: "fill:#fcd34d;font-weight:700"}}, "V35 O3"));
+    }}
+  }}
+}}
+
+function renderV35Final() {{
+  legendEl.innerHTML = `
+    <span class="lg-item"><span class="swatch" style="background:#10b981"></span><b>CLEAVE V35 Final (Stiefel+15%PC+Calib)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#a855f7"></span>Q3 Stiefel+0%PC</span>
+    <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>Q1 Whiten-32</span>
+    <span class="lg-item"><span class="swatch" style="background:#64748b"></span>Q2 PCA-32</span>
+    <span class="lg-item"><span class="swatch" style="background:#f59e0b"></span>R0 Seed-2 Stiefel</span>
+    <span class="lg-item"><span class="swatch" style="background:#14b8a6"></span>P7 E-only (1-NFE)</span>
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>P7 P-only (Src Chroma)</span>
+  `;
+  const spL = drawPanel(50, 22, 410, 242, {{x0: 0.32, x1: 0.94, y0: 0.38, y1: 0.61, xTicks: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.40, 0.45, 0.50, 0.55, 0.60], title: "(a) P3/P4/P7 Attribution: DINO-C vs DINO-S", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑"}});
+  const spR = drawPanel(520, 22, 415, 242, {{x0: 0.32, x1: 0.94, y0: 0.0, y1: 96.0, xTicks: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(b) P3/P4/P7 Attribution: DINO-C vs CSD Top-1 (%)", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑"}});
+  const p3 = DATA.p3_curves || {{}}, p4 = DATA.p4_curves || {{}};
+  const curves = [
+    ["P7 P-only (Src Chroma)", DATA.v35_ponly || [], "#f43f5e", "3,2"],
+    ["P7 E-only (1-NFE)", DATA.v35_eonly || [], "#14b8a6", "4,2"],
+    ["P3 Q2 (PCA-32 + 15%PC)", p3.P3_Q2_pca32_poolc || [], "#64748b", "4,3"],
+    ["P3 Q1 (Whiten-32 + 15%PC)", p3.P3_Q1_whiten_poolc || [], "#3b82f6", "4,3"],
+    ["P3 Q3 (Stiefel + 0%PC)", p3.P3_Q3_stiefel_nopc || [], "#a855f7", ""],
+    ["P4 R0 (Seed-2 Stiefel)", p4.P4_R0_stiefel_seed2 || [], "#f59e0b", "2,2"],
+    ["V35 Final (CLEAVE E+P+Calib)", (DATA.v35_final || []).filter(d => d.knob !== "tau0"), "#10b981", ""],
+  ];
+  for (const [name, pts, col, dash] of curves) {{
+    if (!pts.length) continue;
+    for (const [sp, yK] of [[spL, "ds"], [spR, "t1"]]) {{
+      const p = pts.filter(d => d.dc >= 0.32 && d.dc <= 0.94);
+      svg.appendChild(el("path", {{d: p.map((d, i) => `${{i ? "L" : "M"}}${{sp.sx(d.dc).toFixed(1)}},${{sp.sy(d[yK]).toFixed(1)}}`).join(" "), fill: "none", stroke: col, "stroke-width": name.includes("Final") ? 2.9 : 1.9, ...(dash ? {{"stroke-dasharray": dash}} : {{}})}}));
+      for (const d of p) {{
+        const c = el("circle", {{cx: sp.sx(d.dc), cy: sp.sy(d[yK]), r: name.includes("Final") ? 4.2 : 3.2, fill: col, stroke: "#0f172a", "stroke-width": 0.7}});
+        c.onmouseenter = () => {{ info.textContent = `[${{name}}] ${{d.knob}} | C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Same=${{d.same}}%`; }};
+        svg.appendChild(c);
+      }}
     }}
   }}
 }}
@@ -761,14 +869,15 @@ function renderAblations() {{
 
 function renderHoldout() {{
   legendEl.innerHTML = `
-    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V34 Winner (44M C2+A3)</span>
+    <span class="lg-item"><span class="swatch" style="background:#10b981"></span><b>V35 Final (Seed-1) &amp; Seed-2 R0</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V34 Uncalibrated (44M C2+A3)</span>
     <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>V32 Baseline (22M)</span>
-    <span class="lg-item"><span class="swatch" style="background:#eab308"></span>V34 D_merged (Bridge Retrain)</span>
-    <span class="lg-item">150 Disjoint Unseen Holdout Sources x 5 Targets vs 150 Unseen References</span>
+    <span class="lg-item"><span class="swatch" style="background:#eab308"></span>V34 D_merged</span>
+    <span class="lg-item">150 Holdout Sources x 5 Targets (0 painting overlap)</span>
   `;
   const spL = drawPanel(52, 22, 410, 242, {{x0: 0.53, x1: 0.73, y0: 0.50, y1: 0.58, xTicks: [0.55, 0.60, 0.65, 0.70], yTicks: [0.51, 0.53, 0.55, 0.57], title: "(a) Holdout-750 Blind Split: DINO-C vs DINO-S", xLabel: "Holdout DINO-C ↑", yLabel: "Holdout DINO-S ↑"}});
   const spR = drawPanel(520, 22, 415, 242, {{x0: 0.53, x1: 0.73, y0: 38, y1: 72, xTicks: [0.55, 0.60, 0.65, 0.70], yTicks: [40, 50, 60, 70], yFmt: v => v + "%", title: "(b) Holdout-750 Blind Split: DINO-C vs CSD Top-1 (%)", xLabel: "Holdout DINO-C ↑", yLabel: "Holdout CSD Top-1 (%) ↑"}});
-  const cols = {{V32_s085: "#3b82f6", V32_s100: "#3b82f6", D_merged_s085: "#eab308", D_merged_s100: "#eab308", C2_A3_s085: "#f43f5e", C2_A3_s100: "#f43f5e"}};
+  const cols = {{V32_s085: "#3b82f6", V32_s100: "#3b82f6", D_merged_s085: "#eab308", D_merged_s100: "#eab308", C2_A3_s085: "#f43f5e", C2_A3_s100: "#f43f5e", V35_Final_s085: "#10b981", V35_Seed2_s085: "#059669"}};
   for (const [a, b, col] of [["V32_s100", "V32_s085", "#3b82f6"], ["D_merged_s100", "D_merged_s085", "#eab308"], ["C2_A3_s100", "C2_A3_s085", "#f43f5e"]]) {{
     const p0 = DATA.holdout.find(x => x.label === a), p1 = DATA.holdout.find(x => x.label === b);
     if (p0 && p1) {{
@@ -781,10 +890,11 @@ function renderHoldout() {{
     const col = cols[p.label] || "#f43f5e";
     for (const [sp, yK] of [[spL, "ds"], [spR, "t1"]]) {{
       const cx = sp.sx(p.dc), cy = sp.sy(p[yK]);
-      const c = el("circle", {{cx, cy, r: 5.5, fill: col, stroke: "#fff", "stroke-width": 1}});
+      const c = el("circle", {{cx, cy, r: p.label.startsWith("V35_") ? 6.0 : 5.0, fill: col, stroke: "#fff", "stroke-width": 1}});
       c.onmouseenter = () => {{ info.textContent = `[Holdout-750] ${{p.label}} | C=${{p.dc.toFixed(4)}} S=${{p.ds.toFixed(4)}} Top1=${{p.t1.toFixed(2)}}% LP=${{p.lpips}} Same=${{p.same}}%`; }};
       svg.appendChild(c);
-      svg.appendChild(el("text", {{x: cx + 7, y: cy - 5, class: "pt-lbl", style: `fill:${{col}};font-weight:700`}}, p.label));
+      const dy = p.label === "V35_Seed2_s085" ? 12 : -5;
+      svg.appendChild(el("text", {{x: cx + 7, y: cy + dy, class: "pt-lbl", style: `fill:${{col}};font-weight:700`}}, p.label));
     }}
   }}
 }}
@@ -792,6 +902,7 @@ function renderHoldout() {{
 function draw() {{
   svg.innerHTML = "";
   if (curView === "triptych") renderTriptych();
+  else if (curView === "v35_final") renderV35Final();
   else if (curView === "v35") renderV35();
   else if (curView === "ablations") renderAblations();
   else renderHoldout();
