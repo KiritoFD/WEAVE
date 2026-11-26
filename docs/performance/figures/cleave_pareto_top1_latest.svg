@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 520" width="860" height="520" style="background:#0f172a;font-family:system-ui,sans-serif">
+<rect x="68" y="38" width="572" height="426" fill="#111827" stroke="#334155" stroke-width="1"/>
+<text x="68" y="22" fill="#f8fafc" font-size="14" font-weight="700">CLEAVE V32 -> V34 Pareto Frontier (Cross600, Zero-DINO, S10)</text>
+<line x1="115.7" y1="38" x2="115.7" y2="464" stroke="#1e293b" stroke-width="1"/>
+<text x="115.7" y="482" fill="#94a3b8" font-size="11" text-anchor="middle">0.3</text>
+<line x1="211.0" y1="38" x2="211.0" y2="464" stroke="#1e293b" stroke-width="1"/>
+<text x="211.0" y="482" fill="#94a3b8" font-size="11" text-anchor="middle">0.4</text>
+<line x1="306.3" y1="38" x2="306.3" y2="464" stroke="#1e293b" stroke-width="1"/>
+<text x="306.3" y="482" fill="#94a3b8" font-size="11" text-anchor="middle">0.5</text>
+<line x1="401.7" y1="38" x2="401.7" y2="464" stroke="#1e293b" stroke-width="1"/>
+<text x="401.7" y="482" fill="#94a3b8" font-size="11" text-anchor="middle">0.6</text>
+<line x1="497.0" y1="38" x2="497.0" y2="464" stroke="#1e293b" stroke-width="1"/>
+<text x="497.0" y="482" fill="#94a3b8" font-size="11" text-anchor="middle">0.7</text>
+<line x1="592.3" y1="38" x2="592.3" y2="464" stroke="#1e293b" stroke-width="1"/>
+<text x="592.3" y="482" fill="#94a3b8" font-size="11" text-anchor="middle">0.8</text>
+<line x1="68" y1="433.6" x2="640" y2="433.6" stroke="#1e293b" stroke-width="1"/>
+<text x="60" y="437.6" fill="#94a3b8" font-size="11" text-anchor="end">30%</text>
+<line x1="68" y1="342.3" x2="640" y2="342.3" stroke="#1e293b" stroke-width="1"/>
+<text x="60" y="346.3" fill="#94a3b8" font-size="11" text-anchor="end">45%</text>
+<line x1="68" y1="251.0" x2="640" y2="251.0" stroke="#1e293b" stroke-width="1"/>
+<text x="60" y="255.0" fill="#94a3b8" font-size="11" text-anchor="end">60%</text>
+<line x1="68" y1="159.7" x2="640" y2="159.7" stroke="#1e293b" stroke-width="1"/>
+<text x="60" y="163.7" fill="#94a3b8" font-size="11" text-anchor="end">75%</text>
+<line x1="68" y1="68.4" x2="640" y2="68.4" stroke="#1e293b" stroke-width="1"/>
+<text x="60" y="72.4" fill="#94a3b8" font-size="11" text-anchor="end">90%</text>
+<text x="354.0" y="508" fill="#cbd5e1" font-size="12" text-anchor="middle">DINO-C (Content Preservation)</text>
+<text x="18" y="251.0" fill="#cbd5e1" font-size="12" text-anchor="middle" transform="rotate(-90 18 251.0)">CSD Top-1 Accuracy</text>
+<circle cx="169.9" cy="52.6" r="4.2" fill="#94a3b8" opacity="0.8"/>
+<text x="175.9" y="47.6" fill="#cbd5e1" font-size="10">StyleShot</text>
+<circle cx="200.0" cy="170.7" r="4.2" fill="#94a3b8" opacity="0.8"/>
+<text x="206.0" y="165.7" fill="#cbd5e1" font-size="10">StyleID</text>
+<circle cx="408.8" cy="427.5" r="4.2" fill="#94a3b8" opacity="0.8"/>
+<text x="414.8" y="422.5" fill="#cbd5e1" font-size="10">AesPA</text>
+<circle cx="412.4" cy="296.6" r="4.2" fill="#94a3b8" opacity="0.8"/>
+<text x="418.4" y="291.6" fill="#cbd5e1" font-size="10">StyleGallery</text>
+<circle cx="499.2" cy="375.8" r="4.2" fill="#94a3b8" opacity="0.8"/>
+<text x="505.2" y="370.8" fill="#cbd5e1" font-size="10">StyTr2</text>
+<path d="M169.9,52.6 L412.4,296.6 L499.2,375.8 L615.1,600.9 L633.8,581.5" fill="none" stroke="#64748b" stroke-width="2.0" stroke-dasharray="5,4"/>
+<circle cx="169.9" cy="52.6" r="3.4" fill="#64748b"/>
+<circle cx="412.4" cy="296.6" r="3.4" fill="#64748b"/>
+<circle cx="499.2" cy="375.8" r="3.4" fill="#64748b"/>
+<circle cx="615.1" cy="600.9" r="3.4" fill="#64748b"/>
+<circle cx="633.8" cy="581.5" r="3.4" fill="#64748b"/>
+<line x1="654" y1="48" x2="672" y2="48" stroke="#64748b" stroke-width="2.0" stroke-dasharray="5,4"/>
+<text x="678" y="52" fill="#e2e8f0" font-size="10.5">External Literature Frontier</text>
+<path d="M97.1,128.3 L189.3,145.5 L227.3,145.5 L296.4,158.7 L356.3,216.5 L402.6,236.8 L443.6,284.5 L457.4,297.7 L501.7,329.1 L605.7,424.4" fill="none" stroke="#3b82f6" stroke-width="2.0"/>
+<circle cx="97.1" cy="128.3" r="3.4" fill="#3b82f6"/>
+<circle cx="189.3" cy="145.5" r="3.4" fill="#3b82f6"/>
+<circle cx="227.3" cy="145.5" r="3.4" fill="#3b82f6"/>
+<circle cx="296.4" cy="158.7" r="3.4" fill="#3b82f6"/>
+<circle cx="356.3" cy="216.5" r="3.4" fill="#3b82f6"/>
+<circle cx="402.6" cy="236.8" r="3.4" fill="#3b82f6"/>
+<circle cx="443.6" cy="284.5" r="3.4" fill="#3b82f6"/>
+<circle cx="457.4" cy="297.7" r="3.4" fill="#3b82f6"/>
+<circle cx="501.7" cy="329.1" r="3.4" fill="#3b82f6"/>
+<circle cx="605.7" cy="424.4" r="3.4" fill="#3b82f6"/>
+<line x1="654" y1="70" x2="672" y2="70" stroke="#3b82f6" stroke-width="2.0"/>
+<text x="678" y="74" fill="#e2e8f0" font-size="10.5">V32 PCore_NoDINO (22M)</text>
+<path d="M163.8,208.4 L308.1,219.5 L346.7,227.7 L377.7,230.7 L419.4,252.0 L437.4,267.2" fill="none" stroke="#8b5cf6" stroke-width="2.0" stroke-dasharray="5,4"/>
+<circle cx="163.8" cy="208.4" r="3.4" fill="#8b5cf6"/>
+<circle cx="308.1" cy="219.5" r="3.4" fill="#8b5cf6"/>
+<circle cx="346.7" cy="227.7" r="3.4" fill="#8b5cf6"/>
+<circle cx="377.7" cy="230.7" r="3.4" fill="#8b5cf6"/>
+<circle cx="419.4" cy="252.0" r="3.4" fill="#8b5cf6"/>
+<circle cx="437.4" cy="267.2" r="3.4" fill="#8b5cf6"/>
+<line x1="654" y1="92" x2="672" y2="92" stroke="#8b5cf6" stroke-width="2.0" stroke-dasharray="5,4"/>
+<text x="678" y="96" fill="#e2e8f0" font-size="10.5">V33 P2_S2 (22M+7M frozen)</text>
+<path d="M313.6,167.8 L405.7,234.8" fill="none" stroke="#ec4899" stroke-width="2.0" stroke-dasharray="2,3"/>
+<circle cx="313.6" cy="167.8" r="3.4" fill="#ec4899"/>
+<circle cx="405.7" cy="234.8" r="3.4" fill="#ec4899"/>
+<line x1="654" y1="114" x2="672" y2="114" stroke="#ec4899" stroke-width="2.0" stroke-dasharray="2,3"/>
+<text x="678" y="118" fill="#e2e8f0" font-size="10.5">V34 Stage A (A3)</text>
+<path d="M146.9,312.9 L247.0,251.0 L344.5,244.9 L465.0,305.8 L500.2,303.8" fill="none" stroke="#ef4444" stroke-width="2.0"/>
+<circle cx="146.9" cy="312.9" r="3.4" fill="#ef4444"/>
+<circle cx="247.0" cy="251.0" r="3.4" fill="#ef4444"/>
+<circle cx="344.5" cy="244.9" r="3.4" fill="#ef4444"/>
+<circle cx="465.0" cy="305.8" r="3.4" fill="#ef4444"/>
+<circle cx="500.2" cy="303.8" r="3.4" fill="#ef4444"/>
+<line x1="654" y1="136" x2="672" y2="136" stroke="#ef4444" stroke-width="2.0"/>
+<text x="678" y="140" fill="#e2e8f0" font-size="10.5">V34 B2 (Inst 1101-D+Tex)</text>
+<path d="M154.5,61.3 L225.7,167.8 L259.7,130.3 L356.1,212.5 L473.0,298.7 L504.7,302.7" fill="none" stroke="#10b981" stroke-width="2.0"/>
+<circle cx="154.5" cy="61.3" r="3.4" fill="#10b981"/>
+<circle cx="225.7" cy="167.8" r="3.4" fill="#10b981"/>
+<circle cx="259.7" cy="130.3" r="3.4" fill="#10b981"/>
+<circle cx="356.1" cy="212.5" r="3.4" fill="#10b981"/>
+<circle cx="473.0" cy="298.7" r="3.4" fill="#10b981"/>
+<circle cx="504.7" cy="302.7" r="3.4" fill="#10b981"/>
+<line x1="654" y1="158" x2="672" y2="158" stroke="#10b981" stroke-width="2.0"/>
+<text x="678" y="162" fill="#e2e8f0" font-size="10.5">V34 C2 (44M + Q32)</text>
+<path d="M115.9,183.0 L148.3,214.5 L228.4,231.7 L331.4,256.1 L469.7,342.3 L513.8,366.6 L566.1,422.4" fill="none" stroke="#eab308" stroke-width="2.0" stroke-dasharray="5,4"/>
+<circle cx="115.9" cy="183.0" r="3.4" fill="#eab308"/>
+<circle cx="148.3" cy="214.5" r="3.4" fill="#eab308"/>
+<circle cx="228.4" cy="231.7" r="3.4" fill="#eab308"/>
+<circle cx="331.4" cy="256.1" r="3.4" fill="#eab308"/>
+<circle cx="469.7" cy="342.3" r="3.4" fill="#eab308"/>
+<circle cx="513.8" cy="366.6" r="3.4" fill="#eab308"/>
+<circle cx="566.1" cy="422.4" r="3.4" fill="#eab308"/>
+<line x1="654" y1="180" x2="672" y2="180" stroke="#eab308" stroke-width="2.0" stroke-dasharray="5,4"/>
+<text x="678" y="184" fill="#e2e8f0" font-size="10.5">V34 D_merged (44M+A3 Bridge)</text>
+<path d="M160.5,56.3 L274.7,126.2 L366.2,200.3 L471.6,282.5 L503.8,291.6" fill="none" stroke="#22c55e" stroke-width="3.2"/>
+<circle cx="160.5" cy="56.3" r="4.6" fill="#22c55e"/>
+<circle cx="274.7" cy="126.2" r="4.6" fill="#22c55e"/>
+<circle cx="366.2" cy="200.3" r="4.6" fill="#22c55e"/>
+<circle cx="471.6" cy="282.5" r="4.6" fill="#22c55e"/>
+<circle cx="503.8" cy="291.6" r="4.6" fill="#22c55e"/>
+<line x1="654" y1="202" x2="672" y2="202" stroke="#22c55e" stroke-width="3.2"/>
+<text x="678" y="206" fill="#e2e8f0" font-size="10.5">V34 Winner (44M C2 + A3 Start)</text>
+</svg>

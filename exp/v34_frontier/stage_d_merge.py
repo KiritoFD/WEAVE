@@ -56,8 +56,8 @@ from src.utils.structure import local_contrast_norm, rgb_to_gray, rgb_to_structu
 
 
 STYLEGALLERY_BASE = {
-    "dino_c": 0.5064,
-    "dino_s": 0.5604,
+    "dino_c": 0.61134,
+    "dino_s": 0.56044,
     "csd_top1": 0.5250,
     "clip_s": 0.7260,
     "style_affinity": 0.6432,

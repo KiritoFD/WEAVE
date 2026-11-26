@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--foreground, #e2e8f0);
+  padding: 0;
+  margin: 0;
+}
+.wrap { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between;
+}
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn {
+  border: 1px solid var(--border, #334155);
+  background: var(--secondary, #1e293b);
+  color: var(--foreground, #e2e8f0);
+  border-radius: var(--radius, 8px);
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.btn.active {
+  background: var(--primary, #3b82f6);
+  color: var(--primary-foreground, #ffffff);
+  border-color: var(--primary, #3b82f6);
+  font-weight: 600;
+}
+.card {
+  background: var(--card, #111827);
+  border: 1px solid var(--border, #334155);
+  border-radius: var(--radius, 8px);
+  padding: 12px 14px;
+}
+.legend {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+}
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 8px; border-radius: 999px; font-size: 11px;
+  border: 1px solid var(--border, #334155);
+  background: var(--secondary, #1e293b);
+  color: var(--foreground, #e2e8f0);
+  cursor: pointer; opacity: 1;
+}
+.pill.off { opacity: 0.35; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.info-bar {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--muted-foreground, #94a3b8);
+  padding: 6px 10px;
+  background: var(--muted, #0f172a);
+  border-radius: var(--radius, 6px);
+  min-height: 28px;
+}
+svg { width: 100%; height: 390px; display: block; }
+.grid-line { stroke: var(--border, #334155); stroke-opacity: 0.45; stroke-width: 1; }
+.axis-text { fill: var(--muted-foreground, #94a3b8); font-size: 10.5px; }
+.ext-label { fill: var(--muted-foreground, #cbd5e1); font-size: 9.8px; paint-order: stroke; stroke: var(--card, #111827); stroke-width: 3px; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <div class="tabs">
+      <button class="btn active" data-mode="dino_s">Cross600: DINO-C vs DINO-S</button>
+      <button class="btn" data-mode="csd_top1">Cross600: DINO-C vs CSD Top-1</button>
+      <button class="btn" data-mode="holdout">Independent Holdout-750</button>
+    </div>
+    <div class="tabs">
+      <button class="btn active" data-preset="main">Main Frontiers</button>
+      <button class="btn" data-preset="all">Show All V32-V34</button>
+      <button class="btn" data-preset="ablation">Stage A/B/C Detail</button>
+    </div>
+  </div>
+  <div class="card">
+    <svg id="chart" viewBox="0 0 700 390" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="info-bar" id="info">Hover any point for exact DINO-C / DINO-S / CSD Top-1 / LPIPS readout. Click legend pills to toggle curves.</div>
+    <div class="legend" id="legend"></div>
+  </div>
+</div>
+<script>
+const DATA = {"external_scatter": [{"label": "SaMST", "dino_c": 0.1628, "dino_s": 0.2738, "csd_top1": 0.2}, {"label": "AdaIN", "dino_c": 0.2271, "dino_s": 0.3426, "csd_top1": 0.343}, {"label": "StyleShot", "dino_c": 0.3569, "dino_s": 0.575, "csd_top1": 0.926}, {"label": "StyleID", "dino_c": 0.3885, "dino_s": 0.5143, "csd_top1": 0.732}, {"label": "AesPA", "dino_c": 0.6075, "dino_s": 0.4661, "csd_top1": 0.31}, {"label": "StyleGallery", "dino_c": 0.6113, "dino_s": 0.5604, "csd_top1": 0.525}, {"label": "StyTr2", "dino_c": 0.7023, "dino_s": 0.4074, "csd_top1": 0.395}, {"label": "SaMAM", "dino_c": 0.8239, "dino_s": 0.3832, "csd_top1": 0.025}, {"label": "CUT", "dino_c": 0.8435, "dino_s": 0.3755, "csd_top1": 0.057}, {"label": "Hist2Style", "dino_c": 0.9083, "dino_s": 0.3643, "csd_top1": 0.12}], "other_refs": [{"label": "WEAVE (Published)", "dino_c": 0.8079, "dino_s": 0.4003, "csd_top1": 0.167}, {"label": "Seedream 4.5", "dino_c": 0.7343, "dino_s": 0.3885, "csd_top1": 0.373}], "series": [{"id": "ext_front", "name": "External Literature Frontier", "group": "external", "style": "dashed", "color": "#64748b", "points": [{"label": "StyleShot", "dino_c": 0.3569, "dino_s": 0.575, "csd_top1": 0.926}, {"label": "StyleGallery", "dino_c": 0.6113, "dino_s": 0.5604, "csd_top1": 0.525}, {"label": "StyTr2", "dino_c": 0.7023, "dino_s": 0.4074, "csd_top1": 0.395}, {"label": "SaMAM", "dino_c": 0.8239, "dino_s": 0.3832, "csd_top1": 0.025}, {"label": "CUT", "dino_c": 0.8435, "dino_s": 0.3755, "csd_top1": 0.057}, {"label": "Hist2Style", "dino_c": 0.9083, "dino_s": 0.3643, "csd_top1": 0.12}]}, {"id": "v32", "name": "V32 PCore_NoDINO (22M)", "group": "baseline", "style": "solid", "color": "#3b82f6", "points": [{"label": "PCore_NoDINO_s150", "dino_c": 0.2805, "dino_s": 0.6054, "csd_top1": 0.8017, "lpips": 0.8275, "same150_top1": 0.8667}, {"label": "PCore_NoDINO_s135", "dino_c": 0.3772, "dino_s": 0.5919, "csd_top1": 0.7733, "lpips": 0.7075, "same150_top1": 0.8933}, {"label": "PCore_NoDINO_s125", "dino_c": 0.4171, "dino_s": 0.5814, "csd_top1": 0.7733, "lpips": 0.6721, "same150_top1": 0.9267}, {"label": "PCore_NoDINO_s100", "dino_c": 0.4896, "dino_s": 0.5628, "csd_top1": 0.7517, "lpips": 0.63, "same150_top1": 0.94}, {"label": "PCore_NoDINO_s093_cal_c10", "dino_c": 0.5524, "dino_s": 0.5446, "csd_top1": 0.6567, "lpips": 0.5838, "same150_top1": 0.9667}, {"label": "PCore_NoDINO_s085_c10", "dino_c": 0.601, "dino_s": 0.5266, "csd_top1": 0.6233, "lpips": 0.5511, "same150_top1": 0.96}, {"label": "PCore_NoDINO_s085", "dino_c": 0.644, "dino_s": 0.5208, "csd_top1": 0.545, "lpips": 0.5232, "same150_top1": 0.9533}, {"label": "PCore_NoDINO_s075_cal_c10", "dino_c": 0.6585, "dino_s": 0.5087, "csd_top1": 0.5233, "lpips": 0.5175, "same150_top1": 0.9667}, {"label": "PCore_NoDINO_s075", "dino_c": 0.7049, "dino_s": 0.4947, "csd_top1": 0.4717, "lpips": 0.4839, "same150_top1": 0.96}, {"label": "PCore_NoDINO_s060", "dino_c": 0.814, "dino_s": 0.421, "csd_top1": 0.315, "lpips": 0.4041, "same150_top1": 0.9867}]}, {"id": "v33_s2", "name": "V33 P2_S2 (22M+7M frozen)", "group": "v33", "style": "dashed", "color": "#8b5cf6", "points": [{"label": "tau000", "dino_c": 0.3505, "dino_s": 0.5938, "csd_top1": 0.67, "lpips": 0.7935, "same150_top1": 0.8267}, {"label": "tau035", "dino_c": 0.5019, "dino_s": 0.544, "csd_top1": 0.6517, "lpips": 0.624, "same150_top1": 0.8933}, {"label": "tau050", "dino_c": 0.5423, "dino_s": 0.5341, "csd_top1": 0.6383, "lpips": 0.6027, "same150_top1": 0.9}, {"label": "tau065", "dino_c": 0.5749, "dino_s": 0.5289, "csd_top1": 0.6333, "lpips": 0.5888, "same150_top1": 0.9}, {"label": "tau075", "dino_c": 0.6186, "dino_s": 0.5186, "csd_top1": 0.5983, "lpips": 0.557, "same150_top1": 0.9467}, {"label": "tau079", "dino_c": 0.6375, "dino_s": 0.5134, "csd_top1": 0.5733, "lpips": 0.5341, "same150_top1": 0.9733}]}, {"id": "v34_stage_a0", "name": "V34 Stage A (A0)", "group": "stage_a", "style": "dotted", "color": "#94a3b8", "points": [{"label": "A0_s100", "dino_c": 0.4896, "dino_s": 0.5629, "csd_top1": 0.7483, "min_s": 0.3415}, {"label": "A0_s085", "dino_c": 0.601, "dino_s": 0.5265, "csd_top1": 0.6183, "min_s": 0.3336}]}, {"id": "v34_stage_a1", "name": "V34 Stage A (A1)", "group": "stage_a", "style": "dotted", "color": "#14b8a6", "points": [{"label": "A1_s100", "dino_c": 0.4884, "dino_s": 0.5674, "csd_top1": 0.7333, "min_s": 0.3571}, {"label": "A1_s085", "dino_c": 0.5965, "dino_s": 0.5304, "csd_top1": 0.6333, "min_s": 0.3411}]}, {"id": "v34_stage_a2", "name": "V34 Stage A (A2)", "group": "stage_a", "style": "dotted", "color": "#f59e0b", "points": [{"label": "A2_s100", "dino_c": 0.5081, "dino_s": 0.5677, "csd_top1": 0.7317, "min_s": 0.3574}, {"label": "A2_s085", "dino_c": 0.6086, "dino_s": 0.5319, "csd_top1": 0.59, "min_s": 0.3521}]}, {"id": "v34_stage_a3", "name": "V34 Stage A (A3)", "group": "stage_a", "style": "dotted", "color": "#ec4899", "points": [{"label": "A3_s100", "dino_c": 0.5076, "dino_s": 0.5725, "csd_top1": 0.7367, "min_s": 0.3718}, {"label": "A3_s085", "dino_c": 0.6042, "dino_s": 0.5357, "csd_top1": 0.6267, "min_s": 0.3564}]}, {"id": "v34_B0_k8_discrete", "name": "V34 B0 (K=8 Discrete)", "group": "stage_b", "style": "solid", "color": "#0ea5e9", "points": [{"label": "s150", "dino_c": 0.3229, "dino_s": 0.5822, "csd_top1": 0.8217, "lpips": 0.7278, "same150_top1": 0.9067}, {"label": "s125", "dino_c": 0.4337, "dino_s": 0.5724, "csd_top1": 0.7583, "lpips": 0.6584, "same150_top1": 0.9133}, {"label": "s100", "dino_c": 0.5388, "dino_s": 0.5485, "csd_top1": 0.6467, "lpips": 0.5818, "same150_top1": 0.92}, {"label": "s085", "dino_c": 0.6669, "dino_s": 0.5084, "csd_top1": 0.5117, "lpips": 0.5096, "same150_top1": 0.96}, {"label": "s075", "dino_c": 0.703, "dino_s": 0.4904, "csd_top1": 0.515, "lpips": 0.502, "same150_top1": 0.9933}]}, {"id": "v34_B1_inst_417", "name": "V34 B1 (Inst 417-D)", "group": "stage_b", "style": "solid", "color": "#f97316", "points": [{"label": "s150", "dino_c": 0.3392, "dino_s": 0.5186, "csd_top1": 0.5067, "lpips": 0.7219, "same150_top1": 0.7}, {"label": "s125", "dino_c": 0.4367, "dino_s": 0.5391, "csd_top1": 0.5933, "lpips": 0.6559, "same150_top1": 0.82}, {"label": "s100", "dino_c": 0.5397, "dino_s": 0.5377, "csd_top1": 0.5883, "lpips": 0.5823, "same150_top1": 0.88}, {"label": "s085", "dino_c": 0.6667, "dino_s": 0.5048, "csd_top1": 0.4867, "lpips": 0.5128, "same150_top1": 0.9733}, {"label": "s075", "dino_c": 0.703, "dino_s": 0.4885, "csd_top1": 0.5033, "lpips": 0.5035, "same150_top1": 0.9867}]}, {"id": "v34_B2_inst_tex1101", "name": "V34 B2 (Inst 1101-D+Tex)", "group": "stage_b", "style": "solid", "color": "#ef4444", "points": [{"label": "s150", "dino_c": 0.3328, "dino_s": 0.5114, "csd_top1": 0.4983, "lpips": 0.7179, "same150_top1": 0.7267}, {"label": "s125", "dino_c": 0.4378, "dino_s": 0.5383, "csd_top1": 0.6, "lpips": 0.6546, "same150_top1": 0.82}, {"label": "s100", "dino_c": 0.54, "dino_s": 0.5377, "csd_top1": 0.61, "lpips": 0.5805, "same150_top1": 0.8933}, {"label": "s085", "dino_c": 0.6664, "dino_s": 0.5058, "csd_top1": 0.51, "lpips": 0.5121, "same150_top1": 0.96}, {"label": "s075", "dino_c": 0.7034, "dino_s": 0.4889, "csd_top1": 0.5133, "lpips": 0.5032, "same150_top1": 0.9867}]}, {"id": "v34_C0_22m_q32", "name": "V34 C0 (22M + Q32)", "group": "stage_c", "style": "solid", "color": "#06b6d4", "points": [{"label": "s150", "dino_c": 0.3214, "dino_s": 0.5651, "csd_top1": 0.76, "lpips": 0.7278, "same150_top1": 0.9067}, {"label": "tau0", "dino_c": 0.3985, "dino_s": 0.5788, "csd_top1": 0.5883, "lpips": 0.7373, "same150_top1": 0.8133}, {"label": "s125", "dino_c": 0.4412, "dino_s": 0.5675, "csd_top1": 0.7467, "lpips": 0.6591, "same150_top1": 0.9133}, {"label": "s100", "dino_c": 0.5425, "dino_s": 0.5498, "csd_top1": 0.635, "lpips": 0.5803, "same150_top1": 0.9133}, {"label": "s085", "dino_c": 0.6689, "dino_s": 0.5085, "csd_top1": 0.5083, "lpips": 0.5083, "same150_top1": 0.96}, {"label": "s075", "dino_c": 0.705, "dino_s": 0.4902, "csd_top1": 0.5117, "lpips": 0.5008, "same150_top1": 0.9933}]}, {"id": "v34_C1_22m_s2_joint", "name": "V34 C1 (22M+S2 Joint)", "group": "stage_c", "style": "solid", "color": "#a855f7", "points": [{"label": "s150", "dino_c": 0.4045, "dino_s": 0.5659, "csd_top1": 0.6467, "lpips": 0.6861, "same150_top1": 0.86}, {"label": "s125", "dino_c": 0.5633, "dino_s": 0.5337, "csd_top1": 0.6017, "lpips": 0.6005, "same150_top1": 0.9}, {"label": "tau0", "dino_c": 0.5735, "dino_s": 0.5192, "csd_top1": 0.4933, "lpips": 0.5897, "same150_top1": 0.8733}, {"label": "s100", "dino_c": 0.6383, "dino_s": 0.51, "csd_top1": 0.5517, "lpips": 0.5349, "same150_top1": 0.9533}, {"label": "s085", "dino_c": 0.7132, "dino_s": 0.4871, "csd_top1": 0.4717, "lpips": 0.4873, "same150_top1": 0.9733}, {"label": "s075", "dino_c": 0.7315, "dino_s": 0.4764, "csd_top1": 0.4733, "lpips": 0.4871, "same150_top1": 0.9933}]}, {"id": "v34_C2_44m_q32", "name": "V34 C2 (44M + Q32)", "group": "stage_c", "style": "solid", "color": "#10b981", "points": [{"label": "s150", "dino_c": 0.3407, "dino_s": 0.589, "csd_top1": 0.9117, "lpips": 0.7208, "same150_top1": 0.9733}, {"label": "tau0", "dino_c": 0.4154, "dino_s": 0.5925, "csd_top1": 0.7367, "lpips": 0.7241, "same150_top1": 0.9067}, {"label": "s125", "dino_c": 0.4511, "dino_s": 0.5718, "csd_top1": 0.7983, "lpips": 0.6504, "same150_top1": 0.9867}, {"label": "s100", "dino_c": 0.5522, "dino_s": 0.5484, "csd_top1": 0.6633, "lpips": 0.5744, "same150_top1": 0.9533}, {"label": "s085", "dino_c": 0.6748, "dino_s": 0.5054, "csd_top1": 0.5217, "lpips": 0.5064, "same150_top1": 0.9667}, {"label": "s075", "dino_c": 0.7081, "dino_s": 0.4877, "csd_top1": 0.515, "lpips": 0.4998, "same150_top1": 0.9933}]}, {"id": "v34_C3_44m_s2_joint", "name": "V34 C3 (44M+S2 Joint)", "group": "stage_c", "style": "solid", "color": "#c084fc", "points": [{"label": "s150", "dino_c": 0.4218, "dino_s": 0.5566, "csd_top1": 0.7983, "lpips": 0.6786, "same150_top1": 0.96}, {"label": "s125", "dino_c": 0.5697, "dino_s": 0.5274, "csd_top1": 0.655, "lpips": 0.5941, "same150_top1": 0.9533}, {"label": "tau0", "dino_c": 0.5844, "dino_s": 0.5173, "csd_top1": 0.4883, "lpips": 0.5822, "same150_top1": 0.9267}, {"label": "s100", "dino_c": 0.6443, "dino_s": 0.5054, "csd_top1": 0.5683, "lpips": 0.529, "same150_top1": 0.96}, {"label": "s085", "dino_c": 0.7191, "dino_s": 0.486, "csd_top1": 0.4733, "lpips": 0.4832, "same150_top1": 0.9733}, {"label": "s075", "dino_c": 0.7366, "dino_s": 0.475, "csd_top1": 0.4733, "lpips": 0.4843, "same150_top1": 0.9867}]}, {"id": "v34_d_merged", "name": "V34 D_merged (44M+A3 Bridge)", "group": "stage_d", "style": "dashed", "color": "#eab308", "points": [{"label": "s150", "dino_c": 0.3002, "dino_s": 0.5572, "csd_top1": 0.7117, "lpips": 0.7584, "same150_top1": 0.8067}, {"label": "tau0", "dino_c": 0.3342, "dino_s": 0.5928, "csd_top1": 0.66, "lpips": 0.7916, "same150_top1": 0.7733}, {"label": "s125", "dino_c": 0.4183, "dino_s": 0.5698, "csd_top1": 0.6317, "lpips": 0.6599, "same150_top1": 0.82}, {"label": "s100", "dino_c": 0.5263, "dino_s": 0.5532, "csd_top1": 0.5917, "lpips": 0.5888, "same150_top1": 0.86}, {"label": "s085", "dino_c": 0.6714, "dino_s": 0.5161, "csd_top1": 0.45, "lpips": 0.5247, "same150_top1": 0.94}, {"label": "s075", "dino_c": 0.7176, "dino_s": 0.4959, "csd_top1": 0.41, "lpips": 0.503, "same150_top1": 0.9467}, {"label": "s065", "dino_c": 0.7725, "dino_s": 0.4693, "csd_top1": 0.3183, "lpips": 0.4724, "same150_top1": 0.9733}]}, {"id": "v34_winner", "name": "V34 Winner (44M C2 + A3 Start)", "group": "winner", "style": "solid", "color": "#22c55e", "width": 3.2, "points": [{"label": "s150", "dino_c": 0.347, "dino_s": 0.5916, "csd_top1": 0.92, "lpips": 0.7158, "same150_top1": 0.98}, {"label": "s125", "dino_c": 0.4668, "dino_s": 0.5782, "csd_top1": 0.805, "lpips": 0.6446, "same150_top1": 0.9733}, {"label": "s100", "dino_c": 0.5628, "dino_s": 0.557, "csd_top1": 0.6833, "lpips": 0.5894, "same150_top1": 0.9467}, {"label": "s085", "dino_c": 0.6734, "dino_s": 0.5143, "csd_top1": 0.5483, "lpips": 0.5365, "same150_top1": 0.9667}, {"label": "s075", "dino_c": 0.7071, "dino_s": 0.4974, "csd_top1": 0.5333, "lpips": 0.5211, "same150_top1": 0.98}]}], "holdout": [{"label": "V32_s085", "dino_c": 0.7004, "dino_s": 0.5164, "csd_top1": 0.48, "lpips": 0.8298, "same150_top1": 0.9267}, {"label": "D_merged_s085", "dino_c": 0.6997, "dino_s": 0.5238, "csd_top1": 0.4233, "lpips": 0.7782, "same150_top1": 0.92}, {"label": "V32_s100", "dino_c": 0.5715, "dino_s": 0.5569, "csd_top1": 0.615, "lpips": 0.8357, "same150_top1": 0.86}, {"label": "D_merged_s100", "dino_c": 0.552, "dino_s": 0.5565, "csd_top1": 0.5517, "lpips": 0.7881, "same150_top1": 0.86}, {"label": "C2_A3_s085", "dino_c": 0.7042, "dino_s": 0.5208, "csd_top1": 0.53, "lpips": 0.8121, "same150_top1": 0.9467}, {"label": "C2_A3_s100", "dino_c": 0.5961, "dino_s": 0.5597, "csd_top1": 0.6817, "lpips": 0.8206, "same150_top1": 0.9267}]};
+let curMode = "dino_s";
+const PRESETS = {
+  main: ["ext_front", "v32", "v33_s2", "v34_stage_a3", "v34_C2_44m_q32", "v34_d_merged", "v34_winner"],
+  all: DATA.series.map(s => s.id),
+  ablation: ["v32", "v34_stage_a0", "v34_stage_a1", "v34_stage_a2", "v34_stage_a3", "v34_B0_k8_discrete", "v34_B1_inst_417", "v34_B2_inst_tex1101", "v34_C0_22m_q32", "v34_C1_22m_s2_joint", "v34_C2_44m_q32", "v34_C3_44m_s2_joint", "v34_winner"]
+};
+const enabled = new Set(PRESETS.main);
+
+const svg = document.getElementById("chart");
+const info = document.getElementById("info");
+const legendEl = document.getElementById("legend");
+
+function el(tag, attrs, text) {
+  const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, v);
+  if (text !== undefined) n.textContent = text;
+  return n;
+}
+
+function renderLegend() {
+  legendEl.innerHTML = "";
+  if (curMode === "holdout") {
+    legendEl.innerHTML = '<span style="font-size:11px;color:var(--muted-foreground,#94a3b8)">Holdout-750: 150 disjoint unseen sources x 5 target styles scored against 150 disjoint unseen holdout references (Zero-DINO + S10).</span>';
+    return;
+  }
+  for (const s of DATA.series) {
+    const btn = document.createElement("span");
+    btn.className = "pill" + (enabled.has(s.id) ? "" : " off");
+    btn.innerHTML = `<span class="dot" style="background:${s.color}"></span>${s.name}`;
+    btn.onclick = () => {
+      if (enabled.has(s.id)) enabled.delete(s.id); else enabled.add(s.id);
+      render();
+    };
+    legendEl.appendChild(btn);
+  }
+}
+
+function render() {
+  renderLegend();
+  svg.innerHTML = "";
+  const W = 700, H = 390, pl = 52, pr = 18, pt = 18, pb = 38;
+  const pw = W - pl - pr, ph = H - pt - pb;
+
+  let x0 = 0.27, x1 = 0.85, y0 = 0.36, y1 = 0.62, yKey = "dino_s", yTitle = "DINO-S (Style Similarity ↑)";
+  if (curMode === "csd_top1") {
+    y0 = 0.25; y1 = 0.96; yKey = "csd_top1"; yTitle = "CSD Top-1 Accuracy ↑";
+  } else if (curMode === "holdout") {
+    x0 = 0.52; x1 = 0.74; y0 = 0.49; y1 = 0.58; yKey = "dino_s"; yTitle = "Holdout-750 DINO-S ↑";
+  }
+
+  const sx = v => pl + ((v - x0) / (x1 - x0)) * pw;
+  const sy = v => pt + ph - ((v - y0) / (y1 - y0)) * ph;
+
+  svg.appendChild(el("rect", {x: pl, y: pt, width: pw, height: ph, fill: "none", stroke: "var(--border, #334155)"}));
+  const xTicks = curMode === "holdout" ? [0.55, 0.60, 0.65, 0.70] : [0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
+  for (const t of xTicks) {
+    const px = sx(t);
+    svg.appendChild(el("line", {x1: px, y1: pt, x2: px, y2: pt + ph, class: "grid-line"}));
+    svg.appendChild(el("text", {x: px, y: pt + ph + 16, "text-anchor": "middle", class: "axis-text"}, t.toFixed(2)));
+  }
+  const yTicks = curMode === "csd_top1" ? [0.30, 0.45, 0.60, 0.75, 0.90] : (curMode === "holdout" ? [0.50, 0.52, 0.54, 0.56] : [0.40, 0.45, 0.50, 0.55, 0.60]);
+  for (const t of yTicks) {
+    const py = sy(t);
+    svg.appendChild(el("line", {x1: pl, y1: py, x2: pl + pw, y2: py, class: "grid-line"}));
+    const lbl = curMode === "csd_top1" ? `${(t*100).toFixed(0)}%` : t.toFixed(2);
+    svg.appendChild(el("text", {x: pl - 6, y: py + 3.5, "text-anchor": "end", class: "axis-text"}, lbl));
+  }
+  svg.appendChild(el("text", {x: pl + pw / 2, y: H - 6, "text-anchor": "middle", class: "axis-text"}, "DINO-C (Content Preservation ↑)"));
+  svg.appendChild(el("text", {x: 14, y: pt + ph / 2, "text-anchor": "middle", class: "axis-text", transform: `rotate(-90 14 ${pt+ph/2})`}, yTitle));
+
+  if (curMode === "holdout") {
+    const colors = {V32_s085: "#3b82f6", V32_s100: "#3b82f6", D_merged_s085: "#eab308", D_merged_s100: "#eab308", C2_A3_s085: "#22c55e", C2_A3_s100: "#22c55e"};
+    for (const pair of [["V32_s100", "V32_s085", "#3b82f6"], ["D_merged_s100", "D_merged_s085", "#eab308"], ["C2_A3_s100", "C2_A3_s085", "#22c55e"]]) {
+      const p0 = DATA.holdout.find(p => p.label === pair[0]);
+      const p1 = DATA.holdout.find(p => p.label === pair[1]);
+      if (p0 && p1) {
+        svg.appendChild(el("line", {x1: sx(p0.dino_c), y1: sy(p0.dino_s), x2: sx(p1.dino_c), y2: sy(p1.dino_s), stroke: pair[2], "stroke-width": 2.6}));
+      }
+    }
+    for (const p of DATA.holdout) {
+      const cx = sx(p.dino_c), cy = sy(p.dino_s), col = colors[p.label] || "#22c55e";
+      const c = el("circle", {cx, cy, r: 6, fill: col, stroke: "#0f172a", "stroke-width": 1.2});
+      c.onmouseenter = () => { info.textContent = `[Holdout-750] ${p.label} | C=${p.dino_c.toFixed(4)} S=${p.dino_s.toFixed(4)} Top1=${(p.csd_top1*100).toFixed(2)}% LP=${p.lpips.toFixed(4)} Same=${(p.same150_top1*100).toFixed(1)}%`; };
+      svg.appendChild(c);
+      svg.appendChild(el("text", {x: cx + 8, y: cy + 4, class: "axis-text", style: `fill:${col};font-weight:600`}, `${p.label} (${(p.csd_top1*100).toFixed(1)}%)`));
+    }
+    return;
+  }
+
+  // External scatter
+  for (const p of DATA.external_scatter) {
+    const cx = sx(p.dino_c), cy = sy(p[yKey]);
+    if (cx < pl || cx > pl + pw || cy < pt || cy > pt + ph) continue;
+    const c = el("circle", {cx, cy, r: 4, fill: "#94a3b8", opacity: 0.85});
+    c.onmouseenter = () => { info.textContent = `[External] ${p.label} | DINO-C=${p.dino_c.toFixed(4)} DINO-S=${p.dino_s.toFixed(4)} Top1=${(p.csd_top1*100).toFixed(1)}%`; };
+    svg.appendChild(c);
+    const below = p.label === "StyleShot" || p.label === "CUT";
+    svg.appendChild(el("text", {x: cx + 5, y: cy + (below ? 12 : -5), class: "ext-label"}, p.label));
+  }
+
+  // Series curves
+  for (const s of DATA.series) {
+    if (!enabled.has(s.id)) continue;
+    const pts = s.points.filter(p => p.dino_c >= x0 - 0.01 && p.dino_c <= x1 + 0.01);
+    if (!pts.length) continue;
+    const d = pts.map((p, i) => `${i ? "L" : "M"}${sx(p.dino_c).toFixed(1)},${sy(p[yKey]).toFixed(1)}`).join(" ");
+    const dash = s.style === "dashed" ? "5,4" : (s.style === "dotted" ? "2,3" : "");
+    const sw = s.width || 2.1;
+    const pathAttrs = {d, fill: "none", stroke: s.color, "stroke-width": sw};
+    if (dash) pathAttrs["stroke-dasharray"] = dash;
+    svg.appendChild(el("path", pathAttrs));
+    for (const p of pts) {
+      const cx = sx(p.dino_c), cy = sy(p[yKey]);
+      if (cy < pt - 2 || cy > pt + ph + 2) continue;
+      const c = el("circle", {cx, cy, r: sw + 1.8, fill: s.color, stroke: "var(--card, #111827)", "stroke-width": 1});
+      c.onmouseenter = () => {
+        const lp = p.lpips ? ` LP=${p.lpips.toFixed(4)}` : "";
+        const sm = p.same150_top1 ? ` Same=${(p.same150_top1*100).toFixed(1)}%` : "";
+        info.textContent = `${s.name} [${p.label}] | C=${p.dino_c.toFixed(4)} S=${p.dino_s.toFixed(4)} Top1=${(p.csd_top1*100).toFixed(2)}%${lp}${sm}`;
+      };
+      svg.appendChild(c);
+    }
+  }
+}
+
+document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-mode]").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  curMode = b.dataset.mode;
+  render();
+});
+document.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-preset]").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  enabled.clear();
+  for (const id of PRESETS[b.dataset.preset]) enabled.add(id);
+  render();
+});
+render();
+</script>
+</body>
+</html>

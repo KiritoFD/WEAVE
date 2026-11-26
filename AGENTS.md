@@ -7,6 +7,10 @@
 
 ## 决策协议（2026-11-14 起，覆盖一切历史文档的相反约定）
 
+### 实验结果可视化规范（2026-11-26 起）
+
+- **以后所有新实验结果必须统一可视化到 Pareto 前沿图上**：任何新阶段评测完成后，均须将完整 `test750 / Cross600`（以及独立 `Holdout`）实测点并入 [`docs/performance/plot_cleave_pareto.py`](docs/performance/plot_cleave_pareto.py) 更新矢量图 [`docs/performance/figures/cleave_pareto_latest.svg`](docs/performance/figures/cleave_pareto_latest.svg) 与交互式 HTML，并通过 `html_preview` + `html_render` 在对话中直接展示 `DINO-C vs DINO-S` 及 `DINO-C vs CSD Top-1` 前沿曲线（遵循 [`docs/performance/pareto.md`](docs/performance/pareto.md) 的内外部方法分组与非支配前沿规则）。
+
 ### 解码器：一律用 S10，不用原版 SD-VAE decoder
 
 - **所有评测/出图解码使用 S10**（`deliver/checkpoints/runs/vae_decoder_prune/s10_p5_lowlr/decoder.pt`，10.66M 剪枝 decoder，自带 `post_quant_conv`）。
