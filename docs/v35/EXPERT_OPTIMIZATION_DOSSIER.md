@@ -108,7 +108,7 @@ P8 锁定校准：[`p8_final_report.json`](data/p8_final_report.json) 中 `ws_mu
    - 位置：[`exp/v33_semantic_control/models.py#L512-L542`](../../exp/v33_semantic_control/models.py#L512-L542)。
    - 现象：每步将 batch 复制为 `[v_sc, v_s0, v_0c, v_00]`（`4B` 吞吐）。其中 `v_00`（无条件）与 `v_0c`（纯内容条件）不依赖 `style_id / u_style`；此外可评估：**风格/内容联合 CFG 蒸馏**（`4B → 1B`，理论省去 `75%` P-Core FLOPs）或尾部步剪除 `v_s0` / 复用早期无条件预测。
 3. **`PCoreSLFUNet` 缺少 `channels_last`、上采样写法与算子编译**：
-   - 位置：[`exp/v29_biglittle/pcore_model.py#L167-L177`](../../exp/v29_biglittle/pcore_model.py#L167-L177)。
+   - 位置：`exp/v29_biglittle/pcore_model.py#L167-L177`（仓库当前未提交：`exp/v29_biglittle/pcore_model.py`）。
    - 现象：仅 `UnifiedHybridUNet` 对输入调用了 `.contiguous(memory_format=torch.channels_last)`，而占 **56.6%** 耗时的 `PCoreSLFUNet` 与 `S10B`/`A0` 均以默认 `NCHW` 运行；上采样采用 `.repeat_interleave(2, -2).repeat_interleave(2, -1)` 替代 `F.interpolate(..., mode="nearest")`；且整条推理链尚未启用 `torch.compile(mode="reduce-overhead")` / `CUDA Graph`（固定 `512×512` 静态 shape 极适合 CUDA Graph 消除 `GroupNorm+SiLU+FiLM` 小 kernel launch 开销）。
 4. **`A0 VAE Encoder` 占端到端 `22.6%` (`15.79 ms/img @ 4090`)**：
    - 位置：[`exp/v25/r14_e2e_benchmark.py#L73-L80`](../../exp/v25/r14_e2e_benchmark.py#L73-L80) 与 [`exp/v35_final/common.py#L559`](../../exp/v35_final/common.py#L559)。

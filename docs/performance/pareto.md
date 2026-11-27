@@ -22,7 +22,7 @@
 
 ## 复现入口
 
-当前 PRISM-1-Unified 与外部文献的对照图来自以下命令。历史轨迹同图保留为内部参照。[图与结果](../exp1123/single_q32/unified/README.md)
+当前 PRISM-1-Unified 与外部文献的对照图来自以下命令。历史轨迹同图保留为内部参照。[图与结果](../archive/historical/exp1123/single_q32/unified/README.md)
 
 ```bash
 python -m exp.v27_single.plot_flow_pnp docs/exp1123/single_q32/flow_pnp/results.json --prism docs/exp1123/single_q32/unified/results_s4000.json --editor-label PRISM-1-Unified
@@ -36,7 +36,7 @@ python -m exp.v28_unified.plot_speed_score
 
 线性组合（如 `DINO-C + DINO-S`）会在无编辑端点（`λ=0`, `C=0.959, S=0.3735`）或内容坍缩端点达到极值，压低均衡工作点。提供两类简洁、无门槛的综合指标（定义于 [pareto.py](../../src/eval/pareto.py)）：
 
-1. **负对数平滑最小值** `composite_dino_lse`：$S_{\mathrm{LSE}}(C, S) = -\log\!\big(e^{-10 C} + e^{-15 S}\big)$，以 `2:3` 整数比对齐 `DINO-C (~0.70)` 与 `DINO-S (~0.47)` 的自然量级。Zoom-in 主图 [速度-负对数得分图](figures/speed_composite_score.png) 聚焦 `[5.20, 6.48]` 上簇区间（剔除下方离群点 `StyleID=3.86`, `StyleShot=3.56`, `SaMST=1.55`, `WCT=0.11` 以拉开纵坐标间距）。
-2. **零参数负幂广义均值（无对数）** `composite_dino_power_mean`：$M_{-4}(C, S) = \big(\tfrac{1}{2}(C^{-4} + S^{-4})\big)^{-1/4} \in [0, 1]$，完全对称且无需任何超参或对数变换，在 [速度-负幂均值图](figures/speed_power_mean.png) 中使 `Seedream 4.5` 升至外部第 4（`0.4534`）、`λ=0` 垫底（`0.4417`）。
+1. **负对数平滑最小值** `composite_dino_lse`：$S_{\mathrm{LSE}}(C, S) = -\log\!\big(e^{-10 C} + e^{-15 S}\big)$，以 `2:3` 整数比对齐 `DINO-C (~0.70)` 与 `DINO-S (~0.47)` 的自然量级。Zoom-in 主图 [速度-负对数得分图](figures/speed_composite_score.svg) 聚焦 `[5.20, 6.48]` 上簇区间（剔除下方离群点 `StyleID=3.86`, `StyleShot=3.56`, `SaMST=1.55`, `WCT=0.11` 以拉开纵坐标间距）。
+2. **零参数负幂广义均值（无对数）** `composite_dino_power_mean`：$M_{-4}(C, S) = \big(\tfrac{1}{2}(C^{-4} + S^{-4})\big)^{-1/4} \in [0, 1]$，完全对称且无需任何超参或对数变换，在 [速度-负幂均值图](figures/speed_power_mean.svg) 中使 `Seedream 4.5` 升至外部第 4（`0.4534`）、`λ=0` 垫底（`0.4417`）。
 
 台账绘图命令读取现有 CSV，保留原始数据。V25 默认输出到性能图目录。冻结稿的图单独保管，需要明确指定 `--paper-figures` 才写入论文图目录。

@@ -2,7 +2,7 @@
 
 > **日期**：2026-11-27 · **代码主入口**：[`exp/v35_final/run_v35.py`](../../exp/v35_final/run_v35.py) · **执行方案**：[`plan.md`](plan.md) · **推理优化专家简报**：[`EXPERT_OPTIMIZATION_DOSSIER.md`](EXPERT_OPTIMIZATION_DOSSIER.md)  
 > **状态**：**P0–P8 + P9（高内容区间补齐、P8 统一 Decoder/E/P、真实画师审计与 58.04M 共享主干对照）全量在 RTX 4090 实测收官并同步落盘**（零编造、零跳过、零外推钳位）。  
-> **核心可视化**：[1×3 论文 Pareto 三联图 (`SVG`)](../performance/figures/cleave_pareto_triptych.svg) · [交互式 Pareto (`HTML`)](../performance/figures/cleave_pareto_latest.html) · [固定 5 任务横向对比视觉条 (`PNG`)](figures/v35_fixed_task_comparison.png)
+> **核心可视化**：[1×3 论文 Pareto 三联图 (`SVG`)](../performance/figures/cleave_pareto_triptych.svg) · [交互式 Pareto (`HTML`)](../performance/figures/cleave_pareto_latest.html) · 固定 5 任务横向对比视觉条 (`PNG`)（仓库当前未提交：`docs/v35/figures/v35_fixed_task_comparison.png`）
 
 ---
 
@@ -209,7 +209,7 @@ CLEAVE（**Zero-DINO** 双流风格迁移系统：**11.13M `E-Core` 1-NFE 风格
 
 ### 9.1 固定 5 任务横向视觉对比与 Pareto 前沿
 
-- **视觉对比图**：[`docs/v35/figures/v35_fixed_task_comparison.png`](figures/v35_fixed_task_comparison.png) 对比了 `Source`、`Target`、`A1_src_chroma`、`E_only_l100`、`P_only_s100`、`P8_D0_sdvae_s100`、`P8_D1_wikiart_s100` 与 `P8_CLEAVE_Final_s100` 共 8 列在 5 组跨画派固定任务（如 `Armand Guillaumin → Early_Renaissance` 及 `Andrea Mantegna → {Impressionism, Minimalism, Rococo, Ukiyo_e}`）上的真实输出：可肉眼验证 `P_only` 原貌锁定、`E_only` 笔触粗糙、`D1` 过度模糊发灰、而 **`CLEAVE Final (S10B)`** 在结构对齐、色彩分布和目标纹理上表现最均衡。
+- **视觉对比图**：`docs/v35/figures/v35_fixed_task_comparison.png`（仓库当前未提交：`docs/v35/figures/v35_fixed_task_comparison.png`） 对比了 `Source`、`Target`、`A1_src_chroma`、`E_only_l100`、`P_only_s100`、`P8_D0_sdvae_s100`、`P8_D1_wikiart_s100` 与 `P8_CLEAVE_Final_s100` 共 8 列在 5 组跨画派固定任务（如 `Armand Guillaumin → Early_Renaissance` 及 `Andrea Mantegna → {Impressionism, Minimalism, Rococo, Ukiyo_e}`）上的真实输出：可肉眼验证 `P_only` 原貌锁定、`E_only` 笔触粗糙、`D1` 过度模糊发灰、而 **`CLEAVE Final (S10B)`** 在结构对齐、色彩分布和目标纹理上表现最均衡。
 - **Pareto 三联图与交互页面**：已同步更新 [`../performance/plot_cleave_pareto.py`](../performance/plot_cleave_pareto.py)，生成 [`../performance/figures/cleave_pareto_triptych.svg`](../performance/figures/cleave_pareto_triptych.svg) 与交互式 [`../performance/figures/cleave_pareto_latest.html`](../performance/figures/cleave_pareto_latest.html)（含 `V35 P0–P8 定型消融` 专属交互分页）。
 
 ### 9.2 工程整理与算力基础设施成果
@@ -223,7 +223,7 @@ CLEAVE（**Zero-DINO** 双流风格迁移系统：**11.13M `E-Core` 1-NFE 风格
 
 - [`data/p0_a3_report.json`](data/p0_a3_report.json) · [`data/p0_freeze_audit.json`](data/p0_freeze_audit.json) · [`data/p1_ecore_report.json`](data/p1_ecore_report.json) · [`data/p2_decoder_report.json`](data/p2_decoder_report.json)
 - [`data/p3_stiefel_poolc_report.json`](data/p3_stiefel_poolc_report.json) · [`data/p4_seed2_report.json`](data/p4_seed2_report.json) · [`data/p5_duration_report.json`](data/p5_duration_report.json) · [`data/p6_hyper_report.json`](data/p6_hyper_report.json)
-- [`data/p7_biglittle_report.json`](data/p7_biglittle_report.json) · [`data/p8_final_report.json`](data/p8_final_report.json) · [`data/p9_paper_audit_report.json`](data/p9_paper_audit_report.json) · [`figures/v35_fixed_task_comparison.png`](figures/v35_fixed_task_comparison.png)
+- [`data/p7_biglittle_report.json`](data/p7_biglittle_report.json) · [`data/p8_final_report.json`](data/p8_final_report.json) · [`data/p9_paper_audit_report.json`](data/p9_paper_audit_report.json) · `figures/v35_fixed_task_comparison.png`（仓库当前未提交：`docs/v35/figures/v35_fixed_task_comparison.png`）
 
 ---
 
