@@ -136,7 +136,7 @@ dataset(is_training=True) = 100,207  → 泄漏 21,546 张测试图
 | CSD Keep ↑ | 0.9155 | **0.8535** | ≥0.90 | ❌ 差 0.047 |
 | HF corr L0 | 0.4504 | 0.4279 | 无新退化 | ✅ |
 
-**联合目标 2/3 达成。CSD shortfall 被接受**（见 `docs/v6/S10_FINAL_REPORT.md`）。
+**联合目标 2/3 达成。CSD shortfall 被接受**（见 `docs/archive/historical/v6/S10_FINAL_REPORT.md`）。
 
 ### 3.6 效率（4090, bs=1, 512px, PyTorch）
 
@@ -209,7 +209,7 @@ A/B/C/D 对照证明：**旧 S10 直接喂未缩放 SD0 latent 就可用且更�
 因此：
 - **旧 S10 = S10B，字节级相同**，零重训、零 A0 运行时依赖
 - SD0-S10 V2 的 C0/C1 仍是有效的研究产物（更好的重建 + 响应一致性），但从「下游 Q2a+Oracle」视角不是必要路线
-- 详细证据见 [09_S10B_DECISION.md](09_S10B_DECISION.md) 与 `docs/v6/S10_SD0_ADAPT_REPORT.md`
+- 详细证据见 [09_S10B_DECISION.md](09_S10B_DECISION.md) 与 `docs/archive/historical/v6/S10_SD0_ADAPT_REPORT.md`
 
 ---
 
@@ -227,4 +227,4 @@ A/B/C/D 对照证明：**旧 S10 直接喂未缩放 SD0 latent 就可用且更�
 | 评测 | `tools/vae_suite/eval_sd0_s10.py`、`eval_generator_swap_full.py`、`score_baseline_protocol.py` |
 | S10B 导出 | `tools/vae_suite/export_s10b.py` |
 
-原始报告：`docs/v6/S10_FINAL_REPORT.md`、`docs/v6/S10_12H_EXECUTION_LOG.md`、`docs/v6/SD0_S10_V2_EXECUTION.md`、`docs/v6/SD0_S10_V2_FINAL.md`。
+原始报告：`docs/archive/historical/v6/S10_FINAL_REPORT.md`、`docs/archive/historical/v6/S10_12H_EXECUTION_LOG.md`、`docs/archive/historical/v6/SD0_S10_V2_EXECUTION.md`、`docs/archive/historical/v6/SD0_S10_V2_FINAL.md`。

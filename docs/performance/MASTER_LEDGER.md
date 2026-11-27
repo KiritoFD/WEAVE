@@ -1,6 +1,6 @@
 # WEAVE / PRISM 全局实验结论与全量数据总台账（Master Ledger · V6 → V21）
 
-> **历史快照 / 勘误（2026-11-21）**：本文正文按 **V6–V21** 阶段写作；标题中“唯一总台账”“最新收官”和下文“任意参考全面超越 StyleGallery”均是**当时视角**，不代表 V22–V26 最终裁决。机器可读的 [metrics.csv](metrics.csv) 当前已有 **531 条数据行**，而本文首行的“265 条”是旧快照，不是实时行数。最新结论看 [根 README](../../README.md)、[模型资产](../ours/README.md)、[V25 台账](../v25/ABLATION_LEDGER.md)、[V26 诊断](../1120/V26_RESULTS_SUMMARY.md) 与 [V26-L 进度](../1120/PROGRESS.md)。
+> **历史快照 / 勘误（2026-11-21）**：本文正文按 **V6–V21** 阶段写作；标题中“唯一总台账”“最新收官”和下文“任意参考全面超越 StyleGallery”均是**当时视角**，不代表 V22–V26 最终裁决。机器可读的 [metrics.csv](metrics.csv) 当前已有 **531 条数据行**，而本文首行的“265 条”是旧快照，不是实时行数。最新结论看 [根 README](../../README.md)、[模型资产](../archive/historical/ours/README.md)、[V25 台账](../archive/historical/v25/ABLATION_LEDGER.md)、[V26 诊断](../archive/historical/1120/V26_RESULTS_SUMMARY.md) 与 [V26-L 进度](../archive/historical/1120/PROGRESS.md)。
 >
 > **最重要的比较边界**：V20 强工作点使用**闭集五画派原型**，不等同于严格任意参考；V21 单参考 DINO-S **0.6006** 高于 StyleGallery **0.5604**，但 DINO-C **0.3970** 远低于其 **0.6113**，**不存在严格内容—风格双轴全胜**。Q32 将所测 Gram 探针降到五分类随机底线，只证明二阶统计去泄漏，未证明最终网络生成增益。历史记录保留，后续结论以受控数据为准。
 
@@ -14,7 +14,7 @@
 ## 一、全局核心结论与决定性突破（Executive Findings）
 
 ### 1.0 `PRISM-Flow / V20–V21` 突破超球面均值坍缩与二阶 Gram 泄漏：任意单图 1-Shot 直出全面超越 `StyleGallery`（2026-11-18 最新收官）
-针对 `V19` 高 `CSD Top-1`（`59.0%`）但 `DINO-S` 停留在 `0.462` 的超球面均值坍缩瓶颈，以及对角白化隐藏的 `92.33%` 二阶 Gram 源风格泄漏（详见 [`../next1118/04_V20_SUBMODE_SLF_THEORY.md`](../next1118/04_V20_SUBMODE_SLF_THEORY.md)、[`../next1118/05_V21_STIEFEL_ONESHOT_THEORY.md`](../next1118/05_V21_STIEFEL_ONESHOT_THEORY.md) 与 [`../next1118/V20_RESULTS.md`](../next1118/V20_RESULTS.md)）：
+针对 `V19` 高 `CSD Top-1`（`59.0%`）但 `DINO-S` 停留在 `0.462` 的超球面均值坍缩瓶颈，以及对角白化隐藏的 `92.33%` 二阶 Gram 源风格泄漏（详见 [`../next1118/04_V20_SUBMODE_SLF_THEORY.md`](../archive/historical/next1118/04_V20_SUBMODE_SLF_THEORY.md)、[`../next1118/05_V21_STIEFEL_ONESHOT_THEORY.md`](../archive/historical/next1118/05_V21_STIEFEL_ONESHOT_THEORY.md) 与 [`../next1118/V20_RESULTS.md`](../archive/historical/next1118/V20_RESULTS.md)）：
 1. **Stiefel 极分解正交商（二阶 Gram 泄漏 `92.33% → 20.00%`）**：严格证明对角白化仅令方差归一，保留了全部通道协方差（留出集 Gram 探针仍达 `92.3%`）；通过 $Q_k = \sqrt{N} U V^\top$ 保证 $\frac{1}{N}Q Q^\top \equiv I_k$ 恒等，实测将二阶 Gram 风格泄漏压降至精确随机水平 **`20.00%`**（误差 $2.21\times 10^{-4}$）。
 2. **纯训练集内部 `kNN-30` 核心流形原型**：滤除 WikiArt `Minimalism` 中近半数 3D 展厅装置实拍离群点，五类原型纯度跃升 `+20pp~+29pp`；结合 Coarse-16 `SLFUNet` 分段视界流，旗舰档 **`V20.D1_core_slf_hiS`**（`134.1 ms/img`）取得 **`DINO-S = 0.5789`**（超 `StyleGallery` `0.5604` **`+1.85pp`**）、**`Affinity = 0.6683`**、**`CSD Top-1 = 64.00%`**（`Minimalism = 100.0%`），错标签控制跌至 **`2.33%`**（因果特异性 **`+58.17pp`**）。
 3. **任意参考图 1-Shot 直出与画廊跨注意力（`PRISMAttnUNet`）**：
@@ -23,7 +23,7 @@
    - **`V20.A1_t4_patchswd`（`PRISM-Pro+`）**：在高保真区间将 `CSD Top-1` 推升至 **`64.33%`**（`DINO-C = 0.6392, LPIPS = 0.5332`）。
 
 ### 1.1 `PRISM v2 / V19` 正交商—纤维对偶与各向异性谱传输（2026-11-18 实测终局）
-立足源码级病灶剖析（见 [`../next1118/01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md`](../next1118/01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md)），`V19` 通过**正交商—纤维对偶 $(\Pi_\perp, \Pi_\parallel)$**、**潜空间亮度—色度正交分裂 $\R^4 = \operatorname{span}(\hat{w}_Y)\oplus\hat{w}_Y^\perp$** 与 **穿过可微 `S10` 的无归一化 `VGG-16+Oklab` 均衡判别器**，在完全**零测试期源标签 `sid`**、**零裁判泄漏**的前提下实现了全面历史性突破：
+立足源码级病灶剖析（见 [`../next1118/01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md`](../archive/historical/next1118/01_CRITICAL_DIAGNOSIS_AND_HISTORICAL_AUDIT.md)），`V19` 通过**正交商—纤维对偶 $(\Pi_\perp, \Pi_\parallel)$**、**潜空间亮度—色度正交分裂 $\R^4 = \operatorname{span}(\hat{w}_Y)\oplus\hat{w}_Y^\perp$** 与 **穿过可微 `S10` 的无归一化 `VGG-16+Oklab` 均衡判别器**，在完全**零测试期源标签 `sid`**、**零裁判泄漏**的前提下实现了全面历史性突破：
 
 1. **纯单步毫秒级模型（`17.0 ms/img` = `58.7 img/s` @ 4090）无条件同时碾压 `Seedream 4.5` 与 `StyTr2`**：
    - **`V19.S2_prism1_v2`（`PRISM-1`, $\lambda=1.0$, `1.50M` 活跃潜参数）**：Cross600 **CSD Top-1 = `44.33%`**（`DINO-S = 0.4431`, `CLIP-S = 0.6880`, `Affinity = 0.5655`, `DINO-C = 0.7440`, `LPIPS = 0.5057`），以单次前馈同时在 **全部五项风格与内容指标** 上严格支配商业基座 **Seedream 4.5（`37.30%` Top-1, `0.7343` DINO-C, `0.5202` LPIPS）** 与 **StyTr2（`39.50%` Top-1, `0.7023` DINO-C, `0.7386` LPIPS）**，且提速 **`117×–178×`**！

@@ -1,8 +1,8 @@
 # docs/vae — VAE / S10 Decoder 专门文档
 
 > 本目录集中收录 **S10 Decoder 全流程训练、SD0 适配、评测与推理速度**的全部文档。
-> `docs/v6/` 下的同名文件自 2026-11-14 起已去重为指针 stub（字节级相同已验证），
-> **本目录为权威入口**；反向地，Q2A 评测类文档权威在 `docs/v6/`（见 06 条目）。
+> `docs/archive/historical/v6/` 下的同名文件自 2026-11-14 起已去重为指针 stub（字节级相同已验证），
+> **本目录为权威入口**；反向地，Q2A 评测类文档权威在 `docs/archive/historical/v6/`（见 06 条目）。
 > 由 commit `bd04475` 之后的专门提交建立（2026-11-12）。
 
 ---
@@ -11,7 +11,7 @@
 
 1. **结构减法是系统级突破**：49.49M→10.66M（−78.5%）；3060 PyTorch B8 解码 **3.15×**，同机完整流水 **1.92×**。[同卡测速](08_STAGED_PROFILE_AND_TRT.md)。
 2. **像素恢复不等于纹理恢复**：原 S10 L1-only 后 LPIPS≈0.390，必须靠 512px 真实图感知训练降至约 0.085；**旧 S10 本身没有教师蒸馏**。[训练全记录](01_S10_TRAINING_FULL.md)。
-3. **更像教师不等于下游更强**：C1 响应蒸馏改善重建，但下游 Cross600 Top-1 为 **旧 S10 37.67% > C0 36.83% > C1 36.00%**。最终 S10B 是旧 S10 权重的字节级同一封装，不是新权重。[下游对照](../v6/Q2A_ORACLE_DECODER_RANKING.md) · [S10B](10_S10B_FINAL.md)。
+3. **更像教师不等于下游更强**：C1 响应蒸馏改善重建，但下游 Cross600 Top-1 为 **旧 S10 37.67% > C0 36.83% > C1 36.00%**。最终 S10B 是旧 S10 权重的字节级同一封装，不是新权重。[下游对照](../archive/historical/v6/Q2A_ORACLE_DECODER_RANKING.md) · [S10B](10_S10B_FINAL.md)。
 
 ## 导航
 
@@ -22,7 +22,7 @@
 | 03 | [03_S10_EXECUTION_LOG.md](03_S10_EXECUTION_LOG.md) | 12h 计划执行日志（P0/P1/P2 逐步记录与数据泄漏发现） |
 | 04 | [04_SD0_S10_V2_EXECUTION.md](04_SD0_S10_V2_EXECUTION.md) | SD0-S10 V2 执行方案与 P0 基线（Cold/Warm 修正、离线依赖、组件清单） |
 | 05 | [05_SD0_S10_V2_FINAL.md](05_SD0_S10_V2_FINAL.md) | SD0-S10 V2 最终结果（两 Gate、四层验收、链异常修复、交付物） |
-| 06 | [06_Q2A_ORACLE_BASELINE_RANKING.md](06_Q2A_ORACLE_BASELINE_RANKING.md) | （指针）Q2a+Oracle1 × 新 Decoder 在 32 方法榜的定位——**权威版本在 [`docs/v6/Q2A_ORACLE_BASELINE_RANKING.md`](../v6/Q2A_ORACLE_BASELINE_RANKING.md)**（2026-11-14 去重） |
+| 06 | [06_Q2A_ORACLE_BASELINE_RANKING.md](06_Q2A_ORACLE_BASELINE_RANKING.md) | （指针）Q2a+Oracle1 × 新 Decoder 在 32 方法榜的定位——**权威版本在 [`docs/archive/historical/v6/Q2A_ORACLE_BASELINE_RANKING.md`](../archive/historical/v6/Q2A_ORACLE_BASELINE_RANKING.md)**（2026-11-14 去重） |
 | 07 | [07_INFERENCE_SPEED.md](07_INFERENCE_SPEED.md) | 推理速度三套口径辨析（4090 Decoder 段 / 论文 3060 端到端 / 本轮 Infra） |
 | 08 | [08_STAGED_PROFILE_AND_TRT.md](08_STAGED_PROFILE_AND_TRT.md) | 3060 同硬件分段 profile 与 TRT b8 测速（encoder/WEAVE/decoder 占比） |
 | 09 | **[09_S10B_DECISION.md](09_S10B_DECISION.md)** | ⭐ **关键决策**：旧 S10 无需重训即可用于原版 SD0 Encoder；A/B/C/D 对照；S10B 字节级证明 |

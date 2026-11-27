@@ -165,12 +165,12 @@ def collect_triptych_data() -> dict[str, Any]:
     fb_idx = frontier_indices([(b["dc"], b["t1"]) for b in ext_list])
     fc_idx = frontier_indices([(b["ips"], b["t1"]) for b in ext_list])
 
-    sd = _load_json(REPO / "docs/v34/data/stage_d_report.json")
-    c2a3 = _load_json(REPO / "docs/v34/data/c2_a3_control_report.json")
-    sc = _load_json(REPO / "docs/v34/data/stage_c_report.json")
-    sa = _load_json(REPO / "docs/v34/data/stage_a_report.json")
-    sb = _load_json(REPO / "docs/v34/data/stage_b_report.json")
-    p2 = _load_json(REPO / "docs/v33/data/p2_report.json")
+    sd = _load_json(REPO / "docs/archive/historical/v34/data/stage_d_report.json")
+    c2a3 = _load_json(REPO / "docs/archive/historical/v34/data/c2_a3_control_report.json")
+    sc = _load_json(REPO / "docs/archive/historical/v34/data/stage_c_report.json")
+    sa = _load_json(REPO / "docs/archive/historical/v34/data/stage_a_report.json")
+    sb = _load_json(REPO / "docs/archive/historical/v34/data/stage_b_report.json")
+    p2 = _load_json(REPO / "docs/archive/historical/v33/data/p2_report.json")
 
     v34_ips = float(sd["cold_start_rgb_to_rgb_speed"]["b16_ips"]) if sd else 14.5
     v34_winner = _extract_curve(c2a3["levels"], ips=v34_ips) if c2a3 else []

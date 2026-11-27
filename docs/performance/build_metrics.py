@@ -125,7 +125,7 @@ def eval_json_to_row(arm: str, group: str, path: Path, *,
 def load_artfid_map() -> dict[str, dict]:
     p = ROOT / "runs/artfid/artfid_results.json"
     res = read_json(p) or {}
-    sys.path.insert(0, str(ROOT / "docs/v15"))
+    sys.path.insert(0, str(ROOT / "docs/archive/historical/v15"))
     try:
         import plot_v15_dino_artfid as artplot
         name_fn = artplot._af_plot_name
@@ -209,10 +209,10 @@ def collect_all() -> list[dict]:
 
     # 3. V8 (41 arms) & V11B (6 arms) CSVs + speed
     speed = read_json(ROOT / "runs/v8_speed.json") or {}
-    speed.update(read_json(ROOT / "docs/v15/v11b_speed.json") or {})
+    speed.update(read_json(ROOT / "docs/archive/historical/v15/v11b_speed.json") or {})
     for rel_csv, grp, dec in [
-        ("docs/v8/results.csv", "V8", "SDVAE-historical"),
-        ("docs/v15/v11b_arms.csv", "V11B", "S10"),
+        ("docs/archive/historical/v8/results.csv", "V8", "SDVAE-historical"),
+        ("docs/archive/historical/v15/v11b_arms.csv", "V11B", "S10"),
     ]:
         p = ROOT / rel_csv
         if p.is_file():
@@ -308,7 +308,7 @@ def collect_all() -> list[dict]:
                 push(row)
 
     # 6. V15 Scaling (S1..S6) & Style-Bridge (PT2)
-    sc = read_json(ROOT / "docs/v15/scaling_results_summary.json")
+    sc = read_json(ROOT / "docs/archive/historical/v15/scaling_results_summary.json")
     if sc and "cross600" in sc:
         for arm_k, lvls in sc["cross600"].items():
             if arm_k == "W_dim96_conv_base":
@@ -318,7 +318,7 @@ def collect_all() -> list[dict]:
                     continue
                 v = lvls[lk]
                 row = blank_row(f"V15.{arm_k}.{tag}", "V15-Scaling", "q2a_oracle_cross600", "S10",
-                                lk == "t0_0.0", "docs/v15/scaling_results_summary.json")
+                                lk == "t0_0.0", "docs/archive/historical/v15/scaling_results_summary.json")
                 row["n_cross"] = 600
                 row.update({
                     "dino_s": v.get("dino_s"), "dino_c": v.get("dino_c"), "lpips": v.get("lpips"),
@@ -336,7 +336,7 @@ def collect_all() -> list[dict]:
         ("V15.PT2_P3_s0.t07", 0.4207, 0.8812, 0.1741, 0.0183, -0.3232, -0.0526, True),
     ]:
         row = blank_row(nm, "V15-Bridge", "q2a_oracle_cross600", "S10", is_d,
-                        "docs/v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md")
+                        "docs/archive/historical/v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md")
         row["n_cross"] = 600
         row.update({"dino_s": ds, "dino_c": dc, "lpips": lp, "target_top1": t1, "target_margin": mar, "G": g_val})
         push(row)
@@ -391,7 +391,7 @@ def collect_all() -> list[dict]:
         push(row)
         v20_done.add(nm)
 
-    v20_cache = read_json(ROOT / "docs/next1118/v20_measured_cache.json")
+    v20_cache = read_json(ROOT / "docs/archive/historical/next1118/v20_measured_cache.json")
     if v20_cache and "arms" in v20_cache:
         for rec in v20_cache["arms"]:
             nm = rec["arm"]
@@ -400,7 +400,7 @@ def collect_all() -> list[dict]:
             is_diag = bool(rec.get("is_diagnostic", "_wrong" in nm))
             row = blank_row(
                 f"V20.{nm.removeprefix('V20_')}", "V20-PRISM", "q2a_oracle_cross600", "S10",
-                is_diag, "docs/next1118/v20_measured_cache.json",
+                is_diag, "docs/archive/historical/next1118/v20_measured_cache.json",
             )
             row["n_cross"] = 600
             row.update({
@@ -419,14 +419,14 @@ def collect_all() -> list[dict]:
             push(row)
 
     # 12. V21 / PRISM 1-Shot Arbitrary-Reference & Gallery Cross-Attention arms
-    v21_cache = read_json(ROOT / "docs/next1118/v21_measured_cache.json")
+    v21_cache = read_json(ROOT / "docs/archive/historical/next1118/v21_measured_cache.json")
     if v21_cache and "arms" in v21_cache:
         for rec in v21_cache["arms"]:
             nm = rec["arm"]
             is_diag = bool(rec.get("is_diagnostic", "_wrong" in nm))
             row = blank_row(
                 f"V21.{nm.removeprefix('V21_')}", "V21-1Shot", "q2a_oracle_cross600", "S10",
-                is_diag, "docs/next1118/v21_measured_cache.json",
+                is_diag, "docs/archive/historical/next1118/v21_measured_cache.json",
             )
             row["n_cross"] = 600
             row.update({

@@ -5,7 +5,7 @@
 > `python tools/legacy_root/run.py ...`、`python tools/legacy_root/run_evaluation.py ...`；
 > `verify_main_table.py` → `python tools/legacy_root/verify_main_table.py`。
 > 当前研究线的评测协议（750 任务、S10 解码）见 [docs/README.md](docs/README.md) 与
-> [docs/HIGHLIGHTS.md](docs/HIGHLIGHTS.md)——与本文的论文口径（原版 decoder）是两代协议。
+> [docs/HIGHLIGHTS.md](docs/archive/historical/HIGHLIGHTS.md)——与本文的论文口径（原版 decoder）是两代协议。
 
 本指南说明如何从零复现论文 Table 1 中 **WEAVE** 行的三个核心指标：
 **DINO-S (C↑, content, max 口径)、CLIP-S (S↑, style)、LPIPS (D↓, perceptual)**。
@@ -77,7 +77,7 @@ python -c "import torch; print(torch.cuda.get_device_name(0), torch.cuda.get_dev
 
 ## 3. 数据准备
 
-详细数据集说明见 [`docs/legacy_root/DATA.md`](docs/legacy_root/DATA.md)。复现主表需要 D5-512 数据集。
+详细数据集说明见 [`docs/archive/historical/legacy_root/DATA.md`](docs/archive/historical/legacy_root/DATA.md)。复现主表需要 D5-512 数据集。
 
 ### 3.1 目录结构
 

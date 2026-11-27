@@ -1,7 +1,7 @@
 # 总览：从 Local Reader 失败到 S10B 定稿（2026-11-11 ~ 11-12）
 
 > 本文是整段工作的**决策链总览**。各环节的原始细节见本目录分篇；
-> `docs/v6/` 保留历史原件。重点结论：**S10 不需要重训就能配合原版 SD0 Encoder**。
+> `docs/archive/historical/v6/` 保留历史原件。重点结论：**S10 不需要重训就能配合原版 SD0 Encoder**。
 
 ---
 
@@ -26,7 +26,7 @@
 - 全量 1500 步：Local AUROC 0.4645、CNN 0.4770、5-shot 0.0353/0.0529、未见流派 0.1395
 - **不过度推断**：easy-neg AUROC 0.5375 → 0.5976/0.6098 → latent **有**风格信息；hard AUROC<0.5 源于内容匹配的异风格在 latent 上比同风格跨画家更近
 - 配对 Bootstrap 修正为「按源图聚类 + 每源图 pos−hard gap」；CNN 略优 → 收益来自可训练非线性而非局部集合归纳偏置
-- 📄 归档 `docs/v6/LOCAL_STYLE_READER_REPORT.md`、`docs/v6/ART_VAE_ENCODER_REPORT.md`
+- 📄 归档 `docs/archive/historical/v6/LOCAL_STYLE_READER_REPORT.md`、`docs/archive/historical/v6/ART_VAE_ENCODER_REPORT.md`
 
 ## 2. ② SD0-S10 V2：48h 训练链
 
@@ -77,7 +77,7 @@ C1 真实训练 **0 次 OOM / 0 次二次 backward**；此前担心的隔离响�
 - B 显著优于官方 D0（Affinity +0.0068、LPIPS −0.0114）
 
 **按方案决策表：B 已接近 A → 直接使用旧 S10，不做 1×1/3×3 适配、不重训 Decoder。**
-📄 [09_S10B_DECISION.md](09_S10B_DECISION.md) ｜ `docs/v6/S10_SD0_ADAPT_REPORT.md`
+📄 [09_S10B_DECISION.md](09_S10B_DECISION.md) ｜ `docs/archive/historical/v6/S10_SD0_ADAPT_REPORT.md`
 
 ## 5. ⑤ S10B 定稿
 
