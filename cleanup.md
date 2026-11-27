@@ -16,7 +16,7 @@
 | Stiefel 基 | runs/v32_nodino/cache/cnx_stiefel_cache.pt | 必须保留 W_stiefel_cnx；当前 loader 仍读完整 1.03GB 缓存 |
 | Y16 投影 | runs/v18/cache/ccf_pool_cache.pt | 必须保留 luma_proj.w/b；当前 loader 仍读完整约1.4GB 缓存 |
 
-以上 hash 引自 [专家简报](docs/v35/EXPERT_OPTIMIZATION_DOSSIER.md)，不是本次独立磁盘校验。冻结配置：P-Core step3500 EMA、A3=(1,1)、ws_mul=1、wc_mul=1.2、dtau0=-.05、steps=6。必须保存完整配置与源码依赖。P 权重仅 EMA，不是可精确续训 checkpoint。
+以上 hash 引自 [专家简报](docs/archive/historical/v35/EXPERT_OPTIMIZATION_DOSSIER.md)，不是本次独立磁盘校验。冻结配置：P-Core step3500 EMA、A3=(1,1)、ws_mul=1、wc_mul=1.2、dtau0=-.05、steps=6。必须保存完整配置与源码依赖。P 权重仅 EMA，不是可精确续训 checkpoint。
 
 **E-Core 教师血缘同样重要。** V22 clean teacher pool、生成监督缓存、数据索引、V28 Adv1NFE 配方、V32 E 训练配置至少保留一份可复现冷档。不能因为目前推理不加载教师就删除其唯一副本。
 

@@ -215,12 +215,12 @@ def collect_triptych_data() -> dict[str, Any]:
             if k in sb["arms"]:
                 stage_b_curves[k] = _extract_curve(sb["arms"][k]["levels"], ips=18.2)
 
-    p8 = _load_json(REPO / "docs/v35/data/p8_final_report.json")
-    p9 = _load_json(REPO / "docs/v35/data/p9_paper_audit_report.json")
-    p7 = _load_json(REPO / "docs/v35/data/p7_biglittle_report.json")
-    p3 = _load_json(REPO / "docs/v35/data/p3_stiefel_poolc_report.json")
-    p4 = _load_json(REPO / "docs/v35/data/p4_seed2_report.json")
-    p5 = _load_json(REPO / "docs/v35/data/p5_duration_report.json")
+    p8 = _load_json(REPO / "docs/archive/historical/v35/data/p8_final_report.json")
+    p9 = _load_json(REPO / "docs/archive/historical/v35/data/p9_paper_audit_report.json")
+    p7 = _load_json(REPO / "docs/archive/historical/v35/data/p7_biglittle_report.json")
+    p3 = _load_json(REPO / "docs/archive/historical/v35/data/p3_stiefel_poolc_report.json")
+    p4 = _load_json(REPO / "docs/archive/historical/v35/data/p4_seed2_report.json")
+    p5 = _load_json(REPO / "docs/archive/historical/v35/data/p5_duration_report.json")
 
     v35_final_ips = float(p8["perf_4090"]["speed"]["b16_ips"]) if p8 else 14.3
     if p9 and "p9a_high_content_and_handoff" in p9:

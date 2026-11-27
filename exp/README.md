@@ -34,7 +34,7 @@
 | `exp/v26/` | 诊断完成 | Q32、RefAttn、SR-CFG、局部性 Exp1/Exp2、跨画派教师、Full Decoder matched 与少步 | [`gpu4090/`](v26/gpu4090/) · [V26 文档索引](../docs/archive/historical/1120/README.md) |
 | `exp/v33_semantic_control/` | 实测收官（P0–P2+CFG 探针，P3 按门控跳过） | P0 路由 CSLS 与 Y16 亮度解耦、P1 `Q64+` 正交补空间与部分白化泄漏审计、P2 `16×16+32×32` SemanticControlAdapter 与 CFG 重平衡瓶颈定位 | [`run_v33.py`](v33_semantic_control/run_v33.py) · [V33 报告](../docs/archive/historical/v33/V33_SEMANTIC_CONTROL_REPORT.md) |
 | `exp/v34_frontier/` | 实测收官（A/B/C/D + Holdout-300） | Stage A 解析起点 `A3` ($L_{\rm low}+P_C$)、Stage B 连续条件 `417D`/`1101D` 响应与前沿消融、Stage C 2×2 `44M Q32` 容量解锁及独立留出集复验 | [`run_v34.py`](v34_frontier/run_v34.py) · [V34 报告](../docs/archive/historical/v34/V34_FRONTIER_REPORT.md) |
-| `exp/v35_final/` | 实测定型收官（P0–P9 全栈 + 等参数共享主干对照） | Zero-DINO CLEAVE 全系统因果归因：`P0` 审计、`P1` `E-Core` 2×2 因果、`P2/P9b` 解码器 (`D0/D1/D2`) 与错目标方向响应、`P3/P4` Stiefel+PoolC 双种子、`P5` 训练时长、`P6` 无泄露校准、`P7/P9c` 大小流、`P8/P9a/P9d` 高内容区间与作品级 Holdout、`P9e` `58.04M` 共享单主干对照 | [`run_v35.py`](v35_final/run_v35.py) · [V35 终稿报告](../docs/v35/V35_FINAL_REPORT.md) |
+| `exp/v35_final/` | 实测定型收官（P0–P9 全栈 + 等参数共享主干对照） | Zero-DINO CLEAVE 全系统因果归因：`P0` 审计、`P1` `E-Core` 2×2 因果、`P2/P9b` 解码器 (`D0/D1/D2`) 与错目标方向响应、`P3/P4` Stiefel+PoolC 双种子、`P5` 训练时长、`P6` 无泄露校准、`P7/P9c` 大小流、`P8/P9a/P9d` 高内容区间与作品级 Holdout、`P9e` `58.04M` 共享单主干对照 | [`run_v35.py`](v35_final/run_v35.py) · [V35 终稿报告](../docs/archive/historical/v35/V35_FINAL_REPORT.md) |
 
 **关键纠偏**：V25 主线多数使用 `dino_16`，不能将 V21 的硬 Q32 当作所有生成模型的统一输入；C2nt 旧局部 `V` 在 V26 K1/Exp1 被判为不值得原样继承。V26-L L1 的早期 **F2=11% 因教师目标条件反置已作废**。[当前执行记录](../docs/archive/historical/1120/PROGRESS.md)。
 

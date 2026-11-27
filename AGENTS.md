@@ -1,10 +1,10 @@
 # WEAVE — Agent Memory（必读）
 
-> **2026-11-27 当前状态（覆盖历史状态快照）**：CLEAVE Final 为 V35 P0–P9 的闭集双核系统，E 11.13M、P 44.54M、S10B 10.66M；高内容独立 E 路径不调用 P。当前入口见 [文档首页](docs/README.md)、[最终报告](docs/v35/V35_FINAL_REPORT.md)、[3060 优化计划](docs/3060_PROFILE_OPTIMIZATION.md)、[资产清理](cleanup.md)。One-shot 单独研发；不得将旧 V26/PRISM 状态视作生产状态。历史文档已移至 docs/archive/historical，保留原始证据。工程契约与 S10 默认评测协议继续生效；Decoder 对照实验例外须明确标注。名义 6 步的积分器含 midpoint 首步，实际 NFE 需计数，不从步数推算。
+> **2026-11-27 当前状态（覆盖历史状态快照）**：CLEAVE Final 为 V35 P0–P9 的闭集双核系统，E 11.13M、P 44.54M、S10B 10.66M；高内容独立 E 路径不调用 P。当前入口见 [文档首页](docs/README.md)、[系统总览](docs/system/README.md)、[3060 优化计划](docs/system/3060_PROFILE_OPTIMIZATION.md)、[资产清理](cleanup.md)。One-shot 单独研发；不得将旧 V26/PRISM 状态视作生产状态。新文档按 E-Core / P-Core / Conditioning / Decoder / System / One-shot 组件分区；原始证据移至 docs/archive/historical。不要再创建版本号顶层文档目录。工程契约与 S10 默认评测协议继续生效；Decoder 对照实验例外须明确标注。名义 6 步的积分器含 midpoint 首步，实际 NFE 需计数，不从步数推算。
 
 > **研究状态更新（2026-11-21，优先于下方 2026-11-14 研究快照）**：当前主线是 **V26-L PRISM-Flow 任意参考化**；C2nt 旧训练配方冻结，V26 L1 修复前的 F2=11.00% 已作废。工程/解码接口契约继续执行，但历史性能比较、目录最新版本与待测状态请以 [根 README](README.md)、[文档总导航](docs/README.md)、[V26 进度](docs/archive/historical/1120/PROGRESS.md) 为准。当前 [metrics.csv](docs/performance/metrics.csv) 有 **531 条记录**，下面的“265 条 / V21 最新”是历史快照。
 >
-> **S10 边界**：统一研究评测默认用 S10，是**协议选择**；在固定 latent 的 Cross600 对照中 Top-1 +3.17pp、LPIPS 更低，但 DINO-C/S 约下降 0.01，不能写“所有指标全面更优”。旧 S10 的主要训练是剪枝＋L1/LPIPS，**不是教师蒸馏**；C1 响应蒸馏没有超过旧 S10 的下游 Top-1。[Decoder 证据](docs/archive/historical/v6/Q2A_ORACLE_DECODER_RANKING.md) · [训练链](docs/vae/01_S10_TRAINING_FULL.md)。
+> **S10 边界**：统一研究评测默认用 S10，是**协议选择**；在固定 latent 的 Cross600 对照中 Top-1 +3.17pp、LPIPS 更低，但 DINO-C/S 约下降 0.01，不能写“所有指标全面更优”。旧 S10 的主要训练是剪枝＋L1/LPIPS，**不是教师蒸馏**；C1 响应蒸馏没有超过旧 S10 的下游 Top-1。[Decoder 证据](docs/archive/historical/v6/Q2A_ORACLE_DECODER_RANKING.md) · [训练链](docs/archive/historical/vae/01_S10_TRAINING_FULL.md)。
 
 
 ## 决策协议（2026-11-14 起，覆盖一切历史文档的相反约定）
@@ -37,7 +37,7 @@ rgb01 = decode_s10(s10, z_scaled)       # z 须为 repo 存储的缩放 latent�
   - CSD Top-1：old_s10 **.3767** vs sdvae .3450（**+3.2pp**，bootstrap CI 排除 0）
   - CSD Margin：−.0411 vs −.0551；LPIPS .5034 vs .5149；same150 Top-1 .96 vs .94
   - 代价：DINO-S/C 各 −.010（风格略降），但 Top-1/Margin/LPIPS 净胜
-- `docs/vae/S10_READY_TO_USE.md`：SD0 Encoder + 旧 S10 直接用，Affinity .5616 > 官方 SD0 decoder .5548，零重训。（docs/archive/historical/v6 同名文件已改为指针 stub，权威在 docs/vae）
+- `docs/archive/historical/vae/S10_READY_TO_USE.md`：SD0 Encoder + 旧 S10 直接用，Affinity .5616 > 官方 SD0 decoder .5548，零重训。（docs/archive/historical/v6 同名文件已改为指针 stub，权威在 docs/vae）
 - `docs/archive/historical/v6/Q2A_ORACLE_DECODER_RANKING.md`：old_s10 在 4 变体中 Top-1 排名第 1。
 - S10B（`deliver/checkpoints/s10b_standalone/`）与 s10_p5_lowlr **字节级同一权重**，只是为 SD0 未缩放 latent 打包的独立加载器；本仓库 SD1.5 latent 用 `s10_p5_lowlr/decoder.pt` + `src.utils.load_s10_decoder`。
 

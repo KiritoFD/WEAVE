@@ -2,7 +2,7 @@
 
 **More capacity can preserve the wrong information.** 风格迁移不是单纯的重建或纹理匹配：生成器必须删除源画法，同时保留对象关系。CLEAVE 用选择性信息过滤、非对称 E/P 传输和轻量解码实现完整质量—效率谱。
 
-[文档首页](docs/README.md) · [最终报告](docs/v35/V35_FINAL_REPORT.md) · [论文](docs/icme2027/) · [性能前沿](docs/performance/figures/cleave_pareto_triptych.svg) · [3060 优化](docs/3060_PROFILE_OPTIMIZATION.md) · [资产清理](cleanup.md)
+[文档首页](docs/README.md) · [系统总览](docs/system/README.md) · [E-Core](docs/e-core/README.md) · [P-Core](docs/p-core/README.md) · [Conditioning](docs/conditioning/README.md) · [Decoder](docs/decoder/README.md) · [论文](docs/icme2027/) · [性能前沿](docs/performance/figures/cleave_pareto_triptych.svg) · [3060 优化](docs/system/3060_PROFILE_OPTIMIZATION.md) · [资产清理](cleanup.md)
 
 ## 当前系统（V35 P0–P9，2026-11-27）
 
@@ -26,7 +26,7 @@ E 独立路径不调用 P；E→A3→P 为高质量重绘路径。当前 P9 补�
 | E→P s100 | .5502 | .5597 | 69.67% |
 | E→P s150 | .3435 | .5919 | 91.17% |
 
-来源：[V35 P7–P9](docs/v35/V35_FINAL_REPORT.md)，E-only 与 E+A3 配置不同。4090 B16 P 路径已加载 RGB→RGB 报告 14.3 img/s，3060 最终权重尚待统一实测。StyleGallery 在 C≈.61 处 S=.5604，CLEAVE 插值 S=.5398、Top-1=62.67%；质量取舍与计时协议见报告，闭集画派条件不是任意参考。
+来源：[V35 P7–P9](docs/archive/historical/v35/V35_FINAL_REPORT.md)，E-only 与 E+A3 配置不同。4090 B16 P 路径已加载 RGB→RGB 报告 14.3 img/s，3060 最终权重尚待统一实测。StyleGallery 在 C≈.61 处 S=.5604，CLEAVE 插值 S=.5398、Top-1=62.67%；质量取舍与计时协议见报告，闭集画派条件不是任意参考。
 
 ## 证据与复现
 
@@ -37,4 +37,4 @@ E 独立路径不调用 P；E→A3→P 为高质量重绘路径。当前 P9 补�
 
 最终实验入口见 [exp/v35_final](exp/v35_final/)；旧模型、原始报告与负结果见 [历史档案](docs/archive/historical/README.md)。旧 WEAVE 复现指南 [REPRODUCE.md](REPRODUCE.md) 不代表当前 CLEAVE 推理接口。模型与缓存未随 Git 全部交付，按 [cleanup.md](cleanup.md) 的资产清单核验；远端缺失源码/权重时不得假装已能完整复现。
 
-One-shot 独立开发：[3060 阶段报告](docs/v35/CLEAVE_ONE_RESULTS.md)。不把高参考跟随率当作高质量内容保持的证明。
+One-shot 独立开发：[One-shot 研究](docs/one-shot/README.md)。不把高参考跟随率当作高质量内容保持的证明。
