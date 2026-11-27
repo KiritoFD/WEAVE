@@ -1,6 +1,6 @@
 # CLEAVE Final：RTX 3060 12GB 精准 Profile 与无损加速执行方案
 
-> 2026-11-27，基线为 V35 P8/P9。目标是同一最终模型更快，而非再训练、再改变 Pareto 质量前沿。当前 3060 实测仅有旧模型/One-shot，不能把 4090 数字当作 3060 基线。参见 [最终报告](v35/V35_FINAL_REPORT.md)、[源码与资产简报](v35/EXPERT_OPTIMIZATION_DOSSIER.md)、[历史 TRT 对照](vae/08_STAGED_PROFILE_AND_TRT.md)、[cleanup](../cleanup.md)。
+> 2026-11-27，基线为 V35 P8/P9。目标是同一最终模型更快，而非再训练、再改变 Pareto 质量前沿。当前 3060 实测仅有旧模型/One-shot，不能把 4090 数字当作 3060 基线。参见 [最终报告](../archive/historical/v35/V35_FINAL_REPORT.md)、[源码与资产简报](../archive/historical/v35/EXPERT_OPTIMIZATION_DOSSIER.md)、[历史 TRT 对照](../archive/historical/vae/08_STAGED_PROFILE_AND_TRT.md)、[cleanup](../../cleanup.md)。
 
 ## 1. 决策：先纠正测量，再消除冗余计算
 
@@ -14,7 +14,7 @@ Amdahl 上限（只用于估算）：若 P 段占 .566，单独加速两倍，�
 
 ### 2.1 源码审计：目前两个硬错误和一个口径缺口
 
-- [common.py](../exp/v35_final/common.py#L521-L615) 的 ledger 用 n_steps*4 推算 P NFE，但 [integrate_v33_trajectory](../exp/v33_semantic_control/models.py#L512-L563) 首步 midpoint 调用 _vel 两次，其后 DPM-2M 分支各一次。名义 6 步是 **7 次批量模型调用 / 28 次单条件等价评估**，加 E=29；这是源码静态推导，运行时还需 hook 证实。不能继续写 24+1。若首步改 Euler，必须作为新的近似求解器独立验收。
+- [common.py](../../exp/v35_final/common.py#L521-L615) 的 ledger 用 n_steps*4 推算 P NFE，但 [integrate_v33_trajectory](../../exp/v33_semantic_control/models.py#L512-L563) 首步 midpoint 调用 _vel 两次，其后 DPM-2M 分支各一次。名义 6 步是 **7 次批量模型调用 / 28 次单条件等价评估**，加 E=29；这是源码静态推导，运行时还需 hook 证实。不能继续写 24+1。若首步改 Euler，必须作为新的近似求解器独立验收。
 - 同一测速函数 B16 循环 collect_parts=True 每段 synchronize；B1 不做此事，因而两者端到端口径不统一。分段用 CUDA events 记录，不在每段同步；完整调用只在计时窗口前后同步。
 - 当前 benchmark 使用随机 GPU RGB，模型预加载、3 次 warmup，只测 s=.85，未证明实际生产路由的输入构造与 c64 一致（代码拼接 y64/lcn/y64/y64）。先复用真实 eval/deploy preprocessing，严格比对同一源图、tid、eps 的 z_s/c64/q32/ze/zo/RGB。检查整条 infer 是否有 no_grad/inference_mode，而非仅 relies on frozen weights；历史数字称 resident-model GPU RGB→RGB，不叫 cold boot。
 
@@ -60,7 +60,7 @@ Profile 只抓代表点 B1/B8（若 B8 不适合则 B4），使用 torch.profile
 
 ## 4. P2：TensorRT FP16（3h，最高确定性工程路线）
 
-先 A0 与 S10，最后 P；分段导出不重写算法。复用已有 [TRT 工具目录](../tools/trt/)（历史脚本的 API/shape/权重必须重新适配），不要直接拿 C0 engine 当 S10B。
+先 A0 与 S10，最后 P；分段导出不重写算法。复用已有 [TRT 工具目录](../../tools/trt/)（历史脚本的 API/shape/权重必须重新适配），不要直接拿 C0 engine 当 S10B。
 
 | Engine | 输入 | 输出 / 关键约束 |
 |---|---|---|
@@ -93,7 +93,7 @@ S1 改变积分初始精度，S2/S3 改变时间网格，皆非无损。4→3/2 
 
 ## 6. P4：部署包、双路径与缓存（1h）
 
-按 [cleanup](../cleanup.md) 从巨型训练缓存提取 W_stiefel、luma_proj、K8、A3 先验，建立独立 bundle loader。验证空缓存目录、无网络下加载；记录实际文件体积而非预估。加载阶段单独 profile，不将去掉 2.4GB I/O 的收益计入稳态 throughput。
+按 [cleanup](../../cleanup.md) 从巨型训练缓存提取 W_stiefel、luma_proj、K8、A3 先验，建立独立 bundle loader。验证空缓存目录、无网络下加载；记录实际文件体积而非预估。加载阶段单独 profile，不将去掉 2.4GB I/O 的收益计入稳态 throughput。
 
 - E-only：不初始化 P；若同一服务需要热切换，可 lazy load P 并分别测 first-P latency 与常驻显存。保留 E 的原生强度与 A3 变体；不得因 P 的 s060 质量更高就把所有高内容请求强制送进 P。
 - P 路径：缓存 source-only VAE/Q32/结构；改变目标时重算 router/E/A3，改变噪声时不得错误复用生成结果；cache key 含像素 hash、分辨率、权重/预处理版本、dtype、设备。
@@ -121,6 +121,6 @@ S1 改变积分初始精度，S2/S3 改变时间网格，皆非无损。4→3/2 
 
 预算是计划，不是实测耗时。与 One-shot 长训错峰；时间不够先砍 P3 和 P TRT，再砍 compile 探索，不砍最终验收。建议峰值驱动专用显存≤10GB、无持续 WDDM shared memory paging，留出至少约1GB 系统余量（以真实可用显存为准）。OOM 记录而非静默缩 batch。失败后只恢复原配置，不触发无上限搜索。
 
-建议新增 exp/deploy_v35/（后续实现，不在本 PR 声称已运行）：benchmark.py、export_engines.py、bundle.py、parity.py；生产算法复用现有模块。JSON schema 至少包括 git SHA、asset hashes、backend、precision、B、branch、s、seed、actual_model_calls、condition_equivalent_NFE、wall/event ms、p50/p95、allocated/reserved/driver/shared、温度/功耗、compile/build/load time、quality deltas/CI。输出 docs/v35/data/3060_profile_summary.json 和逐任务证据，原始 trace/engine 不入 Git。测试覆盖 E-only 不调用 P、CFG 分支、SVD 正交、PQC/scale、cache invalidation、actual NFE、zero identity。最终更新 Pareto 的实际 E/P 3060 吞吐，不拿不同硬件倍率替代。
+建议新增 exp/deploy_v35/（后续实现，不在本 PR 声称已运行）：benchmark.py、export_engines.py、bundle.py、parity.py；生产算法复用现有模块。JSON schema 至少包括 git SHA、asset hashes、backend、precision、B、branch、s、seed、actual_model_calls、condition_equivalent_NFE、wall/event ms、p50/p95、allocated/reserved/driver/shared、温度/功耗、compile/build/load time、quality deltas/CI。输出 docs/performance/data/3060_profile_summary.json 和逐任务证据，原始 trace/engine 不入 Git。测试覆盖 E-only 不调用 P、CFG 分支、SVD 正交、PQC/scale、cache invalidation、actual NFE、zero identity。最终更新 Pareto 的实际 E/P 3060 吞吐，不拿不同硬件倍率替代。
 
 **最终交付是两个真正可部署的速度档，而不是一个新的模型：11M E-only 极速编辑、55.67M E+P 高质量重绘。** 先追求全链路≥1.3×、再评估≥1.5×；这些是相对于新 3060 同协议 baseline 的工程目标，非承诺。若已达到目标且质量不退，停止优化，不启动 encoder 剪枝/蒸馏等新研究。

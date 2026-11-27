@@ -9,6 +9,8 @@
 | V22–V28：目标锚、教师一致性、单步生成 | [v22](v22/) · [v23](v23/) · [v25](v25/) · [v26](v26/) · [v28](v28/) |
 | V31–V33：编辑桥、Zero-DINO 与语义控制负结果 | [v31](v31/) · [v32](v32/) · [v33](v33/) |
 | V34：44M 容量与 A3 的受控增益 | [V34_FRONTIER_REPORT](v34/V34_FRONTIER_REPORT.md) |
+| V35：最终系统全归因及原始 JSON | [终稿报告](v35/V35_FINAL_REPORT.md) · [数据](v35/data/) · [资产简报](v35/EXPERT_OPTIMIZATION_DOSSIER.md) |
+| S10B：剪枝、训练与接口历史 | [vae 原始专题](vae/README.md) |
 | 旧模型、负结果、交接 | [ours](ours/) · [negative_results](negative_results/) · [DELIVERY](DELIVERY_20261118.md) |
 
-当前权威入口：[docs README](../../README.md)、[V35 Final](../../v35/V35_FINAL_REPORT.md)。归档不代表实验无效，只表示不再是活跃开发入口。恢复历史代码时使用固定快照和原资产清单；不要把旧路径的报告重新写进 docs 根。
+当前权威入口：[组件文档](../../README.md)、[System](../../system/README.md)。当前 V35 原始报告和 VAE 原件仍是主要证据来源，并非因归档而失效。归档不代表实验无效，只表示不再是活跃开发入口。恢复历史代码时使用固定快照和原资产清单；不要把旧路径的报告重新写进 docs 根。
