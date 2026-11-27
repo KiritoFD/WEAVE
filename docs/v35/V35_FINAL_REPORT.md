@@ -1,6 +1,6 @@
 # CLEAVE V35 终稿报告：全系统因果归因、可复现性定型与端到端校准
 
-> **日期**：2026-11-27 · **代码主入口**：[`exp/v35_final/run_v35.py`](../../exp/v35_final/run_v35.py) · **执行方案**：[`plan.md`](plan.md)  
+> **日期**：2026-11-27 · **代码主入口**：[`exp/v35_final/run_v35.py`](../../exp/v35_final/run_v35.py) · **执行方案**：[`plan.md`](plan.md) · **推理优化专家简报**：[`EXPERT_OPTIMIZATION_DOSSIER.md`](EXPERT_OPTIMIZATION_DOSSIER.md)  
 > **状态**：**P0–P8 + P9（高内容区间补齐、P8 统一 Decoder/E/P、真实画师审计与 58.04M 共享主干对照）全量在 RTX 4090 实测收官并同步落盘**（零编造、零跳过、零外推钳位）。  
 > **核心可视化**：[1×3 论文 Pareto 三联图 (`SVG`)](../performance/figures/cleave_pareto_triptych.svg) · [交互式 Pareto (`HTML`)](../performance/figures/cleave_pareto_latest.html) · [固定 5 任务横向对比视觉条 (`PNG`)](figures/v35_fixed_task_comparison.png)
 

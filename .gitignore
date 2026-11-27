@@ -148,6 +148,8 @@ nul
 
 # ============ Local scratch (commit messages, one-off helpers) ============
 _tmp/
+tests/test_v35_cleave_one.py
+tests/test_v36_art_foundation.py
 
 # large binary backups (B4+R1 ckpt + eval images, ~1GB)
 docs/best/
