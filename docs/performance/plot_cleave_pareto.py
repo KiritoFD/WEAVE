@@ -1,13 +1,15 @@
-"""Generate consolidated 1x3 Paper-Style Pareto Triptych (SVG/PNG + Interactive HTML) for CLEAVE V32-V34+.
+"""Generate clean 1x3 Paper-Style Pareto Triptych (SVG/PNG + Interactive HTML) for CLEAVE.
 
-Replicates the exact 1x3 layout of ICME Fig. 1 (docs/icme2027/figures/fig1_prism_pareto):
+Replicates the exact 1x3 layout & palette of ICME Fig. 1 (docs/icme2027/figures/fig1_prism_pareto):
   (a) Full-Spectrum Quality Control: DINO-C vs DINO-S
   (b) Stronger Style Specificity: DINO-C vs CSD Top-1 (%)
   (c) Real-Time Performance at Scale: Cold-Start RGB->RGB Throughput (img/s, log) vs CSD Top-1 (%)
 
-Overlays verified V34 (44M C2 + A3 Start, 14.5 img/s @ b16) against V32 (22M E-Core 33.1 img/s + P-Core 18.2-18.5 img/s)
-and stratified external baselines under identical Cross600 / S10 / Zero-DINO conditions.
-Also preserves V33 / V34 Stage A-D & Holdout-750 interactive views.
+Overlays the two clean CLEAVE branches without One-Shot clutter:
+  - CLEAVE P-Core Final (V35 calibrated 44M, 14.3 img/s @ 4090, s=0.60..1.50)
+  - CLEAVE E-Core Original (1-NFE, 33.1 img/s @ 4090, l=0.25..1.00)
+plus their unified non-dominated Ours Pareto Frontier against prominent external baselines
+under identical Cross600 / S10B / Zero-DINO conditions.
 
 Usage:
   python docs/performance/plot_cleave_pareto.py
@@ -97,16 +99,18 @@ def _load_json(path: Path) -> dict[str, Any] | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _extract_curve(levels: dict[str, dict[str, Any]], *, ips: float | None = None) -> list[dict[str, Any]]:
+def _extract_curve(levels: dict[str, dict[str, Any]], *, ips: float | None = None, branch: str = "") -> list[dict[str, Any]]:
     pts = []
     for k, m in levels.items():
         if "wrong" in k:
             continue
         pts.append({
             "knob": k,
+            "branch": branch,
             "dc": round(float(m["dino_c"]), 4),
             "ds": round(float(m["dino_s"]), 4),
             "t1": round(float(m["csd_top1"]) * 100.0, 2),
+            "clip": round(float(m.get("clip_s", 0.0)), 4),
             "lpips": round(float(m.get("lpips", 0.0)), 4),
             "same": round(float(m.get("same150_top1", 0.0)) * 100.0, 1),
             "ips": ips,
@@ -145,9 +149,10 @@ def collect_triptych_data() -> dict[str, Any]:
 
     ext_list = []
     for name, dc, ds, t1, sec, tier in EXTERNAL_BASELINES:
+        short = name.split(" (")[0]
         ext_list.append({
             "name": name,
-            "short": name.split(" (")[0],
+            "short": short,
             "dc": dc,
             "ds": ds,
             "t1": t1,
@@ -219,16 +224,24 @@ def collect_triptych_data() -> dict[str, Any]:
 
     v35_final_ips = float(p8["perf_4090"]["speed"]["b16_ips"]) if p8 else 14.3
     if p9 and "p9a_high_content_and_handoff" in p9:
-        v35_final = _extract_curve(p9["p9a_high_content_and_handoff"]["pcore_full_levels"], ips=v35_final_ips)
-        v35_eonly = _extract_curve(p9["p9a_high_content_and_handoff"]["ecore_a0_sweep"], ips=33.1)
-        v35_ea3 = _extract_curve(p9["p9a_high_content_and_handoff"]["ecore_a3_sweep"], ips=32.5)
+        v35_final = _extract_curve(p9["p9a_high_content_and_handoff"]["pcore_full_levels"], ips=v35_final_ips, branch="pcore")
+        v35_eonly = _extract_curve(p9["p9a_high_content_and_handoff"]["ecore_a0_sweep"], ips=33.1, branch="ecore")
+        v35_ea3 = _extract_curve(p9["p9a_high_content_and_handoff"]["ecore_a3_sweep"], ips=32.5, branch="ecore_a3")
     else:
-        v35_final = _extract_curve(p8["test750_levels"], ips=v35_final_ips) if p8 else []
-        v35_eonly = _extract_curve(p7["e_only"], ips=33.1) if p7 else []
+        v35_final = _extract_curve(p8["test750_levels"], ips=v35_final_ips, branch="pcore") if p8 else []
+        v35_eonly = _extract_curve(p7["e_only"], ips=33.1, branch="ecore") if p7 else []
         v35_ea3 = []
     v35_ponly = _extract_curve(p7["p_only_src_chroma"], ips=None) if p7 else []
     p9_ponly_a3 = _extract_curve(p9["p9c_unified_ep_necessity"]["P9_Ponly_full_a3"]["levels"], ips=None) if (p9 and "p9c_unified_ep_necessity" in p9) else []
     p9_u58_self = _extract_curve(p9["p9e_iso_param_shared_backbone"]["self_ep_levels"], ips=13.1) if (p9 and "p9e_iso_param_shared_backbone" in p9) else []
+
+    # Clean combined Ours Pareto across V35 P-Core (s=0.60..1.50) + Original E-Core (l=0.25..1.00)
+    ours_pcore = [p for p in v35_final if p["knob"] != "tau0"]
+    ours_ecore = [p for p in v35_eonly if p["knob"] != "l000"]
+    ours_union = ours_pcore + ours_ecore
+    ours_fa_idx = frontier_indices([(p["dc"], p["ds"]) for p in ours_union]) if ours_union else []
+    ours_fb_idx = frontier_indices([(p["dc"], p["t1"]) for p in ours_union]) if ours_union else []
+    ours_fc_idx = frontier_indices([(p["ips"], p["t1"]) for p in ours_union if p["ips"]]) if ours_union else []
 
     if p9 and "p9d_artist_and_work_holdout" in p9:
         ho_lv = p9["p9d_artist_and_work_holdout"]["holdout_levels"]
@@ -278,6 +291,11 @@ def collect_triptych_data() -> dict[str, Any]:
         "ext_front_a": [ext_list[i] for i in fa_idx],
         "ext_front_b": [ext_list[i] for i in fb_idx],
         "ext_front_c": [ext_list[i] for i in fc_idx],
+        "ours_pcore": ours_pcore,
+        "ours_ecore": ours_ecore,
+        "ours_front_a": [ours_union[i] for i in ours_fa_idx],
+        "ours_front_b": [ours_union[i] for i in ours_fb_idx],
+        "ours_front_c": [ours_union[i] for i in ours_fc_idx],
         "v32_ecore": [p for p in v32_traj if p["seg"] == "ecore"],
         "v32_pcore": [p for p in v32_traj if p["seg"] == "pcore"],
         "v32_ec_max": v32_ec_max,
@@ -306,18 +324,15 @@ def collect_triptych_data() -> dict[str, Any]:
 
 
 def save_matplotlib_triptych(data: dict[str, Any]) -> None:
-    """Save crisp 1x3 publication SVG/PNG matching ICME Fig. 1 (docs/v32 + docs/performance)."""
+    """Save clean 1x3 paper-style Pareto Triptych SVG/PNG matching original palette & aesthetic."""
     import matplotlib
     matplotlib.use("Agg")
+    import matplotlib.patheffects as pe
     import matplotlib.pyplot as plt
     from matplotlib.lines import Line2D
 
     TEAL, TEAL_DARK = "#0d9488", "#115e59"
-    BLUE_V32, BLUE_DARK = "#2563eb", "#1e3a8a"
-    WIN_RED, WIN_DARK = "#e11d48", "#881337"
     FINAL_GRN, FINAL_DARK = "#059669", "#064e3b"
-    V35_AMB, V35_DARK = "#f59e0b", "#92400e"
-    V35_O1_COL = "#fb923c"
     HEAVY_PURPLE = "#7c3aed"
     LIGHT_BLUE = "#0284c7"
     SLATE_FRONT = "#64748b"
@@ -336,204 +351,177 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     })
 
     fig, (ax_a, ax_b, ax_c) = plt.subplots(1, 3, figsize=(13.9, 4.45), dpi=240)
-    ec = data["v32_ecore"]
-    pc32 = data["v32_pcore"]
-    ec_m = data["v32_ec_max"]
-    v34 = data["v34_winner"]
-    v35f = [p for p in (data.get("v35_final") or []) if p["knob"] != "tau0"]
-    v35_o3 = data["v35_o3"]
-    v35_o1 = data["v35_o1"]
+    pc = data["ours_pcore"]
+    ec = data["ours_ecore"]
     ext = data["external"]
-
-    def _draw_ext(ax, x_key: str, y_key: str, front_pts: list[dict], *, show_sg_star: bool = True):
-        ax.plot([p[x_key] for p in front_pts], [p[y_key] for p in front_pts],
-                "--", color=SLATE_FRONT, lw=1.35, alpha=0.85, zorder=2)
-        for b in ext:
-            if b["short"] == "StyleGallery" and show_sg_star:
-                ax.scatter([b[x_key]], [b[y_key]], marker="*", s=115, c=HEAVY_PURPLE, edgecolors="#3b0764", lw=0.7, zorder=7)
-            elif b["tier"] == "heavy":
-                ax.scatter([b[x_key]], [b[y_key]], marker="^", s=34, c="#8b5cf6", alpha=0.68, edgecolors="#4c1d95", lw=0.5, zorder=4)
-            else:
-                ax.scatter([b[x_key]], [b[y_key]], marker="s", s=26, c=LIGHT_BLUE, alpha=0.65, edgecolors="#075985", lw=0.5, zorder=4)
+    stroke = [pe.withStroke(linewidth=2.4, foreground="white")]
 
     def _ann(ax, txt: str, xy, off, *, ha="left", col=INK, bold=False, fs=7.3, leader=False):
-        arrow = dict(arrowstyle="-", color="#94a3b8", lw=0.65, shrinkA=0, shrinkB=3) if leader else None
-        ax.annotate(txt, xy=xy, xytext=off, textcoords="offset points", ha=ha, va="center",
-                    fontsize=fs, color=col, fontweight="bold" if bold else "normal", arrowprops=arrow, zorder=10)
+        arrow = dict(arrowstyle="-", color="#94a3b8", lw=0.7, shrinkA=0, shrinkB=3.5) if leader else None
+        ax.annotate(
+            txt, xy=xy, xytext=off, textcoords="offset points", ha=ha, va="center",
+            fontsize=fs, color=col, fontweight="bold" if bold else "normal",
+            arrowprops=arrow, path_effects=stroke, zorder=12,
+        )
 
-    # Panel (a)
-    ax_a.axvspan(0.65, 0.94, color="#ecfdf5", alpha=0.45, zorder=0)
-    _draw_ext(ax_a, "dc", "ds", data["ext_front_a"])
-    ax_a.plot([p["dc"] for p in ec], [p["ds"] for p in ec], "-", color=TEAL, lw=2.4, zorder=5)
-    ax_a.plot([ec[-1]["dc"], pc32[0]["dc"]], [ec[-1]["ds"], pc32[0]["ds"]], ":", color="#64748b", lw=1.4, zorder=4)
-    ax_a.plot([p["dc"] for p in pc32], [p["ds"] for p in pc32], "--", color=BLUE_V32, lw=1.9, alpha=0.85, zorder=5)
-    ax_a.plot([p["dc"] for p in v34], [p["ds"] for p in v34], ":", color=WIN_RED, lw=1.7, alpha=0.75, zorder=7)
-    ax_a.scatter([p["dc"] for p in ec], [p["ds"] for p in ec], marker="D", s=40, c=TEAL, edgecolors=TEAL_DARK, lw=0.9, zorder=6)
-    ax_a.scatter([p["dc"] for p in pc32], [p["ds"] for p in pc32], marker="o", s=34, c=BLUE_V32, edgecolors=BLUE_DARK, lw=0.8, alpha=0.85, zorder=6)
-    ax_a.scatter([p["dc"] for p in v34], [p["ds"] for p in v34], marker="o", s=32, c=WIN_RED, edgecolors=WIN_DARK, lw=0.7, alpha=0.75, zorder=7)
-    if v35f:
-        ax_a.plot([p["dc"] for p in v35f], [p["ds"] for p in v35f], "-", color=FINAL_GRN, lw=3.0, zorder=9)
-        ax_a.scatter([p["dc"] for p in v35f], [p["ds"] for p in v35f], marker="o", s=54, c=FINAL_GRN, edgecolors=FINAL_DARK, lw=1.0, zorder=10)
-    ax_a.scatter([ec_m["dc"]], [ec_m["ds"]], marker="D", s=42, facecolors="none", edgecolors=TEAL, lw=1.5, zorder=6)
-    ax_a.plot([p["dc"] for p in v35_o1], [p["ds"] for p in v35_o1], ":", color=V35_O1_COL, lw=1.6, zorder=7)
-    ax_a.scatter([p["dc"] for p in v35_o1], [p["ds"] for p in v35_o1], marker="^", s=36, c=V35_O1_COL, edgecolors=V35_DARK, lw=0.7, zorder=8)
-    ax_a.plot([p["dc"] for p in v35_o3], [p["ds"] for p in v35_o3], "-", color=V35_AMB, lw=2.5, zorder=9)
-    ax_a.scatter([p["dc"] for p in v35_o3], [p["ds"] for p in v35_o3], marker="*", s=110, c=V35_AMB, edgecolors=V35_DARK, lw=0.8, zorder=10)
-    if v35_o3:
-        _ann(ax_a, "V35 O3 (1-Shot)", (v35_o3[0]["dc"], v35_o3[0]["ds"]), (-4, -14), ha="left", col=V35_DARK, bold=True, fs=7.2)
+    def _draw_ext(ax, x_key: str, y_key: str, front_pts: list[dict], offs: dict[str, tuple[tuple[int, int], str, bool]]):
+        ax.plot([p[x_key] for p in front_pts], [p[y_key] for p in front_pts],
+                "--", color=SLATE_FRONT, lw=1.6, alpha=0.88, zorder=3)
+        for b in ext:
+            if b["short"] == "StyleGallery":
+                ax.scatter([b[x_key]], [b[y_key]], marker="*", s=185, c=HEAVY_PURPLE, edgecolors="#3b0764", lw=0.9, zorder=8)
+            elif b["tier"] == "heavy":
+                ax.scatter([b[x_key]], [b[y_key]], marker="^", s=62, c="#8b5cf6", alpha=0.92, edgecolors="#3b0764", lw=0.75, zorder=6)
+            else:
+                ax.scatter([b[x_key]], [b[y_key]], marker="s", s=52, c=LIGHT_BLUE, alpha=0.92, edgecolors="#075985", lw=0.75, zorder=6)
+            if b["short"] in offs:
+                off, ha, ldr = offs[b["short"]]
+                col = "#4c1d95" if (b["short"] == "StyleGallery" or b["tier"] == "heavy") else "#075985"
+                _ann(ax, b["name"] if b["short"] == "StyleGallery" else b["short"], (b[x_key], b[y_key]), off,
+                     ha=ha, col=col, bold=True, fs=7.2, leader=ldr)
 
-    for b in ext:
-        offs = {
-            "StyleGallery": ((6, 1), "left", True),
-            "StyleShot": ((5, -8), "left", False),
-            "StyleID": ((5, 0), "left", False),
-            "Qwen-Img-2.1T": ((-5, -3), "right", True),
-            "AesPA-Net": ((-4, -10), "right", False),
-            "StyTr2": ((-5, 1), "right", False),
-            "Seedream 4.5": ((-5, -7), "right", True),
-            "SaMAM": ((-6, 0), "right", False),
-            "CUT": ((6, 4), "left", False),
-            "Hist2Style": ((-4, -10), "center", False),
-        }
-        if b["short"] in offs:
-            o, ha, ldr = offs[b["short"]]
-            _ann(ax_a, b["name"] if b["short"] == "StyleGallery" else b["short"], (b["dc"], b["ds"]), o,
-                 ha=ha, col="#4c1d95" if b["short"] == "StyleGallery" else "#475569", bold=(b["short"] == "StyleGallery"), leader=ldr)
+    def _draw_ours(ax, x_key: str, y_key: str, ours_front: list[dict], *, speed_panel: bool = False):
+        if ours_front:
+            fx = [p[x_key] for p in ours_front]
+            fy = [p[y_key] for p in ours_front]
+            ax.plot(fx, fy, "-", color="#10b981", lw=5.4, alpha=0.22, solid_capstyle="round", zorder=5)
+            ax.plot(fx, fy, "--", color=FINAL_DARK, lw=1.65, alpha=0.92, zorder=10)
 
-    for p in (v35f or v34):
-        if p["knob"] in ("s075", "s085", "s100", "s125", "s150"):
+        if not speed_panel:
+            ax.plot([p[x_key] for p in ec], [p[y_key] for p in ec], "-", color=TEAL, lw=2.4, zorder=6)
+            ax.plot([p[x_key] for p in pc], [p[y_key] for p in pc], "-", color=FINAL_GRN, lw=2.9, zorder=8)
+        else:
+            ax.plot([ec[0][x_key], ec[-1][x_key]], [min(p[y_key] for p in ec), max(p[y_key] for p in ec)],
+                    "-", color=TEAL, lw=2.4, alpha=0.85, zorder=6)
+            ax.plot([pc[0][x_key], pc[-1][x_key]], [min(p[y_key] for p in pc), max(p[y_key] for p in pc)],
+                    "-", color=FINAL_GRN, lw=2.9, alpha=0.90, zorder=8)
+
+        ax.scatter([p[x_key] for p in ec], [p[y_key] for p in ec],
+                   marker="D", s=44, c=TEAL, edgecolors=TEAL_DARK, lw=0.95, zorder=7)
+        ax.scatter([p[x_key] for p in pc], [p[y_key] for p in pc],
+                   marker="o", s=54, c=FINAL_GRN, edgecolors=FINAL_DARK, lw=1.0, zorder=9)
+
+    # Panel (a): DINO-C vs DINO-S
+    ax_a.axvspan(0.65, 0.95, color="#ecfdf5", alpha=0.45, zorder=0)
+    _draw_ext(ax_a, "dc", "ds", data["ext_front_a"], {
+        "StyleGallery": ((6, 2), "left", True),
+        "StyleShot": ((6, -6), "left", False),
+        "StyleID": ((6, 1), "left", False),
+        "Qwen-Img-2.1T": ((-6, -8), "right", True),
+        "AesPA-Net": ((-6, 6), "right", False),
+        "StyTr2": ((-6, -1), "right", False),
+        "Seedream 4.5": ((-6, -8), "right", True),
+        "SaMAM": ((-6, 3), "right", False),
+        "CUT": ((6, 5), "left", False),
+        "Hist2Style": ((-7, -5), "right", False),
+    })
+    _draw_ours(ax_a, "dc", "ds", data["ours_front_a"])
+    for p in pc:
+        if p["knob"] in ("s060", "s075", "s085", "s100", "s125", "s150"):
             lbl_s = "s=" + p["knob"][1] + "." + p["knob"][2:]
-            off_map = {"s075": (5, 7), "s085": (5, 8), "s100": (-5, -10), "s125": (5, 9), "s150": (4, 10)}
-            ha_m = "right" if p["knob"] == "s100" else "left"
-            _ann(ax_a, lbl_s, (p["dc"], p["ds"]), off_map[p["knob"]], ha=ha_m, col=FINAL_DARK if v35f else WIN_DARK, bold=True, fs=7.4)
-    _ann(ax_a, "V32 22M", (0.2805, 0.6054), (4, 8), ha="left", col=BLUE_DARK, bold=True, fs=7.1)
-    _ann(ax_a, "E-Core s=0.75", (ec[-1]["dc"], ec[-1]["ds"]), (18, 10), ha="left", col=TEAL_DARK, bold=True, fs=7.2, leader=True)
-    ax_a.set_xlim(0.24, 0.94)
-    ax_a.set_ylim(0.34, 0.63)
+            off_m = {"s060": (-5, 8), "s075": (5, 7), "s085": (5, 8), "s100": (-5, -10), "s125": (5, 9), "s150": (4, 10)}
+            ha_m = "right" if p["knob"] in ("s060", "s100") else "left"
+            _ann(ax_a, lbl_s, (p["dc"], p["ds"]), off_m[p["knob"]], ha=ha_m, col=FINAL_DARK, bold=True, fs=7.3)
+    for p in ec:
+        if p["knob"] in ("l025", "l040", "l055", "l100"):
+            lbl_e = "E " + p["knob"][1] + "." + p["knob"][2:]
+            off_e = {"l025": (0, 10), "l040": (6, 8), "l055": (-7, -7), "l100": (-6, -9)}
+            ha_e = "center" if p["knob"] == "l025" else ("left" if p["knob"] == "l040" else "right")
+            _ann(ax_a, lbl_e, (p["dc"], p["ds"]), off_e[p["knob"]], ha=ha_e, col=TEAL_DARK, bold=True, fs=7.1)
+    ax_a.set_xlim(0.28, 0.95)
+    ax_a.set_ylim(0.35, 0.618)
     ax_a.set_title("(a) Full-Spectrum Quality Control", fontweight="bold", pad=8)
     ax_a.set_xlabel("DINO-C (Content Preservation) ↑", fontweight="bold")
     ax_a.set_ylabel("DINO-S (Style Similarity) ↑", fontweight="bold")
     ax_a.grid(True, ls="--", lw=0.45, alpha=0.45)
 
-    # Panel (b)
-    ax_b.axvspan(0.65, 0.94, color="#ecfdf5", alpha=0.45, zorder=0)
-    _draw_ext(ax_b, "dc", "t1", data["ext_front_b"])
-    ax_b.plot([p["dc"] for p in ec], [p["t1"] for p in ec], "-", color=TEAL, lw=2.4, zorder=5)
-    ax_b.plot([ec[-1]["dc"], pc32[0]["dc"]], [ec[-1]["t1"], pc32[0]["t1"]], ":", color="#64748b", lw=1.4, zorder=4)
-    ax_b.plot([p["dc"] for p in pc32], [p["t1"] for p in pc32], "--", color=BLUE_V32, lw=1.9, alpha=0.85, zorder=5)
-    ax_b.plot([p["dc"] for p in v34], [p["t1"] for p in v34], ":", color=WIN_RED, lw=1.7, alpha=0.75, zorder=7)
-    ax_b.scatter([p["dc"] for p in ec], [p["t1"] for p in ec], marker="D", s=40, c=TEAL, edgecolors=TEAL_DARK, lw=0.9, zorder=6)
-    ax_b.scatter([p["dc"] for p in pc32], [p["t1"] for p in pc32], marker="o", s=34, c=BLUE_V32, edgecolors=BLUE_DARK, lw=0.8, alpha=0.85, zorder=6)
-    ax_b.scatter([p["dc"] for p in v34], [p["t1"] for p in v34], marker="o", s=32, c=WIN_RED, edgecolors=WIN_DARK, lw=0.7, alpha=0.75, zorder=7)
-    if v35f:
-        ax_b.plot([p["dc"] for p in v35f], [p["t1"] for p in v35f], "-", color=FINAL_GRN, lw=3.0, zorder=9)
-        ax_b.scatter([p["dc"] for p in v35f], [p["t1"] for p in v35f], marker="o", s=54, c=FINAL_GRN, edgecolors=FINAL_DARK, lw=1.0, zorder=10)
-    ax_b.scatter([ec_m["dc"]], [ec_m["t1"]], marker="D", s=42, facecolors="none", edgecolors=TEAL, lw=1.5, zorder=6)
-    ax_b.plot([p["dc"] for p in v35_o1], [p["t1"] for p in v35_o1], ":", color=V35_O1_COL, lw=1.6, zorder=7)
-    ax_b.scatter([p["dc"] for p in v35_o1], [p["t1"] for p in v35_o1], marker="^", s=36, c=V35_O1_COL, edgecolors=V35_DARK, lw=0.7, zorder=8)
-    ax_b.plot([p["dc"] for p in v35_o3], [p["t1"] for p in v35_o3], "-", color=V35_AMB, lw=2.5, zorder=9)
-    ax_b.scatter([p["dc"] for p in v35_o3], [p["t1"] for p in v35_o3], marker="*", s=110, c=V35_AMB, edgecolors=V35_DARK, lw=0.8, zorder=10)
-    if v35_o3:
-        _ann(ax_b, "V35 O3 (1-Shot)", (v35_o3[0]["dc"], v35_o3[0]["t1"]), (-4, -13), ha="left", col=V35_DARK, bold=True, fs=7.2)
-
-    for b in ext:
-        offs_b = {
-            "StyleGallery": ((-6, -4), "right", True),
-            "StyleShot": ((6, 3), "left", False),
-            "StyleID": ((-6, -3), "right", False),
-            "AesPA-Net": ((-5, 0), "right", False),
-            "StyTr2": ((-6, -5), "right", True),
-            "Seedream 4.5": ((5, -4), "left", True),
-            "Hist2Style": ((4, 6), "left", False),
-        }
-        if b["short"] in offs_b:
-            o, ha, ldr = offs_b[b["short"]]
-            _ann(ax_b, b["name"] if b["short"] == "StyleGallery" else b["short"], (b["dc"], b["t1"]), o,
-                 ha=ha, col="#4c1d95" if b["short"] == "StyleGallery" else "#475569", bold=(b["short"] == "StyleGallery"), leader=ldr)
-    for p in (v35f or v34):
-        if p["knob"] in ("s075", "s085", "s100", "s125", "s150"):
+    # Panel (b): DINO-C vs CSD Top-1 (%)
+    ax_b.axvspan(0.65, 0.95, color="#ecfdf5", alpha=0.45, zorder=0)
+    _draw_ext(ax_b, "dc", "t1", data["ext_front_b"], {
+        "StyleGallery": ((-6, -5), "right", True),
+        "StyleShot": ((6, 2), "left", False),
+        "StyleID": ((6, 1), "left", False),
+        "Qwen-Img-2.1T": ((-6, 7), "right", True),
+        "AesPA-Net": ((-6, -3), "right", False),
+        "StyTr2": ((-7, -4), "right", False),
+        "Seedream 4.5": ((0, -11), "center", True),
+        "SaMAM": ((-6, 5), "right", False),
+        "CUT": ((6, 4), "left", False),
+        "Hist2Style": ((-6, 6), "right", False),
+    })
+    _draw_ours(ax_b, "dc", "t1", data["ours_front_b"])
+    for p in pc:
+        if p["knob"] in ("s060", "s075", "s085", "s100", "s125", "s150"):
             lbl_s = "s=" + p["knob"][1] + "." + p["knob"][2:]
-            off_b = {"s075": (5, -7), "s085": (5, 7), "s100": (6, 7), "s125": (6, 6), "s150": (-5, -10)}
-            ha_b = "right" if p["knob"] == "s150" else "left"
-            _ann(ax_b, lbl_s, (p["dc"], p["t1"]), off_b[p["knob"]], ha=ha_b, col=FINAL_DARK if v35f else WIN_DARK, bold=True, fs=7.4)
-    ax_b.set_xlim(0.24, 0.94)
-    ax_b.set_ylim(-1.0, 99.0)
+            off_b = {"s060": (-5, 8), "s075": (5, 7), "s085": (5, 8), "s100": (6, 7), "s125": (6, 6), "s150": (0, -12)}
+            ha_b = "right" if p["knob"] == "s060" else ("center" if p["knob"] == "s150" else "left")
+            _ann(ax_b, lbl_s, (p["dc"], p["t1"]), off_b[p["knob"]], ha=ha_b, col=FINAL_DARK, bold=True, fs=7.3)
+    for p in ec:
+        if p["knob"] in ("l025", "l040", "l055", "l100"):
+            lbl_e = "E " + p["knob"][1] + "." + p["knob"][2:]
+            off_eb = {"l025": (-7, 4), "l040": (6, 8), "l055": (6, -5), "l100": (-6, -6)}
+            ha_eb = "right" if p["knob"] in ("l025", "l100") else "left"
+            _ann(ax_b, lbl_e, (p["dc"], p["t1"]), off_eb[p["knob"]], ha=ha_eb, col=TEAL_DARK, bold=True, fs=7.1)
+    ax_b.set_xlim(0.28, 0.95)
+    ax_b.set_ylim(-2.0, 99.0)
     ax_b.set_title("(b) Stronger Style Specificity", fontweight="bold", pad=8)
     ax_b.set_xlabel("DINO-C (Content Preservation) ↑", fontweight="bold")
     ax_b.set_ylabel("CSD Top-1 Accuracy (%) ↑", fontweight="bold")
     ax_b.grid(True, ls="--", lw=0.45, alpha=0.45)
 
-    # Panel (c): Speed vs CSD Top-1
-    ax_c.axvspan(10.0, 180.0, color="#ecfdf5", alpha=0.52, zorder=0)
+    # Panel (c): Speed vs CSD Top-1 (%)
+    ax_c.axvspan(10.0, 175.0, color="#ecfdf5", alpha=0.52, zorder=0)
     ax_c.axvline(10.0, color=FINAL_GRN, ls=":", lw=1.0, alpha=0.45, zorder=1)
-    _draw_ext(ax_c, "ips", "t1", data["ext_front_c"])
-    ax_c.plot([p["ips"] for p in ec], [p["t1"] for p in ec], "-", color=TEAL, lw=2.4, zorder=5)
-    ax_c.plot([ec[-1]["ips"], pc32[0]["ips"]], [ec[-1]["t1"], pc32[0]["t1"]], ":", color="#64748b", lw=1.3, zorder=4)
-    ax_c.plot([p["ips"] for p in pc32], [p["t1"] for p in pc32], "--", color=BLUE_V32, lw=1.9, alpha=0.85, zorder=5)
-    ax_c.plot([p["ips"] for p in v34], [p["t1"] for p in v34], ":", color=WIN_RED, lw=1.7, alpha=0.7, zorder=7)
-    ax_c.scatter([p["ips"] for p in ec], [p["t1"] for p in ec], marker="D", s=40, c=TEAL, edgecolors=TEAL_DARK, lw=0.9, zorder=6)
-    ax_c.scatter([p["ips"] for p in pc32], [p["t1"] for p in pc32], marker="o", s=34, c=BLUE_V32, edgecolors=BLUE_DARK, lw=0.8, alpha=0.85, zorder=6)
-    ax_c.scatter([p["ips"] for p in v34], [p["t1"] for p in v34], marker="o", s=32, c=WIN_RED, edgecolors=WIN_DARK, lw=0.7, alpha=0.7, zorder=7)
-    if v35f:
-        ax_c.plot([p["ips"] for p in v35f], [p["t1"] for p in v35f], "-", color=FINAL_GRN, lw=3.0, zorder=9)
-        ax_c.scatter([p["ips"] for p in v35f], [p["t1"] for p in v35f], marker="o", s=54, c=FINAL_GRN, edgecolors=FINAL_DARK, lw=1.0, zorder=10)
-    ax_c.scatter([ec_m["ips"]], [ec_m["t1"]], marker="D", s=42, facecolors="none", edgecolors=TEAL, lw=1.5, zorder=6)
-    ax_c.plot([p["ips"] for p in v35_o3], [p["t1"] for p in v35_o3], "-", color=V35_AMB, lw=2.2, zorder=9)
-    ax_c.scatter([p["ips"] for p in v35_o3], [p["t1"] for p in v35_o3], marker="*", s=105, c=V35_AMB, edgecolors=V35_DARK, lw=0.8, zorder=10)
-    if v35_o3:
-        p30 = v35_o3[1] if len(v35_o3) > 1 else v35_o3[0]
-        _ann(ax_c, f"V35 O3 1-Shot\n({p30['ips']} img/s @ 3060)", (p30["ips"], p30["t1"]), (-6, 8), ha="right", col=V35_DARK, bold=True, fs=6.9)
-
-    for b in ext:
-        offs_c = {
-            "StyleGallery": ((5, 1), "left"),
-            "StyleShot": ((5, 0), "left"),
-            "StyleID": ((5, 0), "left"),
-            "StyTr2": ((5, 1), "left"),
-            "Seedream 4.5": ((5, -4), "left"),
-            "AesPA-Net": ((5, -2), "left"),
-            "Hist2Style": ((-5, 6), "right"),
-        }
-        if b["short"] in offs_c:
-            o, ha = offs_c[b["short"]]
-            _ann(ax_c, b["short"], (b["ips"], b["t1"]), o, ha=ha,
-                 col="#4c1d95" if b["short"] == "StyleGallery" else "#475569", bold=(b["short"] == "StyleGallery"), fs=7.0)
-    c_curve = v35f or v34
-    _ann(ax_c, f"Final s=1.50 ({c_curve[0]['t1']:.1f}%)", (c_curve[0]["ips"], c_curve[0]["t1"]), (-6, 5), ha="right", col=FINAL_DARK, bold=True, fs=7.1)
-    c_100 = [x for x in c_curve if x["knob"] == "s100"][0]
-    _ann(ax_c, f"Final s=1.00 ({c_100['t1']:.1f}%)", (c_100["ips"], c_100["t1"]), (-6, -2), ha="right", col=FINAL_DARK, bold=True, fs=7.1)
-    _ann(ax_c, f"E-Core 1.00\n67.2%", (ec_m["ips"], ec_m["t1"]), (6, 2), ha="left", col=TEAL_DARK, bold=True, fs=7.0)
-    ax_c.text(0.42, 0.85, f"V35 Final 44M: {data.get('v35_final_ips', 14.3):.1f} img/s\nV32 22M: 18.2-33.1 img/s",
-              transform=ax_c.transAxes, ha="center", va="top", fontsize=6.8, fontweight="bold", color=FINAL_DARK,
-              bbox=dict(boxstyle="round,pad=0.25", fc="#ecfdf5", ec=FINAL_GRN, lw=0.8, alpha=0.92))
+    _draw_ext(ax_c, "ips", "t1", data["ext_front_c"], {
+        "StyleGallery": ((6, 2), "left", False),
+        "StyleShot": ((6, 2), "left", False),
+        "StyleID": ((6, 1), "left", False),
+        "Qwen-Img-2.1T": ((6, 5), "left", False),
+        "Seedream 4.5": ((6, -5), "left", False),
+        "StyTr2": ((6, 2), "left", False),
+        "AesPA-Net": ((6, -2), "left", False),
+        "SaMAM": ((-6, 2), "right", False),
+        "CUT": ((-6, -5), "right", False),
+        "Hist2Style": ((-6, 5), "right", False),
+    })
+    _draw_ours(ax_c, "ips", "t1", data["ours_front_c"], speed_panel=True)
+    pc_150 = [x for x in pc if x["knob"] == "s150"][0]
+    pc_100 = [x for x in pc if x["knob"] == "s100"][0]
+    pc_085 = [x for x in pc if x["knob"] == "s085"][0]
+    ec_100 = [x for x in ec if x["knob"] == "l100"][0]
+    ec_065 = [x for x in ec if x["knob"] == "l065"][0]
+    _ann(ax_c, f"P-Core s=1.50 ({pc_150['t1']:.1f}%)", (pc_150["ips"], pc_150["t1"]), (-7, 2), ha="right", col=FINAL_DARK, bold=True, fs=7.2)
+    _ann(ax_c, f"s=1.00 ({pc_100['t1']:.1f}%)", (pc_100["ips"], pc_100["t1"]), (-7, 1), ha="right", col=FINAL_DARK, bold=True, fs=7.1)
+    _ann(ax_c, f"s=0.85 ({pc_085['t1']:.1f}%)", (pc_085["ips"], pc_085["t1"]), (-7, -4), ha="right", col=FINAL_DARK, bold=True, fs=7.1)
+    _ann(ax_c, f"E-Core 1.00\n({ec_100['t1']:.1f}%)", (ec_100["ips"], ec_100["t1"]), (7, 5), ha="left", col=TEAL_DARK, bold=True, fs=7.1)
+    _ann(ax_c, f"E 0.65 ({ec_065['t1']:.1f}%)", (ec_065["ips"], ec_065["t1"]), (7, -1), ha="left", col=TEAL_DARK, bold=True, fs=7.0)
+    ax_c.text(0.39, 0.85, f"Ours P-Core (44M): {data.get('v35_final_ips', 14.3):.1f} img/s\nOurs E-Core (1-NFE): 33.1 img/s",
+              transform=ax_c.transAxes, ha="center", va="center", fontsize=6.9, fontweight="bold", color=FINAL_DARK,
+              bbox=dict(boxstyle="round,pad=0.25", fc="#ecfdf5", ec=FINAL_GRN, lw=0.85, alpha=0.94))
 
     ax_c.set_xscale("log")
-    ax_c.set_xlim(0.02, 180.0)
-    ax_c.set_ylim(-1.0, 99.0)
+    ax_c.set_xlim(0.02, 175.0)
+    ax_c.set_ylim(-2.0, 99.0)
     ax_c.set_title("(c) Real-Time Performance at Scale", fontweight="bold", pad=8)
     ax_c.set_xlabel("Cold-Start RGB->RGB Throughput (img/s, log) ↑", fontweight="bold")
     ax_c.set_ylabel("CSD Top-1 Accuracy (%) ↑", fontweight="bold")
     ax_c.grid(True, ls="--", lw=0.45, alpha=0.45)
 
     handles = [
-        Line2D([0], [0], color=FINAL_GRN, marker="o", ms=6.2, lw=2.8, mfc=FINAL_GRN, mec=FINAL_DARK,
-               label=f"CLEAVE V35 Final Calibrated (44M, {data.get('v35_final_ips', 14.3):.1f} img/s @ 4090)"),
-        Line2D([0], [0], color=WIN_RED, marker="o", ms=4.5, lw=1.7, ls=":", mfc=WIN_RED, mec=WIN_DARK,
-               label=f"CLEAVE V34 Uncalibrated C2+A3 ({data['v34_ips']:.1f} img/s)"),
-        Line2D([0], [0], color=V35_AMB, marker="*", ms=9.0, lw=2.4, mfc=V35_AMB, mec=V35_DARK,
-               label="CLEAVE V35 O3 Open-Domain 1-Shot (3060, 3.2-5.5 img/s)"),
-        Line2D([0], [0], color=BLUE_V32, marker="o", ms=5.2, lw=1.9, ls="--", mfc=BLUE_V32, mec=BLUE_DARK,
-               label="CLEAVE V32 Closed-Set: 22M P-Core (18.2-18.5 img/s)"),
+        Line2D([0], [0], color=FINAL_DARK, ls="--", lw=1.7,
+               label="Ours Unified Pareto Frontier (P-Core ∪ E-Core Non-Dominated)"),
+        Line2D([0], [0], color=FINAL_GRN, marker="o", ms=6.0, lw=2.8, mfc=FINAL_GRN, mec=FINAL_DARK,
+               label=f"Ours P-Core Final (44M, {data.get('v35_final_ips', 14.3):.1f} img/s @ 4090, s=0.60–1.50)"),
         Line2D([0], [0], color=TEAL, marker="D", ms=5.6, lw=2.4, mfc=TEAL, mec=TEAL_DARK,
-               label="CLEAVE E-Core: 1-NFE (33.1 img/s)"),
-        Line2D([0], [0], color="none", marker="*", ms=8.5, mfc=HEAVY_PURPLE, mec="#3b0764", label="StyleGallery (30.4s)"),
-        Line2D([0], [0], color="none", marker="^", ms=5.8, mfc="#8b5cf6", mec="#4c1d95", label="Heavy Baselines (>1B, 5-25s)"),
-        Line2D([0], [0], color="none", marker="s", ms=5.2, mfc=LIGHT_BLUE, mec="#075985", label="Lightweight Baselines (0.2-3.0s)"),
-        Line2D([0], [0], color=SLATE_FRONT, ls="--", lw=1.35, label="External Pareto Frontier"),
+               label="Ours E-Core Original (1-NFE, 33.1 img/s @ 4090, l=0.25–1.00)"),
+        Line2D([0], [0], color="none", marker="*", ms=9.2, mfc=HEAVY_PURPLE, mec="#3b0764", label="StyleGallery (30.4s)"),
+        Line2D([0], [0], color="none", marker="^", ms=6.2, mfc="#8b5cf6", mec="#3b0764", label="Heavy Baselines (>1B, 5–25s)"),
+        Line2D([0], [0], color="none", marker="s", ms=5.6, mfc=LIGHT_BLUE, mec="#075985", label="Lightweight Baselines (0.2–3.0s)"),
+        Line2D([0], [0], color=SLATE_FRONT, ls="--", lw=1.6, label="External Pareto Frontier"),
     ]
     fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.985), ncol=3,
                frameon=True, facecolor="#f8fafc", edgecolor="#cbd5e1", fontsize=7.2)
-    fig.subplots_adjust(left=0.055, right=0.985, top=0.71, bottom=0.14, wspace=0.25)
+    fig.subplots_adjust(left=0.055, right=0.985, top=0.73, bottom=0.14, wspace=0.25)
 
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     for stem in ("cleave_pareto_triptych", "cleave_pareto_latest"):
@@ -583,7 +571,7 @@ body {{
   padding: 10px 10px 8px 10px;
 }}
 .legend {{
-  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; font-size: 10.5px; color: var(--muted-foreground, #cbd5e1);
+  display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 6px; font-size: 10.5px; color: var(--muted-foreground, #cbd5e1);
 }}
 .lg-item {{ display: inline-flex; align-items: center; gap: 4px; }}
 .swatch {{ width: 14px; height: 3px; display: inline-block; border-radius: 2px; }}
@@ -597,20 +585,22 @@ body {{
   margin-top: 6px;
   min-height: 24px;
 }}
-svg {{ width: 100%; height: 300px; display: block; }}
+svg {{ width: 100%; height: auto; display: block; }}
 .grid {{ stroke: var(--border, #334155); stroke-opacity: 0.45; stroke-width: 0.8; }}
-.ax-lbl {{ fill: var(--muted-foreground, #94a3b8); font-size: 9px; }}
-.ax-title {{ fill: var(--foreground, #e2e8f0); font-size: 9.5px; font-weight: 700; }}
-.pt-lbl {{ fill: var(--muted-foreground, #cbd5e1); font-size: 8px; paint-order: stroke; stroke: var(--card, #111827); stroke-width: 2.5px; stroke-linejoin: round; }}
+.ax-lbl {{ fill: var(--muted-foreground, #94a3b8); font-size: 9.2px; }}
+.ax-title {{ fill: var(--foreground, #e2e8f0); font-size: 9.8px; font-weight: 700; }}
+.pt-lbl {{ fill: var(--foreground, #e2e8f0); font-size: 8.2px; font-weight: 600; paint-order: stroke; stroke: var(--card, #111827); stroke-width: 2.6px; stroke-linejoin: round; }}
+.pt-sg {{ fill: #7c3aed; }}
+.pt-ours {{ fill: #059669; }}
+.pt-ec {{ fill: #0d9488; }}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="toolbar">
     <div class="tabs">
-      <button class="btn active" data-view="triptych">论文三联图 (V35 Final + O3 1-Shot + 外部基线)</button>
-      <button class="btn" data-view="v35_final">V35 P0–P8 定型消融 (Stiefel / E+P)</button>
-      <button class="btn" data-view="v35">V35 开放域 1-Shot (O0–O3)</button>
+      <button class="btn active" data-view="triptych">论文三联图 (Ours 交错前沿 vs 外部基线)</button>
+      <button class="btn" data-view="v35_final">V35 P0–P9 定型消融 (Stiefel / E+P)</button>
       <button class="btn" data-view="ablations">V34 各阶段 (Stage A–D)</button>
       <button class="btn" data-view="holdout">盲测 Holdout-750</button>
     </div>
@@ -662,116 +652,128 @@ function drawPanel(ox, oy, pw, ph, spec) {{
   return {{sx, sy, ox, oy, pw, ph}};
 }}
 
+function starPoints(cx, cy, rOut, rIn) {{
+  const pts = [];
+  for (let i = 0; i < 10; i++) {{
+    const r = i % 2 === 0 ? rOut : rIn;
+    const ang = -Math.PI / 2 + (i * Math.PI) / 5;
+    pts.push(`${{(cx + r * Math.cos(ang)).toFixed(1)}},${{(cy + r * Math.sin(ang)).toFixed(1)}}`);
+  }}
+  return pts.join(" ");
+}}
+
+function triPoints(cx, cy, r) {{
+  return `${{cx.toFixed(1)}},${{(cy - r).toFixed(1)}} ${{(cx - r * 0.9).toFixed(1)}},${{(cy + r * 0.75).toFixed(1)}} ${{(cx + r * 0.9).toFixed(1)}},${{(cy + r * 0.75).toFixed(1)}}`;
+}}
+
 function renderTriptych() {{
+  svg.setAttribute("viewBox", "0 0 960 300");
   legendEl.innerHTML = `
-    <span class="lg-item"><span class="swatch" style="background:#10b981"></span><b>CLEAVE V35 Final 校准定型 (44M, ${{DATA.v35_final_ips || 14.3}} img/s @ 4090)</b></span>
-    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V34 未校准 (44M, 14.5 img/s)</span>
-    <span class="lg-item"><span class="swatch" style="background:#f59e0b"></span><b>V35 O3 开放域 1-Shot (3060)</b></span>
-    <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>V32 闭集 (22M, 18.2 img/s)</span>
-    <span class="lg-item"><span class="swatch" style="background:#14b8a6"></span>E-Core (33.1 img/s)</span>
-    <span class="lg-item"><span class="swatch" style="background:#a78bfa"></span>StyleGallery / 外部基线</span>
+    <span class="lg-item"><span class="swatch" style="background:#064e3b;border-top:1.5px dashed #10b981"></span><b>Ours Unified Pareto (P-Core ∪ E-Core)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#059669"></span><b>Ours P-Core Final (44M, ${{DATA.v35_final_ips || 14.3}} img/s @ 4090)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#0d9488"></span><b>Ours E-Core Original (1-NFE, 33.1 img/s @ 4090)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#7c3aed"></span><b>StyleGallery / Heavy (&gt;1B)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#0284c7"></span><b>Light Baselines (0.2–3.0s)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#64748b"></span>External Pareto</span>
   `;
   const panels = [
-    {{ox: 44,  oy: 22, pw: 264, ph: 242, x0: 0.24, x1: 0.94, y0: 0.34, y1: 0.63, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.35, 0.40, 0.45, 0.50, 0.55, 0.60], title: "(a) Full-Spectrum Quality Control", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑", shade: [0.65, 0.94, "#10b981"], xKey: "dc", yKey: "ds", extFront: DATA.ext_front_a}},
-    {{ox: 368, oy: 22, pw: 264, ph: 242, x0: 0.24, x1: 0.94, y0: 0.0,  y1: 99.0, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(b) Stronger Style Specificity", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑", shade: [0.65, 0.94, "#10b981"], xKey: "dc", yKey: "t1", extFront: DATA.ext_front_b}},
-    {{ox: 690, oy: 22, pw: 256, ph: 242, x0: 0.02, x1: 180.0, y0: 0.0, y1: 99.0, logX: true, xTicks: [0.1, 1, 10, 100], xFmt: v => v < 1 ? v.toFixed(1) : v.toFixed(0), yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(c) Real-Time Performance at Scale", xLabel: "Cold RGB->RGB Throughput (img/s, log) ↑", yLabel: "CSD Top-1 (%) ↑", shade: [10.0, 180.0, "#10b981"], xKey: "ips", yKey: "t1", extFront: DATA.ext_front_c}},
+    {{ox: 44,  oy: 22, pw: 264, ph: 242, x0: 0.28, x1: 0.95, y0: 0.35, y1: 0.618, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.35, 0.40, 0.45, 0.50, 0.55, 0.60], title: "(a) Full-Spectrum Quality Control", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑", shade: [0.65, 0.95, "#10b981"], xKey: "dc", yKey: "ds", extFront: DATA.ext_front_a, oursFront: DATA.ours_front_a}},
+    {{ox: 368, oy: 22, pw: 264, ph: 242, x0: 0.28, x1: 0.95, y0: 0.0,  y1: 99.0,  xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(b) Stronger Style Specificity", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑", shade: [0.65, 0.95, "#10b981"], xKey: "dc", yKey: "t1", extFront: DATA.ext_front_b, oursFront: DATA.ours_front_b}},
+    {{ox: 690, oy: 22, pw: 256, ph: 242, x0: 0.02, x1: 175.0, y0: 0.0, y1: 99.0, logX: true, xTicks: [0.1, 1, 10, 100], xFmt: v => v < 1 ? v.toFixed(1) : v.toFixed(0), yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(c) Real-Time Performance at Scale", xLabel: "Cold RGB->RGB Throughput (img/s, log) ↑", yLabel: "CSD Top-1 (%) ↑", shade: [10.0, 175.0, "#10b981"], xKey: "ips", yKey: "t1", extFront: DATA.ext_front_c, oursFront: DATA.ours_front_c, isSpeed: true}},
   ];
+
+  const pc = DATA.ours_pcore || [];
+  const ec = DATA.ours_ecore || [];
+  const extOffs = {{
+    "ds": {{"StyleGallery": [6, 2, "start"], "StyleShot": [6, 7, "start"], "StyleID": [6, 2, "start"], "Qwen-Img-2.1T": [-6, 10, "end"], "AesPA-Net": [-6, -2, "end"], "StyTr2": [-6, 2, "end"], "Seedream 4.5": [-6, 10, "end"], "SaMAM": [-6, -2, "end"], "CUT": [7, -4, "start"], "Hist2Style": [-7, 7, "end"]}},
+    "t1": {{"StyleGallery": [-6, 7, "end"], "StyleShot": [6, 2, "start"], "StyleID": [6, 2, "start"], "Qwen-Img-2.1T": [-6, -6, "end"], "AesPA-Net": [-6, 3, "end"], "StyTr2": [-6, 5, "end"], "Seedream 4.5": [0, 11, "middle"], "SaMAM": [-6, -3, "end"], "CUT": [7, 2, "start"], "Hist2Style": [-7, -5, "end"]}},
+    "spd": {{"StyleGallery": [6, 2, "start"], "StyleShot": [6, 2, "start"], "StyleID": [6, 2, "start"], "Qwen-Img-2.1T": [6, -4, "start"], "Seedream 4.5": [6, 7, "start"], "StyTr2": [6, -1, "start"], "AesPA-Net": [6, 3, "start"], "SaMAM": [-6, -1, "end"], "CUT": [-6, 5, "end"], "Hist2Style": [-6, -3, "end"]}},
+  }};
 
   for (const sp of panels) {{
     const p = drawPanel(sp.ox, sp.oy, sp.pw, sp.ph, sp);
     const {{sx, sy}} = p;
     const {{xKey, yKey}} = sp;
+    const offMap = sp.isSpeed ? extOffs.spd : extOffs[yKey];
 
     // External frontier dashed
-    svg.appendChild(el("path", {{d: sp.extFront.map((b, i) => `${{i ? "L" : "M"}}${{sx(b[xKey]).toFixed(1)}},${{sy(b[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#94a3b8", "stroke-width": 1.3, "stroke-dasharray": "4,3"}}));
+    svg.appendChild(el("path", {{d: sp.extFront.map((b, i) => `${{i ? "L" : "M"}}${{sx(b[xKey]).toFixed(1)}},${{sy(b[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#64748b", "stroke-width": 1.5, "stroke-dasharray": "4,3", opacity: 0.88}}));
+
+    // Prominent External Baselines (original colors)
     for (const b of DATA.external) {{
       const cx = sx(b[xKey]), cy = sy(b[yKey]);
-      const col = b.short === "StyleGallery" ? "#c084fc" : (b.tier === "heavy" ? "#8b5cf6" : "#38bdf8");
-      const r = b.short === "StyleGallery" ? 5 : 3.2;
-      const dot = el("circle", {{cx, cy, r, fill: col, stroke: "#0f172a", "stroke-width": 0.8}});
-      dot.onmouseenter = () => {{ info.textContent = `[External] ${{b.name}} | C=${{b.dc.toFixed(4)}} S=${{b.ds.toFixed(4)}} Top1=${{b.t1.toFixed(2)}}% Speed=${{b.ips}} img/s`; }};
-      svg.appendChild(dot);
-      if (["StyleGallery", "StyleShot", "StyleID", "StyTr2", "Seedream 4.5"].includes(b.short)) {{
-        const isSGb = b.short === "StyleGallery" && xKey === "dc" && yKey === "t1";
-        const dy = (b.short === "StyleShot" || isSGb) ? 10 : -5;
-        const dx = isSGb ? -6 : 4;
-        const anc = isSGb ? "end" : "start";
-        svg.appendChild(el("text", {{x: cx + dx, y: cy + dy, "text-anchor": anc, class: "pt-lbl"}}, b.short));
+      let mark;
+      if (b.short === "StyleGallery") {{
+        mark = el("polygon", {{points: starPoints(cx, cy, 7.2, 3.2), fill: "#7c3aed", stroke: "#ffffff", "stroke-width": 0.9}});
+      }} else if (b.tier === "heavy") {{
+        mark = el("polygon", {{points: triPoints(cx, cy, 4.8), fill: "#8b5cf6", stroke: "#ffffff", "stroke-width": 0.75}});
+      }} else {{
+        mark = el("rect", {{x: cx - 3.9, y: cy - 3.9, width: 7.8, height: 7.8, fill: "#0284c7", stroke: "#ffffff", "stroke-width": 0.75}});
+      }}
+      mark.onmouseenter = () => {{ info.textContent = `[External · ${{b.tier}}] ${{b.name}} | C=${{b.dc.toFixed(4)}} S=${{b.ds.toFixed(4)}} Top1=${{b.t1.toFixed(2)}}% Speed=${{b.ips}} img/s`; }};
+      svg.appendChild(mark);
+      const showLbl = !sp.isSpeed || ["StyleGallery", "StyleShot", "StyleID", "StyTr2", "Seedream 4.5", "AesPA-Net", "Hist2Style"].includes(b.short);
+      if (showLbl && offMap && offMap[b.short]) {{
+        const [dx, dy, anc] = offMap[b.short];
+        const cls = b.short === "StyleGallery" ? "pt-lbl pt-sg" : "pt-lbl";
+        svg.appendChild(el("text", {{x: cx + dx, y: cy + dy, "text-anchor": anc, class: cls}}, b.short));
       }}
     }}
 
-    // E-Core + V32 P-Core
-    const ec = DATA.v32_ecore, pc = DATA.v32_pcore, ecm = DATA.v32_ec_max;
-    svg.appendChild(el("path", {{d: ec.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#14b8a6", "stroke-width": 2.2}}));
-    svg.appendChild(el("line", {{x1: sx(ec[ec.length-1][xKey]), y1: sy(ec[ec.length-1][yKey]), x2: sx(pc[0][xKey]), y2: sy(pc[0][yKey]), stroke: "#64748b", "stroke-width": 1.3, "stroke-dasharray": "2,2"}}));
-    svg.appendChild(el("path", {{d: pc.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#3b82f6", "stroke-width": 1.8, "stroke-dasharray": "4,2"}}));
-    for (const d of ec) {{
-      const cx = sx(d[xKey]), cy = sy(d[yKey]);
-      const pt = el("rect", {{x: cx - 3.5, y: cy - 3.5, width: 7, height: 7, fill: "#14b8a6", transform: `rotate(45 ${{cx}} ${{cy}})`}});
-      pt.onmouseenter = () => {{ info.textContent = `[V32 E-Core s=${{d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Speed=${{d.ips}} img/s`; }};
-      svg.appendChild(pt);
-    }}
-    for (const d of pc) {{
-      const dot = el("circle", {{cx: sx(d[xKey]), cy: sy(d[yKey]), r: 3.1, fill: "#3b82f6", opacity: 0.85}});
-      dot.onmouseenter = () => {{ info.textContent = `[V32 22M P-Core s=${{d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Speed=${{d.ips}} img/s`; }};
-      svg.appendChild(dot);
-    }}
-    const ecmPt = el("rect", {{x: sx(ecm[xKey]) - 3.5, y: sy(ecm[yKey]) - 3.5, width: 7, height: 7, fill: "none", stroke: "#14b8a6", "stroke-width": 1.6, transform: `rotate(45 ${{sx(ecm[xKey])}} ${{sy(ecm[yKey])}})`}});
-    ecmPt.onmouseenter = () => {{ info.textContent = `[V32 E-Core standalone s=1.00] C=${{ecm.dc.toFixed(4)}} S=${{ecm.ds.toFixed(4)}} Top1=${{ecm.t1.toFixed(2)}}% Speed=${{ecm.ips}} img/s`; }};
-    svg.appendChild(ecmPt);
-
-    // V34 Uncalibrated (thin dotted rose)
-    const v34 = DATA.v34_winner;
-    svg.appendChild(el("path", {{d: v34.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#f43f5e", "stroke-width": 1.6, "stroke-dasharray": "3,2", opacity: 0.78}}));
-    for (const d of v34) {{
-      const dot = el("circle", {{cx: sx(d[xKey]), cy: sy(d[yKey]), r: 3.0, fill: "#f43f5e", opacity: 0.78}});
-      dot.onmouseenter = () => {{ info.textContent = `[V34 Uncalib 44M C2+A3 ${{d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% LP=${{d.lpips}} Same=${{d.same}}% Speed=${{d.ips}} img/s`; }};
-      svg.appendChild(dot);
+    // Combined Ours Pareto Envelope
+    if (sp.oursFront && sp.oursFront.length) {{
+      const fd = sp.oursFront.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" ");
+      svg.appendChild(el("path", {{d: fd, fill: "none", stroke: "#10b981", "stroke-width": 5.0, opacity: 0.22, "stroke-linecap": "round"}}));
+      svg.appendChild(el("path", {{d: fd, fill: "none", stroke: "#064e3b", "stroke-width": 1.6, "stroke-dasharray": "4,3"}}));
     }}
 
-    // V35 Final Calibrated Winner (Emerald)
-    const v35f = (DATA.v35_final || []).filter(d => d.knob !== "tau0");
-    if (v35f.length) {{
-      svg.appendChild(el("path", {{d: v35f.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#10b981", "stroke-width": 2.9}}));
-      for (const d of v35f) {{
+    // E-Core curve + diamonds
+    if (ec.length) {{
+      if (!sp.isSpeed) {{
+        svg.appendChild(el("path", {{d: ec.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#0d9488", "stroke-width": 2.3}}));
+      }} else {{
+        svg.appendChild(el("line", {{x1: sx(ec[0][xKey]), y1: sy(Math.min(...ec.map(x => x[yKey]))), x2: sx(ec[0][xKey]), y2: sy(Math.max(...ec.map(x => x[yKey]))), stroke: "#0d9488", "stroke-width": 2.3}}));
+      }}
+      for (const d of ec) {{
         const cx = sx(d[xKey]), cy = sy(d[yKey]);
-        const dot = el("circle", {{cx, cy, r: 4.4, fill: "#10b981", stroke: "#fff", "stroke-width": 0.9}});
-        dot.onmouseenter = () => {{ info.textContent = `[V35 Final Calibrated ${{d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% LP=${{d.lpips}} Same=${{d.same}}% Speed=${{d.ips}} img/s (4090)`; }};
-        svg.appendChild(dot);
-        if (xKey === "dc" && ["s075", "s100", "s150"].includes(d.knob)) {{
-          const lbl = "s=" + d.knob[1] + "." + d.knob.slice(2);
-          const isA100 = (yKey === "ds" && d.knob === "s100");
-          svg.appendChild(el("text", {{x: cx + (isA100 ? -6 : 5), y: cy + (isA100 ? 11 : -6), "text-anchor": isA100 ? "end" : "start", class: "pt-lbl", style: "fill:#6ee7b7;font-weight:700"}}, lbl));
+        const pt = el("rect", {{x: cx - 3.5, y: cy - 3.5, width: 7, height: 7, fill: "#0d9488", stroke: "#ffffff", "stroke-width": 0.8, transform: `rotate(45 ${{cx}} ${{cy}})`}});
+        pt.onmouseenter = () => {{ info.textContent = `[Ours E-Core 1-NFE ${{d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% LP=${{d.lpips}} Same=${{d.same}}% Speed=${{d.ips}} img/s`; }};
+        svg.appendChild(pt);
+        if (sp.isSpeed && d.knob === "l100") {{
+          svg.appendChild(el("text", {{x: cx + 6, y: cy - 2, "text-anchor": "start", class: "pt-lbl pt-ec"}}, `E 1.00 (${{d.t1.toFixed(1)}}%)`));
         }}
       }}
     }}
 
-    // V35 CLEAVE-One (Open-Domain 1-Shot)
-    const o1 = DATA.v35_o1 || [];
-    const o3 = DATA.v35_o3 || [];
-    if (o1.length) {{
-      svg.appendChild(el("path", {{d: o1.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#fb923c", "stroke-width": 1.6, "stroke-dasharray": "3,2"}}));
-      for (const d of o1) {{
-        const dot = el("circle", {{cx: sx(d[xKey]), cy: sy(d[yKey]), r: 3.3, fill: "#fb923c"}});
-        dot.onmouseenter = () => {{ info.textContent = `[V35 Open-Domain ${{d.arm}}] τ0=${{d.tau0}} | C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Causal=+${{d.causal}}pp MvOOD=${{d.mv}}% Inst=${{d.inst}}% | ${{d.ips}} img/s`; }};
-        svg.appendChild(dot);
+    // P-Core curve + circles
+    if (pc.length) {{
+      if (!sp.isSpeed) {{
+        svg.appendChild(el("path", {{d: pc.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#059669", "stroke-width": 2.7}}));
+      }} else {{
+        svg.appendChild(el("line", {{x1: sx(pc[0][xKey]), y1: sy(Math.min(...pc.map(x => x[yKey]))), x2: sx(pc[0][xKey]), y2: sy(Math.max(...pc.map(x => x[yKey]))), stroke: "#059669", "stroke-width": 2.7}}));
       }}
-    }}
-    if (o3.length) {{
-      svg.appendChild(el("path", {{d: o3.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#f59e0b", "stroke-width": 2.6}}));
-      for (const d of o3) {{
+      for (const d of pc) {{
         const cx = sx(d[xKey]), cy = sy(d[yKey]);
-        const dot = el("rect", {{x: cx - 4, y: cy - 4, width: 8, height: 8, fill: "#f59e0b", stroke: "#fff", "stroke-width": 0.9, transform: `rotate(45 ${{cx}} ${{cy}})`}});
-        dot.onmouseenter = () => {{ info.textContent = `[V35 Open-Domain 1-Shot ${{d.arm}}] τ0=${{d.tau0}} | C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Causal=+${{d.causal}}pp MvOOD=${{d.mv}}% Inst=${{d.inst}}% | ${{d.ips}} img/s (3060)`; }};
+        const dot = el("circle", {{cx, cy, r: 4.1, fill: "#10b981", stroke: "#064e3b", "stroke-width": 0.9}});
+        dot.onmouseenter = () => {{ info.textContent = `[Ours P-Core Final ${{d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% LP=${{d.lpips}} Same=${{d.same}}% Speed=${{d.ips}} img/s (4090)`; }};
         svg.appendChild(dot);
+        if (!sp.isSpeed && ["s075", "s100", "s150"].includes(d.knob)) {{
+          const lbl = "s=" + d.knob[1] + "." + d.knob.slice(2);
+          let dx = 5, dy = -6, anc = "start";
+          if (d.knob === "s150" && yKey === "t1") {{ dx = 0; dy = 12; anc = "middle"; }}
+          else if (d.knob === "s100" && yKey === "ds") {{ dx = -6; dy = 10; anc = "end"; }}
+          svg.appendChild(el("text", {{x: cx + dx, y: cy + dy, "text-anchor": anc, class: "pt-lbl pt-ours"}}, lbl));
+        }} else if (sp.isSpeed && ["s150", "s100"].includes(d.knob)) {{
+          const lbl = d.knob === "s150" ? `P 1.50 (${{d.t1.toFixed(1)}}%)` : `s=1.00 (${{d.t1.toFixed(1)}}%)`;
+          svg.appendChild(el("text", {{x: cx - 6, y: cy + 3, "text-anchor": "end", class: "pt-lbl pt-ours"}}, lbl));
+        }}
       }}
-      const tagPt = o3[0];
-      svg.appendChild(el("text", {{x: sx(tagPt[xKey]) - 2, y: sy(tagPt[yKey]) + 14, class: "pt-lbl", style: "fill:#fcd34d;font-weight:700"}}, "V35 O3"));
     }}
   }}
 }}
 
 function renderV35Final() {{
+  svg.setAttribute("viewBox", "0 0 960 300");
   legendEl.innerHTML = `
     <span class="lg-item"><span class="swatch" style="background:#10b981"></span><b>CLEAVE V35 Final (Stiefel+E+A3+P+S10B, s0.60–1.50)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#f97316"></span>P9 Unified-58M (Shared Single Backbone, Self-EP)</span>
@@ -799,54 +801,15 @@ function renderV35Final() {{
       svg.appendChild(el("path", {{d: p.map((d, i) => `${{i ? "L" : "M"}}${{sp.sx(d.dc).toFixed(1)}},${{sp.sy(d[yK]).toFixed(1)}}`).join(" "), fill: "none", stroke: col, "stroke-width": name.includes("Final") ? 2.9 : 1.9, ...(dash ? {{"stroke-dasharray": dash}} : {{}})}}));
       for (const d of p) {{
         const c = el("circle", {{cx: sp.sx(d.dc), cy: sp.sy(d[yK]), r: name.includes("Final") ? 4.2 : 3.2, fill: col, stroke: "#0f172a", "stroke-width": 0.7}});
-        c.onmouseenter = () => {{ info.textContent = `[${{name}}] ${{d.knob}} | C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Same=${{d.same}}%`; }};
+        c.onmouseenter = () => {{ info.textContent = `[${{name}}] ${{d.knob}} | C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% CLIP-S=${{(d.clip||0).toFixed(4)}} Same=${{d.same}}%`; }};
         svg.appendChild(c);
       }}
     }}
   }}
 }}
 
-function renderV35() {{
-  legendEl.innerHTML = `
-    <span class="lg-item"><span class="swatch" style="background:#f59e0b"></span><b>O3 (StyleEncoderC + VGG Swap)</b></span>
-    <span class="lg-item"><span class="swatch" style="background:#eab308"></span>O2 (EncC, No Swap)</span>
-    <span class="lg-item"><span class="swatch" style="background:#fb923c"></span>O1 (MLP EncA)</span>
-    <span class="lg-item"><span class="swatch" style="background:#94a3b8"></span>O0 (417-D Baseline)</span>
-    <span class="lg-item"><span class="swatch" style="background:#38bdf8"></span>External Pareto (Ref)</span>
-  `;
-  const spL = drawPanel(50, 22, 410, 242, {{x0: 0.28, x1: 0.72, y0: 5, y1: 62, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7], yTicks: [10, 20, 30, 40, 50, 60], yFmt: v => v + "%", title: "(a) V35 Open-Domain 1-Shot: DINO-C vs CSD Top-1 (%)", xLabel: "test750 Cross600 DINO-C ↑", yLabel: "CSD Top-1 (%) ↑"}});
-  const spR = drawPanel(520, 22, 415, 242, {{x0: 66, x1: 96, y0: 62, y1: 88, xTicks: [70, 75, 80, 85, 90, 95], xFmt: v => v + "%", yTicks: [65, 70, 75, 80, 85], yFmt: v => v + "%", title: "(b) Unseen-OOD Generalization: Movement-OOD vs Instance-Swap", xLabel: "Movement-OOD 2-Way Follow (%) ↑", yLabel: "Instance-Swap 2-Way Follow (%) ↑"}});
-  // Target thresholds on right panel
-  svg.appendChild(el("line", {{x1: spR.sx(75), y1: spR.oy, x2: spR.sx(75), y2: spR.oy + spR.ph, stroke: "#10b981", "stroke-width": 1.1, "stroke-dasharray": "4,3"}}));
-  svg.appendChild(el("line", {{x1: spR.ox, y1: spR.sy(65), x2: spR.ox + spR.pw, y2: spR.sy(65), stroke: "#10b981", "stroke-width": 1.1, "stroke-dasharray": "4,3"}}));
-
-  const cols = {{O0: "#94a3b8", O1: "#fb923c", O2: "#eab308", O3: "#f59e0b"}};
-  for (const grp of ["O1", "O3"]) {{
-    const pts = (DATA.v35_all || []).filter(d => d.group === grp).sort((a, b) => a.dc - b.dc);
-    if (pts.length > 1) {{
-      svg.appendChild(el("path", {{d: pts.map((d, i) => `${{i ? "L" : "M"}}${{spL.sx(d.dc).toFixed(1)}},${{spL.sy(d.t1).toFixed(1)}}`).join(" "), fill: "none", stroke: cols[grp], "stroke-width": grp === "O3" ? 2.8 : 1.9, "stroke-dasharray": grp === "O3" ? "" : "4,3"}}));
-    }}
-  }}
-  for (const b of DATA.external) {{
-    if (b.dc >= 0.28 && b.dc <= 0.72 && b.t1 >= 5 && b.t1 <= 62) {{
-      const dot = el("circle", {{cx: spL.sx(b.dc), cy: spL.sy(b.t1), r: 3.0, fill: "#38bdf8", opacity: 0.7}});
-      dot.onmouseenter = () => {{ info.textContent = `[External] ${{b.name}} | C=${{b.dc.toFixed(4)}} S=${{b.ds.toFixed(4)}} Top1=${{b.t1.toFixed(2)}}%`; }};
-      svg.appendChild(dot);
-    }}
-  }}
-  for (const d of (DATA.v35_all || [])) {{
-    const col = cols[d.group] || "#f59e0b";
-    for (const [sp, xk, yk] of [[spL, "dc", "t1"], [spR, "mv", "inst"]]) {{
-      const cx = sp.sx(d[xk]), cy = sp.sy(d[yk]);
-      const c = el("circle", {{cx, cy, r: d.group === "O3" ? 5.2 : 4.1, fill: col, stroke: "#fff", "stroke-width": 0.9}});
-      c.onmouseenter = () => {{ info.textContent = `[V35 ${{d.arm}}] τ0=${{d.tau0}} | C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Causal=+${{d.causal}}pp | Art=${{d.art}}% Mv=${{d.mv}}% Inst=${{d.inst}}% | SG-Aff=${{d.sg_aff}}`; }};
-      svg.appendChild(c);
-      svg.appendChild(el("text", {{x: cx + 6, y: cy - 5, class: "pt-lbl", style: `fill:${{col}};font-weight:700`}}, d.arm));
-    }}
-  }}
-}}
-
 function renderAblations() {{
+  svg.setAttribute("viewBox", "0 0 960 300");
   legendEl.innerHTML = `
     <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V34 Winner (44M C2+A3)</span>
     <span class="lg-item"><span class="swatch" style="background:#eab308"></span>V34 D_merged (44M+A3 Bridge Retrain)</span>
@@ -889,6 +852,7 @@ function renderAblations() {{
 }}
 
 function renderHoldout() {{
+  svg.setAttribute("viewBox", "0 0 960 300");
   legendEl.innerHTML = `
     <span class="lg-item"><span class="swatch" style="background:#10b981"></span><b>V35 Final (Seed-1) &amp; Seed-2 R0</b></span>
     <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V34 Uncalibrated (44M C2+A3)</span>
@@ -924,7 +888,6 @@ function draw() {{
   svg.innerHTML = "";
   if (curView === "triptych") renderTriptych();
   else if (curView === "v35_final") renderV35Final();
-  else if (curView === "v35") renderV35();
   else if (curView === "ablations") renderAblations();
   else renderHoldout();
 }}
@@ -946,7 +909,7 @@ def main() -> None:
     data = collect_triptych_data()
     save_matplotlib_triptych(data)
     (FIG_DIR / "cleave_pareto_latest.html").write_text(build_interactive_html(data), encoding="utf-8")
-    print(f"Wrote 1x3 Triptych HTML+SVG+PNG ({len(data['v34_winner'])} V34 pts, {len(data['holdout'])} holdout pts)")
+    print(f"Wrote 1x3 Triptych HTML+SVG+PNG ({len(data['ours_pcore'])} P-Core pts, {len(data['ours_ecore'])} E-Core pts, {len(data['holdout'])} holdout pts)")
 
 
 if __name__ == "__main__":
