@@ -48,10 +48,12 @@ data/
 !docs/v33/data/
 !docs/v34/data/
 !docs/v35/data/
+!docs/performance/data/
 datasets/
 results/
 exp/*
 !exp/README.md
+!exp/deploy_v35/
 !exp/v8/
 !exp/v9_local/
 !exp/v10/

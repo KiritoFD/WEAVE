@@ -64,6 +64,76 @@ V35_FALLBACK_REPORTS = [
 ]
 
 
+V36_FALLBACK_I2 = [
+    {"arm": "v36_main_p2_I2_t00", "start_mode": "I2", "tau0": 0.00, "wj": 3.8, "wc": 1.6, "steps": 6, "dc": 0.5166, "ds": 0.5016, "t1": 56.17, "margin": 0.0274, "top5": 0.4473, "csls": 0.5300, "clip": 0.7167, "aff": 0.6092, "lpips": 0.6569, "same": 82.7, "same_dc": 0.6120, "wrong": 4.17, "causal": 52.00},
+    {"arm": "v36_main_p2_I2_t35", "start_mode": "I2", "tau0": 0.35, "wj": 3.8, "wc": 1.6, "steps": 6, "dc": 0.5624, "ds": 0.5047, "t1": 54.83, "margin": 0.0267, "top5": 0.4516, "csls": 0.5400, "clip": 0.7196, "aff": 0.6122, "lpips": 0.6323, "same": 86.7, "same_dc": 0.6552, "wrong": 4.17, "causal": 50.67},
+    {"arm": "v36_main_p2_I2_t50", "start_mode": "I2", "tau0": 0.50, "wj": 3.8, "wc": 1.6, "steps": 6, "dc": 0.6399, "ds": 0.4836, "t1": 43.83, "margin": -0.0306, "top5": 0.4309, "csls": 0.4450, "clip": 0.7087, "aff": 0.5962, "lpips": 0.5756, "same": 90.0, "same_dc": 0.7004, "wrong": 4.33, "causal": 39.50},
+    {"arm": "v36_main_p2_I2_t65", "start_mode": "I2", "tau0": 0.65, "wj": 3.8, "wc": 1.6, "steps": 6, "dc": 0.7535, "ds": 0.4541, "t1": 26.33, "margin": -0.1082, "top5": 0.4018, "csls": 0.2683, "clip": 0.6896, "aff": 0.5719, "lpips": 0.5072, "same": 93.3, "same_dc": 0.7970, "wrong": 3.83, "causal": 22.50},
+    {"arm": "v36_main_p2_I2_t80", "start_mode": "I2", "tau0": 0.80, "wj": 3.8, "wc": 1.6, "steps": 6, "dc": 0.8492, "ds": 0.4156, "t1": 14.17, "margin": -0.1914, "top5": 0.3672, "csls": 0.1267, "clip": 0.6698, "aff": 0.5427, "lpips": 0.4470, "same": 96.0, "same_dc": 0.8809, "wrong": 2.50, "causal": 11.67},
+]
+
+V36_FALLBACK_ABLATE = [
+    {"arm": "v36_main_ablate_I0_t50", "start_mode": "I0", "tau0": 0.50, "wj": 3.8, "wc": 1.6, "steps": 6, "dc": 0.7087, "ds": 0.4645, "t1": 14.33, "margin": -0.1956, "top5": 0.4117, "csls": 0.1783, "clip": 0.6901, "aff": 0.5773, "lpips": 0.3342, "same": 91.3, "same_dc": 0.7427, "wrong": 5.17, "causal": 9.17},
+    {"arm": "v36_main_ablate_I0_t65", "start_mode": "I0", "tau0": 0.65, "wj": 3.8, "wc": 1.6, "steps": 6, "dc": 0.8289, "ds": 0.4327, "t1": 4.50,  "margin": -0.2802, "top5": 0.3827, "csls": 0.0767, "clip": 0.6657, "aff": 0.5492, "lpips": 0.2340, "same": 93.3, "same_dc": 0.8437, "wrong": 2.17, "causal": 2.33},
+    {"arm": "v36_main_ablate_I1_t50", "start_mode": "I1", "tau0": 0.50, "wj": 3.8, "wc": 1.6, "steps": 6, "dc": 0.6707, "ds": 0.4662, "t1": 24.33, "margin": -0.1277, "top5": 0.4135, "csls": 0.2433, "clip": 0.6959, "aff": 0.5811, "lpips": 0.4832, "same": 84.0, "same_dc": 0.7211, "wrong": 7.33, "causal": 17.00},
+    {"arm": "v36_main_ablate_I1_t65", "start_mode": "I1", "tau0": 0.65, "wj": 3.8, "wc": 1.6, "steps": 6, "dc": 0.7850, "ds": 0.4391, "t1": 13.00, "margin": -0.1911, "top5": 0.3879, "csls": 0.1583, "clip": 0.6768, "aff": 0.5580, "lpips": 0.4060, "same": 90.0, "same_dc": 0.8192, "wrong": 4.67, "causal": 8.33},
+]
+
+
+def _v36_rows_from_file(path: Path, ips: float) -> list[dict[str, Any]]:
+    raw = _load_json(path)
+    if not isinstance(raw, list):
+        return []
+    out = []
+    for d in raw:
+        c = d["cross600"]
+        s = d.get("same150") or {}
+        t0 = float(d["tau0"])
+        out.append({
+            "arm": d["arm"],
+            "knob": f"t{int(round(t0 * 100)):02d}",
+            "start_mode": d["start_mode"],
+            "tau0": t0,
+            "wj": float(d["wj"]),
+            "wc": float(d["wc"]),
+            "steps": int(d["steps"]),
+            "ips": ips,
+            "dc": round(float(c["dino_c"]), 4),
+            "ds": round(float(c["dino_s"]), 4),
+            "t1": round(float(c["csd_top1"]) * 100.0, 2),
+            "margin": round(float(c.get("csd_margin", 0.0)), 4),
+            "top5": round(float(c.get("dino_s_top5", 0.0)), 4),
+            "csls": round(float(c.get("csls_k10", 0.0)), 4),
+            "clip": round(float(c.get("clip_s", 0.0)), 4),
+            "aff": round(float(c.get("style_affinity", 0.0)), 4),
+            "lpips": round(float(c.get("lpips", 0.0)), 4),
+            "same": round(float(s.get("csd_top1", 0.0)) * 100.0, 1),
+            "same_dc": round(float(s.get("dino_c", 0.0)), 4),
+            "wrong": round(float(d.get("wrong_ctrl_top1", 0.0)) * 100.0, 2),
+            "causal": round(float(d.get("causal_delta_pp", 0.0)), 2),
+        })
+    return sorted(out, key=lambda p: p["dc"])
+
+
+def _collect_v36_reports() -> dict[str, Any]:
+    """Load V36 CLEAVE-One (Zero-DINO whole-WikiArt foundation) measured reports or verified fallback."""
+    v36_dir = REPO / "runs/v36_art_foundation/measured"
+    spd = _load_json(v36_dir / "v36_speed_4090.json") or {
+        "b1_ips": 7.84, "b1_ms": 127.51, "b8_ips": 14.05, "b8_ms_per_img": 71.17, "b16_ips": 13.5, "b16_ms_per_img": 74.09,
+    }
+    ips = float(spd.get("b1_ips", 7.84))
+    i2 = _v36_rows_from_file(v36_dir / "v36_main_p2_I2_tau_sweep.json", ips)
+    if not i2:
+        i2 = [{**r, "knob": f"t{int(round(r['tau0'] * 100)):02d}", "ips": ips} for r in V36_FALLBACK_I2]
+    i0 = _v36_rows_from_file(v36_dir / "v36_main_ablate_I0_tau_sweep.json", ips)
+    if not i0:
+        i0 = [{**r, "knob": f"t{int(round(r['tau0'] * 100)):02d}", "ips": ips} for r in V36_FALLBACK_ABLATE if r["start_mode"] == "I0"]
+    i1 = _v36_rows_from_file(v36_dir / "v36_main_ablate_I1_tau_sweep.json", ips)
+    if not i1:
+        i1 = [{**r, "knob": f"t{int(round(r['tau0'] * 100)):02d}", "ips": ips} for r in V36_FALLBACK_ABLATE if r["start_mode"] == "I1"]
+    return {"speed": spd, "i2": i2, "i0": i0, "i1": i1}
+
+
 def _collect_v35_reports() -> list[dict[str, Any]]:
     """Load completed V35 CLEAVE-One full reports from disk if present, else embedded snapshot."""
     v35_dir = REPO / "runs/v35_cleave_one/measured"
@@ -285,6 +355,74 @@ def collect_triptych_data() -> dict[str, Any]:
     v35_all = _collect_v35_reports()
     v35_o3 = sorted([r for r in v35_all if r["group"] == "O3"], key=lambda p: p["dc"])
     v35_o1 = sorted([r for r in v35_all if r["group"] == "O1"], key=lambda p: p["dc"])
+    v36 = _collect_v36_reports()
+
+    s3060_raw = _load_json(REPO / "docs/performance/data/3060_profile_summary.json")
+    rtx3060: dict[str, Any] = {}
+    if s3060_raw:
+        p0_e_sweep = s3060_raw["p0_reference"]["e_only_host_sweep"]
+        p0_p_sweep = s3060_raw["p0_reference"]["e_to_p_host_sweep"]
+        p2_e_sweep = s3060_raw["p2_optimized"]["e_only_host_sweep"]
+        p2_p_sweep = s3060_raw["p2_optimized"]["e_to_p_host_sweep"]
+
+        def _by_bs(sweep: list[dict[str, Any]], bs: int) -> dict[str, Any]:
+            for row in sweep:
+                if int(row["batch_size"]) == bs:
+                    return row
+            return sweep[0]
+
+        ref_e_b4 = round(1000.0 / float(_by_bs(p0_e_sweep, 4)["gpu_per_img_p50_ms"]), 2)
+        ref_p_b4 = round(1000.0 / float(_by_bs(p0_p_sweep, 4)["gpu_per_img_p50_ms"]), 2)
+        opt_e_b2 = round(1000.0 / float(_by_bs(p2_e_sweep, 2)["gpu_per_img_p50_ms"]), 2)
+        opt_p_b4 = round(1000.0 / float(_by_bs(p2_p_sweep, 4)["gpu_per_img_p50_ms"]), 2)
+        fast5_b4_ms = float(s3060_raw["ablation_summary"]["p3_fast_euler5"]["p_b4_ms"])
+        fast5_b4_ips = round(1000.0 / fast5_b4_ms, 2)
+
+        sums = s3060_raw["test750_quality_gate"]["summaries"]
+
+        def _3060_pts(prefix: str, keys: list[tuple[str, str]], ips: float, hw: str) -> list[dict[str, Any]]:
+            out = []
+            for arm_key, knob in keys:
+                if arm_key not in sums:
+                    continue
+                item = sums[arm_key]
+                c = item["cross600"]
+                s = item["same150"]
+                out.append({
+                    "knob": knob,
+                    "arm": arm_key,
+                    "hw": hw,
+                    "dc": round(float(c["dino_c"]), 4),
+                    "ds": round(float(c["dino_s"]), 4),
+                    "t1": round(float(c["csd_top1"]) * 100.0, 2),
+                    "lpips": round(float(c["lpips"]), 4),
+                    "same": round(float(s["csd_top1"]) * 100.0, 1),
+                    "ips": ips,
+                })
+            return out
+
+        e_knobs = [("e_l050", "l050"), ("e_l060", "l060")]
+        p_knobs = [("p_s060", "s060"), ("p_s085", "s085"), ("p_s100", "s100"), ("p_s150", "s150")]
+        rtx3060 = {
+            "ref_e": _3060_pts("reference_", [("reference_" + k, lbl) for k, lbl in e_knobs], ref_e_b4, "3060 Ref B4"),
+            "opt_e": _3060_pts("optimized_", [("optimized_" + k, lbl) for k, lbl in e_knobs], opt_e_b2, "3060 Opt B2"),
+            "ref_p": _3060_pts("reference_", [("reference_" + k, lbl) for k, lbl in p_knobs], ref_p_b4, "3060 Ref B4"),
+            "opt_p": _3060_pts("optimized_", [("optimized_" + k, lbl) for k, lbl in p_knobs], opt_p_b4, "3060 Opt B4"),
+            "fast5_p": _3060_pts("fast_", [("fast_" + k, lbl) for k, lbl in p_knobs], fast5_b4_ips, "3060 Fast-5 B4"),
+            "speeds": {
+                "ref_e_b1": round(float(_by_bs(p0_e_sweep, 1)["throughput_img_s"]), 2),
+                "ref_e_b4": ref_e_b4,
+                "opt_e_b1": round(float(_by_bs(p2_e_sweep, 1)["throughput_img_s"]), 2),
+                "opt_e_b2": opt_e_b2,
+                "opt_e_b4": round(float(_by_bs(p2_e_sweep, 4)["throughput_img_s"]), 2),
+                "ref_p_b1": round(float(_by_bs(p0_p_sweep, 1)["throughput_img_s"]), 2),
+                "ref_p_b4": ref_p_b4,
+                "opt_p_b1": round(float(_by_bs(p2_p_sweep, 1)["throughput_img_s"]), 2),
+                "opt_p_b4": opt_p_b4,
+                "fast5_p_b1": round(1000.0 / float(s3060_raw["ablation_summary"]["p3_fast_euler5"]["p_b1_ms"]), 2),
+                "fast5_p_b4": fast5_b4_ips,
+            },
+        }
 
     return {
         "external": ext_list,
@@ -317,9 +455,14 @@ def collect_triptych_data() -> dict[str, Any]:
         "v35_all": v35_all,
         "v35_o3": v35_o3,
         "v35_o1": v35_o1,
+        "v36_i2": v36["i2"],
+        "v36_i0": v36["i0"],
+        "v36_i1": v36["i1"],
+        "v36_speed": v36["speed"],
         "stage_a": stage_a_pts,
         "stage_b": stage_b_curves,
         "holdout": holdout_pts,
+        "rtx3060": rtx3060,
     }
 
 
@@ -333,6 +476,7 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
 
     TEAL, TEAL_DARK = "#0d9488", "#115e59"
     FINAL_GRN, FINAL_DARK = "#059669", "#064e3b"
+    AMBER, AMBER_DARK = "#d97706", "#78350f"
     HEAVY_PURPLE = "#7c3aed"
     LIGHT_BLUE = "#0284c7"
     SLATE_FRONT = "#64748b"
@@ -350,9 +494,10 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
         "svg.fonttype": "none",
     })
 
-    fig, (ax_a, ax_b, ax_c) = plt.subplots(1, 3, figsize=(13.9, 4.45), dpi=240)
+    fig, (ax_a, ax_b, ax_c) = plt.subplots(1, 3, figsize=(13.9, 4.55), dpi=240)
     pc = data["ours_pcore"]
     ec = data["ours_ecore"]
+    v36 = data.get("v36_i2", [])
     ext = data["external"]
     stroke = [pe.withStroke(linewidth=2.4, foreground="white")]
 
@@ -400,6 +545,14 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
                    marker="D", s=44, c=TEAL, edgecolors=TEAL_DARK, lw=0.95, zorder=7)
         ax.scatter([p[x_key] for p in pc], [p[y_key] for p in pc],
                    marker="o", s=54, c=FINAL_GRN, edgecolors=FINAL_DARK, lw=1.0, zorder=9)
+        if v36:
+            if not speed_panel:
+                ax.plot([p[x_key] for p in v36], [p[y_key] for p in v36], "-.", color=AMBER, lw=2.1, zorder=8)
+            else:
+                ax.plot([v36[0][x_key], v36[-1][x_key]], [min(p[y_key] for p in v36), max(p[y_key] for p in v36)],
+                        "-.", color=AMBER, lw=2.1, alpha=0.88, zorder=8)
+            ax.scatter([p[x_key] for p in v36], [p[y_key] for p in v36],
+                       marker="v", s=50, c=AMBER, edgecolors=AMBER_DARK, lw=0.9, zorder=10)
 
     # Panel (a): DINO-C vs DINO-S
     ax_a.axvspan(0.65, 0.95, color="#ecfdf5", alpha=0.45, zorder=0)
@@ -428,6 +581,11 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
             off_e = {"l025": (0, 10), "l040": (6, 8), "l055": (-7, -7), "l100": (-6, -9)}
             ha_e = "center" if p["knob"] == "l025" else ("left" if p["knob"] == "l040" else "right")
             _ann(ax_a, lbl_e, (p["dc"], p["ds"]), off_e[p["knob"]], ha=ha_e, col=TEAL_DARK, bold=True, fs=7.1)
+    for p in v36:
+        if p["knob"] in ("t00", "t35", "t50", "t65", "t80"):
+            off_v = {"t00": (0, -11), "t35": (5, -9), "t50": (6, -7), "t65": (-6, -9), "t80": (-6, -8)}
+            ha_v = "center" if p["knob"] == "t00" else ("right" if p["knob"] in ("t65", "t80") else "left")
+            _ann(ax_a, f"V36 τ={p['tau0']:.2f}".rstrip("0").rstrip("."), (p["dc"], p["ds"]), off_v[p["knob"]], ha=ha_v, col=AMBER_DARK, bold=True, fs=6.7)
     ax_a.set_xlim(0.28, 0.95)
     ax_a.set_ylim(0.35, 0.618)
     ax_a.set_title("(a) Full-Spectrum Quality Control", fontweight="bold", pad=8)
@@ -462,6 +620,11 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
             off_eb = {"l025": (-7, 4), "l040": (6, 8), "l055": (6, -5), "l100": (-6, -6)}
             ha_eb = "right" if p["knob"] in ("l025", "l100") else "left"
             _ann(ax_b, lbl_e, (p["dc"], p["t1"]), off_eb[p["knob"]], ha=ha_eb, col=TEAL_DARK, bold=True, fs=7.1)
+    for p in v36:
+        if p["knob"] in ("t00", "t35", "t50", "t65", "t80"):
+            off_vb = {"t00": (-5, 8), "t35": (5, 7), "t50": (6, -6), "t65": (6, -6), "t80": (-6, -8)}
+            ha_vb = "right" if p["knob"] in ("t00", "t80") else "left"
+            _ann(ax_b, f"τ={p['tau0']:.2f}".rstrip("0").rstrip("."), (p["dc"], p["t1"]), off_vb[p["knob"]], ha=ha_vb, col=AMBER_DARK, bold=True, fs=6.8)
     ax_b.set_xlim(0.28, 0.95)
     ax_b.set_ylim(-2.0, 99.0)
     ax_b.set_title("(b) Stronger Style Specificity", fontweight="bold", pad=8)
@@ -490,14 +653,42 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
     pc_085 = [x for x in pc if x["knob"] == "s085"][0]
     ec_100 = [x for x in ec if x["knob"] == "l100"][0]
     ec_065 = [x for x in ec if x["knob"] == "l065"][0]
-    _ann(ax_c, f"P-Core s=1.50 ({pc_150['t1']:.1f}%)", (pc_150["ips"], pc_150["t1"]), (-7, 2), ha="right", col=FINAL_DARK, bold=True, fs=7.2)
-    _ann(ax_c, f"s=1.00 ({pc_100['t1']:.1f}%)", (pc_100["ips"], pc_100["t1"]), (-7, 1), ha="right", col=FINAL_DARK, bold=True, fs=7.1)
-    _ann(ax_c, f"s=0.85 ({pc_085['t1']:.1f}%)", (pc_085["ips"], pc_085["t1"]), (-7, -4), ha="right", col=FINAL_DARK, bold=True, fs=7.1)
+    _ann(ax_c, f"P 1.50 ({pc_150['t1']:.1f}%)", (pc_150["ips"], pc_150["t1"]), (6, 0), ha="left", col=FINAL_DARK, bold=True, fs=7.0)
+    _ann(ax_c, f"s=1.00 ({pc_100['t1']:.1f}%)", (pc_100["ips"], pc_100["t1"]), (-7, 3), ha="right", col=FINAL_DARK, bold=True, fs=7.0)
+    _ann(ax_c, f"s=0.85 ({pc_085['t1']:.1f}%)", (pc_085["ips"], pc_085["t1"]), (6, -3), ha="left", col=FINAL_DARK, bold=True, fs=6.9)
     _ann(ax_c, f"E-Core 1.00\n({ec_100['t1']:.1f}%)", (ec_100["ips"], ec_100["t1"]), (7, 5), ha="left", col=TEAL_DARK, bold=True, fs=7.1)
     _ann(ax_c, f"E 0.65 ({ec_065['t1']:.1f}%)", (ec_065["ips"], ec_065["t1"]), (7, -1), ha="left", col=TEAL_DARK, bold=True, fs=7.0)
-    ax_c.text(0.39, 0.85, f"Ours P-Core (44M): {data.get('v35_final_ips', 14.3):.1f} img/s\nOurs E-Core (1-NFE): 33.1 img/s",
-              transform=ax_c.transAxes, ha="center", va="center", fontsize=6.9, fontweight="bold", color=FINAL_DARK,
-              bbox=dict(boxstyle="round,pad=0.25", fc="#ecfdf5", ec=FINAL_GRN, lw=0.85, alpha=0.94))
+    if v36:
+        v_top = max(v36, key=lambda x: x["t1"])
+        v_t50 = [x for x in v36 if x["knob"] == "t50"][0]
+        _ann(ax_c, f"V36 t00 ({v_top['t1']:.1f}%)", (v_top["ips"], v_top["t1"]), (-7, 2), ha="right", col=AMBER_DARK, bold=True, fs=6.8)
+        _ann(ax_c, f"V36 t50 ({v_t50['t1']:.1f}%)", (v_t50["ips"], v_t50["t1"]), (-7, -3), ha="right", col=AMBER_DARK, bold=True, fs=6.8)
+    v36_b1 = float(data.get("v36_speed", {}).get("b1_ips", 7.84))
+    r3060 = data.get("rtx3060") or {}
+    spd3 = r3060.get("speeds") or {}
+    if r3060.get("opt_p") and r3060.get("opt_e"):
+        p_opt = r3060["opt_p"]
+        e_opt = r3060["opt_e"]
+        p_fast = r3060.get("fast5_p") or []
+        ax_c.plot([p_opt[0]["ips"], p_opt[-1]["ips"]], [min(x["t1"] for x in p_opt), max(x["t1"] for x in p_opt)],
+                  ":", color="#2563eb", lw=1.9, alpha=0.88, zorder=7)
+        ax_c.scatter([x["ips"] for x in p_opt], [x["t1"] for x in p_opt],
+                     marker="s", s=26, c="#3b82f6", edgecolors="#1e3a8a", lw=0.75, zorder=8)
+        ax_c.scatter([x["ips"] for x in e_opt], [x["t1"] for x in e_opt],
+                     marker="d", s=28, c="#06b6d4", edgecolors="#155e75", lw=0.75, zorder=8)
+        if p_fast:
+            ax_c.scatter([x["ips"] for x in p_fast], [x["t1"] for x in p_fast],
+                         marker="^", s=28, c="#ec4899", edgecolors="#831843", lw=0.75, zorder=8)
+        p3060_125 = [x for x in p_opt if x["knob"] == "s125"] or [p_opt[-2]]
+        _ann(ax_c, f"3060 Opt P\n({p_opt[0]['ips']:.2f} img/s)", (p3060_125[0]["ips"], p3060_125[0]["t1"]),
+             (-7, -1), ha="right", col="#1e3a8a", bold=True, fs=6.3)
+        e3060_050 = [x for x in e_opt if x["knob"] == "l050"] or [e_opt[0]]
+        _ann(ax_c, f"3060 Opt E\n({e_opt[0]['ips']:.2f})", (e3060_050[0]["ips"], e3060_050[0]["t1"]),
+             (5, -16), ha="left", col="#155e75", bold=True, fs=6.3)
+        if p_fast:
+            f3060_150 = [x for x in p_fast if x["knob"] == "s150"] or [p_fast[-1]]
+            _ann(ax_c, f"Fast-5 ({p_fast[0]['ips']:.2f})", (f3060_150[0]["ips"], f3060_150[0]["t1"]),
+                 (-7, 2), ha="right", col="#9d174d", bold=True, fs=6.3)
 
     ax_c.set_xscale("log")
     ax_c.set_xlim(0.02, 175.0)
@@ -509,19 +700,23 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
 
     handles = [
         Line2D([0], [0], color=FINAL_DARK, ls="--", lw=1.7,
-               label="Ours Unified Pareto Frontier (P-Core ∪ E-Core Non-Dominated)"),
+               label="Ours Closed-Set Pareto Frontier (P-Core ∪ E-Core)"),
         Line2D([0], [0], color=FINAL_GRN, marker="o", ms=6.0, lw=2.8, mfc=FINAL_GRN, mec=FINAL_DARK,
-               label=f"Ours P-Core Final (44M, {data.get('v35_final_ips', 14.3):.1f} img/s @ 4090, s=0.60–1.50)"),
+               label=f"Ours P-Core Final (Closed-Set, 44M, {data.get('v35_final_ips', 14.3):.1f} img/s)"),
         Line2D([0], [0], color=TEAL, marker="D", ms=5.6, lw=2.4, mfc=TEAL, mec=TEAL_DARK,
-               label="Ours E-Core Original (1-NFE, 33.1 img/s @ 4090, l=0.25–1.00)"),
+               label="Ours E-Core Original (Closed-Set 1-NFE, 33.1 img/s)"),
+        Line2D([0], [0], color=AMBER, ls="-.", marker="v", ms=5.8, lw=2.2, mfc=AMBER, mec=AMBER_DARK,
+               label=f"V36 CLEAVE-One (Open-Ref Core-5 Unseen, B1 {v36_b1:.2f} / B8 {data.get('v36_speed', {}).get('b8_ips', 14.05):.2f} img/s)"),
+        Line2D([0], [0], color="#2563eb", ls=":", marker="s", ms=5.0, lw=1.8, mfc="#3b82f6", mec="#1e3a8a",
+               label=f"RTX 3060 Opt Host E2E (E B2 {spd3.get('opt_e_b2', 12.31):.2f} / P B4 {spd3.get('opt_p_b4', 5.49):.2f} / Fast-5 {spd3.get('fast5_p_b4', 6.51):.2f} img/s)"),
         Line2D([0], [0], color="none", marker="*", ms=9.2, mfc=HEAVY_PURPLE, mec="#3b0764", label="StyleGallery (30.4s)"),
         Line2D([0], [0], color="none", marker="^", ms=6.2, mfc="#8b5cf6", mec="#3b0764", label="Heavy Baselines (>1B, 5–25s)"),
         Line2D([0], [0], color="none", marker="s", ms=5.6, mfc=LIGHT_BLUE, mec="#075985", label="Lightweight Baselines (0.2–3.0s)"),
         Line2D([0], [0], color=SLATE_FRONT, ls="--", lw=1.6, label="External Pareto Frontier"),
     ]
-    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.985), ncol=3,
-               frameon=True, facecolor="#f8fafc", edgecolor="#cbd5e1", fontsize=7.2)
-    fig.subplots_adjust(left=0.055, right=0.985, top=0.73, bottom=0.14, wspace=0.25)
+    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.99), ncol=2,
+               frameon=True, facecolor="#f8fafc", edgecolor="#cbd5e1", fontsize=7.0)
+    fig.subplots_adjust(left=0.055, right=0.985, top=0.71, bottom=0.14, wspace=0.25)
 
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     for stem in ("cleave_pareto_triptych", "cleave_pareto_latest"):
@@ -568,7 +763,7 @@ body {{
   background: var(--card, #111827);
   border: 1px solid var(--border, #334155);
   border-radius: var(--radius, 8px);
-  padding: 10px 10px 8px 10px;
+  padding: 16px;
 }}
 .legend {{
   display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 6px; font-size: 10.5px; color: var(--muted-foreground, #cbd5e1);
@@ -599,7 +794,9 @@ svg {{ width: 100%; height: auto; display: block; }}
 <div class="wrap">
   <div class="toolbar">
     <div class="tabs">
-      <button class="btn active" data-view="triptych">论文三联图 (Ours 交错前沿 vs 外部基线)</button>
+      <button class="btn active" data-view="triptych">论文三联图 (V35 闭集前沿 + V36 开放域 vs 外部)</button>
+      <button class="btn" data-view="rtx3060">RTX 3060 实测优化 (Test750 + 吞吐)</button>
+      <button class="btn" data-view="v36_one">V36 CLEAVE-One (全WikiArt Zero-DINO / I0–I2 消融)</button>
       <button class="btn" data-view="v35_final">V35 P0–P9 定型消融 (Stiefel / E+P)</button>
       <button class="btn" data-view="ablations">V34 各阶段 (Stage A–D)</button>
       <button class="btn" data-view="holdout">盲测 Holdout-750</button>
@@ -669,9 +866,10 @@ function triPoints(cx, cy, r) {{
 function renderTriptych() {{
   svg.setAttribute("viewBox", "0 0 960 300");
   legendEl.innerHTML = `
-    <span class="lg-item"><span class="swatch" style="background:#064e3b;border-top:1.5px dashed #10b981"></span><b>Ours Unified Pareto (P-Core ∪ E-Core)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#064e3b;border-top:1.5px dashed #10b981"></span><b>Ours Closed-Set Pareto (P-Core ∪ E-Core)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#059669"></span><b>Ours P-Core Final (44M, ${{DATA.v35_final_ips || 14.3}} img/s @ 4090)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#0d9488"></span><b>Ours E-Core Original (1-NFE, 33.1 img/s @ 4090)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#d97706"></span><b>V36 CLEAVE-One (Open-Ref 1-Shot Core-5 Unseen, B1 ${{(DATA.v36_speed||{{}}).b1_ips||7.84}} / B8 ${{(DATA.v36_speed||{{}}).b8_ips||14.05}} img/s)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#7c3aed"></span><b>StyleGallery / Heavy (&gt;1B)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#0284c7"></span><b>Light Baselines (0.2–3.0s)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#64748b"></span>External Pareto</span>
@@ -684,6 +882,7 @@ function renderTriptych() {{
 
   const pc = DATA.ours_pcore || [];
   const ec = DATA.ours_ecore || [];
+  const v36 = DATA.v36_i2 || [];
   const extOffs = {{
     "ds": {{"StyleGallery": [6, 2, "start"], "StyleShot": [6, 7, "start"], "StyleID": [6, 2, "start"], "Qwen-Img-2.1T": [-6, 10, "end"], "AesPA-Net": [-6, -2, "end"], "StyTr2": [-6, 2, "end"], "Seedream 4.5": [-6, 10, "end"], "SaMAM": [-6, -2, "end"], "CUT": [7, -4, "start"], "Hist2Style": [-7, 7, "end"]}},
     "t1": {{"StyleGallery": [-6, 7, "end"], "StyleShot": [6, 2, "start"], "StyleID": [6, 2, "start"], "Qwen-Img-2.1T": [-6, -6, "end"], "AesPA-Net": [-6, 3, "end"], "StyTr2": [-6, 5, "end"], "Seedream 4.5": [0, 11, "middle"], "SaMAM": [-6, -3, "end"], "CUT": [7, 2, "start"], "Hist2Style": [-7, -5, "end"]}},
@@ -766,6 +965,75 @@ function renderTriptych() {{
         }} else if (sp.isSpeed && ["s150", "s100"].includes(d.knob)) {{
           const lbl = d.knob === "s150" ? `P 1.50 (${{d.t1.toFixed(1)}}%)` : `s=1.00 (${{d.t1.toFixed(1)}}%)`;
           svg.appendChild(el("text", {{x: cx - 6, y: cy + 3, "text-anchor": "end", class: "pt-lbl pt-ours"}}, lbl));
+        }}
+      }}
+    }}
+
+    // V36 CLEAVE-One (Open-Ref Unseen Core-5)
+    if (v36.length) {{
+      if (!sp.isSpeed) {{
+        svg.appendChild(el("path", {{d: v36.map((d, i) => `${{i ? "L" : "M"}}${{sx(d[xKey]).toFixed(1)}},${{sy(d[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#d97706", "stroke-width": 2.2, "stroke-dasharray": "5,2,1.5,2"}}));
+      }} else {{
+        svg.appendChild(el("line", {{x1: sx(v36[0][xKey]), y1: sy(Math.min(...v36.map(x => x[yKey]))), x2: sx(v36[0][xKey]), y2: sy(Math.max(...v36.map(x => x[yKey]))), stroke: "#d97706", "stroke-width": 2.2, "stroke-dasharray": "5,2,1.5,2"}}));
+      }}
+      for (const d of v36) {{
+        const cx = sx(d[xKey]), cy = sy(d[yKey]);
+        const tri = el("polygon", {{points: `${{cx.toFixed(1)}},${{(cy + 4.8).toFixed(1)}} ${{(cx - 4.5).toFixed(1)}},${{(cy - 3.6).toFixed(1)}} ${{(cx + 4.5).toFixed(1)}},${{(cy - 3.6).toFixed(1)}}`, fill: "#f59e0b", stroke: "#78350f", "stroke-width": 0.9}});
+        tri.onmouseenter = () => {{ info.textContent = `[V36 CLEAVE-One Open-Ref I2 ${{d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Causal=${{d.causal >= 0 ? "+" : ""}}${{d.causal.toFixed(2)}}pp Same150=${{d.same}}% LP=${{d.lpips}} B1=${{d.ips}} img/s`; }};
+        svg.appendChild(tri);
+        if (!sp.isSpeed && ["t00", "t50", "t80"].includes(d.knob)) {{
+          const dx = (yKey === "t1" && d.knob === "t50") ? -5 : 4;
+          const dy = yKey === "ds" ? -7 : (d.knob === "t00" ? -8 : (d.knob === "t50" ? -8 : 11));
+          const anc = (yKey === "t1" && d.knob === "t50") ? "end" : "start";
+          svg.appendChild(el("text", {{x: cx + dx, y: cy + dy, "text-anchor": anc, class: "pt-lbl", style: "fill:#f59e0b"}}, `τ=${{d.tau0.toFixed(2).replace(/0$/, "").replace(/\\.$/, "")}}`));
+        }} else if (sp.isSpeed && ["t00", "t50"].includes(d.knob)) {{
+          svg.appendChild(el("text", {{x: cx - 5, y: cy + 3, "text-anchor": "end", class: "pt-lbl", style: "fill:#f59e0b"}}, `V36 ${{d.knob}} (${{d.t1.toFixed(1)}}%)`));
+        }}
+      }}
+    }}
+  }}
+}}
+
+function renderV36One() {{
+  svg.setAttribute("viewBox", "0 0 960 300");
+  legendEl.innerHTML = `
+    <span class="lg-item"><span class="swatch" style="background:#f59e0b"></span><b>V36 I2 (Full Ref-A3 Chroma+Luma, τ0=0.00–0.80)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#38bdf8"></span>V36 I1 (Chroma-Only A3, τ0=0.50/0.65)</span>
+    <span class="lg-item"><span class="swatch" style="background:#94a3b8"></span>V36 I0 (Raw Src Start, τ0=0.50/0.65)</span>
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V35 CLEAVE-One O3 (Swapped Old)</span>
+    <span class="lg-item"><span class="swatch" style="background:#7c3aed"></span>External Open-Ref Baselines</span>
+  `;
+  const spL = drawPanel(50, 22, 410, 242, {{x0: 0.30, x1: 0.90, y0: 0.35, y1: 0.59, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.35, 0.40, 0.45, 0.50, 0.55], title: "(a) V36 Open-Ref Start Ablation (Core-5 Unseen): DINO-C vs DINO-S", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑"}});
+  const spR = drawPanel(520, 22, 415, 242, {{x0: 0.30, x1: 0.90, y0: 0.0, y1: 68.0, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 15, 30, 45, 60], yFmt: v => v + "%", title: "(b) V36 Open-Ref Start Ablation (Core-5 Unseen): DINO-C vs CSD Top-1 (%)", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑"}});
+  for (const b of (DATA.external || []).filter(x => x.dc >= 0.30 && x.dc <= 0.90)) {{
+    for (const [sp, yK] of [[spL, "ds"], [spR, "t1"]]) {{
+      const cx = sp.sx(b.dc), cy = sp.sy(b[yK]);
+      const mk = el("rect", {{x: cx - 3.4, y: cy - 3.4, width: 6.8, height: 6.8, fill: "#7c3aed", opacity: 0.75}});
+      mk.onmouseenter = () => {{ info.textContent = `[External] ${{b.name}} | C=${{b.dc.toFixed(4)}} S=${{b.ds.toFixed(4)}} Top1=${{b.t1.toFixed(2)}}%`; }};
+      svg.appendChild(mk);
+      if (["StyleGallery", "StyleShot", "StyleID", "StyTr2", "Seedream 4.5"].includes(b.short)) {{
+        svg.appendChild(el("text", {{x: cx + 5, y: cy + 3, class: "pt-lbl", style: "fill:#a78bfa"}}, b.short));
+      }}
+    }}
+  }}
+  const curves = [
+    ["V35 O3", DATA.v35_o3 || [], "#f43f5e", "4,3"],
+    ["V36 I0 (No A3)", DATA.v36_i0 || [], "#94a3b8", "3,2"],
+    ["V36 I1 (Chroma A3)", DATA.v36_i1 || [], "#38bdf8", "4,2"],
+    ["V36 I2 (Full A3)", DATA.v36_i2 || [], "#f59e0b", ""],
+  ];
+  for (const [name, pts, col, dash] of curves) {{
+    if (!pts.length) continue;
+    for (const [sp, yK] of [[spL, "ds"], [spR, "t1"]]) {{
+      svg.appendChild(el("path", {{d: pts.map((d, i) => `${{i ? "L" : "M"}}${{sp.sx(d.dc).toFixed(1)}},${{sp.sy(d[yK]).toFixed(1)}}`).join(" "), fill: "none", stroke: col, "stroke-width": name.includes("I2") ? 2.8 : 2.0, ...(dash ? {{"stroke-dasharray": dash}} : {{}})}}));
+      for (const d of pts) {{
+        const cx = sp.sx(d.dc), cy = sp.sy(d[yK]);
+        const c = el("circle", {{cx, cy, r: name.includes("I2") ? 4.4 : 3.6, fill: col, stroke: "#0f172a", "stroke-width": 0.8}});
+        c.onmouseenter = () => {{ info.textContent = `[${{name}} ${{d.arm || d.knob}}] C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% Causal=${{d.causal >= 0 ? "+" : ""}}${{(d.causal||0).toFixed(2)}}pp`; }};
+        svg.appendChild(c);
+        const tag = d.knob || d.arm || "";
+        if (name.includes("V36")) {{
+          svg.appendChild(el("text", {{x: cx + 5, y: cy - 5, class: "pt-lbl", style: `fill:${{col}}`}}, `${{name.split(" ")[1]}} ${{tag}}`));
         }}
       }}
     }}
@@ -884,9 +1152,82 @@ function renderHoldout() {{
   }}
 }}
 
+function renderRtx3060() {{
+  svg.setAttribute("viewBox", "0 0 960 300");
+  const r = DATA.rtx3060 || {{}};
+  const sp = r.speeds || {{}};
+  legendEl.innerHTML = `
+    <span class="lg-item"><span class="swatch" style="background:#059669"></span><b>V35 4090 Baseline</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#64748b;border-top:1.5px dashed #94a3b8"></span>3060 Reference (P B4=${{sp.ref_p_b4||3.10}} / E B4=${{sp.ref_e_b4||6.92}} img/s)</span>
+    <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span><b>3060 Optimized PyTorch (P B4=${{sp.opt_p_b4||5.49}} / E B2=${{sp.opt_e_b2||12.31}} img/s)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#ec4899"></span><b>3060 Fast-5 Euler (P B4=${{sp.fast5_p_b4||6.51}} img/s, 20 NFE)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#0284c7"></span>External Lightweight</span>
+  `;
+  const spA = drawPanel(44, 22, 264, 242, {{x0: 0.28, x1: 0.90, y0: 0.36, y1: 0.618, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.40, 0.45, 0.50, 0.55, 0.60], title: "(a) 3060 Test750 非劣: DINO-C vs DINO-S", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑"}});
+  const spB = drawPanel(368, 22, 264, 242, {{x0: 0.28, x1: 0.90, y0: 0.0, y1: 99.0, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(b) 3060 Test750 非劣: DINO-C vs Top-1", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑"}});
+  const spC = drawPanel(690, 22, 256, 242, {{x0: 0.10, x1: 22.0, y0: 0.0, y1: 99.0, logX: true, xTicks: [0.2, 1, 5, 10, 20], xFmt: v => v < 1 ? v.toFixed(1) : v.toFixed(0), yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(c) 3060 Host E2E 吞吐 vs CSD Top-1", xLabel: "RTX 3060 Host E2E (img/s, log) ↑", yLabel: "CSD Top-1 (%) ↑", shade: [5.0, 22.0, "#3b82f6"]}});
+
+  for (const [panel, yK, isSpd] of [[spA, "ds", false], [spB, "t1", false], [spC, "t1", true]]) {{
+    const xK = isSpd ? "ips" : "dc";
+    for (const b of (DATA.external || []).filter(x => x[xK] >= (isSpd ? 0.1 : 0.28))) {{
+      const cx = panel.sx(b[xK]), cy = panel.sy(b[yK]);
+      const mk = el("rect", {{x: cx - 3.3, y: cy - 3.3, width: 6.6, height: 6.6, fill: "#0284c7", opacity: 0.72, stroke: "#ffffff", "stroke-width": 0.6}});
+      mk.onmouseenter = () => {{ info.textContent = `[External] ${{b.name}} | C=${{b.dc.toFixed(4)}} S=${{b.ds.toFixed(4)}} Top1=${{b.t1.toFixed(2)}}% Speed=${{b.ips}} img/s`; }};
+      svg.appendChild(mk);
+      if (isSpd && ["StyleShot", "StyleID", "StyTr2", "AesPA-Net", "Hist2Style"].includes(b.short)) {{
+        svg.appendChild(el("text", {{x: cx + 5, y: cy + 3, "text-anchor": "start", class: "pt-lbl"}}, b.short));
+      }}
+    }}
+    if (!isSpd) {{
+      const v35 = (DATA.ours_pcore || []);
+      svg.appendChild(el("path", {{d: v35.map((d, i) => `${{i ? "L" : "M"}}${{panel.sx(d.dc).toFixed(1)}},${{panel.sy(d[yK]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#059669", "stroke-width": 2.0, opacity: 0.55}}));
+    }}
+    const groups = [
+      ["3060 Reference", (r.ref_p || []).concat(r.ref_e || []), "#94a3b8", "4,3", 4.6],
+      ["3060 Optimized", (r.opt_p || []).concat(r.opt_e || []), "#3b82f6", "", 4.2],
+      ["3060 Fast-5", (r.fast5_p || []), "#ec4899", "2,2", 3.8],
+    ];
+    for (const [label, pts, col, dash, rad] of groups) {{
+      const pPts = pts.filter(x => x.knob.startsWith("s"));
+      const ePts = pts.filter(x => x.knob.startsWith("l"));
+      for (const seg of [pPts, ePts]) {{
+        if (!seg.length) continue;
+        if (!isSpd) {{
+          svg.appendChild(el("path", {{d: seg.map((d, i) => `${{i ? "L" : "M"}}${{panel.sx(d.dc).toFixed(1)}},${{panel.sy(d[yK]).toFixed(1)}}`).join(" "), fill: "none", stroke: col, "stroke-width": label.includes("Optimized") ? 2.4 : 1.7, ...(dash ? {{"stroke-dasharray": dash}} : {{}})}}));
+        }} else {{
+          svg.appendChild(el("line", {{x1: panel.sx(seg[0].ips), y1: panel.sy(Math.min(...seg.map(x => x.t1))), x2: panel.sx(seg[0].ips), y2: panel.sy(Math.max(...seg.map(x => x.t1))), stroke: col, "stroke-width": label.includes("Optimized") ? 2.6 : 1.8, ...(dash ? {{"stroke-dasharray": dash}} : {{}})}}));
+        }}
+        for (const d of seg) {{
+          const cx = panel.sx(d[xK]), cy = panel.sy(d[yK]);
+          const pt = el("circle", {{cx, cy, r: rad, fill: label.includes("Reference") ? "none" : col, stroke: label.includes("Reference") ? col : "#ffffff", "stroke-width": label.includes("Reference") ? 1.8 : 0.8}});
+          pt.onmouseenter = () => {{ info.textContent = `[${{label}} · ${{d.hw}}] ${{d.knob}} | C=${{d.dc.toFixed(4)}} S=${{d.ds.toFixed(4)}} Top1=${{d.t1.toFixed(2)}}% LP=${{d.lpips}} Same=${{d.same}}% Speed=${{d.ips}} img/s`; }};
+          svg.appendChild(pt);
+        }}
+      }}
+    }}
+    if (isSpd && (r.ref_p || []).length && (r.opt_p || []).length) {{
+      const rp = r.ref_p.find(x => x.knob === "s100"), op = r.opt_p.find(x => x.knob === "s100"), fp = (r.fast5_p || []).find(x => x.knob === "s100");
+      if (rp && op) {{
+        svg.appendChild(el("line", {{x1: panel.sx(rp.ips), y1: panel.sy(rp.t1), x2: panel.sx(op.ips), y2: panel.sy(op.t1), stroke: "#3b82f6", "stroke-width": 1.3, "stroke-dasharray": "3,2"}}));
+        svg.appendChild(el("text", {{x: panel.sx(op.ips) - 4, y: panel.sy(op.t1) - 10, "text-anchor": "end", class: "pt-lbl", style: "fill:#60a5fa"}}, `P Opt ${{op.ips.toFixed(2)}} (1.77x)`));
+      }}
+      if (fp) {{
+        svg.appendChild(el("text", {{x: panel.sx(fp.ips) + 5, y: panel.sy(fp.t1) + 12, "text-anchor": "start", class: "pt-lbl", style: "fill:#f472b6"}}, `Fast-5 ${{fp.ips.toFixed(2)}}`));
+      }}
+      const re = (r.ref_e || []).find(x => x.knob === "l050"), oe = (r.opt_e || []).find(x => x.knob === "l050");
+      if (re && oe) {{
+        svg.appendChild(el("line", {{x1: panel.sx(re.ips), y1: panel.sy(re.t1), x2: panel.sx(oe.ips), y2: panel.sy(oe.t1), stroke: "#06b6d4", "stroke-width": 1.3, "stroke-dasharray": "3,2"}}));
+        svg.appendChild(el("text", {{x: panel.sx(oe.ips) - 3, y: panel.sy(oe.t1) + 14, "text-anchor": "end", class: "pt-lbl", style: "fill:#22d3ee"}}, `E Opt ${{oe.ips.toFixed(2)}} (1.86x)`));
+      }}
+    }}
+  }}
+}}
+
 function draw() {{
   svg.innerHTML = "";
   if (curView === "triptych") renderTriptych();
+  else if (curView === "rtx3060") renderRtx3060();
+  else if (curView === "v36_one") renderV36One();
   else if (curView === "v35_final") renderV35Final();
   else if (curView === "ablations") renderAblations();
   else renderHoldout();

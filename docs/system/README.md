@@ -78,6 +78,6 @@ P9e 等规模对照：Unified58M（58.04M 单 Flow）vs E+P（55.67M）；C=.50 
 - s=0 精确 latent 恒等，P6 同重建参照 pixel max_err=0；tau0=0 A3 不变量。P9 E/P 交界 RMSE=.1935，大于内部 .033–.088，尚不能声称视觉平滑；另做固定输出过渡实验，不污染正式速度评测。
 - Holdout-750 与训练/测试无作品重叠，但146/150源图、143/150参考图画家已见。s085 两训练种子 C=.6831/.6819、S=.5324/.5333、Top-1=58.50/58.17%。不是严格画家 OOD。P6 用 train_calib_300，A3/训练时长曾参考 test750。
 - 当前锁定：C2 EMA step3500，ECore_NoDINO，S10B，A3=(1,1)，ws_mul=1,wc_mul=1.2,dtau0=-.05,6名义步。资产与 hash 见 [cleanup](../../cleanup.md)。训练/生成源码 [exp/v35_final](../../exp/v35_final/)，缺失的 V29/V32 执行模块必须补齐。
-- **下一步仅部署**：[3060 精准 Profile 与优化方案](3060_PROFILE_OPTIMIZATION.md)，先修正计时/NFE，优化同步/布局、FP16 TRT A0/S10/P，独立 E 路径和部署包；同质量全量 test750 非劣验收，不重训主线。One-shot 单独研发。
+- **3060 纯 PyTorch 固定形状优化与全量门控已完成**：[RTX 3060 优化总报告](optimization/RESULTS.md)（[Profile](optimization/PROFILE.md) · [优化与消融](optimization/OPTIMIZATION.md) · [部署包](optimization/DEPLOYMENT.md) · 方案来源 [3060_PROFILE_OPTIMIZATION.md](3060_PROFILE_OPTIMIZATION.md)）。核心结论：`E-only` Host E2E 从 `6.92 -> 12.31 img/s`（`B=2`，`1.86x`），`E→P` 从 `3.10 -> 5.49 img/s`（`B=4`，`1.77x`，`Fast-5` `6.51 img/s`），全量 `test750` 配对 Bootstrap 非劣全部通过（`|ΔDINO-C| <= 0.0004`, `ΔTop-1 = -0.50pp ~ +0.83pp`）。One-shot 单独研发。
 
 原始完整报告：[V35 Final](../archive/historical/v35/V35_FINAL_REPORT.md) · [专家资产与调用链](../archive/historical/v35/EXPERT_OPTIMIZATION_DOSSIER.md) · [P8 JSON](../archive/historical/v35/data/p8_final_report.json) · [P9 JSON](../archive/historical/v35/data/p9_paper_audit_report.json)。历史文件保持原件，跨目录失效链接可从[归档前快照](https://github.com/KiritoFD/WEAVE/tree/0e314629099b18d7f4a91ec4ca69507549eb279f/docs/v35)查阅。
