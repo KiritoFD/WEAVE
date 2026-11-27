@@ -169,7 +169,7 @@
 ## 对最终风格迁移的影响
 
 严格固定 Encoder 的 A0→S10 比较，Oracle/B3/B4 的 CSD Top-1 分别提升3.67/4.00/5.00个百分点；ScoreDiff N24/N12 则下降3.00/3.50个百分点。
-五个生成器的 DINO-S 均上升；ScoreDiff 的 DINO/CLIP margin 也上升。细表和CI见 [归因](../1111/comparison/03_style_metrics_and_attribution.md)。
+五个生成器的 DINO-S 均上升；ScoreDiff 的 DINO/CLIP margin 也上升。细表和CI见 [归因](../archive/historical/1111/comparison/03_style_metrics_and_attribution.md)。
 这与“压缩伤害独立重建”并不矛盾：固定 WEAVE 输出经过不同 Decoder，形成不同平滑、纹理和判官响应。生成器与 Decoder 有明显交互，不能只用一列重建指标预测全部迁移结果。
 
 ## 目前可以保留的成果
@@ -178,4 +178,4 @@ S10 是一个有独立重建损失的快速 Decoder 选项。它不是“所有�
 是否采用应由具体生成器、关注的风格/内容指标与整条推理延迟共同决定。
 
 
-远端原始 JSON 的位置、大小、SHA256 与压缩内容保存在 [采集快照](../1111/appendix/live_snapshot.json)。这里的“压缩”只省略逐任务大数组，不改聚合数值。
+远端原始 JSON 的位置、大小、SHA256 与压缩内容保存在 [采集快照](../archive/historical/1111/appendix/live_snapshot.json)。这里的“压缩”只省略逐任务大数组，不改聚合数值。

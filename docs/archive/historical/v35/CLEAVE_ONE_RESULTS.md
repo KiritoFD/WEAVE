@@ -14,10 +14,10 @@
 
 ## 2. 合规性与数据隔离核查
 
-- **零裁判泄漏（Zero-DINO Training）**：训练入口 [train_pcore_oneshot.py](../../exp/v35_cleave_one/train_pcore_oneshot.py) 与损失函数 [losses.py](../../exp/v35_cleave_one/losses.py) 仅使用 `PseudoHuber_0.05` 速度场损失、无监督对比+属性重建损失（[probe_encoder.py](../../exp/v35_cleave_one/probe_encoder.py)）以及冻结 `VGG-16` 风格/灰度内容损失，完全隔离 `DINOv2`、`CSD`、`CLIP`、`LPIPS`。
-- **编码器规模与条件机制**：`StyleEncoderC` 实测总参数 **`2,384,865`**（`<= 3M` 上限），结合 [style_features.py](../../exp/v35_cleave_one/style_features.py) 提取的 `1,561-D` 显式多尺度统计向量与无序 ConvNeXt S1/S2/S3 Patch 交叉注意力（无位置编码），经 [models.py](../../exp/v35_cleave_one/models.py) 的每层独立 `AdaGN` 注入 `OneShotPCoreNet`（继承 `V32` 骨干除离散标签头外的 115 个权重键）。
+- **零裁判泄漏（Zero-DINO Training）**：训练入口 train_pcore_oneshot.py（仓库当前未提交：`exp/v35_cleave_one/train_pcore_oneshot.py`） 与损失函数 losses.py（仓库当前未提交：`exp/v35_cleave_one/losses.py`） 仅使用 `PseudoHuber_0.05` 速度场损失、无监督对比+属性重建损失（probe_encoder.py（仓库当前未提交：`exp/v35_cleave_one/probe_encoder.py`））以及冻结 `VGG-16` 风格/灰度内容损失，完全隔离 `DINOv2`、`CSD`、`CLIP`、`LPIPS`。
+- **编码器规模与条件机制**：`StyleEncoderC` 实测总参数 **`2,384,865`**（`<= 3M` 上限），结合 style_features.py（仓库当前未提交：`exp/v35_cleave_one/style_features.py`） 提取的 `1,561-D` 显式多尺度统计向量与无序 ConvNeXt S1/S2/S3 Patch 交叉注意力（无位置编码），经 models.py（仓库当前未提交：`exp/v35_cleave_one/models.py`） 的每层独立 `AdaGN` 注入 `OneShotPCoreNet`（继承 `V32` 骨干除离散标签头外的 115 个权重键）。
 - **解码器契约**：所有训练前向反传与评测出图严格经 [src/utils](../../src/utils/__init__.py) 的 `load_s10_decoder` / `decode_s10(..., enable_grad=True/False)`，未使用原版 `SD-VAE` 解码器。
-- **严格 OOD 数据隔离**（见 [curation_summary.json](../../runs/v35_cleave_one/curation_summary.json) 与 [prepare_data.py](../../exp/v35_cleave_one/prepare_data.py)）：
+- **严格 OOD 数据隔离**（见 curation_summary.json（仓库当前未提交：`runs/v35_cleave_one/curation_summary.json`） 与 prepare_data.py（仓库当前未提交：`exp/v35_cleave_one/prepare_data.py`））：
   - `Seen-Train`：`19,997` 张预计算样本（覆盖 `29` 个可见画派、`969` 位多作品艺术家）。
   - `Artist-OOD`：`500` 张可见画派但完全未见艺术家作品（严格按艺术家、标准化画作 ID `canonical_pid` 与 `16×16` 缩略图去重）。
   - `Unseen-Movement-OOD`：`500` 张来自 **5 个训练完全不可见画派**的作品（`Pointillism`、`Cubism`、`Pop Art`、`Art Nouveau (Modern)`、`Fauvism`），且不参与任何均值/方差归一化或 Stiefel 基拟合。
@@ -26,7 +26,7 @@
 
 ## 3. Stage P0：无监督参考编码器探针（Zero-DINO）
 
-源自 [p0_encoder_probe.json](../../runs/v35_cleave_one/p0_encoder_probe.json)（`1,200` 步自监督对比+属性训练后，各自 `N=500` 探针）：
+源自 p0_encoder_probe.json（仓库当前未提交：`runs/v35_cleave_one/p0_encoder_probe.json`）（`1,200` 步自监督对比+属性训练后，各自 `N=500` 探针）：
 
 | 特征 / 编码器 | Unseen Movement-OOD `1-NN` ↑ | Movement Margin (`same_mv - diff_mv`) ↑ | Artist-OOD `1-NN` ↑ | Artist-OOD Same-Artist Cos ↑ | Artist-OOD Movement Margin ↑ |
 |---|---|---|---|---|---|

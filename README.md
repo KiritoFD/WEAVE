@@ -1,153 +1,40 @@
-# WEAVE → PRISM
+# WEAVE → CLEAVE
 
-> **风格迁移的瓶颈，不是模型太小，而是我们一直在让模型学错任务。**
->
-> 认得出风格，不代表生成得出风格；能生成一幅画，不代表能把当前这幅画变成另一种风格。如果监督终点永远是源图，增加参数、注意力或更强的风格编码器，只会让模型更擅长把源图还原回来。
+**More capacity can preserve the wrong information.** 风格迁移不是单纯的重建或纹理匹配：生成器必须删除源画法，同时保留对象关系。CLEAVE 用选择性信息过滤、非对称 E/P 传输和轻量解码实现完整质量—效率谱。
 
-**PRISM** 的跃升来自两条互补主线：
-1. **潜空间传输范式转向（V0–V26）**：从“去源风格”转向“定向目标传输”；从全局硬约束转向“16×16 锁布局、高分辨放笔触”；从盲目扩容转向优化训练终点、初始化锚点与生成轨迹。
-2. **输出端减法革命（S10 Decoder）**：将 49.49M 的 SD-VAE Decoder 结构化剪枝至 **10.66M（−78.5%）**，在 RTX 3060 上将完整端到端流水线提速 **1.92×**（纯解码 **3.15×**），固定 latent 下的下游目标风格 Top-1 反而提升 **+3.17pp**。
+[文档首页](docs/README.md) · [系统总览](docs/system/README.md) · [E-Core](docs/e-core/README.md) · [P-Core](docs/p-core/README.md) · [Conditioning](docs/conditioning/README.md) · [Decoder](docs/decoder/README.md) · [论文](docs/icme2027/) · [性能前沿](docs/performance/figures/cleave_pareto_triptych.svg) · [3060 优化](docs/system/3060_PROFILE_OPTIMIZATION.md) · [资产清理](cleanup.md)
 
-本文档为截至 **2026-11-21** 的研究结论与资产总纲（**WEAVE** 为早期 Haar/DWT + Flow + AdaIN 轻量基线；**PRISM** 为演化后的潜空间编辑与风格条件流模型族）。
+## 当前系统（V35 P0–P9，2026-11-27）
 
-[核心模型配方](docs/ours/README.md) ｜ [V6–V21 历史总台账](docs/performance/MASTER_LEDGER.md) ｜ [ICME 论文工程](docs/icme2027/README.md) ｜ [V26-L 实时进展](docs/1120/PROGRESS.md) ｜ [原始 WEAVE 复现](docs/reproduction/baseline_reproduction.md)
+| 模块 | 作用 | 参数 |
+|---|---|---:|
+| E-Core | 1-NFE 高内容编辑与目标风格草稿 | 11.13M |
+| A3 | 低频亮度/色度解析起点 | 0 |
+| P-Core | Q32 瓶颈条件 Flow，6 名义积分步 | 44.54M |
+| S10B | 轻量解码 | 10.66M |
+| 冻结 Encoder / ConvNeXt | 编码与布局 | 46.51M |
+| 完整系统 | 无 DINO 推理依赖 | 112.84M |
 
----
+E 独立路径不调用 P；E→A3→P 为高质量重绘路径。当前 P9 补测覆盖高内容区，但交界视觉连续性仍需验证。
 
-## 一、性能全景：当前前沿与胜负格局
-
-以下均为 **Cross600 / S10 解码 / 冻结四裁判** 下的独立实测工作点（绝不拼凑多模型最优指标）。`↑` 越高越好，`↓` 越低越好。
-
-| 模型 / 工作点 | 条件范式 | DINO-C ↑ | DINO-S ↑ | CSD Top-1 ↑ | LPIPS ↓ | 定位与出处 |
-|---|---|---:|---:|---:|---:|---|
-| **R12 HighContent** ($\gamma=0.55$) | 闭集原型 | **0.7723** | 0.4564 | 42.50% | **0.4783** | 极高内容前沿（B4 锚 + Flow + PRISM-1）；[R12](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) |
-| **PRISM-1** ($\lambda=1.0$) | 闭集原型 | 0.7440 | 0.4430 | 44.33% | 0.5057 | 单步轻量（1.28M）、免测试期源标签、错目标 0.83%；[V19](docs/next1118/V19_RESULTS.md) |
-| **R12 HighContent** ($\gamma=1.0$) | 闭集原型 | 0.7286 | 0.4870 | 42.00% | 0.4980 | 单 Flow 高内容端（不混 PRISM-1）；[R12](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) |
-| **V23 HiC-JPk** | 闭集原型 | 0.6299 | 0.5330 | 58.83% | 0.5649 | 中高内容与强风格均衡点；[V23](docs/v23/V23_RESULTS.md) |
-| **PRISM-Flow D2** | 闭集原型 | 0.5335 | 0.5672 | 60.50% | 0.6022 | 16×16 粗尺度条件流主力点；[V20](docs/next1118/V20_RESULTS.md) |
-| **V22 Peak1500** | 闭集原型 | 0.4779 | **0.5781** | **76.83%** | 0.6268 | 强风格极限点（内容改动更大）；[V22](docs/v22/V22_P1_RESULTS.md) |
-| **C2nt** (t45 / t55，*已冻结*) | 严格任意参考 | 0.5448 / 0.6647 | 0.5235 / 0.5027 | 42.17% / 28.33% | 0.5205 / 0.3992 | 验证免教师参考响应与 OOD 正迁移；[C2nt](docs/v25/audits/c2nt_no_teacher_report.md) |
-| **StyleGallery**（外部基线） | 严格任意参考 | 0.6113 | 0.5604 | 52.50% | 0.5576 | 扩散跨注意力强对手（历史报告约 30.4 s/图；计时口径见原文）；[V23 对比](docs/v23/V23_RESULTS.md) |
-
-**核心格局判断：**
-- **已建立的优势**：在单卡 RTX 3060 上，PRISM 用极轻单步网络与少步 Flow 在多档内容预算下建立起清晰的质量—计算效率前沿。
-- **尚未赢下的决胜战**：上述最强点均基于训练五画派原型，**不可宣称在任意参考协议下全面击败 StyleGallery**。下一阶段唯一目标是将 PRISM-Flow 的跨风格生成能力迁移至**严格任意参考（1-Shot）**，并把工作点推进至 `DINO-C 0.62–0.70` 与强风格兼得的区间。
-
----
-
-## 二、主线一：潜空间传输演进（V0–V26 关键拐点）
-
-标注区分改动性质：`[结构/训练]` 新权重能力、`[推理/锚点]` 冻结权重释放、`[修复]` 代码纠错、`[诊断]` 假设证伪。跨代数据不作单变量因果归因，全量细节见 [MASTER_LEDGER](docs/performance/MASTER_LEDGER.md)。
-
-| 阶段 | 关键改动 | 核心实测变化 | 范式意义与文档 |
-|---|---|---|---|
-| **V0–V6** `[结构/诊断]` | 小波分频传输 → 218K 压参 → R1/Score-Diff 引导 | 直接变换 **91.4%** 仍判源画派（目标 **3.1%**）；R1 在 Heldout400 上将 Top-1 **2.8%→36.7%**，但 DINO-C **0.890→0.569** | 首次验证“去源≠到目标”；单纯强引导会摧毁内容。[V6](docs/v6/V6_CONCLUSIONS.md) · [V6 后续](docs/v6/V6_NEXT_RESULTS.md) |
-| **V8–V14** `[诊断]` | 局部预算 LD4、KDE/检索梯度、DWT vs DINO 表征审计 | 混合 KDE 复现目标 KDE **95%** 梯度方向；DINO patch 分类 **79.3%** vs DWT **54.4%**，但未直接转化为生成增益 | “像一幅画”≠“像指定画派”；高判别特征≠可执行生成指令。[V10.2](docs/v10_2/V10_2_RESULTS.md) · [V14](docs/v14/V14_RESULTS.md) |
-| **V15** `[诊断/训练]` | 自配对 Flow 扩容与长训；随后引入目标端 Bridge | 扩容使纯生成 Top-1 **36.33%→49.33%**，同模型编辑反跌 **10.67%→6.67%**（DINO-C **0.7506→0.8083**）；Bridge（$\tau=0.4$）**14.67%→17.83%** | **项目最核心负结果（Source-Style Lock）**：终点仍是源图时，扩容只会锁死源画派（注：含步数差异，不作纯参数因果宣称）。[V15](docs/v15/WEAVE_V15_SCALING_RESULTS.md) · [后训练](docs/v15/WEAVE_V15_POSTSCALE_AND_POSTTRAIN_SUMMARY.md) |
-| **V19** `[结构/训练]` | 亮度—色度各向异性信任域 + S10-VGG/Oklab 监督 + 空间路由 PRISM-1 | 强编辑 Ukiyo-e **0.8%→45.0%**，Top-1 持平（~59%）且 DINO-C **+0.1136**、LPIPS **−0.0866**；PRISM-1 路由 **+3.33pp**，错目标 **0.83%** | 内容与风格必须解耦预算；首次建立高因果特异性的单步模型。[V19](docs/next1118/V19_RESULTS.md) |
-| **V20** `[结构/训练]` | 源结构条件收紧至 **16×16 瓶颈** + 高密度多原型 | 同内容区相对 V19 T4，DINO-S **0.4618→0.5107（+0.0489）**，DINO-C **0.6688**；强风格 D1 达 DINO-S **0.5789** | **最关键架构转向：锁布局，不锁笔触**；细节合成交还生成流。[V20](docs/next1118/V20_RESULTS.md) |
-| **V21** `[结构/诊断]` | Stiefel 极分解 Q32 + 局部参考 One-Shot | 二阶 Gram 风格泄漏 **92.33%→20.00%**（精确随机地板）；参考版 DINO-S **0.6006** 但 DINO-C 跌至 **0.3970** | 表征纯净度≠生成保真度；V25 主线实际沿用 `dino_16`，Q32 生成必要性待裁决。[V21](docs/next1118/V21_RESULTS.md) |
-| **V22** `[训练/锚点]` | 固定布局强度与内容 Dropout；早停 1500 步；冻结换锚 | 同控 **63.33%→69.00%（+5.67pp）**，Peak1500 **73.67%**，过训至 3600 步跌 **−8pp**；仅换锚点：源图 **20.5%** → PRISM-1 锚 **57.17%** | 训练配方、停止时机与初始化起点，威力超过继续叠层。[V22](docs/v22/V22_P1_RESULTS.md) |
-| **V23** `[修复/训练]` | 修复双分支 CFG 清零布局 Bug；中尺度内容损失 + 跨风格桥监督 | 修 Bug 带来 **+8.0 / +14.83pp**；HiC-JPk 达 **58.83% / DINO-C 0.6299**；One-Shot 跨风格监督将 Top-1 从 **~19.7%→38.00%** | 双分支收益属纠错而非新算法；无跨风格终点则 Attention 学不会换画派。[V23](docs/v23/V23_RESULTS.md) |
-| **V24–V25** `[推理/锚点]` | 冻结权重潜空间混合 + B4 锚 + D6H（R12） | 零新权重将高内容前沿推至 DINO-C **0.7723**、DINO-S **0.4564**（+0.0193）、Top-1 **42.50%**（+4.83pp）、LPIPS **0.4783** | 单步与多步流误差互补，工程路径可显著外推前沿（fresh 推理需付两模型开销）。[R12](docs/ours/02_PRISM_HighContent_R12/RECIPE.md) · [审计](docs/v25/audits/a04_strength_report.md) |
-| **V26** `[诊断/减法]` | SR-CFG、RefAttn 因果干预（K1/Exp 1）、L0 采样对照、4 步 Euler、SG-25 OOD | SR-CFG 失败；**Exp 1 证实 V 通路本身损害内容（仅 V=0 使 DINO-C +0.050）**；L0 排除采样主因；4 步 Euler **43.17%**（5× 少 NFE）；SG-25 OOD **+0.2216** 响应但 DINO-C **0.3566** | 正式冻结 C2nt；确立下一代极简主线（移除推理端局部 V，转攻全局弦 + 跨风格教师 + Bary-SWD）。[V26 汇总](docs/1120/V26_RESULTS_SUMMARY.md) · [Exp 1 专题](docs/v26/LOCALITY_UOT_FIBER_BUNDLE.md) |
-
----
-
-## 三、主线二：S10 Decoder 减法革命（速度与风格的双重枢纽）
-
-在 49.49M 官方 SD-VAE Decoder 吞掉 **70.4%** 端到端时间的现实下，仅压缩生成器并非真正轻量化；更重要的是，Decoder 直接决定 latent 位移最终落为清晰笔触还是灰糊失真，它绝非算法无关的输出接口。[完整决策链](docs/vae/00_OVERVIEW.md)
-
-### 1. 结构化剪枝与真实图像感知恢复
-通过 **Taylor 通道重要性 → 四条残差流一致的结构化剪枝 → 继承权重**，将 Decoder 压至 **10,657,923 参数（−78.5%）**，通道宽度 `[64, 128, 192, 256]`。
-- **纯 L1 失败**：1000 步 L1 将重建误差从 `0.5568` 拉到 `0.06586`，但 512px LPIPS 仍高达 `~0.390`、画派保持率仅 `60.8%`——**像素对齐不等于画风恢复**。
-- **512px L1+LPIPS 感知恢复**：经 600 步初恢复 + 78,661 张干净 WikiArt 训练 1400 步 + 低学习率续训 400 步，holdout LPIPS 降至 **0.0851**、画派保持率升至 **87.13%**；独立 256 图测得 `PSNR 26.83 dB / LPIPS 0.0926 / CSD Keep 85.35%`（官方为 `27.21 dB / 0.0784 / 91.55%`，轻量化有损但可控）。**原始最优 S10 未用教师蒸馏，也未用 CSD/HF 风格损失。** [完整训练](docs/vae/01_S10_TRAINING_FULL.md) · [L1 复盘](docs/vae/14_PRUNING_RECOVERY_POSTMORTEM.md)
-
-### 2. 同卡实测加速与固定 Latent 下游对照
-
-| 测速范围（同 GPU / 后端 / Batch） | 官方 49.49M | S10 / 同结构 C0 (10.66M) | 实测加速 |
+| 实测点 | DINO-C | DINO-S | CSD Top-1 |
 |---|---:|---:|---:|
-| RTX 4090，PyTorch B1，纯 Decoder | 44.61 ms | **15.57 ms** | **2.86×** |
-| RTX 3060，PyTorch B8，纯 Decoder | 216.84 ms/图 | **68.83 ms/图** | **3.15×** |
-| **RTX 3060，PyTorch B8，整条 Encoder+WEAVE+Decoder** | **308.12 ms/图** | **160.12 ms/图** | **1.92×（端到端）** |
-| RTX 3060，TensorRT FP16 B8，纯 Decoder（C0） | 73.34 ms/图 | **27.08 ms/图** | **2.71×** |
+| E-only l025 | .9166 | .3907 | 2.33% |
+| E+A3 l050 | .8086 | .4274 | 31.50% |
+| E→P s060 | .7813 | .4636 | 38.83% |
+| E→P s085 | .6514 | .5261 | 57.83% |
+| E→P s100 | .5502 | .5597 | 69.67% |
+| E→P s150 | .3435 | .5919 | 91.17% |
 
-> 测速口径：3060 PyTorch 中 Decoder 耗时占比由 **70.4% → 43.0%**；TRT `27.08 ms` 仅测同拓扑 C0 纯解码器，历史报告的 TRT 整条 `~45.8 ms` 为分段拼接估算，不作实测宣称。[3060 Profile & TRT](docs/vae/08_STAGED_PROFILE_AND_TRT.md) · [测速口径](docs/vae/07_INFERENCE_SPEED.md)
+来源：[V35 P7–P9](docs/archive/historical/v35/V35_FINAL_REPORT.md)，E-only 与 E+A3 配置不同。4090 B16 P 路径已加载 RGB→RGB 报告 14.3 img/s，3060 最终权重尚待统一实测。StyleGallery 在 C≈.61 处 S=.5604，CLEAVE 插值 S=.5398、Top-1=62.67%；质量取舍与计时协议见报告，闭集画派条件不是任意参考。
 
-固定 **SD0 Encoder 与同一批生成 latent**，在 Cross600 上仅替换 Decoder：
+## 证据与复现
 
-| Decoder 变体 | Holdout 重建 LPIPS ↓ | 下游 CSD Top-1 ↑ | 下游 DINO-C ↑ | 下游 LPIPS ↓ |
-|---|---:|---:|---:|---:|
-| 官方原版（49.49M） | 0.0784 | 34.50% | **0.7239** | 0.5149 |
-| **旧 S10（10.66M，纯感知恢复）** | 0.0934 | **37.67%** | 0.7137 | 0.5034 |
-| 新 C0（10.66M，+两级 Haar 高频） | 0.0859 | 36.83% | 0.7156 | 0.5022 |
-| 新 C1（10.66M，+官方教师响应蒸馏） | **0.0850** | 36.00% | 0.7157 | **0.5015** |
+- Stiefel 消除二阶 Gram 泄漏（95.67%→20.67%），双种子同构消融支持中强档生成收益；空间风格信息仍可能存在。
+- 固定 P-Core 交换 E 草稿，目标识别率变化最高 +65.33pp，支持目标流形路由；A3 在固定权重下额外增加约 .009 S。
+- 固定最终 latent 更换 S10B，P9 的 s100 Top-1 +12.17pp；参数 −78.5%，历史 P2 解码提速 3.43×。
+- 58M 单 Flow 对照不及双核当前配方，支持专门化系统价值，不证明任意共享网络不可能成功。
 
-### 3. 三项关键定论与最终封装（S10B）
-- **更像教师 ≠ 更会迁移**：C1 教师有限差分蒸馏改善了重建（`0.0934 → 0.0850`）和响应余弦（`0.6495 → 0.6710`），下游 Top-1 却垫底（**旧 S10 37.67% > C0 36.83% > C1 36.00%**）。旧 S10 相对原版 Top-1 **+3.17pp**（配对 Bootstrap 95% CI `[+0.67, +5.83]pp`）、LPIPS **−0.0114**，代价为 DINO-C **−0.0102**。**因果边界**：`+3.17pp` 是剪枝频谱正则还是 WikiArt 同域微调所致，正通过 Full Decoder 匹配微调（L2）裁决。[下游排名](docs/v6/Q2A_ORACLE_DECODER_RANKING.md) · [C0/C1 验收](docs/vae/05_SD0_S10_V2_FINAL.md)
-- **重建 Encoder 不自动产出风格解耦**：Art-VAE（A0/A1/A2）在 2048 张画作上将 LPIPS 压低 **7.3%**（`0.0822 → 0.0762`）、PSNR **+0.80 dB**，但潜空间风格 AUROC 停在 `54.17% → 54.02%`。[Art-VAE](docs/vae/13_VAE_A0_A1_A2_REPORT.md)
-- **最终交付 S10B**：与旧 S10 **140 个权重张量字节级一致**（非新蒸馏权重），封装了“未缩放 posterior-mean latent + 恰好一次 `post_quant_conv`”契约，零重训直连官方 SD0（重建 DINO-C **0.9678**，下游 Affinity **0.5616** > 历史 A0 配对 `0.5587`）。[S10B 验收](docs/vae/10_S10B_FINAL.md) · [SD0 兼容对照](docs/vae/09_S10B_DECISION.md)
+最终实验入口见 [exp/v35_final](exp/v35_final/)；旧模型、原始报告与负结果见 [历史档案](docs/archive/historical/README.md)。旧 WEAVE 复现指南 [REPRODUCE.md](REPRODUCE.md) 不代表当前 CLEAVE 推理接口。模型与缓存未随 Git 全部交付，按 [cleanup.md](cleanup.md) 的资产清单核验；远端缺失源码/权重时不得假装已能完整复现。
 
----
-
-## 四、六条经 V0–V26 验证的核心科学结论
-
-1. **去源风格 ≠ 获得目标风格。** V6 直接算子已显著拉远源风格，但 **91.4%** 仍判源画派、目标仅 **3.1%**；V10.2 混合 KDE 即可解释目标 KDE **95%** 的恢复梯度。通用艺术先验与无方向扰动无法替代定向目标传输。[V6](docs/v6/V6_CONCLUSIONS.md) · [V10.2](docs/v10_2/V10_2_RESULTS.md)
-2. **自配对恢复目标会系统性强化 Source-Style Lock。** 当训练终点始终是源图时，网络完全可以忽略新参考并还原旧画；V15 给出了扩容后这一现象加剧的实测反例：V15 扩容生成 **+13pp** 而编辑 **−4pp**；V25 移走跨风格配对监督后 Top-1 暴跌 **−23pp**（`35.33%→12.33%`）。必须先修正监督终点，再谈网络容量与条件结构。[V15](docs/v15/WEAVE_V15_SCALING_RESULTS.md) · [V25](docs/v25/GPU3060_RESULTS.md)
-3. **保内容要锁低维布局，不能锁高维像素。** V19 亮度—色度各向异性预算在保持 Top-1 的同时拉升 DINO-C **+0.1136**；V20 将源结构收紧到 **16×16** 释放细尺度笔触自由度；V22 在 32×32 额外注入 SPADE 源结构反而掉 **−17～−19pp**（注：亮度≈结构为有效工程近似，非严格数学正交）。[V19](docs/next1118/V19_RESULTS.md) · [V20](docs/next1118/V20_RESULTS.md) · [V22](docs/v22/V22_P1_RESULTS.md)
-4. **表征可分性、去泄漏指标与生成迁移能力是三张独立成绩单。** 795D 风格 Fiber 经 PCA-64 五分类即达 **92.0%**；硬 Q32 将二阶 Gram 泄漏压至精确随机底线 **20.0%**，但 V25 最强生成主线使用的是 `dino_16` 而非 Q32。任何表征优势都必须经端到端生成消融验证。[V25 特征审计](docs/v25/audits/a05_feature_geometry.md) · [K0](docs/v26/4090/K0_Q32_FEATURE_AUDIT.md)
-5. **起点（锚点）与终点（Decoder）都是核心算法变量。** 冻结 Flow 仅换锚点即可产生 **20.5% → 57.17%** 的 Top-1 跨度；固定 latent 仅换 S10 Decoder 即获 **+3.17pp** 与 **1.92×** 端到端提速。两者都必须纳入受控实验变量。[V22](docs/v22/V22_P1_RESULTS.md) · [S10 对照](docs/v6/Q2A_ORACLE_DECODER_RANKING.md)
-6. **典型流形样本优于判别器极端样本，且不必迷信昂贵检索。** 高 margin 原型易被展厅装置等离群图污染；V22 消融证明 K4 / K8 / Core-K8 / 随机典型实例差距在 **±0.5pp** 内——关键是覆盖正常画法，而非复杂筛选规则本身。[V20](docs/next1118/V20_RESULTS.md) · [V22](docs/v22/V22_P1_RESULTS.md)
-
----
-
-## 五、被证伪的路线清单（Stop-Doing List）
-
-| 被否定的直觉 / 方案 | 证伪证据 | 当前裁决 |
-|---|---|---|
-| **推理端保留 RefAttn 局部 Value 通路** | K1 & **Exp 1**：置零 `V=0` 使 DINO-C **+0.050**（`0.539→0.589`）；去空间化 `V`（`0.486`）、调温（`0.488–0.493`）、UOT $\bar{\Gamma}$（`0.495`）均无法恢复 | **在当前 C2nt 权重上，局部 `V` 注入带来的内容损失不能靠调温或替换匹配矩阵修复；下一版默认删除该推理通路，先用全局弦建立可靠基线。** [K1](docs/v26/4090/K1_REFATTN_CAUSAL_AUDIT.md) · [Exp 1](docs/v26/LOCALITY_UOT_FIBER_BUNDLE.md) |
-| **靠 SR-CFG 推理差分甩掉源风格** | V26 SR1–SR6 最高 **40.33% < 基线 42.17%**，全 9 臂 Rococo 仍为 **0–1.7%**；K1-C 证实 `v_pos−v_src` 沿轨迹衰减（末端 `cos=0.04`） | 训练没学到的方向无法靠推理差分凭空造出（副产品：`v_pos−v_src` 可作免标签 uncond 近似）。[V26](docs/1120/V26_RESULTS_SUMMARY.md) |
-| **只修跨画派参考采样就能救 C2nt** | V26-L0 同配方 1200 步：A0 **16.17%** → 严格跨画派 A1 **11.33%** / Core A2 **12.00%** | 采样不是主因，核心在跨风格监督目标与主干模型。[L0](docs/v26/4090/L0_CROSSSTYLE_CAUSAL.md) |
-| **用教师响应蒸馏替代原 S10 生产权重** | C1 重建 LPIPS **0.0850** 优于旧 S10 **0.0934**，下游 Top-1 反低（**36.00% < 37.67%**） | 生产环境保留与旧 S10 字节级一致的 **S10B**。[下游排名](docs/v6/Q2A_ORACLE_DECODER_RANKING.md) |
-| **持续扩容自配对 Flow / 高分辨源注入** | V15 扩容编辑 **−4pp**；V22 32×32 SPADE 注入 **−17～−19pp** | 不修跨风格终点，禁止堆参；不向 32×32+ 注入源图细节。[V15](docs/v15/WEAVE_V15_SCALING_RESULTS.md) · [V22](docs/v22/V22_P1_RESULTS.md) |
-| **把 SWD 当作“13× 判别力更强”的损失** | 尺度无关更正 AUC：mean-VGG **0.673**、SWD **0.661**、Gram **0.649** | 13× 为量纲伪影；SWD 真实价值是**近正交互补纹理梯度**（`cos=0.179`，`20×` 范数），待实训验证。[K2 更正](docs/1120/PROGRESS.md) |
-| **把困难画派失败归咎于 CSD 题材偏置** | K2-C 正对照：CSD 识别真实 Rococo **90.0%**、ER **98.3%**；C2nt 在全部题材类上 Rococo 均为 **0.0%** | 困难画派失败是真实的风格迁移失败，评测裁判可信。[K2 审计](docs/v26/4090/K2_STYLE_LOSS_AND_SUBJECT_AUDIT.md) |
-| **无条件认为步数越多越好 / 双分支总胜 full** | 4 步 Euler Top-1 **43.17%** > 10 步 RK2 **42.17%**（5× 少 NFE，但 DINO-S `0.5112 < 0.5236`）；极简去繁路线仍需 full 先验 | 步数与 CFG 分支需按工作点与路线权衡，不做一刀切。[V25 审计](docs/v25/ABLATION_LEDGER.md) · [V26](docs/1120/PROGRESS.md) |
-
----
-
-## 六、下一阶段攻关（V26-L：PRISM-Flow 任意参考化）
-
-**C2nt 训练配方已于 2026-11-21 正式冻结**（其科学结论——免教师参考响应 `+0.0732`、SG-25 OOD 正迁移 `+0.2216` / `swap 0.5349` 但内容仅 `0.3566`——已归档，支持降级决策）。[C2nt 降级决策](docs/1120/07_c2nt_demotion_decision.md)
-
-基于 K0–K2、L0 与 Exp 1 的完整诊断闭环，主线全面转向 **PRISM-Flow 任意参考化**，遵循四条硬设计约束：
-1. **推理端极简化**：对下一版任意参考 Flow **默认关闭现有 RefAttnV24 的局部 `V` 注入**，优先全局风格弦通路；是否恢复新的局部机制，必须以受控收益为依据。[Exp 1](docs/v26/LOCALITY_UOT_FIBER_BUNDLE.md)
-2. **局部性下沉至训练目标（Exp 2 进行中）**：研究 **Quotient-UOT 重心切片 Wasserstein 损失（`Bary-SWD`）**，与 `VGG 均值`、`Global SWD` 做同预算对照；目标是把区域纹理监督摊销进全局条件 Flow 权重，**当前仅属候选方案，尚未取得可归档的生成收益**。
-3. **跨风格教师监督修复（进行中）**：已修复 L1 教师条件反置 Bug（原实现用源画派生成教师导致矛盾监督，旧 `F2=11.00%` 已作废），按 `(content, target_style)` 重建跨画派教师并重训验证。[PROGRESS](docs/1120/PROGRESS.md)
-4. **独立因果补账（进行中）**：同步执行 **Full Decoder WikiArt 匹配微调（L2）** 裁决 S10 增益归因，以及 **Q32 匹配训练消融（K3）** 裁决是否永久移除 Q32。[V26-L 长计划](docs/1120/08_v26_long_plan.md)
-
----
-
-## 七、复现入口、代码导航与评测底线
-
-| 入口 | 说明 |
-|---|---|
-| [模型与 Checkpoint 配方](docs/ours/README.md) | 全部代表模型的具体权重、锚点、CFG、求解器配置与 750 图资产 |
-| [历史总台账](docs/performance/MASTER_LEDGER.md) · [机器可读指标](docs/performance/metrics.csv) | 历史同协议完整指标；V22–V26 新增实验以各阶段文档为准 |
-| [完整文档索引](docs/README.md) · [实验源码索引](exp/README.md) | V6–V26 脚本、审计报告与全部失败记录 |
-| [S10 Decoder 专题](docs/vae/README.md) · [运行成本审计](docs/v25/audits/a07_cost_model.md) | 潜变量缩放契约、参数量、NFE/CFG 倍数与缓存/端到端延迟拆解 |
-| [V25 模型血缘](docs/v25/MODEL_LINEAGE.md) · [消融证据评级](docs/v25/ABLATION_LEDGER.md) | 明确区分新权重、换锚点与 Bug 修复来源 |
-| [工程规范与契约](AGENTS.md) · [旧版归档](docs/legacy_root/EXPERIMENTS.md) | S10 潜变量缩放、`post_quant_conv` 强约束与早期 WEAVE 归档 |
-
-**快速复现：** 安装依赖 `pip install -r requirements.txt`；按目标工作点的 [RECIPE](docs/ours/README.md) 加载对应 checkpoint 与参数，运行 [exp/](exp/README.md) 对应入口脚本（V0–V26 不强行合并为单一训练入口）。S10 解码务必严格遵守 [AGENTS.md](AGENTS.md) 中的未缩放 latent 与单次 `post_quant_conv` 契约。
-
-**评测与表述底线：**
-- 标准评测为 **test750 = Cross600 + Same150**（主表报 Cross600），统一 S10 解码与四裁判隔离进程；**test750 已多次用于开发选择，非独立盲测集**。
-- 自参考恒等目前依赖 Same150 协议 bypass（V26 审计显示 C2nt 在 `ref==src` 下 `latent MAE 0.451 / DINO-C 0.707`）。
-- 严格区分**闭集五画派原型**与**任意参考 1-Shot**；严格区分 **cached / 端到端 / 4090 / 3060 / B1 / B8 / 纯 Decoder TRT** 计时口径，绝不混称。
-
----
-
-> **研究主张**：风格迁移不是把一张图改得“不像自己”，也不是让生成器记住某种画派；它要保留源图“画什么”，拒绝源图“怎么画”，再依据目标参考重新生成“怎么画”。决定成败的不是参数规模，而是训练目标是否真正要求跨风格转换，以及架构是否为目标笔触留出可生成的自由度。
-
-MIT License：[LICENSE](LICENSE)。历史引用与早期投稿归档见 [CITATION.cff](CITATION.cff) 与 [aaai2027_v4/](aaai2027_v4/)。
+One-shot 独立开发：[One-shot 研究](docs/one-shot/README.md)。不把高参考跟随率当作高质量内容保持的证明。

@@ -42,7 +42,7 @@ python tools/plot_metrics_750.py --vector  # 额外 SVG + PDF
 
 ## 附：旧图修复
 
-[`../../v15/plot_v15_dino_artfid.py`](../../v15/plot_v15_dino_artfid.py) 原先把 44 行
+[`../../v15/plot_v15_dino_artfid.py`](../../archive/historical/v15/plot_v15_dino_artfid.py) 原先把 44 行
 ArtFID/KID 明细表用 `fig.text` 堆在画布外，配合 `bbox_inches='tight'` 把
 `dino_artfid_v15_zoom.png` 撑到 13008 px 宽。已改为图内一行摘要 + 固定画布，
 重画后两版均为 3588×2116。完整明细改由 `metrics_750.csv` 承载。

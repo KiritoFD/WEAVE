@@ -24,11 +24,11 @@
 | `StyleID` | 外部 DDIM 注意力注入 | `0.3885` | `0.5143` | `73.20%` | `0.7795` | `0.6469` | `0.5554` | `3.864` | `0.4306` | `5040.0` | `0.20` |
 | `StyleShot` | 外部大规模风格调优扩散 | `0.3569` | `0.5750` | `92.60%` | `0.8148` | `0.6949` | `0.7697` | `3.563` | `0.4100` | `24480.0` | `0.04` |
 | **`PRISM-1` (`V19.S2`)** | 专用单步任意参考（1-NFE, 1.50M） | **`0.7440`** | **`0.4431`** | **`44.33%`** | **`0.6880`** | **`0.5655`** | **`0.5057`** | **`6.273`** | **`0.5116`** | **`17.04`** | **`58.69`** |
-| **`PRISM-1-Unified` (`λ=0.45`)** | 专用单步无旁路底座（[基线报告](../exp1123/single_q32/unified/README.md)） | **`0.7587`** | **`0.4426`** | **`44.50%`** | `—` | `—` | `—` | **`6.311`** | **`0.5121`** | `~17–20` | `~50–59` |
+| **`PRISM-1-Unified` (`λ=0.45`)** | 专用单步无旁路底座（[基线报告](../archive/historical/exp1123/single_q32/unified/README.md)） | **`0.7587`** | **`0.4426`** | **`44.50%`** | `—` | `—` | `—` | **`6.311`** | **`0.5121`** | `~17–20` | `~50–59` |
 | **`PRISM-Flow D6`** | 专用少步流模型（闭集原型设置） | `0.6688` | **`0.5107`** | **`55.67%`** | **`0.7182`** | **`0.6145`** | `0.5375` | **`6.367`** | **`0.5645`** | **`76.60`** | **`13.05`** |
 | `ema_s4000 (λ=0.0)` | 纯恒等无编辑下界对照 | `0.9590` | `0.3735` | `0.83%` | `—` | `—` | `—` | `5.584` | `0.4417` | `—` | `—` |
 
-> \* 注：`StyleGallery` 延迟 `30400.0 ms/img` 来自 [speed_composite_score.svg](figures/speed_composite_score.svg) / `exp/v25/plot_ours_pareto.py` 标定口径（`metrics.csv` 该列留空）。`PRISM-1-Unified` 速度与完整表项见 [基线报告](../exp1123/single_q32/unified/README.md)，目前仍在 [V28 进度](../v28/PROGRESS.md) 中继续修复高强度传递损耗。
+> \* 注：`StyleGallery` 延迟 `30400.0 ms/img` 来自 [speed_composite_score.svg](figures/speed_composite_score.svg) / `exp/v25/plot_ours_pareto.py` 标定口径（`metrics.csv` 该列留空）。`PRISM-1-Unified` 速度与完整表项见 [基线报告](../archive/historical/exp1123/single_q32/unified/README.md)，目前仍在 [V28 进度](../archive/historical/v28/PROGRESS.md) 中继续修复高强度传递损耗。
 
 ---
 
@@ -60,5 +60,5 @@
 为了检验上述结论是否在开源通用多图编辑大模型上同样成立，已对本地 `4090` 算力节点的模型资产完成核查：
 
 1. **`MOSS-Image` 不适合作为参考图风格迁移参照**：4090 上既有 `Comfy-Org/MOSS-Image` SFT BF16 权重为纯文生图 dense 管线（`pipeline_moss_image.py` 明确不提供 reference-image 编辑接口），本身不具备图像条件编辑能力，不强行纳入对比。
-2. **`Qwen-Image-2.1-Turbo` 已完成 Cross600 实测（2026-11-25，RTX 3060 12GB `bnb4`）**：详情见 [Qwen-Image-2.1-Turbo Cross600 报告](../v28/QWEN_IMAGE_21_TURBO_CROSS600.md) 与 [eval_qwen_turbo.py](../../exp/v28_unified/eval_qwen_turbo.py)。实测在强风格迁移画派上显著强于 `Seedream 4.5`（`CSD Top-1 = 42.17%` vs `37.30%`，`DINO-S = 0.4660` vs `0.3885`，`Ukiyo_e = 78.33%`），但在相近油画画派仍存在明显源图锁定（`Early_Renaissance = 15.00%`, `Rococo = 20.00%`, `pred_eq_src = 56.83%`），且即便 8-step Turbo 量化至 4-bit NF4 在消费级 3060 上仍需 **`16.07 s/img`**（峰值显存 `7.32 GB`）。
+2. **`Qwen-Image-2.1-Turbo` 已完成 Cross600 实测（2026-11-25，RTX 3060 12GB `bnb4`）**：详情见 [Qwen-Image-2.1-Turbo Cross600 报告](../archive/historical/v28/QWEN_IMAGE_21_TURBO_CROSS600.md) 与 [eval_qwen_turbo.py](../../exp/v28_unified/eval_qwen_turbo.py)。实测在强风格迁移画派上显著强于 `Seedream 4.5`（`CSD Top-1 = 42.17%` vs `37.30%`，`DINO-S = 0.4660` vs `0.3885`，`Ukiyo_e = 78.33%`），但在相近油画画派仍存在明显源图锁定（`Early_Renaissance = 15.00%`, `Rococo = 20.00%`, `pred_eq_src = 56.83%`），且即便 8-step Turbo 量化至 4-bit NF4 在消费级 3060 上仍需 **`16.07 s/img`**（峰值显存 `7.32 GB`）。
 3. **待补齐 `Qwen-Image-2.1`（Base, 40-step）**：后续可在 `4090` 释放 GPU 后在同套 `q2a_oracle_cross600` 协议下补测 Base 40 步上限对照。

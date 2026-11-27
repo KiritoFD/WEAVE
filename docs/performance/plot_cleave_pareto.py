@@ -165,12 +165,12 @@ def collect_triptych_data() -> dict[str, Any]:
     fb_idx = frontier_indices([(b["dc"], b["t1"]) for b in ext_list])
     fc_idx = frontier_indices([(b["ips"], b["t1"]) for b in ext_list])
 
-    sd = _load_json(REPO / "docs/v34/data/stage_d_report.json")
-    c2a3 = _load_json(REPO / "docs/v34/data/c2_a3_control_report.json")
-    sc = _load_json(REPO / "docs/v34/data/stage_c_report.json")
-    sa = _load_json(REPO / "docs/v34/data/stage_a_report.json")
-    sb = _load_json(REPO / "docs/v34/data/stage_b_report.json")
-    p2 = _load_json(REPO / "docs/v33/data/p2_report.json")
+    sd = _load_json(REPO / "docs/archive/historical/v34/data/stage_d_report.json")
+    c2a3 = _load_json(REPO / "docs/archive/historical/v34/data/c2_a3_control_report.json")
+    sc = _load_json(REPO / "docs/archive/historical/v34/data/stage_c_report.json")
+    sa = _load_json(REPO / "docs/archive/historical/v34/data/stage_a_report.json")
+    sb = _load_json(REPO / "docs/archive/historical/v34/data/stage_b_report.json")
+    p2 = _load_json(REPO / "docs/archive/historical/v33/data/p2_report.json")
 
     v34_ips = float(sd["cold_start_rgb_to_rgb_speed"]["b16_ips"]) if sd else 14.5
     v34_winner = _extract_curve(c2a3["levels"], ips=v34_ips) if c2a3 else []
@@ -215,12 +215,12 @@ def collect_triptych_data() -> dict[str, Any]:
             if k in sb["arms"]:
                 stage_b_curves[k] = _extract_curve(sb["arms"][k]["levels"], ips=18.2)
 
-    p8 = _load_json(REPO / "docs/v35/data/p8_final_report.json")
-    p9 = _load_json(REPO / "docs/v35/data/p9_paper_audit_report.json")
-    p7 = _load_json(REPO / "docs/v35/data/p7_biglittle_report.json")
-    p3 = _load_json(REPO / "docs/v35/data/p3_stiefel_poolc_report.json")
-    p4 = _load_json(REPO / "docs/v35/data/p4_seed2_report.json")
-    p5 = _load_json(REPO / "docs/v35/data/p5_duration_report.json")
+    p8 = _load_json(REPO / "docs/archive/historical/v35/data/p8_final_report.json")
+    p9 = _load_json(REPO / "docs/archive/historical/v35/data/p9_paper_audit_report.json")
+    p7 = _load_json(REPO / "docs/archive/historical/v35/data/p7_biglittle_report.json")
+    p3 = _load_json(REPO / "docs/archive/historical/v35/data/p3_stiefel_poolc_report.json")
+    p4 = _load_json(REPO / "docs/archive/historical/v35/data/p4_seed2_report.json")
+    p5 = _load_json(REPO / "docs/archive/historical/v35/data/p5_duration_report.json")
 
     v35_final_ips = float(p8["perf_4090"]["speed"]["b16_ips"]) if p8 else 14.3
     if p9 and "p9a_high_content_and_handoff" in p9:

@@ -422,7 +422,7 @@ def run_p7(*, device: str = "cuda") -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def _export_fixed_task_visual_grid() -> dict[str, Any]:
-    """Assemble fixed task_id visual comparison strips (5 cross-style tasks) into docs/v35/figures/."""
+    """Assemble fixed task_id visual comparison strips (5 cross-style tasks) into docs/performance/figures/."""
     tasks, _, _ = tasks_and_sources()
     # Pick 1 canonical deterministic cross-style task per target style (tid=0..4, source != target)
     picked = []
@@ -430,7 +430,7 @@ def _export_fixed_task_visual_grid() -> dict[str, Any]:
         cand = [t for t in tasks if int(t["target_style_id"]) == tid and int(t["source_style_id"]) != tid]
         picked.append(cand[3])  # deterministic index across styles
 
-    fig_dir = ROOT / "docs/v35/figures"
+    fig_dir = ROOT / "docs/performance/figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
 
     # Columns: Target Ref / Source / E-only(l100) / P-only(s085) / D0_sdvae / D1_wikiart / CLEAVE(s085) / CLEAVE(s100)
