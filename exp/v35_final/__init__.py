@@ -139,15 +139,20 @@ def measure_and_summarize_v35(arm_name: str, *, device: str = "cuda", force: boo
 
 
 def summarize_matched_c(levels: dict[str, dict[str, Any]], c_grid: tuple[float, ...] = (0.50, 0.61, 0.70)) -> dict[str, Any]:
-    """Interpolate DINO-S and CSD Top-1 at fixed DINO-C targets and compute deltas vs V32."""
+    """Interpolate DINO-S and CSD Top-1 at fixed DINO-C targets with explicit bracketing verification."""
     v32_pts = v32_frontier_points()
     pts_s = sorted([(float(m["dino_c"]), float(m["dino_s"])) for k, m in levels.items() if "wrong" not in k], key=lambda x: x[0])
     pts_t = sorted([(float(m["dino_c"]), float(m["csd_top1"])) for k, m in levels.items() if "wrong" not in k], key=lambda x: x[0])
+    c_lo, c_hi = pts_s[0][0], pts_s[-1][0]
+    bracketed = [bool(c_lo - 1e-6 <= c <= c_hi + 1e-6) for c in c_grid]
     s_at_c = [round(interp_s_at_c(c, pts_s), 4) for c in c_grid]
     t_at_c = [round(interp_s_at_c(c, pts_t), 4) for c in c_grid]
     ds_v32 = [round(s_at_c[i] - interp_s_at_c(c_grid[i], v32_pts), 4) for i in range(len(c_grid))]
     return {
         "c_grid": list(c_grid),
+        "c_range": [round(c_lo, 4), round(c_hi, 4)],
+        "bracketed": bracketed,
+        "all_bracketed": all(bracketed),
         "dino_s_at_c": s_at_c,
         "csd_top1_at_c": t_at_c,
         "delta_s_vs_v32": ds_v32,

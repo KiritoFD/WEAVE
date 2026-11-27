@@ -14,6 +14,7 @@ from exp.v35_final.common import train_44m_ablation
 from exp.v35_final.p0_p2_evals import run_p0, run_p1, run_p2
 from exp.v35_final.p3_p4_retrain import run_p3, run_p4
 from exp.v35_final.p5_p8_finalize import run_p5, run_p6, run_p7, run_p8
+from exp.v35_final.p9_paper_audit import run_p9
 from src.utils.runtime import save_json, utc
 
 
@@ -38,14 +39,18 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--stage",
-        choices=["smoke", "p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p0_p2", "all"],
+        choices=["smoke", "p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p0_p2", "all"],
         required=True,
     )
+    ap.add_argument("--only", default=None, help="Optional sub-stage selector for p9 (e.g., p9a..p9e)")
     ap.add_argument("--device", default="cuda")
     args = ap.parse_args()
 
     if args.stage == "smoke":
         run_smoke(device=args.device)
+        return
+    if args.stage == "p9":
+        run_p9(device=args.device, only=args.only)
         return
 
     stages = {

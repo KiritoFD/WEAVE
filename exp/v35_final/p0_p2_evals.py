@@ -46,9 +46,9 @@ from src.utils.structure import dwt2_haar, rgb_to_gray
 
 
 def _artist_key(stem: str) -> str:
-    """Extract normalized artist identifier from WikiArt stem `<Style>__<artist>_<work>`."""
-    body = stem.split("__", 1)[-1]
-    return body.split("_", 1)[0].lower()
+    """Extract normalized artist identifier from IDs like `<pool>__<Style>__<Style>__<artist>_<work>`."""
+    tail = str(stem).rsplit("__", 1)[-1]
+    return tail.split("_", 1)[0].lower()
 
 
 def _extra_cross_rates(m_dir: Path, *, alt_target_tid: torch.Tensor | None = None) -> dict[str, float]:

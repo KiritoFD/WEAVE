@@ -211,17 +211,36 @@ def collect_triptych_data() -> dict[str, Any]:
                 stage_b_curves[k] = _extract_curve(sb["arms"][k]["levels"], ips=18.2)
 
     p8 = _load_json(REPO / "docs/v35/data/p8_final_report.json")
+    p9 = _load_json(REPO / "docs/v35/data/p9_paper_audit_report.json")
     p7 = _load_json(REPO / "docs/v35/data/p7_biglittle_report.json")
     p3 = _load_json(REPO / "docs/v35/data/p3_stiefel_poolc_report.json")
     p4 = _load_json(REPO / "docs/v35/data/p4_seed2_report.json")
     p5 = _load_json(REPO / "docs/v35/data/p5_duration_report.json")
 
     v35_final_ips = float(p8["perf_4090"]["speed"]["b16_ips"]) if p8 else 14.3
-    v35_final = _extract_curve(p8["test750_levels"], ips=v35_final_ips) if p8 else []
-    v35_eonly = _extract_curve(p7["e_only"], ips=33.1) if p7 else []
+    if p9 and "p9a_high_content_and_handoff" in p9:
+        v35_final = _extract_curve(p9["p9a_high_content_and_handoff"]["pcore_full_levels"], ips=v35_final_ips)
+        v35_eonly = _extract_curve(p9["p9a_high_content_and_handoff"]["ecore_a0_sweep"], ips=33.1)
+        v35_ea3 = _extract_curve(p9["p9a_high_content_and_handoff"]["ecore_a3_sweep"], ips=32.5)
+    else:
+        v35_final = _extract_curve(p8["test750_levels"], ips=v35_final_ips) if p8 else []
+        v35_eonly = _extract_curve(p7["e_only"], ips=33.1) if p7 else []
+        v35_ea3 = []
     v35_ponly = _extract_curve(p7["p_only_src_chroma"], ips=None) if p7 else []
+    p9_ponly_a3 = _extract_curve(p9["p9c_unified_ep_necessity"]["P9_Ponly_full_a3"]["levels"], ips=None) if (p9 and "p9c_unified_ep_necessity" in p9) else []
+    p9_u58_self = _extract_curve(p9["p9e_iso_param_shared_backbone"]["self_ep_levels"], ips=13.1) if (p9 and "p9e_iso_param_shared_backbone" in p9) else []
 
-    if p8 and "holdout_s085" in p8:
+    if p9 and "p9d_artist_and_work_holdout" in p9:
+        ho_lv = p9["p9d_artist_and_work_holdout"]["holdout_levels"]
+        for hk, hlabel in [("final_s085", "V35_Final_s085"), ("final_s100", "V35_Final_s100"), ("seed2_s085", "V35_Seed2_s085"), ("seed2_s100", "V35_Seed2_s100")]:
+            if hk in ho_lv:
+                c = ho_lv[hk]["cross600"]
+                holdout_pts.append({
+                    "label": hlabel, "dc": round(c["dino_c"], 4), "ds": round(c["dino_s"], 4),
+                    "t1": round(c["csd_top1"] * 100.0, 2), "lpips": round(c["lpips"], 4),
+                    "same": round(ho_lv[hk]["same150"]["csd_top1"] * 100.0, 1),
+                })
+    elif p8 and "holdout_s085" in p8:
         for hk, hlabel in [("final", "V35_Final_s085"), ("seed2_r0", "V35_Seed2_s085")]:
             if hk in p8["holdout_s085"]:
                 c = p8["holdout_s085"][hk]["cross600"]
@@ -270,7 +289,10 @@ def collect_triptych_data() -> dict[str, Any]:
         "v35_final": v35_final,
         "v35_final_ips": v35_final_ips,
         "v35_eonly": v35_eonly,
+        "v35_ea3": v35_ea3,
         "v35_ponly": v35_ponly,
+        "p9_ponly_a3": p9_ponly_a3,
+        "p9_u58_self": p9_u58_self,
         "p3_curves": p3_curves,
         "p4_curves": p4_curves,
         "p5_points": p5_points,
@@ -385,7 +407,7 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
             ha_m = "right" if p["knob"] == "s100" else "left"
             _ann(ax_a, lbl_s, (p["dc"], p["ds"]), off_map[p["knob"]], ha=ha_m, col=FINAL_DARK if v35f else WIN_DARK, bold=True, fs=7.4)
     _ann(ax_a, "V32 22M", (0.2805, 0.6054), (4, 8), ha="left", col=BLUE_DARK, bold=True, fs=7.1)
-    _ann(ax_a, "E-Core s=0.75", (ec[-1]["dc"], ec[-1]["ds"]), (5, 7), ha="left", col=TEAL_DARK, bold=True, fs=7.2)
+    _ann(ax_a, "E-Core s=0.75", (ec[-1]["dc"], ec[-1]["ds"]), (18, 10), ha="left", col=TEAL_DARK, bold=True, fs=7.2, leader=True)
     ax_a.set_xlim(0.24, 0.94)
     ax_a.set_ylim(0.34, 0.63)
     ax_a.set_title("(a) Full-Spectrum Quality Control", fontweight="bold", pad=8)
@@ -751,25 +773,24 @@ function renderTriptych() {{
 
 function renderV35Final() {{
   legendEl.innerHTML = `
-    <span class="lg-item"><span class="swatch" style="background:#10b981"></span><b>CLEAVE V35 Final (Stiefel+15%PC+Calib)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#10b981"></span><b>CLEAVE V35 Final (Stiefel+E+A3+P+S10B, s0.60–1.50)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#f97316"></span>P9 Unified-58M (Shared Single Backbone, Self-EP)</span>
     <span class="lg-item"><span class="swatch" style="background:#a855f7"></span>Q3 Stiefel+0%PC</span>
     <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>Q1 Whiten-32</span>
-    <span class="lg-item"><span class="swatch" style="background:#64748b"></span>Q2 PCA-32</span>
-    <span class="lg-item"><span class="swatch" style="background:#f59e0b"></span>R0 Seed-2 Stiefel</span>
-    <span class="lg-item"><span class="swatch" style="background:#14b8a6"></span>P7 E-only (1-NFE)</span>
-    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>P7 P-only (Src Chroma)</span>
+    <span class="lg-item"><span class="swatch" style="background:#14b8a6"></span>E-only (1-NFE A0)</span>
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>P-only (Src+A3)</span>
   `;
-  const spL = drawPanel(50, 22, 410, 242, {{x0: 0.32, x1: 0.94, y0: 0.38, y1: 0.61, xTicks: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.40, 0.45, 0.50, 0.55, 0.60], title: "(a) P3/P4/P7 Attribution: DINO-C vs DINO-S", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑"}});
-  const spR = drawPanel(520, 22, 415, 242, {{x0: 0.32, x1: 0.94, y0: 0.0, y1: 96.0, xTicks: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(b) P3/P4/P7 Attribution: DINO-C vs CSD Top-1 (%)", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑"}});
+  const spL = drawPanel(50, 22, 410, 242, {{x0: 0.32, x1: 0.94, y0: 0.38, y1: 0.61, xTicks: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.40, 0.45, 0.50, 0.55, 0.60], title: "(a) P3/P4/P7/P9 Attribution: DINO-C vs DINO-S", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑"}});
+  const spR = drawPanel(520, 22, 415, 242, {{x0: 0.32, x1: 0.94, y0: 0.0, y1: 96.0, xTicks: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 20, 40, 60, 80], yFmt: v => v + "%", title: "(b) P3/P4/P7/P9 Attribution: DINO-C vs CSD Top-1 (%)", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑"}});
   const p3 = DATA.p3_curves || {{}}, p4 = DATA.p4_curves || {{}};
   const curves = [
-    ["P7 P-only (Src Chroma)", DATA.v35_ponly || [], "#f43f5e", "3,2"],
-    ["P7 E-only (1-NFE)", DATA.v35_eonly || [], "#14b8a6", "4,2"],
-    ["P3 Q2 (PCA-32 + 15%PC)", p3.P3_Q2_pca32_poolc || [], "#64748b", "4,3"],
+    ["P9 P-only (Src+A3)", DATA.p9_ponly_a3 && DATA.p9_ponly_a3.length ? DATA.p9_ponly_a3 : (DATA.v35_ponly || []), "#f43f5e", "3,2"],
+    ["P9 E-only (1-NFE A0)", DATA.v35_eonly || [], "#14b8a6", "4,2"],
+    ["P9 Unified-58M (Shared 58.04M Self-EP)", (DATA.p9_u58_self || []).filter(d => d.knob !== "tau0"), "#f97316", ""],
     ["P3 Q1 (Whiten-32 + 15%PC)", p3.P3_Q1_whiten_poolc || [], "#3b82f6", "4,3"],
     ["P3 Q3 (Stiefel + 0%PC)", p3.P3_Q3_stiefel_nopc || [], "#a855f7", ""],
     ["P4 R0 (Seed-2 Stiefel)", p4.P4_R0_stiefel_seed2 || [], "#f59e0b", "2,2"],
-    ["V35 Final (CLEAVE E+P+Calib)", (DATA.v35_final || []).filter(d => d.knob !== "tau0"), "#10b981", ""],
+    ["V35 Final (CLEAVE E+P+Calib s0.60-1.50)", (DATA.v35_final || []).filter(d => d.knob !== "tau0"), "#10b981", ""],
   ];
   for (const [name, pts, col, dash] of curves) {{
     if (!pts.length) continue;
@@ -877,8 +898,8 @@ function renderHoldout() {{
   `;
   const spL = drawPanel(52, 22, 410, 242, {{x0: 0.53, x1: 0.73, y0: 0.50, y1: 0.58, xTicks: [0.55, 0.60, 0.65, 0.70], yTicks: [0.51, 0.53, 0.55, 0.57], title: "(a) Holdout-750 Blind Split: DINO-C vs DINO-S", xLabel: "Holdout DINO-C ↑", yLabel: "Holdout DINO-S ↑"}});
   const spR = drawPanel(520, 22, 415, 242, {{x0: 0.53, x1: 0.73, y0: 38, y1: 72, xTicks: [0.55, 0.60, 0.65, 0.70], yTicks: [40, 50, 60, 70], yFmt: v => v + "%", title: "(b) Holdout-750 Blind Split: DINO-C vs CSD Top-1 (%)", xLabel: "Holdout DINO-C ↑", yLabel: "Holdout CSD Top-1 (%) ↑"}});
-  const cols = {{V32_s085: "#3b82f6", V32_s100: "#3b82f6", D_merged_s085: "#eab308", D_merged_s100: "#eab308", C2_A3_s085: "#f43f5e", C2_A3_s100: "#f43f5e", V35_Final_s085: "#10b981", V35_Seed2_s085: "#059669"}};
-  for (const [a, b, col] of [["V32_s100", "V32_s085", "#3b82f6"], ["D_merged_s100", "D_merged_s085", "#eab308"], ["C2_A3_s100", "C2_A3_s085", "#f43f5e"]]) {{
+  const cols = {{V32_s085: "#3b82f6", V32_s100: "#3b82f6", D_merged_s085: "#eab308", D_merged_s100: "#eab308", C2_A3_s085: "#f43f5e", C2_A3_s100: "#f43f5e", V35_Final_s085: "#10b981", V35_Final_s100: "#10b981", V35_Seed2_s085: "#059669", V35_Seed2_s100: "#059669"}};
+  for (const [a, b, col] of [["V32_s100", "V32_s085", "#3b82f6"], ["D_merged_s100", "D_merged_s085", "#eab308"], ["C2_A3_s100", "C2_A3_s085", "#f43f5e"], ["V35_Final_s100", "V35_Final_s085", "#10b981"], ["V35_Seed2_s100", "V35_Seed2_s085", "#059669"]]) {{
     const p0 = DATA.holdout.find(x => x.label === a), p1 = DATA.holdout.find(x => x.label === b);
     if (p0 && p1) {{
       for (const [sp, yK] of [[spL, "ds"], [spR, "t1"]]) {{

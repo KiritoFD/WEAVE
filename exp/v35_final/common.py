@@ -76,15 +76,29 @@ def make_v35_schedule(
 ) -> dict[str, Any]:
     """Single-knob schedule mapping s -> (tau0, ws, wc, wsp, rescale_phi, gamma, lscale, draft_lambda).
 
-    Guarantees s=0 exact identity and leaves pure-noise tau0=0 unaffected by dtau0.
+    Guarantees s=0 exact identity, keeps s>=0.75 and s=0.65 bit-identical to V34, and smoothly
+    interpolates sub-0.75 (tau0, draft_lambda) for high-content & E/P handoff evaluations.
     """
-    if float(knob_s) <= 0.0:
+    sv = float(knob_s)
+    if sv <= 0.0:
         return {"tau0": 1.0, "ws": 1.0, "wc": 1.0, "wsp": 0.0, "rescale_phi": 0.0, "gamma": 1.0, "lscale": 1.0, "draft_lambda": 0.0}
-    kw = dict(schedule_for_v34(knob_s))
+    kw = dict(schedule_for_v34(sv))
+    if sv < 0.75 - 1e-6:
+        sub_knots = ((0.50, 0.920, 0.450), (0.60, 0.895, 0.500), (0.65, 0.870, 0.550), (0.75, 0.835, 0.650))
+        sc = max(0.50, sv)
+        t0_i, lam_i = sub_knots[-1][1], sub_knots[-1][2]
+        for (s0, a0, l0), (s1, a1, l1) in zip(sub_knots, sub_knots[1:]):
+            if sc <= s1 + 1e-9:
+                u = (sc - s0) / max(s1 - s0, 1e-6)
+                t0_i = (1.0 - u) * a0 + u * a1
+                lam_i = (1.0 - u) * l0 + u * l1
+                break
+        kw["tau0"] = round(t0_i, 4)
+        kw["draft_lambda"] = round(lam_i, 3)
     kw["ws"] = round(float(kw["ws"]) * float(ws_mul), 4)
     kw["wc"] = round(float(kw["wc"]) * float(wc_mul), 4)
     if float(kw["tau0"]) > 0.0:
-        kw["tau0"] = round(max(0.05, min(0.92, float(kw["tau0"]) + float(dtau0))), 4)
+        kw["tau0"] = round(max(0.05, min(0.95, float(kw["tau0"]) + float(dtau0))), 4)
     return kw
 
 
@@ -190,7 +204,7 @@ def eval_pcore_test750(
     wc_mul: float = 1.0,
     dtau0: float = 0.0,
     steps: int = 6,
-    startpoint_mode: str = "ecore_a3",  # "ecore_a3" | "raw_src" | "raw_src_chroma" | "ecore" | "pure_noise"
+    startpoint_mode: str = "ecore_a3",  # "ecore_a3" | "raw_src" | "raw_src_chroma" | "raw_src_a3" | "ecore" | "pure_noise" | "self_ep"
     wrong_draft: bool = False,
     wrong_pcore: bool = False,
     q_mode: str = "correct",
@@ -238,6 +252,7 @@ def eval_pcore_test750(
             t0_v = float(kw["tau0"])
             lam = round(float(kw.get("draft_lambda", 0.75)), 3)
             need_ecore = (t0_v > 0.0) and (startpoint_mode in ("ecore_a3", "ecore"))
+            need_self_draft = (t0_v > 0.0) and (startpoint_mode == "self_ep")
             if need_ecore and (lam, wd_flag) not in draft_cache:
                 chunks = []
                 q16_ec = stiefel["test750"]["q32"].float()
@@ -252,7 +267,23 @@ def eval_pcore_test750(
                     )
                     chunks.append(ze.cpu().half())
                 draft_cache[(lam, wd_flag)] = torch.cat(chunks, 0)
-            ze_pool = draft_cache.get((lam, wd_flag))
+            if need_self_draft and ("self_x1", wd_flag) not in draft_cache:
+                # 1-NFE flow jump from tau=0 using CFG on the same P-Core backbone (iso-param shared test)
+                chunks_x1 = []
+                for st in range(0, len(tasks), infer_bs):
+                    sl = slice(st, min(st + infer_bs, len(tasks)))
+                    ti_d = (tid_wrong[sl] if wd_flag else tid_750[sl]).to(device)
+                    u_d = match_cnx_k8_submode(cnx_gray_750[sl].to(device).float(), ti_d, cnx_bank)
+                    ep_d = eps_750[sl].to(device).float()
+                    # Integrate 1 step from tau=0 -> 1 with calibrated CFG (ws=3.5, wc=2.4) for 1-NFE draft
+                    z_hat = integrate_v33_trajectory(
+                        pcore, None, ep_d, y16_750[sl].to(device).float(), q16_base[sl].to(device).float(),
+                        ti_d, u_d, tau0=0.0, ws=3.5, wc=2.4, wsp=1.5, rescale_phi=0.35, gamma=1.0, lscale=0.80, steps=1, solver="heun",
+                    )
+                    chunks_x1.append(z_hat.cpu().half())
+                draft_cache[("self_x1", wd_flag)] = torch.cat(chunks_x1, 0)
+            ze_pool = draft_cache.get((lam, wd_flag)) if need_ecore else None
+            self_x1_pool = draft_cache.get(("self_x1", wd_flag)) if need_self_draft else None
 
             writer = RawWriterV35(full_tag, dec=dec, device=device)
             kw_call = {k: v for k, v in kw.items() if k != "draft_lambda"}
@@ -271,6 +302,14 @@ def eval_pcore_test750(
                     kw_call_eff = kw_call
                 elif startpoint_mode == "raw_src_chroma":
                     ze_start = build_pcore_startpoint(z_src[sl].to(device).float(), ti_d, priors_a, alpha_y=0.0, alpha_c=1.0)
+                    kw_call_eff = kw_call
+                elif startpoint_mode == "raw_src_a3":
+                    ze_start = build_pcore_startpoint(z_src[sl].to(device).float(), ti_d, priors_a, alpha_y=alpha_y, alpha_c=alpha_c)
+                    kw_call_eff = kw_call
+                elif startpoint_mode == "self_ep":
+                    assert self_x1_pool is not None
+                    ze_raw = (1.0 - lam) * z_src[sl].to(device).float() + lam * self_x1_pool[sl].to(device).float()
+                    ze_start = build_pcore_startpoint(ze_raw, ti_d, priors_a, alpha_y=alpha_y, alpha_c=alpha_c)
                     kw_call_eff = kw_call
                 elif startpoint_mode == "ecore":
                     assert ze_pool is not None
@@ -579,6 +618,8 @@ def train_44m_ablation(
     arm_name: str,
     run_dir: Path,
     *,
+    base_dim: int = 208,
+    cond_dim: int = 384,
     content_mode: str = "stiefel",   # "stiefel" | "whiten32" | "pca32"
     pool_c_mode: str = "15pct",      # "15pct" | "0pct_self_match"
     updates: int = 3500,
@@ -588,7 +629,7 @@ def train_44m_ablation(
     smoke_steps: int = 0,
     device: str = "cuda",
 ) -> dict[str, Any]:
-    """Train 44.54M P-Core (base_dim=208, cond_dim=384) cleanly under identical V34 Stage C recipe."""
+    """Train PCoreSLFUNet (44.54M at dim=208, or iso-param 58.04M at dim=240) cleanly under V34/V35 recipe."""
     sanitize_cuda_env()
     seed_all(SEED_V35 + seed_offset)
     torch.backends.cudnn.allow_tf32 = True
@@ -637,11 +678,11 @@ def train_44m_ablation(
     swd_critic = _HighTEndpointSWDCritic(device=device)
     swd_critic.set_moment_scale(torch.cat([z_all[ci[:10]] for ci in core_cls], dim=0))
 
-    model = PCoreSLFUNet(base_dim=208, u_dim=417, cond_dim=384, use_gamma=True, normalize_u=True).to(device)
+    model = PCoreSLFUNet(base_dim=int(base_dim), u_dim=417, cond_dim=int(cond_dim), use_gamma=True, normalize_u=True).to(device)
     cfg = {
-        "base_dim": 208,
+        "base_dim": int(base_dim),
         "u_dim": 417,
-        "cond_dim": 384,
+        "cond_dim": int(cond_dim),
         "use_adapter": False,
         "pcore_params": model.n_params(),
         "content_mode": content_mode,
@@ -665,7 +706,8 @@ def train_44m_ablation(
         loss_curve = list(r_sv.get("loss_curve", []))
         print(f"[{arm_name}] Resuming from step {start_step}/{updates}", flush=True)
 
-    micro, accum = tier_micro_accum(batch_size, default_micro_24gb=64, max_micro_12gb=32, max_micro_8gb=16, device=device)
+    micro_24gb = 64 if int(base_dim) <= 208 else 32
+    micro, accum = tier_micro_accum(batch_size, default_micro_24gb=micro_24gb, max_micro_12gb=32, max_micro_8gb=16, device=device)
     swd_micro = 6 if vram_total_gb(device) > 13.5 else 2
     vram_budget_gb = auto_vram_budget_gb(device)
     torch.cuda.empty_cache()

@@ -146,3 +146,27 @@ def test_content_ablation_reps_and_s0_identity() -> None:
     with tempfile.TemporaryDirectory() as td:
         wr = RawWriterV35("unit_calib_tmp", dec=None, device="cpu", raw_root=Path(td), expected_tasks=300)
         assert wr.expected_tasks == 300
+
+
+def test_p9_artist_key_schedule_and_bracketing() -> None:
+    from exp.v35_final.p0_p2_evals import _artist_key
+
+    assert _artist_key("d5__Early_Renaissance__Early_Renaissance__benozzo-gozzoli_foo") == "benozzo-gozzoli"
+    assert _artist_key("Early_Renaissance__andrea-mantegna_bar") == "andrea-mantegna"
+
+    # Sub-0.75 smooth schedule preserves >=0.75 and =0.65 exactly while bridging 0.68..0.72 smoothly
+    k65 = make_v35_schedule(0.65)
+    k70 = make_v35_schedule(0.70)
+    k75 = make_v35_schedule(0.75)
+    k85 = make_v35_schedule(0.85)
+    assert k65["tau0"] == 0.87 and k75["tau0"] == 0.835 and k85["tau0"] == 0.79
+    assert k65["tau0"] > k70["tau0"] > k75["tau0"]
+    assert k65["draft_lambda"] < k70["draft_lambda"] < k75["draft_lambda"]
+
+    # Explicit bracketing metadata detects boundary clamping when C is outside [c_lo, c_hi]
+    unbr_lv = {"s075": {"dino_c": 0.68, "dino_s": 0.51, "csd_top1": 0.55}, "s100": {"dino_c": 0.55, "dino_s": 0.56, "csd_top1": 0.69}}
+    mc_un = summarize_matched_c(unbr_lv, c_grid=(0.61, 0.70))
+    assert mc_un["bracketed"] == [True, False] and not mc_un["all_bracketed"]
+    br_lv = {"s065": {"dino_c": 0.74, "dino_s": 0.49, "csd_top1": 0.50}, **unbr_lv}
+    mc_br = summarize_matched_c(br_lv, c_grid=(0.61, 0.70))
+    assert mc_br["bracketed"] == [True, True] and mc_br["all_bracketed"]
