@@ -2,6 +2,8 @@
 
 当前 CLEAVE Final 的模型与因果结论见 [System](../system/README.md)。本目录维护统一性能证据和绘图，不再承担 E/P、Conditioning 或 Decoder 的原理说明。
 
+当前跨组件结果见[整体实验报告](../system/OVERALL_REPORT.md)；同一输出的两种聚合见[Cross600 / All750对照](protocol_comparison/README.md)。
+
 ## 当前正式结果
 
 | 入口 | 内容 |
@@ -11,7 +13,7 @@
 | [P8 原始 JSON](../archive/historical/v35/data/p8_final_report.json) | 最终44M系统的质量、效率与参数 |
 | [P9 原始 JSON](../archive/historical/v35/data/p9_paper_audit_report.json) | 高内容补点、同 latent Decoder、单核/双核、Holdout |
 | [P7 原始 JSON](../archive/historical/v35/data/p7_biglittle_report.json) | 原生 E 四档、P-only、E→P |
-| [3060 执行计划](../system/3060_PROFILE_OPTIMIZATION.md) | 尚待最终双路径实测、实际 NFE 与质量门控 |
+| [3060 优化结果](../system/optimization/RESULTS.md) / [兼容蒸馏验收](../system/optimization/DISTILLATION_RESULTS.md) | 双路径测速、实际 NFE 与完整质量门控；新F7组合另待验收 |
 
 ## 历史台账与绘图
 

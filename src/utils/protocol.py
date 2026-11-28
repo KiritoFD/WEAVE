@@ -51,6 +51,9 @@ def load_vgg16_features_offline(device: str = "cuda"):
                 param.requires_grad_(False)
             return feat
 
+    import os
+    if os.environ.get("WEAVE_STAGE1_GPU_ALLOWED") == "1":
+        raise FileNotFoundError("Stage1 requires existing offline VGG weights; network fallback is disabled")
     feat = tvm.vgg16(weights=tvm.VGG16_Weights.IMAGENET1K_V1).features.to(device).eval()
     for param in feat.parameters():
         param.requires_grad_(False)

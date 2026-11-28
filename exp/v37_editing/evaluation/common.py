@@ -7,14 +7,27 @@ from PIL import Image
 from exp.v36_art_foundation import CACHE_DIR, CKPT_DIR, ROOT
 from exp.v37_editing import OUT, SEED, atomic_json
 
+try:
+    import sys
+    from pathlib import Path as _Path
+    if sys.platform == "win32" and not hasattr(sys, "_stage1_utf8_io_fixed"):
+        import io
+        for _stream_name in ("stdin", "stdout", "stderr"):
+            _stream = getattr(sys, _stream_name)
+            if _stream is not None and hasattr(_stream, "buffer"):
+                setattr(sys, _stream_name, io.TextIOWrapper(_stream.buffer, encoding="utf-8", errors="replace"))
+        sys._stage1_utf8_io_fixed = True
+except Exception:
+    pass
+
 P_CKPTS = {"p1_30k": CKPT_DIR / "v36_main_p1_step030000.pt",
            "p1_42k": CKPT_DIR / "v36_main_p1_final.pt", "p2_50k": CKPT_DIR / "v36_main_p2_final.pt"}
 
 
 def split_pack(split, n=0):
     key = {"seen_dev": "dev_info", "artist_ood": "art_info", "movement_ood": "mv_info"}[split]
-    info = json.loads((CACHE_DIR / "v36_caches_ready.json").read_text())[key]
-    recs = json.loads((CACHE_DIR / "curation_manifest.json").read_text())[split]
+    info = json.loads((CACHE_DIR / "v36_caches_ready.json").read_text(encoding="utf-8-sig"))[key]
+    recs = json.loads((CACHE_DIR / "curation_manifest.json").read_text(encoding="utf-8-sig"))[split]
     rng = np.random.default_rng(SEED + 10)
     ci = rng.permutation(info["n"])[:n or info["n"]]
     styles = np.array([r["style"] for r in recs])

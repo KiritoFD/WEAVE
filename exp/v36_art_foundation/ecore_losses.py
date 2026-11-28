@@ -127,7 +127,10 @@ class ECorePerceptualCritic(nn.Module):
         *,
         margin: float = 0.08,
         use_ckpt: bool = False,
-    ) -> tuple[torch.Tensor, dict[str, float]]:
+        style_multiplier: float = 1.0,
+        style_scale: torch.Tensor | None = None,
+        return_components: bool = False,
+    ):
         B = z_a.shape[0]
         z_ab = torch.cat([z_a, z_b], dim=0)
         x_ab = cp.checkpoint(lambda z: _decode_s10_diff(s10_dec, z), z_ab, use_reentrant=False) if use_ckpt else _decode_s10_diff(s10_dec, z_ab)
@@ -179,24 +182,39 @@ class ECorePerceptualCritic(nn.Module):
             + (z_b.float().flatten(1).std(1) - 0.80).square().mean()
         )
 
-        s_scale = w_lam.mean()
-        loss = (
+        s_scale = w_lam.mean() if style_scale is None else style_scale
+        style_loss = (
             1.15 * s_scale * (l_rank + 0.45 * l_dir)
             + 0.70 * s_scale * l_gram
             + 0.30 * s_scale * l_swd
-            + 0.35 * s_scale * l_ok
+        )
+        # Keep colour, content, edge and amplitude terms unchanged in the stage-1 B ablation.
+        fixed_loss = (
+            0.35 * s_scale * l_ok
             + 0.42 * l_cont
             + 0.15 * l_edge
             + 0.12 * l_lat_std
         )
+        loss = style_multiplier * style_loss + fixed_loss
         follow = 0.5 * ((d_aa < d_ab).float().mean().item() + (d_bb < d_ba).float().mean().item())
-        return loss, {
+        logs = {
             "l_swap": float(loss.item()),
             "l_gram": float(l_gram.item()),
             "l_swd": float(l_swd.item()),
             "l_cont": float(l_cont.item()),
+            "l_rank": float(l_rank.item()),
+            "l_dir": float(l_dir.item()),
+            "l_oklab": float(l_ok.item()),
+            "l_edge": float(l_edge.item()),
+            "l_latent_std": float(l_lat_std.item()),
             "swap_follow": follow,
         }
+        if return_components:
+            # Monitoring can compare true style-vs-content gradients, excluding colour from both.
+            return loss, logs, {"style": style_multiplier * style_loss,
+                                "content": 0.42 * l_cont + 0.15 * l_edge,
+                                "fixed": fixed_loss}
+        return loss, logs
 
     def forward_proxy_pixel(
         self,

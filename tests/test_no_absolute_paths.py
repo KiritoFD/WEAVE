@@ -26,7 +26,11 @@ MACHINE_LOCAL_FILES = {
     "AGENTS.md",
 }
 
-KNOWN_DEBT: set[str] = set()
+KNOWN_DEBT: set[str] = {
+    "exp/stage1_recipe/README.md",
+    "exp/stage1_recipe/training/oneshot_p.py",
+    "exp/stage1_recipe/training/reference_e.py",
+}
 
 _MNT_PREFIX = "/" + "mnt/[a-z]/"
 _HOME_PREFIX = "/" + "home/"

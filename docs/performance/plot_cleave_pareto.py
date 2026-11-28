@@ -1368,6 +1368,17 @@ draw();
 
 
 def main() -> None:
+    if "--stage1-results" in sys.argv:
+        from exp.stage1_recipe.evaluation.final import render
+        position = sys.argv.index("--stage1-results")
+        if position + 1 >= len(sys.argv):
+            raise ValueError("--stage1-results requires a verified pareto_points.json")
+        render(Path(sys.argv[position + 1]))
+        return
+    if "--compare-aggregation" in sys.argv:
+        from docs.performance.protocol_comparison.plot import main as compare_aggregation
+        compare_aggregation()
+        return
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     data = collect_triptych_data()
     save_matplotlib_triptych(data)

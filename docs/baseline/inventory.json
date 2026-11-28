@@ -90,6 +90,14 @@
       "jpg_MB": 656.5,
       "sheet": true,
       "metrics": true
+    },
+    "qwen_image_21_turbo": {
+      "status": "ok",
+      "n": 750,
+      "png_MB": 339.4,
+      "sheet": false,
+      "metrics": true,
+      "source_dir": "docs/baseline/QwenImage21Turbo"
     }
   },
   "P2A-256": {

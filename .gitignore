@@ -82,6 +82,8 @@ exp/*
 !exp/v35_final/
 !exp/v36_art_foundation/
 !exp/v37_editing/
+!exp/stage1_recipe/
+!exp/paper_audit/
 experiments/
 state/
 archives/

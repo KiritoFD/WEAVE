@@ -1,5 +1,7 @@
 # One-shot 与 StyleGallery 差距专项总结报告
 
+> **2026-11-28 结论边界更正**：下文保留历史数值与比较。已测差距不能证明轻量/Zero-DINO体系存在不可突破的“固有结构性代差”；DINO-S不是纯笔触测量。历史速度标签不足以证明process cold，238×/427×不作为严格同口径加速结论。后续引用以[阶段结论](../system/paper-audit/POST_12H_CONCLUSIONS.md)的限定为准。
+
 **日期**：2026-11-28  
 **组件归属**：One-shot（开放域单参考无标签风格迁移独立研究线）  
 **核心基线**：正式 One-shot 基线保持 **`V36 P-Core + Reference-A3`**（Zero-DINO、Core-5 严格未见）；`V37 E0/E1` 为实验性 Reference E-Core 分支；`V35 CLEAVE Final`（闭集双核）与 `V36 D1 Oracle`（闭集 Core-5 草稿注入冻结 P-Core）仅作诊断参照，不计入正式 One-shot 成绩。  

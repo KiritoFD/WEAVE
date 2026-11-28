@@ -159,13 +159,16 @@ class ReferenceECoreNet(nn.Module):
         priors: dict[str, torch.Tensor],
         *,
         noise: torch.Tensor | None = None,
+        alpha_y: float = 1.0,
+        alpha_c: float = 1.0,
     ) -> torch.Tensor:
         """Single 1-NFE pre-edit forward pass with strict identity at strength == 0."""
         B = z_src.shape[0]
         lam = strength.to(z_src.device).float().view(B).clamp(0.0, 1.25)
         amount = lam.view(B, 1, 1, 1)
 
-        z_a3 = reconstruct_reference_a3(z_src.float(), z_ref.float(), priors, mode="I2")
+        z_a3 = reconstruct_reference_a3(z_src.float(), z_ref.float(), priors, mode="I2",
+                                        alpha_y=alpha_y, alpha_c=alpha_c)
         z0 = z_src.float() + amount.clamp(0.0, 1.0) * (z_a3 - z_src.float())
 
         p_y = priors["P_Y"].to(z_src.device).float()

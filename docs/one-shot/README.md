@@ -1,5 +1,7 @@
 # One-shot｜开放域单参考迁移（独立研究线）
 
+> **阶段总结**：[从12小时计划到冻结审计：已验证结论、失败路线与未决问题](../system/paper-audit/POST_12H_CONCLUSIONS.md)。V37实际约6小时24分收工，12小时为预算上限；后续审计与部署结果分开列示。以下V35旧计划段保留历史背景，不代表V36/V37尚未执行。
+
 **2026-11-28 05:31 更新**：V37 已完成固定 12 小时实验。E0 原配方续训至 12,902 步，E1 反向真实配对同曝光至 12,902 步；完整 Core750、Artist-OOD 1000、Movement-OOD 500 和配对置信区间已归档于 [V37 结果](V37_RESULTS.md)。E1 在等内容比较中 DINO-S 约低 0.0054–0.0065，Top-1 低 7.7–13.0pp，P4 延长训练门槛未通过；正式 One-shot 仍保持 P+A3。与重型基线的全面量化差距拆解见 [One-shot 与 StyleGallery 差距专项总结](ONE_SHOT_VS_STYLEGALLERY_SUMMARY.md)，执行证据与训练审计见 [V37 计划与审计](V37_PLAN_AND_AUDIT.md)。
 
 闭集 CLEAVE 已定型；任意参考不等于换一个风格 Encoder。当前 V35 CLEAVE-One 只证明参考响应，尚未解决高内容重绘。不要把它作为当前生产模型或将其 OOD 跟随率当作生成质量。

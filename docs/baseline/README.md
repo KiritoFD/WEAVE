@@ -1,5 +1,7 @@
 # Baseline 评测图与数据（论文引述的 13 个方法 × 3 个数据集）
 
+> **2026-11-28 主图统计**：D5冻结任务的[Cross600 / Same150 / All750聚合快照](evaluation/paper_rgb_v1_aggregates.json)与[两种口径的现役CLEAVE三联图](../performance/protocol_comparison/README.md)已归档。数据沿用本文第三节的统一重评结果，StyleGallery/Hist2Style采用本目录逐任务评分；缺失任务分母显式保留，不重跑模型。
+
 > 这里存放论文中引述的 baseline **评测输出图**（不是训练数据集），用于与 WEAVE / V6 / V9 的生成结果做视觉和数值对比。
 > 每个方法的原始规模是 **每个数据集 750 张**（150 源图 × 5 目标风格），三个数据集分别是
 > **D5-512**（512×512）、**P2A-256**（Photo2Art，256×256）、**R5-WikiArt**（hold-out 5 风格，512×512）。

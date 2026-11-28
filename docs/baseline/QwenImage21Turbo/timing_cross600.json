@@ -1,0 +1,13 @@
+{
+  "arm": "Qwen-Image-2.1-Turbo-bnb4",
+  "n_measured": 599,
+  "mean_ms_per_img": 16070.78,
+  "median_ms_per_img": 15745.35,
+  "p95_ms_per_img": 18601.11,
+  "img_per_sec": 0.0622,
+  "gen_res": 512,
+  "cond_res": 512,
+  "quant": "auto",
+  "offload": "model",
+  "gpu": "NVIDIA Graphics Device"
+}

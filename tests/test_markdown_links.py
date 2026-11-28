@@ -9,6 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SKIP_PREFIXES = (
     "docs/archive/",
     "archives/",
+    "_tmp/",
     "aaai2027_v4/",
     "deliver/",
     "tools/",

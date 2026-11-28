@@ -48,6 +48,9 @@ def load_convnext_tiny_offline(device: str = "cuda") -> nn.Module:
             for param in feat.parameters():
                 param.requires_grad_(False)
             return feat
+    import os
+    if os.environ.get("WEAVE_STAGE1_GPU_ALLOWED") == "1":
+        raise FileNotFoundError("Stage1 requires existing offline ConvNeXt weights; network fallback is disabled")
     feat = tvm.convnext_tiny(weights=tvm.ConvNeXt_Tiny_Weights.IMAGENET1K_V1).features.to(device).eval()
     for param in feat.parameters():
         param.requires_grad_(False)

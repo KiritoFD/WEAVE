@@ -50,7 +50,9 @@ def _resolve_weave_path(raw_path: str) -> Path:
     raise FileNotFoundError(f"Cannot resolve WEAVE path: {raw_path}")
 
 
-def _load_cross_tasks(manifest_csv: Path, *, include_same: bool = False, limit: int = 0) -> list[dict]:
+def _load_cross_tasks(
+    manifest_csv: Path, *, include_same: bool = False, same_only: bool = False, limit: int = 0
+) -> list[dict]:
     """Load frozen tasks paired with sg750_manifest reference image paths."""
     tasks_json = REPO_ROOT / "eval_protocol" / "tasks_750.json"
     tasks = json.loads(tasks_json.read_text(encoding="utf-8"))["tasks"]
@@ -59,7 +61,10 @@ def _load_cross_tasks(manifest_csv: Path, *, include_same: bool = False, limit: 
 
     selected = []
     for t in tasks:
-        if not include_same and not t["is_cross"]:
+        if same_only:
+            if t["is_cross"]:
+                continue
+        elif not include_same and not t["is_cross"]:
             continue
         tid = t["task_id"]
         if tid not in sg_by_id:
@@ -280,6 +285,7 @@ def run_eval(args: argparse.Namespace) -> None:
     tasks = _load_cross_tasks(
         Path(args.manifest),
         include_same=args.include_same,
+        same_only=args.same_only,
         limit=args.limit,
     )
     batches, done_ids, offset = _load_existing_batches(raw_dir) if args.resume else ([], set(), 0)
@@ -428,6 +434,7 @@ def main() -> None:
     ap.add_argument("--batch-save", type=int, default=10)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--include-same", action="store_true")
+    ap.add_argument("--same-only", action="store_true")
     ap.add_argument("--save-png", action="store_true")
     ap.add_argument("--no-kv-cache", action="store_true")
     ap.add_argument("--resume", action="store_true")

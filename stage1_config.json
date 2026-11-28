@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "seed": 20263800,
+  "stage_budgets": {
+    "S0": 3600,
+    "S1": 3600,
+    "E0": 5400,
+    "E1": 5400,
+    "E2": 5400,
+    "P0": 5400,
+    "P1": 5400,
+    "P2": 5400,
+    "R0": 7200,
+    "I0": 3600,
+    "F0": 7200
+  },
+  "paths": {
+    "output_root": "runs/stage1_recipe",
+    "cache_root": "runs/v36_art_foundation/cache",
+    "e_initial": "runs/v37_editing/checkpoints/initial4500.pt",
+    "p_initial": null,
+    "p_candidates": [
+      "runs/v36_art_foundation/checkpoints/v36_main_p1_final.pt",
+      "runs/v36_art_foundation/checkpoints/v36_main_p2_final.pt"
+    ]
+  },
+  "training": {
+    "train_budget_s": 4500,
+    "min_updates": 600,
+    "save_reserve_s": 60,
+    "e": {
+      "warmup_steps": 100,
+      "ema_decays": [
+        0.995,
+        0.999
+      ],
+      "batch_a": 6,
+      "batch_b": 4,
+      "batch_c": 4,
+      "grad_clip": 1.5,
+      "micro": 1,
+      "checkpointing": true,
+      "save_every": 250,
+      "monitor_every": 250
+    },
+    "p": {
+      "warmup_steps": 100,
+      "ema_decays": [
+        0.999,
+        0.9995
+      ],
+      "batch_size": 96,
+      "grad_clip": 1.0,
+      "micro": 4,
+      "checkpointing": true,
+      "content_dropout": 0.3,
+      "style_dropout": 0.15,
+      "y16_dropout": 0.4,
+      "task_ratios": null,
+      "save_every": 250,
+      "monitor_every": 250
+    }
+  },
+  "arms": {
+    "E0": {
+      "a_q32": "target",
+      "a_weight": 1.0,
+      "b_style_weight": 1.0,
+      "lr": 0.0001
+    },
+    "E1": {
+      "a_q32": "proxy",
+      "a_weight": 1.0,
+      "b_style_weight": 1.0,
+      "lr": 0.0001
+    },
+    "E2": {
+      "a_q32": "proxy",
+      "a_weight": 1.0,
+      "b_style_weight": 1.25,
+      "lr": 0.0001
+    },
+    "E3": {
+      "a_q32": "proxy",
+      "a_weight": 0.75,
+      "b_style_weight": 1.0,
+      "lr": 0.0001
+    },
+    "P0": {
+      "lr_p": 0.0001,
+      "lr_style": 0.00015,
+      "q_noise": 0.05
+    },
+    "P1": {
+      "lr_p": 5e-05,
+      "lr_style": 7.5e-05,
+      "q_noise": 0.05
+    },
+    "P2": {
+      "lr_from": "seen_winner_P0_P1",
+      "q_noise": 0.025
+    },
+    "P3": {
+      "lr_from": "seen_winner_P0_P1",
+      "style_lr_ratio": 2.0,
+      "q_noise": 0.05
+    }
+  },
+  "evaluation": {
+    "seen_n": 300,
+    "taus": [
+      0.35,
+      0.5,
+      0.65,
+      0.8
+    ],
+    "e_lambdas": [
+      0.4,
+      0.6,
+      0.8,
+      1.0
+    ],
+    "content_anchors": [
+      0.6,
+      0.65,
+      0.7,
+      0.75
+    ],
+    "steps": 6,
+    "wj": 3.8,
+    "wc": 1.6,
+    "alpha_y": 1.0,
+    "alpha_c": 1.0,
+    "batch": 4,
+    "bootstrap": 2000,
+    "minimum_valid_bootstrap": 1000,
+    "s_gain": 0.01,
+    "top1_gain_pp": 5.0,
+    "s_noninferiority": -0.005,
+    "same_noninferiority_pp": -2.0,
+    "ood_2way_noninferiority_pp": -2.0,
+    "formal_max_candidates": 1
+  },
+  "profile": {
+    "micro_p": [
+      4,
+      8,
+      16
+    ],
+    "micro_e": [
+      1,
+      2,
+      4
+    ],
+    "checkpointing": [
+      false,
+      true
+    ],
+    "peak_gib_limit": 10.0,
+    "warmup": 2,
+    "steps": 5,
+    "safety_factor": 0.9
+  },
+  "gpu": {
+    "required_name": "3060",
+    "idle_memory_mib_max": 768,
+    "idle_util_max": 5
+  },
+  "r0": {
+    "mode": "auto",
+    "seed_offset": 1
+  },
+  "prohibited": [
+    "closed_set_retraining",
+    "muon",
+    "encoder_distillation",
+    "cfg_distillation",
+    "qwen_inference",
+    "F5",
+    "architecture_search"
+  ]
+}
