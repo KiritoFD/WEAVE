@@ -115,6 +115,35 @@ def _v36_rows_from_file(path: Path, ips: float) -> list[dict[str, Any]]:
     return sorted(out, key=lambda p: p["dc"])
 
 
+def _collect_v36_ecore() -> dict[str, Any]:
+    root = REPO / "runs/v36_art_foundation/measured"
+    report = _load_json(root / "v36_ecore_full_report.json") or {}
+    speed = report.get("speed_4090", {})
+    groups = {"ref_ecore": [], "dual": [], "ecore_ablation": []}
+    for group in ("standalone", "dual"):
+        for row in report.get(group, []):
+            metrics = row["cross600"]
+            standalone = group == "standalone"
+            main_dual = row["lam"] == 1.0 and not row["use_a3_post"]
+            key = "ref_ecore" if standalone else "dual" if main_dual else "ecore_ablation"
+            bench = speed.get("ecore_1nfe" if standalone else "dual_ecore_pcore", {})
+            groups[key].append({
+                "arm": row["arm"], "knob": row["arm"].removeprefix("v36_ecore_"),
+                "lam": row["lam"], "tau0": row["tau0"],
+                "dc": float(metrics["dino_c"]), "ds": float(metrics["dino_s"]),
+                "t1": float(metrics["csd_top1"]) * 100.0,
+                "lpips": float(metrics["lpips"]),
+                "same": float(row["same150"]["csd_top1"]) * 100.0,
+                "causal": row.get("causal_delta_pp"),
+                "ips": bench.get("b1_ips"),
+                "speed_measured": row["lam"] == 1.0 and (standalone or (main_dual and row["tau0"] == 0.65)),
+            })
+    return {
+        **{key: sorted(rows, key=lambda point: point["dc"]) for key, rows in groups.items()},
+        "training": _load_json(root / "v36_ecore_training_diag.json") or [],
+    }
+
+
 def _collect_v36_reports() -> dict[str, Any]:
     """Load V36 CLEAVE-One (Zero-DINO whole-WikiArt foundation) measured reports or verified fallback."""
     v36_dir = REPO / "runs/v36_art_foundation/measured"
@@ -131,7 +160,7 @@ def _collect_v36_reports() -> dict[str, Any]:
     i1 = _v36_rows_from_file(v36_dir / "v36_main_ablate_I1_tau_sweep.json", ips)
     if not i1:
         i1 = [{**r, "knob": f"t{int(round(r['tau0'] * 100)):02d}", "ips": ips} for r in V36_FALLBACK_ABLATE if r["start_mode"] == "I1"]
-    return {"speed": spd, "i2": i2, "i0": i0, "i1": i1}
+    return {"speed": spd, "i2": i2, "i0": i0, "i1": i1, **_collect_v36_ecore()}
 
 
 def _collect_v35_reports() -> list[dict[str, Any]]:
@@ -308,10 +337,13 @@ def collect_triptych_data() -> dict[str, Any]:
     # Clean combined Ours Pareto across V35 P-Core (s=0.60..1.50) + Original E-Core (l=0.25..1.00)
     ours_pcore = [p for p in v35_final if p["knob"] != "tau0"]
     ours_ecore = [p for p in v35_eonly if p["knob"] != "l000"]
-    ours_union = ours_pcore + ours_ecore
+    distillation = (_load_json(REPO / 'docs/performance/data/3060_distillation_summary.json') or {}).get('points', [])
+    qualified = [p for p in distillation if p.get('non_inferiority_pass')]
+    ours_union = ours_pcore + ours_ecore + qualified
     ours_fa_idx = frontier_indices([(p["dc"], p["ds"]) for p in ours_union]) if ours_union else []
     ours_fb_idx = frontier_indices([(p["dc"], p["t1"]) for p in ours_union]) if ours_union else []
-    ours_fc_idx = frontier_indices([(p["ips"], p["t1"]) for p in ours_union if p["ips"]]) if ours_union else []
+    speed_union = [p for p in ours_union if p.get('ips') and p not in qualified]
+    ours_fc_idx = frontier_indices([(p["ips"], p["t1"]) for p in speed_union]) if speed_union else []
 
     if p9 and "p9d_artist_and_work_holdout" in p9:
         ho_lv = p9["p9d_artist_and_work_holdout"]["holdout_levels"]
@@ -433,7 +465,8 @@ def collect_triptych_data() -> dict[str, Any]:
         "ours_ecore": ours_ecore,
         "ours_front_a": [ours_union[i] for i in ours_fa_idx],
         "ours_front_b": [ours_union[i] for i in ours_fb_idx],
-        "ours_front_c": [ours_union[i] for i in ours_fc_idx],
+        "ours_front_c": [speed_union[i] for i in ours_fc_idx],
+        "distillation": distillation,
         "v32_ecore": [p for p in v32_traj if p["seg"] == "ecore"],
         "v32_pcore": [p for p in v32_traj if p["seg"] == "pcore"],
         "v32_ec_max": v32_ec_max,
@@ -459,6 +492,10 @@ def collect_triptych_data() -> dict[str, Any]:
         "v36_i0": v36["i0"],
         "v36_i1": v36["i1"],
         "v36_speed": v36["speed"],
+        "v36_ref_ecore": v36["ref_ecore"],
+        "v36_dual": v36["dual"],
+        "v36_ecore_ablation": v36["ecore_ablation"],
+        "v36_ecore_training": v36["training"],
         "stage_a": stage_a_pts,
         "stage_b": stage_b_curves,
         "holdout": holdout_pts,
@@ -526,6 +563,9 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
                      ha=ha, col=col, bold=True, fs=7.2, leader=ldr)
 
     def _draw_ours(ax, x_key: str, y_key: str, ours_front: list[dict], *, speed_panel: bool = False):
+        if not speed_panel:
+            for point in data.get('distillation', []):
+                ax.scatter([point[x_key]], [point[y_key]], marker='x', s=32, color='#a855f7', alpha=.7, zorder=9)
         if ours_front:
             fx = [p[x_key] for p in ours_front]
             fy = [p[y_key] for p in ours_front]
@@ -553,6 +593,13 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
                         "-.", color=AMBER, lw=2.1, alpha=0.88, zorder=8)
             ax.scatter([p[x_key] for p in v36], [p[y_key] for p in v36],
                        marker="v", s=50, c=AMBER, edgecolors=AMBER_DARK, lw=0.9, zorder=10)
+        for key, color, marker in (("v36_ref_ecore", "#2563eb", "s"), ("v36_dual", "#e11d48", "P"), ("v36_ecore_ablation", "#e11d48", "x")):
+            points = [point for point in data.get(key, []) if not speed_panel or point["speed_measured"]]
+            if not points:
+                continue
+            if not speed_panel and key != "v36_ecore_ablation":
+                ax.plot([point[x_key] for point in points], [point[y_key] for point in points], ":", color=color, lw=1.5, zorder=8)
+            ax.scatter([point[x_key] for point in points], [point[y_key] for point in points], marker=marker, s=34, color=color, zorder=10)
 
     # Panel (a): DINO-C vs DINO-S
     ax_a.axvspan(0.65, 0.95, color="#ecfdf5", alpha=0.45, zorder=0)
@@ -707,6 +754,8 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
                label="Ours E-Core Original (Closed-Set 1-NFE, 33.1 img/s)"),
         Line2D([0], [0], color=AMBER, ls="-.", marker="v", ms=5.8, lw=2.2, mfc=AMBER, mec=AMBER_DARK,
                label=f"V36 CLEAVE-One (Open-Ref Core-5 Unseen, B1 {v36_b1:.2f} / B8 {data.get('v36_speed', {}).get('b8_ips', 14.05):.2f} img/s)"),
+        Line2D([0], [0], color="#2563eb", ls=":", marker="s", ms=5, label="V36 Reference E-Core (Open-Ref, 4500 updates)"),
+        Line2D([0], [0], color="#e11d48", ls=":", marker="P", ms=5, label="V36 Reference E+P (lambda=1; crosses: ablations)"),
         Line2D([0], [0], color="#2563eb", ls=":", marker="s", ms=5.0, lw=1.8, mfc="#3b82f6", mec="#1e3a8a",
                label=f"RTX 3060 Opt Host E2E (E B2 {spd3.get('opt_e_b2', 12.31):.2f} / P B4 {spd3.get('opt_p_b4', 5.49):.2f} / Fast-5 {spd3.get('fast5_p_b4', 6.51):.2f} img/s)"),
         Line2D([0], [0], color="none", marker="*", ms=9.2, mfc=HEAVY_PURPLE, mec="#3b0764", label="StyleGallery (30.4s)"),
@@ -714,7 +763,7 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
         Line2D([0], [0], color="none", marker="s", ms=5.6, mfc=LIGHT_BLUE, mec="#075985", label="Lightweight Baselines (0.2–3.0s)"),
         Line2D([0], [0], color=SLATE_FRONT, ls="--", lw=1.6, label="External Pareto Frontier"),
     ]
-    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.99), ncol=2,
+    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.99), ncol=3,
                frameon=True, facecolor="#f8fafc", edgecolor="#cbd5e1", fontsize=7.0)
     fig.subplots_adjust(left=0.055, right=0.985, top=0.71, bottom=0.14, wspace=0.25)
 
@@ -724,6 +773,26 @@ def save_matplotlib_triptych(data: dict[str, Any]) -> None:
         fig.savefig(FIG_DIR / f"{stem}.png", dpi=240)
     plt.close(fig)
     print(f"Saved 1x3 Triptych SVG+PNG to {FIG_DIR}")
+
+
+def save_ecore_training_curve(data: dict[str, Any]) -> None:
+    import matplotlib.pyplot as plt
+
+    rows = data.get("v36_ecore_training", [])
+    if not rows:
+        return
+    fig, axes = plt.subplots(1, 3, figsize=(11.5, 3.2), layout="constrained")
+    for axis, key, label, scale in zip(
+        axes,
+        ("dev_vgg_follow_2way", "dev_vgg_style_margin", "dev_gray_content_l1"),
+        ("Seen-Dev reference follow (%)", "Seen-Dev style margin", "Seen-Dev gray content L1 (lower is better)"),
+        (100.0, 1.0, 1.0),
+    ):
+        axis.plot([row["step"] for row in rows], [row[key] * scale for row in rows], "o-", color="#2563eb", ms=4)
+        axis.set(xlabel="Optimizer updates", ylabel=label)
+        axis.grid(alpha=0.25)
+    fig.savefig(FIG_DIR / "v36_ecore_training.svg")
+    plt.close(fig)
 
 
 def build_interactive_html(data: dict[str, Any]) -> str:
@@ -797,6 +866,7 @@ svg {{ width: 100%; height: auto; display: block; }}
       <button class="btn active" data-view="triptych">论文三联图 (V35 闭集前沿 + V36 开放域 vs 外部)</button>
       <button class="btn" data-view="rtx3060">RTX 3060 实测优化 (Test750 + 吞吐)</button>
       <button class="btn" data-view="v36_one">V36 CLEAVE-One (全WikiArt Zero-DINO / I0–I2 消融)</button>
+      <button class="btn" data-view="v36_training">Reference E-Core 训练充分性</button>
       <button class="btn" data-view="v35_final">V35 P0–P9 定型消融 (Stiefel / E+P)</button>
       <button class="btn" data-view="ablations">V34 各阶段 (Stage A–D)</button>
       <button class="btn" data-view="holdout">盲测 Holdout-750</button>
@@ -863,6 +933,45 @@ function triPoints(cx, cy, r) {{
   return `${{cx.toFixed(1)}},${{(cy - r).toFixed(1)}} ${{(cx - r * 0.9).toFixed(1)}},${{(cy + r * 0.75).toFixed(1)}} ${{(cx + r * 0.9).toFixed(1)}},${{(cy + r * 0.75).toFixed(1)}}`;
 }}
 
+function drawV36ECore(panel) {{
+  for (const [key, color, label] of [["v36_ref_ecore", "#3b82f6", "Open-Ref E"], ["v36_dual", "#f43f5e", "Open-Ref E+P"], ["v36_ecore_ablation", "#f43f5e", "E+P ablation"]]) {{
+    const points = (DATA[key] || []).filter(point => !panel.isSpeed || point.speed_measured);
+    if (!points.length) continue;
+    const xKey = panel.xKey || "dc", yKey = panel.yKey;
+    if (!panel.isSpeed && key !== "v36_ecore_ablation") {{
+      svg.appendChild(el("path", {{d: points.map((point, index) => `${{index ? "L" : "M"}}${{panel.sx(point[xKey])}},${{panel.sy(point[yKey])}}`).join(" "), fill: "none", stroke: color, "stroke-width": 1.8, "stroke-dasharray": "2,2"}}));
+    }}
+    for (const point of points) {{
+      const cx = panel.sx(point[xKey]), cy = panel.sy(point[yKey]);
+      const mark = key === "v36_ecore_ablation"
+        ? el("path", {{d: `M${{cx-4}},${{cy-4}}l8,8m-8,0l8,-8`, stroke: color, "stroke-width": 1.6}})
+        : el("rect", {{x: cx-3.5, y: cy-3.5, width: 7, height: 7, fill: color, stroke: "var(--foreground)", "stroke-width": 0.6}});
+      mark.onmouseenter = () => {{ info.textContent = `[${{label}}] ${{point.knob}} C=${{point.dc.toFixed(4)}} S=${{point.ds.toFixed(4)}} Top1=${{point.t1.toFixed(2)}}% LPIPS=${{point.lpips.toFixed(4)}}`; }};
+      svg.appendChild(mark);
+    }}
+  }}
+}}
+
+function renderV36Training() {{
+  svg.setAttribute("viewBox", "0 0 960 300");
+  legendEl.textContent = "4500 updates, random initialization; fixed 32-source Seen-Dev diagnostic. Training completion does not establish convergence.";
+  const rows = DATA.v36_ecore_training || [];
+  const specs = [
+    ["dev_vgg_follow_2way", "Reference follow (%)", 100, 65, 76],
+    ["dev_vgg_style_margin", "Style margin", 1, 0.029, 0.036],
+    ["dev_gray_content_l1", "Content L1 (lower is better)", 1, 0.025, 0.038],
+  ];
+  specs.forEach(([key, title, scale, lo, hi], index) => {{
+    const panel = drawPanel(48 + index*320, 24, 252, 230, {{x0: 0, x1: 4500, y0: lo, y1: hi, xTicks: [0, 1500, 3000, 4500], yTicks: [lo, (lo+hi)/2, hi], yFmt: value => value.toFixed(scale === 100 ? 1 : 3), title, xLabel: "Optimizer updates", yLabel: ""}});
+    svg.appendChild(el("path", {{d: rows.map((row, position) => `${{position ? "L" : "M"}}${{panel.sx(row.step)}},${{panel.sy(row[key]*scale)}}`).join(" "), fill: "none", stroke: "#3b82f6", "stroke-width": 2}}));
+    rows.forEach(row => {{
+      const point = el("circle", {{cx: panel.sx(row.step), cy: panel.sy(row[key]*scale), r: 3.5, fill: "#3b82f6"}});
+      point.onmouseenter = () => {{ info.textContent = `Step ${{row.step}} | ${{title}}: ${{(row[key]*scale).toFixed(scale === 100 ? 2 : 5)}}`; }};
+      svg.appendChild(point);
+    }});
+  }});
+}}
+
 function renderTriptych() {{
   svg.setAttribute("viewBox", "0 0 960 300");
   legendEl.innerHTML = `
@@ -870,6 +979,8 @@ function renderTriptych() {{
     <span class="lg-item"><span class="swatch" style="background:#059669"></span><b>Ours P-Core Final (44M, ${{DATA.v35_final_ips || 14.3}} img/s @ 4090)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#0d9488"></span><b>Ours E-Core Original (1-NFE, 33.1 img/s @ 4090)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#d97706"></span><b>V36 CLEAVE-One (Open-Ref 1-Shot Core-5 Unseen, B1 ${{(DATA.v36_speed||{{}}).b1_ips||7.84}} / B8 ${{(DATA.v36_speed||{{}}).b8_ips||14.05}} img/s)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>V36 Open-Ref E (4500 updates)</span>
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V36 Open-Ref E+P (crosses: ablations)</span>
     <span class="lg-item"><span class="swatch" style="background:#7c3aed"></span><b>StyleGallery / Heavy (&gt;1B)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#0284c7"></span><b>Light Baselines (0.2–3.0s)</b></span>
     <span class="lg-item"><span class="swatch" style="background:#64748b"></span>External Pareto</span>
@@ -894,6 +1005,8 @@ function renderTriptych() {{
     const {{sx, sy}} = p;
     const {{xKey, yKey}} = sp;
     const offMap = sp.isSpeed ? extOffs.spd : extOffs[yKey];
+
+    drawV36ECore({{...sp, ...p}});
 
     // External frontier dashed
     svg.appendChild(el("path", {{d: sp.extFront.map((b, i) => `${{i ? "L" : "M"}}${{sx(b[xKey]).toFixed(1)}},${{sy(b[yKey]).toFixed(1)}}`).join(" "), fill: "none", stroke: "#64748b", "stroke-width": 1.5, "stroke-dasharray": "4,3", opacity: 0.88}}));
@@ -998,13 +1111,17 @@ function renderV36One() {{
   svg.setAttribute("viewBox", "0 0 960 300");
   legendEl.innerHTML = `
     <span class="lg-item"><span class="swatch" style="background:#f59e0b"></span><b>V36 I2 (Full Ref-A3 Chroma+Luma, τ0=0.00–0.80)</b></span>
+    <span class="lg-item"><span class="swatch" style="background:#3b82f6"></span>V36 Reference E (4500 updates)</span>
+    <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V36 Reference E+P (crosses: ablations)</span>
     <span class="lg-item"><span class="swatch" style="background:#38bdf8"></span>V36 I1 (Chroma-Only A3, τ0=0.50/0.65)</span>
     <span class="lg-item"><span class="swatch" style="background:#94a3b8"></span>V36 I0 (Raw Src Start, τ0=0.50/0.65)</span>
     <span class="lg-item"><span class="swatch" style="background:#f43f5e"></span>V35 CLEAVE-One O3 (Swapped Old)</span>
     <span class="lg-item"><span class="swatch" style="background:#7c3aed"></span>External Open-Ref Baselines</span>
   `;
-  const spL = drawPanel(50, 22, 410, 242, {{x0: 0.30, x1: 0.90, y0: 0.35, y1: 0.59, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.35, 0.40, 0.45, 0.50, 0.55], title: "(a) V36 Open-Ref Start Ablation (Core-5 Unseen): DINO-C vs DINO-S", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑"}});
-  const spR = drawPanel(520, 22, 415, 242, {{x0: 0.30, x1: 0.90, y0: 0.0, y1: 68.0, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 15, 30, 45, 60], yFmt: v => v + "%", title: "(b) V36 Open-Ref Start Ablation (Core-5 Unseen): DINO-C vs CSD Top-1 (%)", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑"}});
+  const spL = drawPanel(50, 22, 410, 242, {{x0: 0.30, x1: 0.96, y0: 0.35, y1: 0.59, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0.35, 0.40, 0.45, 0.50, 0.55], title: "(a) V36 Open-Ref: DINO-C vs DINO-S", xLabel: "DINO-C ↑", yLabel: "DINO-S ↑"}});
+  const spR = drawPanel(520, 22, 415, 242, {{x0: 0.30, x1: 0.96, y0: 0.0, y1: 68.0, xTicks: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], yTicks: [0, 15, 30, 45, 60], yFmt: v => v + "%", title: "(b) V36 Open-Ref: DINO-C vs CSD Top-1 (%)", xLabel: "DINO-C ↑", yLabel: "CSD Top-1 (%) ↑"}});
+  drawV36ECore({{...spL, yKey: "ds"}});
+  drawV36ECore({{...spR, yKey: "t1"}});
   for (const b of (DATA.external || []).filter(x => x.dc >= 0.30 && x.dc <= 0.90)) {{
     for (const [sp, yK] of [[spL, "ds"], [spR, "t1"]]) {{
       const cx = sp.sx(b.dc), cy = sp.sy(b[yK]);
@@ -1187,6 +1304,10 @@ function renderRtx3060() {{
       ["3060 Optimized", (r.opt_p || []).concat(r.opt_e || []), "#3b82f6", "", 4.2],
       ["3060 Fast-5", (r.fast5_p || []), "#ec4899", "2,2", 3.8],
     ];
+    for (const name of ["trt", "encoder", "cfg", "combined"]) {{
+      const pts = (DATA.distillation || []).filter(p => p.profile === name && (!isSpd || p.ips));
+      if (pts.length) groups.push(["3060 " + name, pts, "#a855f7", "3,2", 4]);
+    }}
     for (const [label, pts, col, dash, rad] of groups) {{
       const pPts = pts.filter(x => x.knob.startsWith("s"));
       const ePts = pts.filter(x => x.knob.startsWith("l"));
@@ -1228,6 +1349,7 @@ function draw() {{
   if (curView === "triptych") renderTriptych();
   else if (curView === "rtx3060") renderRtx3060();
   else if (curView === "v36_one") renderV36One();
+  else if (curView === "v36_training") renderV36Training();
   else if (curView === "v35_final") renderV35Final();
   else if (curView === "ablations") renderAblations();
   else renderHoldout();
@@ -1249,7 +1371,10 @@ def main() -> None:
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     data = collect_triptych_data()
     save_matplotlib_triptych(data)
+    save_ecore_training_curve(data)
     (FIG_DIR / "cleave_pareto_latest.html").write_text(build_interactive_html(data), encoding="utf-8")
+    from docs.performance.plot_v37_extension import append_v37_views
+    append_v37_views(REPO, FIG_DIR, _collect_v36_reports()["i2"])
     print(f"Wrote 1x3 Triptych HTML+SVG+PNG ({len(data['ours_pcore'])} P-Core pts, {len(data['ours_ecore'])} E-Core pts, {len(data['holdout'])} holdout pts)")
 
 

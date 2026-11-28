@@ -104,15 +104,24 @@ def paired_cluster_bootstrap(
     out["same150"]["csd_top1_pp"] = {"delta": pt_same, "ci95_lo": float(lo_s), "ci95_hi": float(hi_s)}
 
     lim = NON_INFERIORITY_LIMITS
-    checks = {
+    point_checks = {
         "dino_c": out["cross600"]["dino_c"]["delta"] >= lim["dino_c_min_delta"],
         "dino_s": out["cross600"]["dino_s"]["delta"] >= lim["dino_s_min_delta"],
         "csd_top1": out["cross600"]["csd_top1_pp"]["delta"] >= lim["csd_top1_pp_min_delta"],
         "same150": out["same150"]["csd_top1_pp"]["delta"] >= lim["same150_pp_min_delta"],
         "lpips": out["cross600"]["lpips"]["delta"] <= lim["lpips_max_delta"],
     }
+    checks = {
+        "dino_c": out["cross600"]["dino_c"]["ci95_lo"] >= lim["dino_c_min_delta"],
+        "dino_s": out["cross600"]["dino_s"]["ci95_lo"] >= lim["dino_s_min_delta"],
+        "csd_top1": out["cross600"]["csd_top1_pp"]["ci95_lo"] >= lim["csd_top1_pp_min_delta"],
+        "same150": out["same150"]["csd_top1_pp"]["ci95_lo"] >= lim["same150_pp_min_delta"],
+        "lpips": out["cross600"]["lpips"]["ci95_hi"] <= lim["lpips_max_delta"],
+    }
     out["non_inferiority_pass"] = all(checks.values())
     out["checks"] = checks
+    out["point_checks"] = point_checks
+    out["status"] = "pass" if all(checks.values()) else ("inconclusive" if all(point_checks.values()) else "reject")
     return out
 
 
@@ -147,6 +156,7 @@ def generate_test750_arm(
     src_cpu_map: dict[str, torch.Tensor] | None = None,
     save_visual_dir: Path | None = None,
     visual_indices: tuple[int, ...] = (0, 62, 188, 315, 441, 612),
+    wrong_target: bool = False,
 ) -> Path:
     """Run full test750 inference using raw RGB images from data/test/ and save via RawWriter."""
     arm_raw = raw_root / arm_name
@@ -173,6 +183,10 @@ def generate_test750_arm(
             for t in sl
         ]).to(pipe.device)
         tids = torch.tensor([int(t["target_style_id"]) for t in sl], dtype=torch.long, device=pipe.device)
+        if wrong_target:
+            from src.utils.protocol import pick_wrong_cross_tid
+            sids = torch.tensor([int(t["source_style_id"]) for t in sl], dtype=torch.long, device=pipe.device)
+            tids = pick_wrong_cross_tid(sids, tids)
         eps = eps_750[s:e].to(pipe.device)
         if real_n < batch_size and getattr(pipe, "compile_mode", ""):
             pad_n = batch_size - real_n
@@ -194,7 +208,7 @@ def generate_test750_arm(
                     vis_u8.append(u8)
                     vis_ids.append(tasks[j]["task_id"])
 
-    writer.finish(arm=arm_name, mode=mode, knob=knob, profile=pipe.profile, utc=utc())
+    writer.finish(arm=arm_name, mode=mode, knob=knob, profile=pipe.profile, wrong_target=wrong_target, utc=utc())
     if save_visual_dir is not None and vis_u8:
         save_png_batch_fast(torch.stack(vis_u8, 0), vis_ids, save_visual_dir / arm_name)
     return arm_raw

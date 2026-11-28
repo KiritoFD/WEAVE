@@ -80,6 +80,8 @@ exp/*
 !exp/v33_semantic_control/
 !exp/v34_frontier/
 !exp/v35_final/
+!exp/v36_art_foundation/
+!exp/v37_editing/
 experiments/
 state/
 archives/
